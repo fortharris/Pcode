@@ -46,4 +46,4 @@ Homepage: [pcode.blog.com](http://pcode.blog.com/)
 
 Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
 
-Mailing List: [pcode-ide@googlegroups.com](pcode-ide@googlegroups.com)
+Mailing List: [pcode-ide@googlegroups.com](https://pcode-ide@googlegroups.com)
