@@ -45,3 +45,5 @@ Then perhaps:
 Homepage: [pcode.blog.com](http://pcode.blog.com/)
 
 Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
+
+Mailing List: [pcode-ide@googlegroups.com](pcode-ide@googlegroups.com)
