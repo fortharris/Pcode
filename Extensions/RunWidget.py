@@ -128,7 +128,7 @@ class SetRunParameters(QtGui.QLabel):
         hbox.addWidget(label)
 
         self.updateVirtualInterpreters()
-        self.venvBox.currentIndexChanged.connect(self.saveArguments)
+        self.venvBox.currentIndexChanged.connect(self.setDefaultInterpreter)
 
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
@@ -137,7 +137,7 @@ class SetRunParameters(QtGui.QLabel):
         self.installedPythonVersionBox.setMinimumWidth(200)
         self.updateInstalledInterpreters()
         self.installedPythonVersionBox.currentIndexChanged.connect(
-            self.saveArguments)
+            self.setDefaultInterpreter)
         hbox.addWidget(self.installedPythonVersionBox)
 
         hbox.addStretch(1)
@@ -160,6 +160,8 @@ class SetRunParameters(QtGui.QLabel):
         hbox.addStretch(1)
 
         self.setLayout(mainLayout)
+        
+        self.setDefaultInterpreter()
 
     def updateInstalledInterpreters(self):
         self.installedPythonVersionBox.clear()
@@ -219,9 +221,8 @@ class SetRunParameters(QtGui.QLabel):
             self.projectData["DefaultVenv"] = venv
             self.venvVersionLabel.setText(self.getVesionFromVenv())
         else:
-            self.projectData["DefaultInterpreter"] = 'None'
             self.projectData["DefaultVenv"] = 'None'
-            self.venvBox.addItem("<No Python installed>")
+            self.venvBox.addItem("<No Virtual Environment>")
             self.venvVersionLabel.clear()
 
     def setDefaultInterpreter(self):
@@ -482,14 +483,17 @@ class RunWidget(BaseScintilla):
                                0], self.blocking_cursor_pos[1])
 
     def pythonPath(self):
+        print(self.projectData["DefaultInterpreter"])
         if self.projectData["DefaultInterpreter"] == "None":
+            message = QtGui.QMessageBox.critical(
+                self, "Run", "No python interpreter to run your code.")
             return None
         else:
             if os.path.exists(self.projectData["DefaultInterpreter"]):
                 return self.projectData["DefaultInterpreter"]
             else:
                 message = QtGui.QMessageBox.critical(
-                    self, "Run", "The current Python interpreter is not available.")
+                    self, "Run", "Your current python interpreter of choice is not available.")
                 return None
 
     def runModule(self, runScript, fileName, run_internal, run_with_args, args):

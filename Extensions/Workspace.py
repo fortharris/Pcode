@@ -4,6 +4,22 @@ import zipfile
 from PyQt4 import QtCore, QtGui
 
 
+class CreateWorkSpaceThread(QtCore.QThread):
+
+    def run(self):
+        self.errors = None
+        try:
+            zip = zipfile.ZipFile("Resources\\PcodeProjects.zip", 'r')
+            zip.extractall(self.path)
+        except Exception as err:
+            self.errors = str(err)
+
+    def createWorkspace(self, path):
+        self.path = path
+
+        self.start()
+
+
 class GetPathLine(QtGui.QWidget):
 
     textChanged = QtCore.pyqtSignal(str)
@@ -60,6 +76,9 @@ class WorkSpace(QtGui.QDialog):
         self.setWindowIcon(QtGui.QIcon("Resources\\images\\Icon"))
         self.setFixedSize(500, 130)
 
+        self.createWorkSpaceThread = CreateWorkSpaceThread()
+        self.createWorkSpaceThread.finished.connect(self.completeWorkspace)
+
         mainLayout = QtGui.QVBoxLayout()
         self.setLayout(mainLayout)
 
@@ -77,8 +96,12 @@ class WorkSpace(QtGui.QDialog):
         mainLayout.addStretch(1)
 
         hbox = QtGui.QHBoxLayout()
-        hbox.addStretch(1)
         mainLayout.addLayout(hbox)
+
+        self.statusLabel = QtGui.QLabel()
+        hbox.addWidget(self.statusLabel)
+
+        hbox.addStretch(1)
 
         self.okButton = QtGui.QPushButton("Done")
         self.okButton.clicked.connect(self.accept)
@@ -92,34 +115,43 @@ class WorkSpace(QtGui.QDialog):
 
         self.exec_()
 
+    def completeWorkspace(self):
+        QtGui.QApplication.restoreOverrideCursor()
+        if self.createWorkSpaceThread.errors == None:
+            self.path = os.path.join(
+                self.createWorkSpaceThread.path, "PcodeProjects")
+            self.created = True
+            self.close()
+        else:
+            self.statusLabel.clear()
+            message = QtGui.QMessageBox.warning(
+                self, "Workspace", "Error creating workspace:\n\n{0}".format(self.createWorkSpaceThread.errors))
+            self.okButton.setDisabled(False)
+            self.cancelButton.setDisabled(False)
+            self.getPathLine.setDisabled(False)
+            self.choiceBox.setDisabled(False)
+
     def accept(self):
         path = self.getPathLine.text()
         if os.path.exists(path):
             if self.choiceBox.currentIndex() == 0:
                 if os.path.basename(path) == "PcodeProjects":
                     self.path = path
+                    self.created = True
+                    self.close()
                 else:
-                    message = QtGui.QMessageBox.warning(self, "Workspace", "This is not a valid workspace!")
+                    message = QtGui.QMessageBox.warning(
+                        self, "Workspace", "The workspace is not valid!")
                     return
             else:
-                QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
                 self.okButton.setDisabled(True)
-                try:
-                    zip = zipfile.ZipFile("Resources\\PcodeProjects.zip", 'r')
-                    zip.extractall(path)
+                self.cancelButton.setDisabled(True)
+                self.getPathLine.setDisabled(True)
+                self.choiceBox.setDisabled(True)
+                self.statusLabel.setText("Creating workspace...")
+                QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 
-                    self.path = os.path.join(path, "PcodeProjects")
-                    QtGui.QApplication.restoreOverrideCursor()
-
-                except Exception as err:
-                    QtGui.QApplication.restoreOverrideCursor()
-                    message = QtGui.QMessageBox.warning(
-                        self, "Workspace", "Error creating workspace:\n\n{0}".format(str(err)))
-                    self.okButton.setDisabled(False)
-
-                    return
-            self.created = True
-            self.close()
+                self.createWorkSpaceThread.createWorkspace(path)
         else:
             message = QtGui.QMessageBox.warning(
                 self, "Workspace", "Path does not exist.")
