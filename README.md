@@ -3,9 +3,9 @@ Pcode
 
 ##  Python 3 IDE
 
-Pcode seeks to automate the process of python development by means of:
+Pcode seeks to simply the process of python development by means of:
 
-1. A simplistic and intuitive UI ( Zero clutter )
+1. A simple and intuitive UI ( Zero clutter )
 1. Utilization of very powerful open source libraries
 1. Implementation of carefully chosen features
 1. Support for other file formats that commonly accompany python development
