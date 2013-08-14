@@ -37,7 +37,7 @@ Then perhaps:
 ### License:
 * GPL v3
         
-Homepage: [pcode.blog.com](http://pcode.blog.com/)
+###Download: [Windows Executable](https://www.dropbox.com/s/ka79uk2uwreg8am/Pcode%200.1%20Beta.exe)
 
 Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
 
