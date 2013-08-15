@@ -56,6 +56,7 @@ class NewProjectDialog(QtGui.QDialog):
         form = QtGui.QFormLayout()
 
         self.nameLine = QtGui.QLineEdit()
+        self.nameLine.setText("PythonApp")
         self.nameLine.textChanged.connect(self.validateFields)
         form.addRow("Name: ", self.nameLine)
 
@@ -91,25 +92,29 @@ class NewProjectDialog(QtGui.QDialog):
         hbox.addWidget(self.helpButton)
 
         mainLayout.addLayout(hbox)
-        self.nameLine.setText("PythonApp")
+        
+        self.validateFields()
 
     def validateFields(self):
-        self.projName = self.nameLine.text().strip()
-        self.projLocation = self.destinationBox.text().strip()
+        self.projectName = self.nameLine.text().strip()
+        self.projectLocation = self.destinationBox.text().strip()
         self.importPath = self.sourcesLine.text().strip()
-        if self.projName == '':
+        if self.projectName == '':
             self.okButton.setDisabled(True)
             return
-        elif self.projLocation == '':
+        elif self.projectLocation == '':
             self.okButton.setDisabled(True)
             return
-        if os.path.exists(self.projLocation) == False:
+        if os.path.exists(self.projectLocation) == False:
             self.okButton.setDisabled(True)
             return
         if self.importPath != '':
             if os.path.exists(self.importPath) == False:
                 self.okButton.setDisabled(True)
                 return
+        if os.path.exists(os.path.join(self.projectLocation, self.projectName)):
+            self.okButton.setDisabled(True)
+            return
         self.okButton.setDisabled(False)
 
     def sendData(self):
@@ -119,9 +124,9 @@ class NewProjectDialog(QtGui.QDialog):
             mainScript = "__init__.py"
         data = {
             "mainscript": mainScript,
-            "name": self.projName,
+            "name": self.projectName,
             "type": self.typeBox.currentText(),
-            "location": self.projLocation,
+            "location": self.projectLocation,
             "importdir": self.importPath
         }
         self.close()

@@ -115,5 +115,5 @@ class BusyWidget(QtGui.QDialog):
         else:
             self.progressBar.setRange(1, 1)
             self.hide()
-            if self.useData.SETTINGS['SoundsEnabled']:
+            if self.useData.SETTINGS['SoundsEnabled'] == "True":
                 self.app.beep()

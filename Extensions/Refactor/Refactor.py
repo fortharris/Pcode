@@ -117,6 +117,7 @@ class RenameThread(QtCore.QThread):
         self.error = None
         self.changedFiles = []
         try:
+            self.ropeProject.validate()
             rename = Rename(self.ropeProject, libutils.path_to_resource(
                 self.ropeProject, self.path), self.offset)
             changes = rename.get_changes(self.new_name, docs=True)

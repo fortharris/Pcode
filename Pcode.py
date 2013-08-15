@@ -114,7 +114,7 @@ class Pcode(QtGui.QWidget):
         self.aboutAct = QtGui.QAction(
             QtGui.QIcon("Resources\\images\\properties"),
             "About Pcode", self, statusTip="About Pcode",
-            triggered=self.showAboutPane)
+            triggered=self.showAbout)
 
         self.showFullScreenAct = \
             QtGui.QAction(QtGui.QIcon("Resources\\images\\fullscreen"),
@@ -193,7 +193,7 @@ class Pcode(QtGui.QWidget):
                 title = "Pcode - " + title
         self.setWindowTitle(title)
 
-    def showAboutPane(self):
+    def showAbout(self):
         aboutPane = About(self)
         aboutPane.exec_()
 

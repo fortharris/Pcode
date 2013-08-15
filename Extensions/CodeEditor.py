@@ -491,10 +491,6 @@ class CodeEditor(BaseScintilla):
                           "Indentation Guide", self,
                           statusTip="Indentation Guide",
                           triggered=self.showIndentationGuide)
-
-        self.foldAllAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\fold"),
-                                        "Fold", self, statusTip="Fold",
-                                        triggered=self.foldAll)
                                         
         self.contextMenu = QtGui.QMenu()
         self.contextMenu.addAction(self.snippetsAct)
@@ -517,7 +513,6 @@ class CodeEditor(BaseScintilla):
         self.viewMenu.addAction(self.editorTabWidget.hSplitEditorAct)
         self.viewMenu.addAction(self.editorTabWidget.noSplitEditorAct)
         self.viewMenu.addSeparator()
-        self.viewMenu.addAction(self.foldAllAct)
         self.viewMenu.addAction(self.indentationGuideAct)
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(self.zoomAct)
