@@ -321,7 +321,7 @@ class GeneralSettings(QtGui.QDialog):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
-                if editor.DATA["fileType"] == "python":
+                if editor.DATA["fileType"] in self.useData.supportedFileTypes:
                     editor2 = editorTabWidget.getCloneEditor(i)
                     editor.setCaretLineVisible(state)
                     editor2.setCaretLineVisible(state)
@@ -345,15 +345,14 @@ class GeneralSettings(QtGui.QDialog):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
-                if editor.DATA["fileType"] == "python":
-                    editor2 = editorTabWidget.getCloneEditor(i)
-                    if state == True:
-                        editor.setBraceMatching(QsciScintilla.SloppyBraceMatch)
-                        editor2.setBraceMatching(
-                            QsciScintilla.SloppyBraceMatch)
-                    else:
-                        editor.setBraceMatching(QsciScintilla.NoBraceMatch)
-                        editor2.setBraceMatching(QsciScintilla.NoBraceMatch)
+                editor2 = editorTabWidget.getCloneEditor(i)
+                if state == True:
+                    editor.setBraceMatching(QsciScintilla.SloppyBraceMatch)
+                    editor2.setBraceMatching(
+                        QsciScintilla.SloppyBraceMatch)
+                else:
+                    editor.setBraceMatching(QsciScintilla.NoBraceMatch)
+                    editor2.setBraceMatching(QsciScintilla.NoBraceMatch)
 
     def setFolding(self, state):
         self.useData.SETTINGS["EnableFolding"] = str(state)

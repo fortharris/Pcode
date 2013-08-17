@@ -47,21 +47,23 @@ class EditorTabBar(QtGui.QTabBar):
 
     def contextMenuEvent(self, event):
         filePath = self.editorTabWidget.getEditorData('filePath')
+        isProjectFile = self.editorTabWidget.isProjectFile(filePath)
 
-        state = (self.editorTabWidget.getEditorData("fileType") == "python")
-        self.cloneTabAct.setEnabled(state)
-        self.moduleToPackageAct.setEnabled(state)
-        self.renameFileAct.setEnabled(state)
+        isPyFile = (self.editorTabWidget.getEditorData("fileType") == "python")
+        self.cloneTabAct.setEnabled(isPyFile)
+        if isProjectFile:
+            print(isPyFile, self.editorTabWidget.getEditorData("fileType"))
+            self.moduleToPackageAct.setEnabled(isPyFile)
+            self.renameFileAct.setEnabled(isPyFile)
+        else:
+            self.moduleToPackageAct.setEnabled(False)
+            self.renameFileAct.setEnabled(False)
 
         state = (filePath != None)
         self.copyPathAct.setEnabled(state)
         self.openFileLocationAct.setEnabled(state)
         self.favouritesAct.setEnabled(state)
         self.reloadTabAct.setEnabled(state)
-
-        state = self.editorTabWidget.isProjectFile(filePath)
-        self.renameFileAct.setEnabled(state)
-        self.moduleToPackageAct.setEnabled(state)
 
         self.menu.exec_(event.globalPos())
 
@@ -317,7 +319,7 @@ class EditorTabWidget(QtGui.QTabWidget):
                           triggered=self.removeBookmarks)
         #---------------------------------------------------------------------
         self.newPythonFileAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\new"),
-                                        "Python", self,
+                                        "New Python File", self,
                                         statusTip="Create a new python file",
                                         triggered=self._newPythonFile)
                                         
@@ -971,8 +973,15 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.saveAs(copyOnly=True)
 
     def getFilter(self):
-        if self.getEditorData("fileType") == "python":
+        fileType = self.getEditorData("fileType")
+        if fileType == "python":
             filter = "Console (*.py);;No Console (*.pyw)"
+        elif fileType == ".xml":
+            filter = "Xml (*.xml)"
+        elif fileType == ".html":
+            filter = "Html (*.html)"
+        elif fileType == ".css":
+            filter = "Css (*.css)"
         else:
             filter = "All Files (*)"
         return filter
@@ -1014,7 +1023,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         fileName = QtGui.QFileDialog.getOpenFileName(self,
                                                      "Select File", self.useData.getLastOpenedDir(
                                                      ),
-                                                     "All Files (*);;Console (*.py);;No Console (*.pyw)")
+                                                     "All Files (*);;Console (*.py);;No Console (*.pyw);;Xml (*.xml);;Html (*.html);;Css (*.css)")
         if fileName:
             self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
             self.loadfile(os.path.normpath(fileName))

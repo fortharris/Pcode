@@ -125,7 +125,7 @@ class GetName(QtGui.QDialog):
 
 class CodeViewer(BaseScintilla):
     def __init__(self, parent=None):
-        super(CodeViewer, self).__init__(parent)
+        BaseScintilla.__init__(self, parent)
 
         self.setReadOnly(True)
         self.setMarginLineNumbers(0, True)
@@ -329,7 +329,7 @@ class Library(QtGui.QMainWindow):
         self.printAct = \
             QtGui.QAction(QtGui.QIcon("Resources\\images\\_0013_Printer"),
                           "Print", self,
-                          statusTip="Print", triggered=self.print)
+                          statusTip="Print", triggered=self.printFile)
 
         self.exportAct = \
             QtGui.QAction(QtGui.QIcon("Resources\\images\\archive"),
@@ -543,7 +543,7 @@ class Library(QtGui.QMainWindow):
                 message = QtGui.QMessageBox.warning(self, "Remove",
                                                     "Failed to remove item!")
 
-    def print(self):
+    def printFile(self):
         document = self.codeViewer.document()
         printer = QtGui.QPrinter()
 

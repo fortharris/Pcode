@@ -1,3 +1,4 @@
+import os
 from PyQt4 import QtCore, QtGui
 from PyQt4.Qsci import QsciScintilla
 
@@ -6,19 +7,22 @@ from Extensions.ZoomWidget import ZoomWidget
 from Extensions import Global
 from Extensions.Notification import Notification
 from Extensions import StyleSheet
+from Extensions.Exporter import Exporter
 
 
 class TextEditor(BaseScintilla):
 
-    def __init__(self, useData,  DATA, colorScheme, editorTabWidget,
+    def __init__(self, useData, DATA, colorScheme, editorTabWidget,
                  encoding=None, parent=None):
-        super(TextEditor, self).__init__(parent)
+        BaseScintilla.__init__(self, parent)
 
         self.useData = useData
         self.encoding = encoding
         self.DATA = DATA
         self.colorScheme = colorScheme
         self.editorTabWidget = editorTabWidget
+        
+        self.exporter = Exporter(self)
 
         self.setFont(Global.getDefaultFont())
         self.setWrapMode(QsciScintilla.WrapWord)
@@ -38,7 +42,6 @@ class TextEditor(BaseScintilla):
 
         self.zoomWidget = ZoomWidget(self.useData, self)
         hbox.addWidget(self.zoomWidget)
-        hbox.addStretch(1)
 
         #
 
@@ -82,14 +85,18 @@ class TextEditor(BaseScintilla):
         self.setMarginSensitivity(1, True)
 
         # Braces matching
-        self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
+        if self.useData.SETTINGS["MatchBraces"] == "True":
+            self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
+            
+        if self.DATA["fileType"] in self.useData.supportedFileTypes:
+            if self.useData.SETTINGS["ShowCaretLine"] == 'True':
+                self.setCaretLineVisible(True)
 
         self.setAutoCompletionReplaceWord(True)
         # minimum number of letters to be typed before list is displayed
         self.setAutoCompletionThreshold(2)
 
         self.setEdgeMode(QsciScintilla.EdgeNone)
-        self.setCaretLineVisible(False)
         self.showWhiteSpaces()
 
         # Margins colors
@@ -212,6 +219,27 @@ class TextEditor(BaseScintilla):
         self.viewMenu.addAction(self.editorTabWidget.noSplitEditorAct)
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(self.zoomAct)
+        
+    def export(self):
+        options = QtGui.QFileDialog.Options()
+        if self.DATA["filePath"] is None:
+            name = "Untitled"
+        else:
+            name = os.path.splitext(os.path.basename(self.DATA["filePath"]))[0]
+        fileName = QtGui.QFileDialog.getSaveFileName(self,
+                                                     "Export",
+                                                     os.path.join(
+                                                         self.useData.getLastOpenedDir(
+                                                         ), name + '.html'),
+                                                     "Html (*.html);;ODT(*.odt);;PDF (*.pdf);;RTF (*.rtf);;TeX (*.tex)", options)
+        if fileName:
+            self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
+
+            fileName = os.path.normpath(fileName)
+            t = os.path.split(fileName)[1]
+            ext = os.path.splitext(t)[1]
+
+            self.exporter.export(ext, fileName)
 
     def contextMenuEvent(self, event):
         state = self.hasSelectedText()
@@ -274,22 +302,6 @@ class TextEditor(BaseScintilla):
     def removeMarkers(self):
         self.markerDeleteAll(8)
 
-    def increaseIndent(self):
-        if self.hasSelectedText() == False:
-            pos = self.getCursorPosition()
-            line = pos[0]
-            self.indent(line)
-        else:
-            self.SendScintilla(QsciScintilla.SCI_TAB)
-
-    def decreaseIndent(self):
-        if self.hasSelectedText() == False:
-            pos = self.getCursorPosition()
-            line = pos[0]
-            self.unindent(line)
-        else:
-            self.SendScintilla(QsciScintilla.SCI_BACKTAB)
-
     def findNextBookmark(self):
         cursorLine = self.getCursorPosition()[0]
         lineNum = self.markerFindNext(cursorLine + 1, 256)
@@ -340,6 +352,6 @@ class TextEditor(BaseScintilla):
 
     def notify(self, mess):
         self.infoBar.showMessage(mess)
-
+        
     def install_shortcuts(self):
-        shortcuts = self.useData.CUSTOM_DEFAULT_SHORTCUTS
+        self.updateShortcuts(self.useData)

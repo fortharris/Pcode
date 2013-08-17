@@ -152,7 +152,6 @@ class Keymap(QtGui.QDialog):
                 topLevelItem = item.parent()
                 item.setText(
                     1, getShortcut.keysequence.toString())
-                print(self.useData.CUSTOM_DEFAULT_SHORTCUTS[topLevelItem.text(0)][item.text(0)])
                 self.useData.CUSTOM_DEFAULT_SHORTCUTS[topLevelItem.text(0)][item.text(0)][0] = getShortcut.keysequence.toString()
 
     def save(self):
@@ -209,8 +208,15 @@ class Keymap(QtGui.QDialog):
             mainItem.setExpanded(True)
 
     def setDefaultShortcuts(self):
-        self.shortcutsView.clear()
-        self.useData.CUSTOM_DEFAULT_SHORTCUTS = self.useData.DEFAULT_SHORTCUTS
-        self.updateShortcutsView()
+        reply = QtGui.QMessageBox.warning(self, "Set Default",
+                    "Setting keymap to default will wipe away your current keymap.\n\nProceed?",
+                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+        if reply == QtGui.QMessageBox.Yes:
+            self.shortcutsView.clear()
+            self.useData.CUSTOM_DEFAULT_SHORTCUTS = self.useData.DEFAULT_SHORTCUTS
+            self.updateShortcutsView()
         
-        self.save()
+            self.save()
+        else:
+            return
+

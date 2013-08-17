@@ -8,7 +8,7 @@ from Extensions import StyleSheet
 class TextSnapshot(BaseScintilla):
 
     def __init__(self, colorScheme, fileType, parent=None):
-        super(TextSnapshot, self).__init__(parent)
+        BaseScintilla.__init__(self, parent)
 
         self.setFont(Global.getDefaultFont())
         self.setMarginLineNumbers(0, True)

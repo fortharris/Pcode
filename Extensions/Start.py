@@ -151,7 +151,7 @@ class Start(QtGui.QLabel):
 
     def visitHomepage(self):
         QtGui.QDesktopServices().openUrl(QtCore.QUrl(
-            "www.pcode.blog.com"))
+            """https://github.com/fortharris/Pcode"""))
 
     def createProject(self):
         self.pcode.newProject()

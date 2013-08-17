@@ -661,6 +661,8 @@ class ConfigureProject(QtGui.QLabel):
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
         
+        hbox.addWidget(QtGui.QLabel("The module 're' must be imported for frozen scripts to work."))
+        
         hbox.addStretch(1)
 
         self.saveButton = QtGui.QPushButton("Save")

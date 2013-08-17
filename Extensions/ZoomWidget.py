@@ -10,24 +10,21 @@ class ZoomWidget(QtGui.QLabel):
         self.editor = editor
         self.prevValue = 0
 
-        self.setMinimumHeight(35)
-        self.setMaximumHeight(35)
-        self.setMinimumWidth(180)
-        self.setMaximumWidth(180)
+        self.setMinimumHeight(130)
+        self.setMaximumHeight(130)
+        self.setMinimumWidth(38)
+        self.setMaximumWidth(38)
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(2)
+        mainLayout.setMargin(1)
+        self.setLayout(mainLayout)
 
-        hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(0)
-        mainLayout.addLayout(hbox)
-
-        self.decreaseButton = QtGui.QToolButton()
-        self.decreaseButton.setMaximumWidth(25)
-        self.decreaseButton.setText('-')
-        self.decreaseButton.setMaximumHeight(25)
-        self.decreaseButton.clicked.connect(self.zoomOut)
-        hbox.addWidget(self.decreaseButton)
+        self.increaseButton = QtGui.QToolButton()
+        self.increaseButton.setMaximumWidth(36)
+        self.increaseButton.setText('+')
+        self.increaseButton.setMaximumHeight(36)
+        self.increaseButton.clicked.connect(self.zoomIn)
+        mainLayout.addWidget(self.increaseButton)
 
         self.zoomBox = QtGui.QSpinBox()
         self.zoomBox.setMinimum(0)
@@ -38,22 +35,22 @@ class ZoomWidget(QtGui.QLabel):
         self.zoomBox.setSingleStep(10)
         self.zoomBox.setSuffix("%")
         self.zoomBox.valueChanged.connect(self.changePosition)
-        hbox.addWidget(self.zoomBox)
-
-        self.increaseButton = QtGui.QToolButton()
-        self.increaseButton.setMaximumWidth(25)
-        self.increaseButton.setText('+')
-        self.increaseButton.setMaximumHeight(25)
-        self.increaseButton.clicked.connect(self.zoomIn)
-        hbox.addWidget(self.increaseButton)
+        mainLayout.addWidget(self.zoomBox)
+        
+        self.decreaseButton = QtGui.QToolButton()
+        self.decreaseButton.setMaximumWidth(36)
+        self.decreaseButton.setText('-')
+        self.decreaseButton.setMaximumHeight(36)
+        self.decreaseButton.clicked.connect(self.zoomOut)
+        mainLayout.addWidget(self.decreaseButton)
 
         self.hideButton = QtGui.QToolButton()
+        self.hideButton.setMaximumWidth(36)
+        self.hideButton.setMaximumHeight(36)
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(QtGui.QIcon("Resources\\images\\exit"))
         self.hideButton.clicked.connect(self.hide)
-        hbox.addWidget(self.hideButton)
-
-        self.setLayout(mainLayout)
+        mainLayout.addWidget(self.hideButton)
 
         self.hide()
 

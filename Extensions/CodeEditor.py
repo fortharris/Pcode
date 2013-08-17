@@ -185,7 +185,7 @@ class CodeEditor(BaseScintilla):
 
     def __init__(self, useData, refactor, colorScheme,
                  DATA, editorTabWidget, parent=None):
-        super(CodeEditor, self).__init__(parent)
+        BaseScintilla.__init__(self, parent)
 
         self.useData = useData
         self.refactor = refactor
@@ -215,7 +215,7 @@ class CodeEditor(BaseScintilla):
         
         self.completionThreadTimer = QtCore.QTimer()
         self.completionThreadTimer.setSingleShot(True)
-        self.completionThreadTimer.setInterval(500)
+        self.completionThreadTimer.setInterval(1000)
         self.completionThreadTimer.timeout.connect(self.startCompletion)
 
         self.cursorPositionChanged.connect(self.occurrencesTimer.start)
@@ -235,7 +235,6 @@ class CodeEditor(BaseScintilla):
 
         self.zoomWidget = ZoomWidget(self.useData, self)
         hbox.addWidget(self.zoomWidget)
-        hbox.addStretch(1)
 
         #
 
@@ -386,7 +385,6 @@ class CodeEditor(BaseScintilla):
         self.lexer = self.colorScheme.styleEditor(self)
 
         self.install_shortcuts()
-#        self.clearKeys()
 
     def showDoc(self, doc, pos):
         if self.isListActive():
@@ -829,22 +827,6 @@ class CodeEditor(BaseScintilla):
             line, index = self.getCursorPosition()
             self.removeCommentPrefix(line)
 
-    def increaseIndent(self):
-        if self.hasSelectedText() == False:
-            pos = self.getCursorPosition()
-            line = pos[0]
-            self.indent(line)
-        else:
-            self.SendScintilla(QsciScintilla.SCI_TAB)
-
-    def decreaseIndent(self):
-        if self.hasSelectedText() == False:
-            pos = self.getCursorPosition()
-            line = pos[0]
-            self.unindent(line)
-        else:
-            self.SendScintilla(QsciScintilla.SCI_BACKTAB)
-
     def replaceTabsWithSpaces(self):
         text = self.text()
         text = text.replace('\t', ' ' * 4)
@@ -866,34 +848,13 @@ class CodeEditor(BaseScintilla):
         self.infoBar.showMessage(mess)
 
     def install_shortcuts(self):
+        self.updateShortcuts(self.useData)
+
         shortcuts = self.useData.CUSTOM_DEFAULT_SHORTCUTS
 
-        self.shortUndo = QtGui.QShortcut(
-            shortcuts["Editor"]["Undo-Last-Command"][0], self)
-        self.shortUndo.activated.connect(self.undo)
-
-        self.shortRedo = QtGui.QShortcut(
-            shortcuts["Editor"]["Redo-Last-Command"][0], self)
-        self.shortRedo.activated.connect(self.redo)
-
-        self.shortCut = QtGui.QShortcut(
-            shortcuts["Editor"]["Cut-Selection"][0], self)
         self.cutAct.setShortcut(shortcuts["Editor"]["Cut-Selection"][0])
-
-        self.shortCopy = QtGui.QShortcut(
-            shortcuts["Editor"]["Copy-Selection"][0], self)
-        self.shortCopy.activatedAmbiguously.connect(self.copy)
         self.copyAct.setShortcut(shortcuts["Editor"]["Copy-Selection"][0])
-
-        self.shortPaste = QtGui.QShortcut(
-            shortcuts["Editor"]["Paste"][0], self)
-        self.shortPaste.activatedAmbiguously.connect(self.paste)
         self.pasteAct.setShortcut(shortcuts["Editor"]["Paste"][0])
-
-        self.shortSelectToMatchingBrace = QtGui.QShortcut(
-            shortcuts["Editor"]["Select-to-Matching-Brace"][0], self)
-        self.shortSelectToMatchingBrace.activated.connect(
-            self.selectToMatchingBrace)
 
         self.shortSnippets = QtGui.QShortcut(
             shortcuts["Editor"]["Snippets"][0], self)
@@ -927,14 +888,6 @@ class CodeEditor(BaseScintilla):
             shortcuts["Editor"]["Uncomment"][0], self)
         self.shortUncomment.activated.connect(self.unComment)
 
-        self.shortIndent = QtGui.QShortcut(
-            shortcuts["Editor"]["Indent-One-Level"][0], self)
-        self.shortIndent.activated.connect(self.increaseIndent)
-
-        self.shortUnindent = QtGui.QShortcut(
-            shortcuts["Editor"]["De-indent-One-Level"][0], self)
-        self.shortUnindent.activated.connect(self.decreaseIndent)
-
         self.shortZoomIn = QtGui.QShortcut(
             shortcuts["Editor"]["Zoom-In"][0], self)
         self.shortZoomIn.activated.connect(self.zoomWidget.zoomIn)
@@ -942,80 +895,3 @@ class CodeEditor(BaseScintilla):
         self.shortZoomOut = QtGui.QShortcut(
             shortcuts["Editor"]["Zoom-Out"][0], self)
         self.shortZoomOut.activated.connect(self.zoomWidget.zoomOut)
-
-        self.shortSelectAll = QtGui.QShortcut(
-            shortcuts["Editor"]["Select-All"][0], self)
-        self.shortSelectAll.activated.connect(self.selectAll)
-
-        self.shortUppercase = QtGui.QShortcut(
-            shortcuts["Editor"]["Convert-Selection-To-Upper-Case"][0], self)
-        self.shortUppercase.activated.connect(self.toUpperCase)
-
-        self.shortLowercase = QtGui.QShortcut(
-            shortcuts["Editor"]["Convert-Selection-To-Lower-Case"][0], self)
-        self.shortLowercase.activated.connect(self.toLowerCase)
-
-        self.shortMoveCursorWordRight = QtGui.QShortcut(
-            shortcuts["Editor"]["Move-Right-One-Word"][0], self)
-        self.shortMoveCursorWordRight.activated.connect(
-            self.moveCursorWordRight)
-
-        self.shortMoveCursorWordLeft = QtGui.QShortcut(
-            shortcuts["Editor"]["Move-Left-One-Word"][0], self)
-        self.shortMoveCursorWordLeft.activated.connect(self.moveCursorWordLeft)
-
-        self.shortMoveCursorRight = QtGui.QShortcut(
-            shortcuts["Editor"]["Move-Right-One-Character"][0], self)
-        self.shortMoveCursorRight.activated.connect(self.moveCursorRight)
-
-        self.shortMoveCursorLeft = QtGui.QShortcut(
-            shortcuts["Editor"]["Move-Left-One-Character"][0], self)
-        self.shortMoveCursorLeft.activated.connect(self.moveCursorLeft)
-
-        self.shortNewLineBelow = QtGui.QShortcut(
-            shortcuts["Editor"]["Insert-Newline"][0], self)
-        self.shortNewLineBelow.activated.connect(self.newLineBelow)
-
-        self.shortDeleteBack = QtGui.QShortcut(
-            shortcuts["Editor"]["Delete-Previous-Character"][0], self)
-        self.shortDeleteBack.activated.connect(self.deleteBack)
-
-        self.shortDeleteForward = QtGui.QShortcut(
-            shortcuts["Editor"]["Delete-Current-Character"][0], self)
-        self.shortDeleteForward.activated.connect(self.delete)
-
-        self.shortDeleteWordLeft = QtGui.QShortcut(
-            shortcuts["Editor"]["Delete-Current-Character"][0], self)
-        self.shortDeleteWordLeft.activated.connect(self.deleteWordLeft)
-
-        self.shortDeleteWordRight = QtGui.QShortcut(
-            shortcuts["Editor"]["Delete-Word-To-Left"][0], self)
-        self.shortDeleteWordRight.activated.connect(self.deleteWordRight)
-
-        self.shortDeleteLineRight = QtGui.QShortcut(
-            shortcuts["Editor"]["Delete-Line-To-Left"][0], self)
-        self.shortDeleteLineRight.activated.connect(self.deleteLineLeft)
-
-        self.shortDeleteLineRight = QtGui.QShortcut(
-            shortcuts["Editor"]["Delete-Line-To-Right"][0], self)
-        self.shortDeleteLineRight.activated.connect(self.deleteLineRight)
-
-        self.shortExtendSelectionLeft = QtGui.QShortcut(
-            shortcuts["Editor"]["Extend-Selection-Left-One-Character"][0], self)
-        self.shortExtendSelectionLeft.activated.connect(
-            self.extendSelectionLeft)
-
-        self.shortExtendSelectionRight = QtGui.QShortcut(
-            shortcuts["Editor"]["Extend-Selection-Right-One-Character"][0], self)
-        self.shortExtendSelectionRight.activated.connect(
-            self.extendSelectionRight)
-
-        self.shortExtendSelectionWordLeft = QtGui.QShortcut(
-            shortcuts["Editor"]["Extend-Selection-Left-One-Word"][0], self)
-        self.shortExtendSelectionWordLeft.activated.connect(
-            self.extendSelectionRight)
-
-        self.shortExtendSelectionWordRight = QtGui.QShortcut(
-            shortcuts["Editor"]["Extend-Selection-Right-One-Word"][0], self)
-        self.shortExtendSelectionWordRight.activated.connect(
-            self.extendSelectionWordRight)

@@ -79,28 +79,17 @@ class FindUsageThread(QtCore.QThread):
         try:
             resource = self.ropeProject.get_file(self.path)
             result = find_occurrences(self.ropeProject, resource, self.offset)
-            itemsDict = {}
+            self.itemsDict = {}
             if len(result) == 0:
                 self.error = "No usages found."
             else:
                 for i in result:
                     line = i.lineno
                     path = i.resource.path
-                    if path in itemsDict:
-                        itemsDict[path].append(line)
+                    if path in self.itemsDict:
+                        self.itemsDict[path].append(line)
                     else:
-                        itemsDict[path] = [line]
-                for parent, lines in itemsDict.items():
-                    parentItem = QtGui.QTreeWidgetItem()
-                    parentItem.setForeground(0, QtGui.QBrush(
-                        QtGui.QColor("#003366")))
-                    parentItem.setText(0, parent)
-                    for line in lines:
-                        childItem = QtGui.QTreeWidgetItem()
-                        childItem.setText(0, str(line))
-                        childItem.setFirstColumnSpanned(True)
-                        parentItem.addChild(childItem)
-                        self.foundList.append(parentItem)
+                        self.itemsDict[path] = [line]
         except Exception as err:
             self.error = str(err)
 
@@ -385,7 +374,7 @@ class Refactor(QtGui.QWidget):
         saved = self.editorTabWidget.saveProject()
         if saved:
             self.localToFieldThread.convert(project, resource, offset)
-            self.busyWidget.showBusy(True, "Inlining... please wait!")
+            self.busyWidget.showBusy(True, "Converting Local to Field... please wait!")
 
     def localToFieldFinished(self):
         self.busyWidget.showBusy(False)
@@ -452,15 +441,27 @@ class Refactor(QtGui.QWidget):
             path = self.editorTabWidget.getEditorData("filePath")
             self.objectName = self.editorTabWidget.get_current_word()
             self.findThread.find(path, project, offset)
-            self.busyWidget.showBusy(True, "Searching... please wait!")
+            self.busyWidget.showBusy(True, "Finding usages... please wait!")
 
     def findOccurrencesFinished(self):
         self.busyWidget.showBusy(False)
         if self.findThread.error != None:
             self.editorTabWidget.showNotification(self.findThread.error)
             return
-        if len(self.findThread.foundList) > 0:
-            usageDialog = UsageDialog(self.editorTabWidget, "Usages: " + self.objectName, self.findThread.foundList, self)
+        if len(self.findThread.itemsDict) > 0:
+            foundList = []
+            for parent, lines in self.findThread.itemsDict.items():
+                parentItem = QtGui.QTreeWidgetItem()
+                parentItem.setForeground(0, QtGui.QBrush(
+                    QtGui.QColor("#003366")))
+                parentItem.setText(0, parent)
+                for line in lines:
+                    childItem = QtGui.QTreeWidgetItem()
+                    childItem.setText(0, str(line))
+                    childItem.setFirstColumnSpanned(True)
+                    parentItem.addChild(childItem)
+                    foundList.append(parentItem)
+            usageDialog = UsageDialog(self.editorTabWidget, "Usages: " + self.objectName, foundList, self)
         else:
             self.editorTabWidget.showNotification("No usages found.")
 

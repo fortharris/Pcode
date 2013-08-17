@@ -176,7 +176,7 @@ class EditorWindow(QtGui.QWidget):
         helpMenu.addAction(self.helpAct)
         helpMenu.addAction(self.pythonManualsAct)
         helpMenu.addSeparator()
-        helpMenu.addAction(self.feedbackAct)
+#        helpMenu.addAction(self.feedbackAct)
         helpMenu.addAction(self.checkUpdatesAct)
         self.mainMenu.addSeparator()
         self.mainMenu.addMenu(self.manageFavourites.favouritesMenu)
@@ -305,7 +305,8 @@ class EditorWindow(QtGui.QWidget):
                                               triggered=self.launchPythonHelp)
 
         self.checkUpdatesAct = QtGui.QAction("Check For Updates", self,
-                                             statusTip="Check For Updates")
+                                             statusTip="Check For Updates",
+                                              triggered=self.visitHomepage)
 
         self.feedbackAct = QtGui.QAction("Send Feedback", self,
                                          statusTip="Send Feedback")
@@ -388,6 +389,10 @@ class EditorWindow(QtGui.QWidget):
             QtGui.QAction(QtGui.QIcon("Resources\\images\\inbox--minus"),
                           "Close Project", self, statusTip="Close Project",
                           triggered=self.closeProject)
+                          
+    def visitHomepage(self):
+        QtGui.QDesktopServices().openUrl(QtCore.QUrl(
+            """https://github.com/fortharris/Pcode"""))
 
     def showProjectConfiguration(self):
         self.editorTabWidget.showProjectConfiguration()

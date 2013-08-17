@@ -145,7 +145,7 @@ class SetRunParameters(QtGui.QLabel):
         label = QtGui.QLabel("Installed Python")
         hbox.addWidget(label)
         
-        mainLayout.addWidget(QtGui.QLabel("NB: Python must be installed for virtual env to work."))
+        mainLayout.addWidget(QtGui.QLabel("NB: Python must be installed for virtual environment to work."))
         mainLayout.addStretch(1)
 
         hbox = QtGui.QHBoxLayout()
@@ -156,8 +156,6 @@ class SetRunParameters(QtGui.QLabel):
         self.okButton = QtGui.QPushButton("Close")
         self.okButton.clicked.connect(self.hide)
         hbox.addWidget(self.okButton)
-
-        hbox.addStretch(1)
 
         self.setLayout(mainLayout)
         
@@ -403,6 +401,9 @@ class RunWidget(BaseScintilla):
     def stateChanged(self, newState):
         if newState == 2:
             self.vSplitter.showRunning()
+            self.setReadOnly(False)
+        else:
+            self.setReadOnly(True)
 
     def insertInput(self, text):
         self.append('\n')
@@ -483,7 +484,6 @@ class RunWidget(BaseScintilla):
                                0], self.blocking_cursor_pos[1])
 
     def pythonPath(self):
-        print(self.projectData["DefaultInterpreter"])
         if self.projectData["DefaultInterpreter"] == "None":
             message = QtGui.QMessageBox.critical(
                 self, "Run", "No python interpreter to run your code.")
@@ -766,7 +766,7 @@ class RunWidget(BaseScintilla):
 
     def keyPressEvent(self, event):
         """
-            Reimplemented to create a console-like interface.
+        Reimplemented to create a console-like interface.
         """
         line, index = self.getCursorPosition()
         key = event.key()
