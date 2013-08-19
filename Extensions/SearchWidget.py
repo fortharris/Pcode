@@ -1,4 +1,5 @@
 from PyQt4 import QtCore, QtGui
+import os.path
 
 
 class SearchWidget(QtGui.QLabel):
@@ -40,7 +41,7 @@ class SearchWidget(QtGui.QLabel):
         self.findDownButton.setAutoRaise(True)
         self.findDownButton.setIconSize(QtCore.QSize(20, 20))
         self.findDownButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\findDown"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","findDown")),
                           "Find Next", self, triggered=self.findNext))
         hbox.addWidget(self.findDownButton)
 
@@ -48,7 +49,7 @@ class SearchWidget(QtGui.QLabel):
         self.findUpButton.setAutoRaise(True)
         self.findUpButton.setIconSize(QtCore.QSize(20, 20))
         self.findUpButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\findUp"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","findUp")),
                           "Find Previous", self,
                           triggered=self.findPrevious))
         hbox.addWidget(self.findUpButton)
@@ -79,7 +80,7 @@ class SearchWidget(QtGui.QLabel):
         self.hideFindWidgetButton = QtGui.QToolButton()
         self.hideFindWidgetButton.setAutoRaise(True)
         self.hideFindWidgetButton.setIcon(
-            QtGui.QIcon("Resources\\images\\exit"))
+            QtGui.QIcon(os.path.join("Resources","images","exit")))
         self.hideFindWidgetButton.clicked.connect(self.hideFindWidget)
         hbox.addWidget(self.hideFindWidgetButton)
 

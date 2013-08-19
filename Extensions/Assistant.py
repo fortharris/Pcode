@@ -3,6 +3,7 @@ from PyQt4 import QtCore, QtGui
 from pyflakes.checker import Checker as flakeChecker
 from Xtra import pep8
 from Xtra import autopep8
+import os.path
 
 
 class ErrorCheckerThread(QtCore.QThread):
@@ -44,7 +45,7 @@ class Pep8CheckerThread(QtCore.QThread):
         checkList = []
         try:
             styleGuide = pep8.StyleGuide(reporter=Pep8Report)
-            report = styleGuide.check_files(["temp\\temp8.py"])
+            report = styleGuide.check_files([os.path.join("temp","temp8.py")])
             for i in report.all_errors:
                 fname = i[0]
                 lineno = i[1]
@@ -77,10 +78,10 @@ class Pep8Report (pep8.BaseReport):
 
         err = (self.filename, line_number, offset, code, text)
         self.all_errors.append(err)
-#        
+#
 #class AutoPep8FixerOtions(object):
 #    def __init__(self):
-#        self.verbose = 0 # 
+#        self.verbose = 0 #
 #        self.diff # print the diff for the fixed source
 #        self.in_place # make changes to files in place
 #        self.recursive # run recursively; must be used with --in-place or diff
@@ -165,7 +166,7 @@ class Pep8View(QtGui.QTreeWidget):
             QtGui.QAction(
                 "Fix All Occurrences (Not Ready)", self, statusTip="Fix All Occurrences")
         self.fixAllAct.setDisabled(True)
-        
+
         self.fixModuleAct = \
             QtGui.QAction(
                 "Fix All Issues", self, statusTip="Fix All Issues",
@@ -329,10 +330,10 @@ class Assistant(QtGui.QStackedWidget):
         item = QtGui.QTreeWidgetItem(itemType)
         if itemType == 0:
             item.setIcon(0, QtGui.QIcon(
-                "Resources\\images\\alerts\\_0035_Flashlight"))
+                os.path.join("Resources","images","alerts","_0035_Flashlight")))
         elif itemType == 1:
             item.setIcon(0, QtGui.QIcon(
-                "Resources\\images\\alerts\\construction"))
+                os.path.join("Resources","images","alerts","construction")))
         item.setText(1, str(line))
         item.setText(2, message)
         item.setData(10, 2, offset)
@@ -346,11 +347,11 @@ class Assistant(QtGui.QStackedWidget):
             for i in checkList:
                 item = QtGui.QTreeWidgetItem()
                 if i[3] in self.autopep8SupportDict:
-                    icon = QtGui.QIcon("Resources\\images\\security\\allowed")
+                    icon = QtGui.QIcon(os.path.join("Resources","images","security","allowed"))
                     item.setData(9, 2, True)
                 else:
                     icon = QtGui.QIcon(
-                        "Resources\\images\\security\\requesting")
+                        os.path.join("Resources","images","security","requesting"))
                     item.setData(9, 2, False)
                 item.setIcon(0, icon)
                 item.setText(1, str(i[1]))

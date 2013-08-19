@@ -4,6 +4,7 @@ from Extensions.BaseScintilla import BaseScintilla
 from Extensions import Global
 from Extensions import StyleSheet
 
+import os.path
 
 class TextSnapshot(BaseScintilla):
 
@@ -35,7 +36,7 @@ class TextSnapshot(BaseScintilla):
                                           triggered=self.selectAllText)
 
         self.selectToMatchingBraceAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\text_select"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","text_select")),
                           "Select to Matching Brace", self,
                           statusTip="Select to Matching Brace",
                           triggered=self.selectToMatchingBrace)

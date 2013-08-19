@@ -58,7 +58,7 @@ class LibraryAddDialog(QtGui.QDialog):
         self.showDetailsButton.setToolButtonStyle(2)
         self.showDetailsButton.setText("Comments")
         self.showDetailsButton.setIcon(QtGui.QIcon(
-            "Resources\\images\\extender-down"))
+            os.path.join("Resources","images","extender-down")))
         self.showDetailsButton.clicked.connect(self.showComments)
         hbox.addWidget(self.showDetailsButton)
 
@@ -84,12 +84,12 @@ class LibraryAddDialog(QtGui.QDialog):
             self.moreWidget.hide()
             self.setFixedSize(400, 120)
             self.showDetailsButton.setIcon(QtGui.QIcon(
-                "Resources\\images\\extender-down"))
+                os.path.join("Resources","images","extender-down")))
         else:
             self.moreWidget.show()
             self.setFixedSize(400, 300)
             self.showDetailsButton.setIcon(QtGui.QIcon(
-                "Resources\\images\\extender-up"))
+                os.path.join("Resources","images","extender-up")))
 
     def textChanged(self):
         if self.nameLine.text().strip() == '':

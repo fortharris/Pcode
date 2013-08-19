@@ -102,14 +102,14 @@ class SnippetsManager(QtGui.QDialog):
         self.addButton = QtGui.QToolButton()
         self.addButton.setAutoRaise(True)
         self.addButton.setToolTip("Add")
-        self.addButton.setIcon(QtGui.QIcon("Resources\\images\\add"))
+        self.addButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","add")))
         self.addButton.clicked.connect(self.addSnippet)
         hbox.addWidget(self.addButton)
 
         self.removeButton = QtGui.QToolButton()
         self.removeButton.setAutoRaise(True)
         self.removeButton.setToolTip("Remove")
-        self.removeButton.setIcon(QtGui.QIcon("Resources\\images\\minus"))
+        self.removeButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","minus")))
         self.removeButton.clicked.connect(self.removeSnippet)
         hbox.addWidget(self.removeButton)
 
@@ -117,7 +117,7 @@ class SnippetsManager(QtGui.QDialog):
         self.renameButton.setAutoRaise(True)
         self.renameButton.setToolTip("Rename")
         self.renameButton.setIcon(QtGui.QIcon(
-            "Resources\\images\\ui-text-field"))
+            os.path.join("Resources","images","ui-text-field")))
         self.renameButton.clicked.connect(self.renameSnippet)
         hbox.addWidget(self.renameButton)
 

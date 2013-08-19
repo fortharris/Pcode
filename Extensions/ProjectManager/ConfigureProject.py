@@ -130,13 +130,13 @@ class RopeConfig(QtGui.QWidget):
         mainLayout.addLayout(hbox)
 
         self.addButton = QtGui.QPushButton()
-        self.addButton.setIcon(QtGui.QIcon("Resources\\images\\add"))
+        self.addButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","add")))
 #        self.addButton.clicked.connect(self.appendToList)
         hbox.addWidget(self.addButton)
 
         self.removeButton = QtGui.QPushButton()
         self.removeButton.setIcon(
-            QtGui.QIcon("Resources\\images\\minus"))
+            QtGui.QIcon(os.path.join("Resources","images","minus")))
 #        self.removeButton.clicked.connect(self.removeItem)
         hbox.addWidget(self.removeButton)
 
@@ -197,7 +197,7 @@ class RopeConfig(QtGui.QWidget):
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(dom_document.toString())
         file.close()
-        
+
 class LibrariesConfig(QtGui.QWidget):
     def __init__(self, pathDict, useData, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -213,12 +213,12 @@ class LibrariesConfig(QtGui.QWidget):
                           "OpenGL": ["OpenGL"],
                           "gc": ["gc"]
                           }
-                          
-        
+
+
 
         mainLayout = QtGui.QVBoxLayout()
         self.setLayout(mainLayout)
-        
+
         self.listWidget = QtGui.QListWidget()
         for i, v in self.libraries.items():
             item = QtGui.QListWidgetItem(i)
@@ -251,7 +251,7 @@ class BuildConfig(QtGui.QTabWidget):
 
         versionWidget = QtGui.QWidget()
         self.addTab(versionWidget,
-                     QtGui.QIcon("Resources\\images\\arrow-045"),
+                     QtGui.QIcon(os.path.join("Resources","images","arrow-045")),
                      "Version Information")
 
         versionLayout = QtGui.QFormLayout()
@@ -297,7 +297,7 @@ class BuildConfig(QtGui.QTabWidget):
 
         optionsWidget = QtGui.QWidget()
         self.addTab(optionsWidget, QtGui.QIcon(
-            "Resources\\images\\arrow-045"), "Options")
+            os.path.join("Resources","images","arrow-045")), "Options")
 
         optionsLayout = QtGui.QFormLayout()
         optionsLayout.setMargin(0)
@@ -338,14 +338,14 @@ class BuildConfig(QtGui.QTabWidget):
         optionsLayout.addRow('', self.appendScriptToLibraryBox)
 
         self.baseBox = QtGui.QComboBox()
-        for i in os.listdir("Build\\bases"):
+        for i in os.listdir(os.path.join("Build","bases")):
             self.baseBox.addItem(i)
         self.baseBox.setCurrentIndex(
             self.baseBox.findText(profileData["base"]))
         optionsLayout.addRow("Base", self.baseBox)
 
         self.initScriptBox = QtGui.QComboBox()
-        for i in os.listdir("Build\\initscripts"):
+        for i in os.listdir(os.path.join("Build","initscripts")):
             self.initScriptBox.addItem(i)
         self.initScriptBox.setCurrentIndex(
             self.initScriptBox.findText(profileData["initscript"]))
@@ -366,7 +366,7 @@ class BuildConfig(QtGui.QTabWidget):
 
         advancedWidget = QtGui.QWidget()
         self.addTab(advancedWidget, QtGui.QIcon(
-            "Resources\\images\\arrow-045"), "Advanced")
+            os.path.join("Resources","images","arrow-045")), "Advanced")
 
         advancedLayout = QtGui.QVBoxLayout()
         advancedLayout.setMargin(0)
@@ -423,13 +423,13 @@ class BuildConfig(QtGui.QTabWidget):
         advancedLayout.addLayout(hbox)
 
         self.addButton = QtGui.QPushButton()
-        self.addButton.setIcon(QtGui.QIcon("Resources\\images\\add"))
+        self.addButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","add")))
         self.addButton.clicked.connect(self.appendToList)
         hbox.addWidget(self.addButton)
 
         self.removeButton = QtGui.QPushButton()
         self.removeButton.setIcon(
-            QtGui.QIcon("Resources\\images\\minus"))
+            QtGui.QIcon(os.path.join("Resources","images","minus")))
         self.removeButton.clicked.connect(self.removeItem)
         hbox.addWidget(self.removeButton)
 
@@ -624,16 +624,16 @@ class ConfigureProject(QtGui.QLabel):
     def __init__(self, pathDict, useData, parent=None):
         QtGui.QLabel.__init__(self, parent)
 
-        
+
         self.setBackgroundRole(QtGui.QPalette.Background)
         self.setAutoFillBackground(True)
-        
+
         self.setMinimumSize(500, 350)
         self.pagesList = []
 
         mainLayout = QtGui.QVBoxLayout()
         self.setLayout(mainLayout)
-        
+
         label = QtGui.QLabel("Configure Project")
         label.setStyleSheet("font: 14px; color: grey;")
         mainLayout.addWidget(label)
@@ -643,26 +643,26 @@ class ConfigureProject(QtGui.QLabel):
         if pathDict["type"] == "Desktop Application":
             self.buildConfig = BuildConfig(pathDict, useData)
             self.tabWidget.addTab(self.buildConfig,
-                                  QtGui.QIcon("Resources\\images\\build"), "Build")
+                                  QtGui.QIcon(os.path.join("Resources","images","build")), "Build")
             self.pagesList.append(self.buildConfig)
-        
+
         self.libraries = LibrariesConfig(pathDict, useData)
         self.tabWidget.addTab(self.libraries,
-                            QtGui.QIcon("Resources\\images\\erase"), "Libraries")
+                            QtGui.QIcon(os.path.join("Resources","images","erase")), "Libraries")
 #        self.pagesList.append(self.libraries)
-                            
+
         self.refactorConfig = RopeConfig(pathDict, useData)
         #self.tabWidget.addTab(self.refactorConfig,
-                              #QtGui.QIcon("Resources\\images\\erase"), "Refactor")
+                              #QtGui.QIcon(os.path.join("Resources","images","erase")), "Refactor")
 #        self.pagesList.append(self.libraries)
 
         mainLayout.addWidget(self.tabWidget)
 
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
-        
+
         hbox.addWidget(QtGui.QLabel("The module 're' must be imported for frozen scripts to work."))
-        
+
         hbox.addStretch(1)
 
         self.saveButton = QtGui.QPushButton("Save")

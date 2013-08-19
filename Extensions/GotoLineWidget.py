@@ -1,4 +1,5 @@
 from PyQt4 import QtGui
+import os.path
 
 
 class GotoLineWidget(QtGui.QLabel):
@@ -13,7 +14,7 @@ class GotoLineWidget(QtGui.QLabel):
         self.setMaximumWidth(200)
 
         self.gotoLineAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\mail_check"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","mail_check")),
                           "Goto Line", self, statusTip="Goto Line",
                           triggered=self.gotoLine)
 
@@ -24,7 +25,7 @@ class GotoLineWidget(QtGui.QLabel):
 
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
-        self.hideButton.setIcon(QtGui.QIcon("Resources\\images\\exit"))
+        self.hideButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","exit")))
         self.hideButton.clicked.connect(self.hide)
         mainLayout.addWidget(self.hideButton)
 

@@ -83,7 +83,7 @@ class ConfirmReplaceDialog(QtGui.QDialog):
     def __init__(self, path, text, replaceText, search, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)
-        
+
         self.setWindowTitle(path)
         self.resize(700, 400)
 
@@ -102,7 +102,7 @@ class ConfirmReplaceDialog(QtGui.QDialog):
         b = open(path, 'r').read().splitlines()
         for i in range(len(b)):
             b[i] = search.sub(replaceText, b[i])
-            
+
         diffExists = diff.generateUnifiedDiff(a, b)
 
         if diffExists:
@@ -118,26 +118,26 @@ class ConfirmReplaceDialog(QtGui.QDialog):
         self.replaceButton = QtGui.QPushButton("Replace")
         self.replaceButton.clicked.connect(self.replace)
         hbox.addWidget(self.replaceButton)
-        
+
         self.cancelButton = QtGui.QPushButton("Cancel")
         self.cancelButton.pressed.connect(self.close)
         hbox.addWidget(self.cancelButton)
 
         hbox.addStretch(1)
-        
+
         self.exec_()
 
     def replace(self):
         QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        
+
         file = open(self.path, 'r')
         new = self.search.sub(self.replaceText, file.read())
         file.close()
-        
+
         file = open(self.path, 'w')
         file.write(new)
         file.close()
-        
+
         QtGui.QApplication.restoreOverrideCursor()
         self.close()
 
@@ -197,7 +197,7 @@ class FindInFiles(QtGui.QWidget):
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.setMargin(0)
         self.setLayout(mainLayout)
-        
+
         self.statusWidget = QtGui.QWidget()
         self.statusWidget.setMaximumHeight(25)
         mainLayout.addWidget(self.statusWidget)
@@ -205,23 +205,23 @@ class FindInFiles(QtGui.QWidget):
         hbox = QtGui.QHBoxLayout()
         hbox.setContentsMargins(0, 5, 0, 0)
         self.statusWidget.setLayout(hbox)
-        
+
         label = QtGui.QLabel()
         label.setMaximumWidth(25)
         label.setMaximumHeight(25)
         label.setScaledContents(True)
-        label.setPixmap(QtGui.QPixmap("Resources\\images\\cascade"))
+        label.setPixmap(QtGui.QPixmap(os.path.join("Resources","images","cascade")))
         hbox.addWidget(label)
 
         self.dirLabel = QtGui.QLabel()
         hbox.addWidget(self.dirLabel)
-        
+
         self.statusWidget.hide()
-        
+
         self.filesView = FoundFilesView(self)
         self.filesView.activated.connect(self.viewFile)
         mainLayout.addWidget(self.filesView)
-        
+
         ### create finder controls
 
         self.dashboard = QtGui.QWidget()
@@ -272,13 +272,13 @@ class FindInFiles(QtGui.QWidget):
         self.browseButton = QtGui.QPushButton('...')
         self.browseButton.clicked.connect(self.setPath)
         hbox.addWidget(self.browseButton)
-        
+
         self.stopButton = QtGui.QPushButton("Stop")
-        self.stopButton.setIcon(QtGui.QIcon("Resources\\images\\stop"))
+        self.stopButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","stop")))
         self.stopButton.clicked.connect(self.stopFinder)
         self.stopButton.hide()
         hbox.addWidget(self.stopButton)
-        
+
         self.findButton = QtGui.QPushButton("Find")
         self.findButton.clicked.connect(self.find)
         hbox.addWidget(self.findButton)
@@ -310,11 +310,11 @@ class FindInFiles(QtGui.QWidget):
         hbox.addWidget(self.replaceBox)
 
         hbox.addStretch(1)
-        
+
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
-            QtGui.QIcon("Resources\\images\\exit"))
+            QtGui.QIcon(os.path.join("Resources","images","exit")))
         self.hideButton.clicked.connect(self.dashboard.hide)
         hbox.addWidget(self.hideButton)
 

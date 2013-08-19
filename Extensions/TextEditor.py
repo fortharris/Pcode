@@ -21,7 +21,7 @@ class TextEditor(BaseScintilla):
         self.DATA = DATA
         self.colorScheme = colorScheme
         self.editorTabWidget = editorTabWidget
-        
+
         self.exporter = Exporter(self)
 
         self.setFont(Global.getDefaultFont())
@@ -87,7 +87,7 @@ class TextEditor(BaseScintilla):
         # Braces matching
         if self.useData.SETTINGS["MatchBraces"] == "True":
             self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
-            
+
         if self.DATA["fileType"] in self.useData.supportedFileTypes:
             if self.useData.SETTINGS["ShowCaretLine"] == 'True':
                 self.setCaretLineVisible(True)
@@ -119,13 +119,13 @@ class TextEditor(BaseScintilla):
                                       self.breakpointLine)
 
         self.markerDefine(QtGui.QPixmap(
-            "Resources\\images\\ui-button-navigation"), 8)
+            os.path.join("Resources","images","ui-button-navigation")), 8)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 8)
 
-        self.markerDefine(QtGui.QPixmap("Resources\\images\\err_mark"), 9)
+        self.markerDefine(QtGui.QPixmap(os.path.join("Resources","images","err_mark")), 9)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 9)
 
-        self.markerDefine(QtGui.QPixmap("Resources\\images\\brk_point"), 10)
+        self.markerDefine(QtGui.QPixmap(os.path.join("Resources","images","brk_point")), 10)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 10)
 
         self.showLineNumbers()
@@ -143,16 +143,16 @@ class TextEditor(BaseScintilla):
         self.setIndicatorForegroundColor(
             QtGui.QColor("#FFDB4A"), self.searchIndicator)
         self.setIndicatorDrawUnder(True, self.searchIndicator)
-        
+
         self.setAutoCompletionSource(QsciScintilla.AcsDocument)
-        
+
         self.copyAvailableTimer = QtCore.QTimer()
         self.copyAvailableTimer.setSingleShot(True)
         self.copyAvailableTimer.setInterval(0)
         self.copyAvailableTimer.timeout.connect(self.copyActModifier)
-        
+
         self.copyAvailable.connect(self.copyAvailableTimer.start)
-        
+
         self.textChangedTimer = QtCore.QTimer()
         self.textChangedTimer.setSingleShot(True)
         self.textChangedTimer.setInterval(0)
@@ -196,12 +196,12 @@ class TextEditor(BaseScintilla):
                                           triggered=self.selectAllText)
 
         self.selectToMatchingBraceAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\text_select"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","text_select")),
                           "Select to Matching Brace", self,
                           statusTip="Select to Matching Brace",
                           triggered=self.selectToMatchingBrace)
 
-        self.zoomAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\zoom"),
+        self.zoomAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","zoom")),
                                      "Zoom", self,
                                      statusTip="Zoom", triggered=self.showZoomWidget)
 
@@ -219,7 +219,7 @@ class TextEditor(BaseScintilla):
         self.viewMenu.addAction(self.editorTabWidget.noSplitEditorAct)
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(self.zoomAct)
-        
+
     def export(self):
         options = QtGui.QFileDialog.Options()
         if self.DATA["filePath"] is None:
@@ -352,6 +352,6 @@ class TextEditor(BaseScintilla):
 
     def notify(self, mess):
         self.infoBar.showMessage(mess)
-        
+
     def install_shortcuts(self):
         self.updateShortcuts(self.useData)

@@ -114,7 +114,7 @@ class AutoCompletionThread(QtCore.QThread):
                 or p[-3:] in ('.py', '.so') \
                     or p[-4:] in ('.pyc', '.pyo', '.pyd'):
                 if os.path.isdir(os.path.join(path, p)):
-                    folderList_.append(p + '\\')
+                    folderList_.append(p + os.path.sep)
                 else:
                     folderList_.append(os.path.splitext(p)[0])
 
@@ -154,7 +154,7 @@ class AutoCompletionThread(QtCore.QThread):
                     completionList.append(os.path.splitext(item)[0])
                 else:
                     if '__init__.py' in os.listdir(path):
-                        completionList.append(item + '\\')
+                        completionList.append(item + os.path.sep)
             if '__init__' in completionList:
                 completionList.remove('__init__')
         except:
@@ -212,7 +212,7 @@ class CodeEditor(BaseScintilla):
         self.occurrencesTimer.setSingleShot(True)
         self.occurrencesTimer.setInterval(1000)
         self.occurrencesTimer.timeout.connect(self.findMatches)
-        
+
         self.completionThreadTimer = QtCore.QTimer()
         self.completionThreadTimer.setSingleShot(True)
         self.completionThreadTimer.setInterval(1000)
@@ -368,13 +368,13 @@ class CodeEditor(BaseScintilla):
                                       self.breakpointLine)
 
         self.markerDefine(QtGui.QPixmap(
-            "Resources\\images\\ui-button-navigation"), 8)
+            os.path.join("Resources","images","ui-button-navigation")), 8)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 8)
 
-        self.markerDefine(QtGui.QPixmap("Resources\\images\\err_mark"), 9)
+        self.markerDefine(QtGui.QPixmap(os.path.join("Resources","images","err_mark")), 9)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 9)
 
-        self.markerDefine(QtGui.QPixmap("Resources\\images\\brk_point"), 10)
+        self.markerDefine(QtGui.QPixmap(os.path.join("Resources","images","brk_point")), 10)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 10)
 
         self.showLineNumbers()
@@ -458,11 +458,11 @@ class CodeEditor(BaseScintilla):
                           triggered=self.selectToMatchingBrace)
 
         self.snippetsAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\edit2"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","edit2")),
                           "Insert Snippet...", self,
                           statusTip="Insert Snippet...",
                           triggered=self.showSnippets)
-                          
+
         self.toggleBookmarkAct = \
             QtGui.QAction(
                 "Toggle Bookmark", self,
@@ -480,16 +480,16 @@ class CodeEditor(BaseScintilla):
                           statusTip="Take Snapshot",
                           triggered=self.takeSnapshot)
 
-        self.zoomAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\zoom"),
+        self.zoomAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","zoom")),
                                      "Zoom", self,
                                      statusTip="Zoom", triggered=self.showZoomWidget)
 
         self.indentationGuideAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\guide"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","guide")),
                           "Indentation Guide", self,
                           statusTip="Indentation Guide",
                           triggered=self.showIndentationGuide)
-                                        
+
         self.contextMenu = QtGui.QMenu()
         self.contextMenu.addAction(self.snippetsAct)
         self.contextMenu.addSeparator()
@@ -499,7 +499,7 @@ class CodeEditor(BaseScintilla):
         self.contextMenu.addAction(self.selectToMatchingBraceAct)
         self.contextMenu.addAction(self.toggleBookmarkAct)
         self.contextMenu.addAction(self.toggleBreakpointAct)
-        
+
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.refactor.findDefAct)
         self.contextMenu.addAction(self.refactor.findOccurrencesAct)
@@ -630,11 +630,11 @@ class CodeEditor(BaseScintilla):
             ext = os.path.splitext(t)[1]
 
             self.exporter.export(ext, fileName)
-            
+
     def _toggleBookmark(self):
         nmargin = 0
         nline = self.getCursorPosition()[0]
-        
+
         self.toggleBookmark(nmargin, nline)
 
     def toggleBookmark(self, nmargin, nline, modifiers=None):
@@ -694,31 +694,31 @@ class CodeEditor(BaseScintilla):
         TemplateImageID = 100
 
         self.registerImage(ClassID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
         self.registerImage(ClassProtectedID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
         self.registerImage(ClassPrivateID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
         self.registerImage(MethodID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
         self.registerImage(MethodProtectedID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
         self.registerImage(MethodPrivateID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
         self.registerImage(AttributeID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
         self.registerImage(AttributeProtectedID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
         self.registerImage(AttributePrivateID,
-                           QtGui.QPixmap("Resources\word = self.get_current_word()\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources\word = self.get_current_word()\images","auto-images","_0028_Tag")))
         self.registerImage(EnumID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
 
         self.registerImage(FromDocumentID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
 
         self.registerImage(TemplateImageID,
-                           QtGui.QPixmap("Resources\\images\\auto-images\\_0028_Tag"))
+                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
 
     def clearErrorMarkerAndIndicator(self):
         self.clearAllIndicators(self.syntaxErrorIndicator)

@@ -1,4 +1,5 @@
 from PyQt4 import QtGui, QtCore
+import os.path
 
 
 class MessagesWidget(QtGui.QTreeWidget):
@@ -17,13 +18,13 @@ class MessagesWidget(QtGui.QTreeWidget):
         parentItem = QtGui.QTreeWidgetItem(self)
         if messType == 0:
             parentItem.setIcon(0, QtGui.QIcon(
-                "Resources\\images\\security\\attention"))
+                os.path.join("Resources","images","security","attention")))
         elif messType == 1:
             parentItem.setIcon(0, QtGui.QIcon(
-                "Resources\\images\\security\\warning"))
+                os.path.join("Resources","images","security","warning")))
         elif messType == 2:
             parentItem.setIcon(0, QtGui.QIcon(
-                "Resources\\images\\security\\danger"))
+                os.path.join("Resources","images","security","danger")))
         parentItem.setText(0, title)
         parentItem.setText(1, QtCore.QDateTime().currentDateTime().toString())
         for i in messageList:

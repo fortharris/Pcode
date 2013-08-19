@@ -144,7 +144,7 @@ class SetRunParameters(QtGui.QLabel):
 
         label = QtGui.QLabel("Installed Python")
         hbox.addWidget(label)
-        
+
         mainLayout.addWidget(QtGui.QLabel("NB: Python must be installed for virtual environment to work."))
         mainLayout.addStretch(1)
 
@@ -158,7 +158,7 @@ class SetRunParameters(QtGui.QLabel):
         hbox.addWidget(self.okButton)
 
         self.setLayout(mainLayout)
-        
+
         self.setDefaultInterpreter()
 
     def updateInstalledInterpreters(self):
@@ -227,11 +227,11 @@ class SetRunParameters(QtGui.QLabel):
         venv = self.venvBox.currentText()
         self.projectData["DefaultVenv"] = venv
         self.venvVersionLabel.setText(self.getVesionFromVenv())
-        
+
         if self.useVirtualEnvBox.isChecked():
             self.projectData["DefaultInterpreter"] = \
                 os.path.join(self.projectData["venvdir"],
-                             venv, "Scripts\\python.exe")
+                             venv, "Scripts","python.exe")
         else:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) > 0:
                 self.projectData["DefaultInterpreter"] = \
@@ -624,7 +624,7 @@ class RunWidget(BaseScintilla):
         env = QtCore.QProcessEnvironment().systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
 
-        p_args = ['-m', 'cProfile', '-o', os.path.abspath("temp\\profile")]
+        p_args = ['-m', 'cProfile', '-o', os.path.abspath(os.path.join("temp","profile"))]
         if os.name == 'nt':
             # On Windows, one has to replace backslashes by slashes to avoid
             # confusion with escape characters (otherwise, for example, '\t'

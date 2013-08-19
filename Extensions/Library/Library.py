@@ -130,7 +130,7 @@ class CodeViewer(BaseScintilla):
         self.setReadOnly(True)
         self.setMarginLineNumbers(0, True)
         self.setCaretLineVisible(True)
-        
+
         self.DATA = {"fileType": "python"}
 
         self.setStyleSheet("""
@@ -188,7 +188,7 @@ class Library(QtGui.QMainWindow):
         self.snippetsListWidget.itemPressed.connect(self.viewLibraryItem)
         self.snippetsListWidget.itemPressed.connect(self.selectionChanged)
         self.snippetsListWidget.itemActivated.connect(self.viewLibraryItem)
-        self.snippetsListWidget.setStyleSheet("""        
+        self.snippetsListWidget.setStyleSheet("""
                     QTreeView {
                          show-decoration-selected: 1; /* make the selection span the entire width of the view */
                          border: none;
@@ -201,9 +201,9 @@ class Library(QtGui.QMainWindow):
         snippetsWidget.setLayout(snippetsVbox)
 
         self.tabWidget.addTab(snippetsWidget,
-                              QtGui.QIcon("Resources\\images\\envelope"), "Modules")
+                              QtGui.QIcon(os.path.join("Resources","images","envelope")), "Modules")
         self.tabWidget.addTab(self.advancedSearch,
-                              QtGui.QIcon("Resources\\images\\search"), "Search")
+                              QtGui.QIcon(os.path.join("Resources","images","search")), "Search")
 
         vbox.addWidget(self.tabWidget)
         widget.setLayout(vbox)
@@ -217,7 +217,7 @@ class Library(QtGui.QMainWindow):
         self.showDetailsButton.setToolButtonStyle(2)
         self.showDetailsButton.setText("More")
         self.showDetailsButton.setIcon(QtGui.QIcon(
-            "Resources\\images\\extender-up"))
+            os.path.join("Resources","images","extender-up")))
         self.showDetailsButton.clicked.connect(self.showComments)
         hbox.addWidget(self.showDetailsButton)
 
@@ -312,32 +312,32 @@ class Library(QtGui.QMainWindow):
 
     def createActions(self):
         self.editCommentAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\edit"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","edit")),
                           "Edit Comment", self,
                           statusTip="Edit Comment", triggered=self.editComment)
 
         self.removeAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\remove"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","remove")),
                           "Remove", self,
                           statusTip="Remove", triggered=self.removeItem)
 
         self.renameAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\ui-text-field"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","ui-text-field")),
                           "Rename", self,
                           statusTip="Rename", triggered=self.rename)
 
         self.printAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\_0013_Printer"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","_0013_Printer")),
                           "Print", self,
                           statusTip="Print", triggered=self.printFile)
 
         self.exportAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\archive"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","archive")),
                           "Export Library", self,
                           statusTip="Export Library", triggered=self.export)
 
         self.toggleSidebarViewAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\out"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","out")),
                           "Toggle Sidebar View", self,
                           statusTip="Toggle Sidebar View", triggered=self.viewSideBar)
 
@@ -428,22 +428,22 @@ class Library(QtGui.QMainWindow):
             self.detailsWidget.hide()
             self.showDetailsButton.setText("More")
             self.showDetailsButton.setIcon(QtGui.QIcon(
-                "Resources\\images\\extender-up"))
+                os.path.join("Resources","images","extender-up")))
         else:
             self.detailsWidget.show()
             self.showDetailsButton.setText("Less")
             self.showDetailsButton.setIcon(QtGui.QIcon(
-                "Resources\\images\\extender-down"))
+                os.path.join("Resources","images","extender-down")))
 
     def viewSideBar(self):
         if self.subSplitter.isHidden() == False:
             self.subSplitter.hide()
             self.toggleSidebarViewAct.setIcon(
-                QtGui.QIcon("Resources\\images\\in"))
+                QtGui.QIcon(os.path.join("Resources","images","in")))
         else:
             self.subSplitter.show()
             self.toggleSidebarViewAct.setIcon(
-                QtGui.QIcon("Resources\\images\\out"))
+                QtGui.QIcon(os.path.join("Resources","images","out")))
 
     def loadLibrary(self):
         self.snippetsListWidget.clear()

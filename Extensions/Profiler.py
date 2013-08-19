@@ -35,12 +35,12 @@ class Profiler(QtGui.QTreeWidget):
 
     def viewProfile(self, file=None):
         if file is None:
-            file = "temp\\profile"
+            file = os.path.join("temp","profile")
         self.p = pstats.Stats(file)
         self.p.calc_callees()
         self.stats = self.p.stats
         #self.saveButton.setDisabled(False)
-        
+
         self.clear()
 
         for func, (cc, nc, tt, ct, callers) in self.stats.items():
@@ -56,7 +56,7 @@ class Profiler(QtGui.QTreeWidget):
 
             child = QtGui.QTreeWidgetItem()
             for caller, (cc1, nc1, tt1, ct1) in callers.items():
-                child.setIcon(0, QtGui.QIcon("Resources\\images\\lightning"))
+                child.setIcon(0, QtGui.QIcon(os.path.join("Resources","images","lightning")))
                 child.setText(0, str(cc))
                 child.setText(1, str(nc1))
                 child.setText(2, str(tt1))

@@ -98,9 +98,9 @@ class ColorScheme(QtGui.QDialog):
             self.lexerStyler.reloadStyles.emit)
 
         optionsTab.addTab(self.lexerStyler,
-                          QtGui.QIcon("Resources\\images\\edit-color"), "Lexer")
+                          QtGui.QIcon(os.path.join("Resources","images","edit-color")), "Lexer")
         optionsTab.addTab(self.editorStyler,
-                          QtGui.QIcon("Resources\\images\\ui-scroll-pane-blog"), "Editor")
+                          QtGui.QIcon(os.path.join("Resources","images","ui-scroll-pane-blog")), "Editor")
 
         mainLayout.addWidget(optionsTab)
 
@@ -123,14 +123,14 @@ class ColorScheme(QtGui.QDialog):
         self.newButton = QtGui.QToolButton()
         self.newButton.setAutoRaise(True)
         self.newButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\add"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","add")),
                           "New", self, triggered=self.newScheme))
         hbox.addWidget(self.newButton)
 
         self.renameButton = QtGui.QToolButton()
         self.renameButton.setAutoRaise(True)
         self.renameButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\ui-text-field"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","ui-text-field")),
                           "Rename", self, triggered=self.rename))
         self.renameButton.setDisabled(True)
         hbox.addWidget(self.renameButton)
@@ -138,7 +138,7 @@ class ColorScheme(QtGui.QDialog):
         self.removeButton = QtGui.QToolButton()
         self.removeButton.setAutoRaise(True)
         self.removeButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\minus"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","minus")),
                           "Remove", self, triggered=self.remove))
         self.removeButton.setDisabled(True)
         hbox.addWidget(self.removeButton)
@@ -204,13 +204,13 @@ class ColorScheme(QtGui.QDialog):
     def loadSchemeNames(self):
         self.schemeNameBox.clear()
         self.schemeNameBox.addItem(
-            QtGui.QIcon("Resources\\images\\mail_pinned"),
+            QtGui.QIcon(os.path.join("Resources","images","mail_pinned")),
             "Default")
         groupName = self.schemeTypeBox.currentText()
         path = os.path.join(self.useData.appPathDict["stylesdir"], groupName)
         for i in os.listdir(path):
             self.schemeNameBox.addItem(QtGui.QIcon(
-                "Resources\\images\\foaf"), os.path.splitext(i)[0])
+                os.path.join("Resources","images","foaf")), os.path.splitext(i)[0])
         self.lexerStyler.updatePropertyListWidget(groupName)
 
     def updateScheme(self):

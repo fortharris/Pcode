@@ -20,7 +20,7 @@ class Favourites(QtGui.QLabel):
         self.favouritesList = favouritesList
 
         self.manageFavAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\settings"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","settings")),
                           "Manage Favourites", self, statusTip="Manage Favourites",
                           triggered=self.showMe.emit)
 
@@ -51,7 +51,7 @@ class Favourites(QtGui.QLabel):
 
         self.favouritesMenu = QtGui.QMenu("Favourites")
         self.favouritesMenu.setIcon(QtGui.QIcon(
-            "Resources\\images\\bookmarked_url"))
+            os.path.join("Resources","images","bookmarked_url")))
         self.loadFavourites()
 
     def removeFavourite(self):
@@ -78,7 +78,7 @@ class Favourites(QtGui.QLabel):
                 self.favouriteActivated)
             for i in self.favouritesList:
                 action = QtGui.QAction(QtGui.QIcon(
-                    "Resources\\images\\star"), i, self)
+                    os.path.join("Resources","images","star")), i, self)
                 self.favouritesActionGroup.addAction(action)
                 self.favouritesMenu.addAction(action)
 

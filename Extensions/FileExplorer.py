@@ -28,24 +28,24 @@ class ManageShortcuts(QtGui.QDialog):
 
         self.removeShortcutButton = QtGui.QPushButton()
         self.removeShortcutButton.setIcon(
-            QtGui.QIcon("Resources\\images\\minus"))
+            QtGui.QIcon(os.path.join("Resources","images","minus")))
         self.removeShortcutButton.clicked.connect(self.removeShorcut)
         hbox.addWidget(self.removeShortcutButton)
 
         self.addShortcutButton = QtGui.QPushButton()
-        self.addShortcutButton.setIcon(QtGui.QIcon("Resources\\images\\add"))
+        self.addShortcutButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","add")))
         self.addShortcutButton.clicked.connect(self.addShortcut)
         hbox.addWidget(self.addShortcutButton)
 
         hbox.addStretch(1)
 
         self.moveDownButton = QtGui.QPushButton()
-        self.moveDownButton.setIcon(QtGui.QIcon("Resources\\images\\down"))
+        self.moveDownButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","down")))
         self.moveDownButton.clicked.connect(self.moveDown)
         hbox.addWidget(self.moveDownButton)
 
         self.moveUpButton = QtGui.QPushButton()
-        self.moveUpButton.setIcon(QtGui.QIcon("Resources\\images\\up"))
+        self.moveUpButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","up")))
         self.moveUpButton.clicked.connect(self.moveUp)
         hbox.addWidget(self.moveUpButton)
 
@@ -171,7 +171,7 @@ class FileExplorer(QtGui.QTreeView):
         self.contextMenu.exec_(event.globalPos())
 
     def createActions(self):
-        self.homeAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\home"),
+        self.homeAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","home")),
                                      "Home", self,
                                      statusTip="Home", triggered=self.refreshFileSytemModel)
 
@@ -191,12 +191,12 @@ class FileExplorer(QtGui.QTreeView):
                           triggered=self.locate)
 
         self.createShortcutAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\brainstorming"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","brainstorming")),
                           "Create Shortcut", self, statusTip="Create Shortcut",
                           triggered=self.createShortcut)
 
         self.manageShortcutsAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\settings"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","settings")),
                           "Manage Shortcuts", self, statusTip="Manage Shortcuts",
                           triggered=self.manageShortcuts.exec_)
 

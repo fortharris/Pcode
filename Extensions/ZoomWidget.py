@@ -1,4 +1,5 @@
 from PyQt4 import QtCore, QtGui
+import os.path
 
 
 class ZoomWidget(QtGui.QLabel):
@@ -36,7 +37,7 @@ class ZoomWidget(QtGui.QLabel):
         self.zoomBox.setSuffix("%")
         self.zoomBox.valueChanged.connect(self.changePosition)
         mainLayout.addWidget(self.zoomBox)
-        
+
         self.decreaseButton = QtGui.QToolButton()
         self.decreaseButton.setMaximumWidth(36)
         self.decreaseButton.setText('-')
@@ -48,7 +49,7 @@ class ZoomWidget(QtGui.QLabel):
         self.hideButton.setMaximumWidth(36)
         self.hideButton.setMaximumHeight(36)
         self.hideButton.setAutoRaise(True)
-        self.hideButton.setIcon(QtGui.QIcon("Resources\\images\\exit"))
+        self.hideButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","exit")))
         self.hideButton.clicked.connect(self.hide)
         mainLayout.addWidget(self.hideButton)
 
