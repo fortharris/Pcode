@@ -9,7 +9,7 @@ class CreateWorkSpaceThread(QtCore.QThread):
     def run(self):
         self.errors = None
         try:
-            zip = zipfile.ZipFile("Resources\\PcodeProjects.zip", 'r')
+            zip = zipfile.ZipFile(os.path.join("Resources","PcodeProjects.zip"), 'r')
             zip.extractall(self.path)
         except Exception as err:
             self.errors = str(err)
@@ -41,13 +41,13 @@ class GetPathLine(QtGui.QWidget):
 
         if sys.platform == 'win32':
             path = os.path.join(homePath,
-                                "My Documents\\PcodeProjects")
+                                "My Documents","PcodeProjects")
         elif sys.platform == 'darwin':
             path = os.path.join(homePath,
-                                "My Documents\\PcodeProjects")
+                                "Documents","PcodeProjects")
         else:
             path = os.path.join(homePath,
-                                "My Documents\\PcodeProjects")
+                                "My Documents","PcodeProjects")
         path = os.path.normpath(path)
         self.locationLine.setText(path)
 
@@ -73,7 +73,7 @@ class WorkSpace(QtGui.QDialog):
         QtGui.QDialog.__init__(self, parent)
 
         self.setWindowTitle("Workspace")
-        self.setWindowIcon(QtGui.QIcon("Resources\\images\\Icon"))
+        self.setWindowIcon(QtGui.QIcon(os.path.join("Resources","images","Icon")))
         self.setFixedSize(500, 130)
 
         self.createWorkSpaceThread = CreateWorkSpaceThread()

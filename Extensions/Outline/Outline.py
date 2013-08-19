@@ -1,5 +1,6 @@
 from PyQt4 import QtCore, QtGui
 from Extensions.Outline.Python import pyclbr
+import os.path
 
 
 class PythonOutlineThread(QtCore.QThread):
@@ -42,7 +43,7 @@ class Outline(QtGui.QTreeWidget):
 
         self.editorTabWidget.currentChanged.connect(self.navigatorTimer.start)
         self.editorTabWidget.currentEditorTextChanged.connect(self.navigatorTimer.start)
-        
+
         self.pythonOutlineThread.updateNavigator.connect(self.updateOutline)
 
         self.setAutoScroll(True)
@@ -64,7 +65,7 @@ class Outline(QtGui.QTreeWidget):
                 item.setText(0, x[0])
                 item.setData(0, 3, x[2])
                 item.setIcon(0,
-                             QtGui.QIcon("Resources\\images\\function"))
+                             QtGui.QIcon(os.path.join("Resources","images","function")))
                 self.addTopLevelItem(item)
                 item.setExpanded(True)
             elif "Class" in str(object):
@@ -84,7 +85,7 @@ class Outline(QtGui.QTreeWidget):
                         attribute = QtGui.QTreeWidgetItem()
                         attribute.setText(0, i[0])
                         attribute.setIcon(0,
-                                          QtGui.QIcon("Resources\\images\\led"))
+                                          QtGui.QIcon(os.path.join("Resources","images","led")))
                         attribute.setData(0, 3, i[2])
                         self.addTopLevelItem(attribute)
                         attribute.setExpanded(True)
@@ -94,7 +95,7 @@ class Outline(QtGui.QTreeWidget):
                 else:
                     sub_parent.setText(0, x[0])
                     sub_parent.setIcon(0,
-                                       QtGui.QIcon("Resources\\images\\class"))
+                                       QtGui.QIcon(os.path.join("Resources","images","class")))
                 sub_parent.setForeground(0,
                                          QtGui.QBrush(QtGui.QColor("#FF0000")))
                 sub_parent.setData(0, 3, x[2])
@@ -120,7 +121,7 @@ class Outline(QtGui.QTreeWidget):
                         attribute = QtGui.QTreeWidgetItem()
                         attribute.setText(0, i[0])
                         attribute.setIcon(0,
-                                          QtGui.QIcon("Resources\\images\\led"))
+                                          QtGui.QIcon(os.path.join("Resources","images","led")))
                         attribute.setData(0, 3, i[2])
                         attrib.addChild(attribute)
                     sub_parent.addChild(attrib)
@@ -140,7 +141,7 @@ class Outline(QtGui.QTreeWidget):
                     item.setText(0, i[0])
                     item.setData(0, 3, i[2])
                     item.setIcon(0,
-                                 QtGui.QIcon("Resources\\images\\function"))
+                                 QtGui.QIcon(os.path.join("Resources","images","function")))
                     sub_parent.addChild(item)
         if len(outlineList) == 0:
             item = QtGui.QTreeWidgetItem()

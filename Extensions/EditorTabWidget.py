@@ -69,7 +69,7 @@ class EditorTabBar(QtGui.QTabBar):
 
     def createActions(self):
         self.closeTabAct = QtGui.QAction(
-            QtGui.QIcon("Resources\\images\\cross_"),
+            QtGui.QIcon(os.path.join("Resources","images","cross_")),
             "Close", self, statusTip="Close Tab", triggered=self.closeTab)
 
         self.copyPathAct = QtGui.QAction("Copy File Path", self,
@@ -91,7 +91,7 @@ class EditorTabBar(QtGui.QTabBar):
                 triggered=self.reload)
 
         self.favouritesAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\plus"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","plus")),
                           "Add to Favourites", self,
                           statusTip="Add to Favourites",
                           triggered=self.editorTabWidget.addToFavourites)
@@ -229,7 +229,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.tabSelectButton = QtGui.QToolButton()
         self.tabSelectButton.setAutoRaise(True)
         self.tabSelectButton.setPopupMode(2)
-        self.tabSelectButton.setIcon(QtGui.QIcon("Resources\\images\\tile"))
+        self.tabSelectButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","tile")))
         self.tabSelectButton.setMenu(self.openedTabsMenu)
 
         self.setTabBar(self.tabBar)
@@ -241,7 +241,7 @@ class EditorTabWidget(QtGui.QTabWidget):
 
         self.install_shortcuts()
         self.backupTimer.start()
-        
+
         self.newFileMenu = QtGui.QMenu("New File")
         self.newFileMenu.addAction(self.newPythonFileAct)
         self.newFileMenu.addAction(self.newXmlFileAct)
@@ -258,25 +258,25 @@ class EditorTabWidget(QtGui.QTabWidget):
         widget.hide()
 
     def createActions(self):
-        self.undoAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\undo"),
+        self.undoAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","undo")),
                                      "Undo", self,
                                      statusTip="Undo last edit action",
                                      triggered=self.undoAction)
 
-        self.redoAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\redo"),
+        self.redoAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","redo")),
                                      "Redo", self,
                                      statusTip="Redo last edit action",
                                      triggered=self.redoAction)
 
-        self.cutAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\cut"),
+        self.cutAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","cut")),
                                     "Cut", self,
                                     statusTip="Cut selected text", triggered=self.cutItem)
 
-        self.copyAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\copy"),
+        self.copyAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","copy")),
                                      "Copy", self,
                                      statusTip="Copy selected text", triggered=self.copyItem)
 
-        self.pasteAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\paste"),
+        self.pasteAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","paste")),
                                       "Paste", self,
                                       statusTip="Paste text from clipboard",
                                       triggered=self.pasteFromClipboard)
@@ -285,71 +285,71 @@ class EditorTabWidget(QtGui.QTabWidget):
 
         self.indentAct = \
             QtGui.QAction(
-                QtGui.QIcon("Resources\\images\\increase_indent"),
+                QtGui.QIcon(os.path.join("Resources","images","increase_indent")),
                 "Indent", self,
                 statusTip="Indent Region",
                 triggered=self.increaseIndent)
 
         self.dedentAct = \
             QtGui.QAction(
-                QtGui.QIcon("Resources\\images\\decrease_indent"),
+                QtGui.QIcon(os.path.join("Resources","images","decrease_indent")),
                 "Unindent", self,
                 statusTip="Unindent Region",
                 triggered=self.decreaseIndent)
 
         self.writeLockAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\block"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","block")),
                           "Write Lock", self,
                           statusTip="Write Lock",
                           triggered=self.writeLock)
 
         self.findNextBookmarkAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\Arrow2-down"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","Arrow2-down")),
                           "Next Bookmark", self, statusTip="Next Bookmark",
                           triggered=self.findNextBookmark)
 
         self.findPrevBookmarkAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\Arrow2-up"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","Arrow2-up")),
                           "Previous Bookmark", self, statusTip="Previous Bookmark",
                           triggered=self.findPreviousBookmark)
 
         self.removeBookmarksAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\block__"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","block__")),
                           "Remove Bookmarks", self, statusTip="Remove Bookmarks",
                           triggered=self.removeBookmarks)
         #---------------------------------------------------------------------
-        self.newPythonFileAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\new"),
+        self.newPythonFileAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","new")),
                                         "New Python File", self,
                                         statusTip="Create a new python file",
                                         triggered=self._newPythonFile)
-                                        
-        self.newXmlFileAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\new"),
+
+        self.newXmlFileAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","new")),
                                         "Xml", self,
                                         statusTip="Create a new Xml file",
                                         triggered=self._newXmlFile)
-                                        
-        self.newHtmlFileAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\new"),
+
+        self.newHtmlFileAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","new")),
                                         "Html", self,
                                         statusTip="Create a new Html file",
                                         triggered=self._newHtmlFile)
-                                        
-        self.newCssFileAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\new"),
+
+        self.newCssFileAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","new")),
                                         "Css", self,
                                         statusTip="Create a new Css file",
                                         triggered=self._newCssFile)
 
         self.openFileAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\open_file"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","open_file")),
                           "Open File...", self,
                           statusTip="Open python file",
                           triggered=self.openFile)
 
-        self.saveAct = QtGui.QAction(QtGui.QIcon("Resources\\images\\save_"),
+        self.saveAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","save_")),
                                      "Save", self,
                                      statusTip="Save", triggered=self._save)
 
         self.saveAllAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\disks-black"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","disks-black")),
                           "Save All", self,
                           statusTip="Save All",
                           triggered=self.saveAll)
@@ -366,25 +366,25 @@ class EditorTabWidget(QtGui.QTabWidget):
                                        triggered=self.export)
 
         self.printAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\_0013_Printer"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","_0013_Printer")),
                           "Print", self,
                           statusTip="Print", triggered=self.printCode)
         #----------------------------------------------------------------------
 
         self.vSplitEditorAct = \
             QtGui.QAction(
-                QtGui.QIcon("Resources\\images\\border-horizontal"),
+                QtGui.QIcon(os.path.join("Resources","images","border-horizontal")),
                 "Split Vertical", self,
                 statusTip="Split Vertical", triggered=self.splitVertical)
 
         self.hSplitEditorAct = \
             QtGui.QAction(
-                QtGui.QIcon("Resources\\images\\border-vertical"),
+                QtGui.QIcon(os.path.join("Resources","images","border-vertical")),
                 "Split Horizontal", self,
                 statusTip="Split Horizontal", triggered=self.splitHorizontal)
 
         self.noSplitEditorAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\border"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","border")),
                           "Remove Split", self,
                           statusTip="Remove Split", triggered=self.removeSplit)
 
@@ -780,16 +780,16 @@ class EditorTabWidget(QtGui.QTabWidget):
         if self.focusedEditor().isReadOnly() == False:
             self.focusedEditor().setReadOnly(True)
             self.setTabIcon(self.currentIndex(),
-                            QtGui.QIcon("Resources\\images\\locked_script"))
+                            QtGui.QIcon(os.path.join("Resources","images","locked_script")))
         else:
             self.focusedEditor().setReadOnly(False)
             if self.getEditorData("fileType") == "python":
                 if self.focusedEditor().isModified() == True:
                     self.setTabIcon(self.currentIndex(),
-                                    QtGui.QIcon("Resources\\images\\script_grey"))
+                                    QtGui.QIcon(os.path.join("Resources","images","script_grey")))
                 else:
                     self.setTabIcon(self.currentIndex(),
-                                    QtGui.QIcon("Resources\\images\\script"))
+                                    QtGui.QIcon(os.path.join("Resources","images","script")))
             else:
                 self.setTabIcon(self.currentIndex(),
                                 Global.iconFromPath(self.getEditorData("filePath")))
@@ -868,7 +868,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             else:
                 self.setTabText(tabIndex, os.path.basename(value))
                 self.updateWindowTitle.emit(value)
-                
+
     def updateTabName(self, index=None):
         if index is None:
             index = self.currentIndex()
@@ -933,7 +933,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             index = self.currentIndex()
         try:
             if type == 'pep8':
-                file = open("temp\\temp8.py", "w")
+                file = open(os.path.join("temp","temp8.py"), "w")
             editor = self.getEditor(index)
             file.write(editor.text())
             file.close()
@@ -1033,13 +1033,13 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def _newPythonFile(self):
         self.newEditor()
-        
+
     def _newXmlFile(self):
         self.newEditor(fileName="Untitled.xml")
-        
+
     def _newHtmlFile(self):
         self.newEditor(fileName="Untitled.html")
-        
+
     def _newCssFile(self):
         self.newEditor(fileName="Untitled.css")
 
@@ -1093,7 +1093,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         subStack.addWidget(DiffWindow(editor, snapShot))
 
         if extension in self.useData.supportedFileTypes:
-            icon = QtGui.QIcon("Resources\\images\\script")
+            icon = QtGui.QIcon(os.path.join("Resources","images","script"))
         else:
             icon = Global.iconFromPath(filePath)
         if index is None:
