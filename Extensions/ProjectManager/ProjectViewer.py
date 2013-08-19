@@ -82,16 +82,16 @@ class IconProvider(QtGui.QFileIconProvider):
                 dir = QtCore.QDir(fname)
                 dirList = dir.entryList(QtCore.QDir.Files)
                 if "__init__.py" in dirList:
-                    icon = QtGui.QIcon("Resources\\images\\box")
+                    icon = QtGui.QIcon(os.path.join("Resources","images","box"))
                 else:
-                    icon = QtGui.QIcon("Resources\\images\\folder-horizontal")
+                    icon = QtGui.QIcon(os.path.join("Resources","images","folder-horizontal"))
                 return icon
             else:
                 if os.path.basename(fname) == "__init__.py":
-                    return QtGui.QIcon("Resources\\images\\haiku-wide")
+                    return QtGui.QIcon(os.path.join("Resources","images","haiku-wide"))
                 ext = os.path.splitext(fname)[1][1:]
                 if ext == "py" or ext == "pyw":
-                    return QtGui.QIcon("Resources\\images\\gear")
+                    return QtGui.QIcon(os.path.join("Resources","images","gear"))
                 else:
                     return super(IconProvider, self).icon(qfileinfo)
 
@@ -177,7 +177,7 @@ class ProjectTree(QtGui.QTreeView):
             statusTip="Directory", triggered=self.newDirectory)
 
         self.addPackageAct = QtGui.QAction(
-            QtGui.QIcon("Resources\\images\\box"),
+            QtGui.QIcon(os.path.join("Resources","images","box")),
             "Package", self,
             statusTip="Package", triggered=self.newPackage)
 
@@ -197,12 +197,12 @@ class ProjectTree(QtGui.QTreeView):
                                                  statusTip="Convert to Package", triggered=self.dirToPackage)
 
         self.addExistingItems = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\login"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","login")),
                           "Add Existing items", self,
                           statusTip="Add Existing items", triggered=self.addExistingItems)
 
         self.mainScriptsAct = QtGui.QAction(
-            QtGui.QIcon("Resources\\images\\location"),
+            QtGui.QIcon(os.path.join("Resources","images","location")),
             "Set as Main Script", self, statusTip="Set as Main Script",
             triggered=self.setMainScript)
 
@@ -248,7 +248,7 @@ class ProjectTree(QtGui.QTreeView):
         url = QtCore.QUrl.fromLocalFile(path)
         data = QtCore.QMimeData()
         data.setUrls([url])
-        
+
         cb = self.app.clipboard()
         cb.setMimeData(data)
 
@@ -387,7 +387,7 @@ class ProjectTree(QtGui.QTreeView):
     def setMainScript(self):
         fileName = self.getCurrentFilePath()
         self.pathDict["mainscript"] = fileName
-        
+
         dom_document = QtXml.QDomDocument()
         file = open(self.pathDict["projectmainfile"], "r")
         x = dom_document.setContent(file.read())
@@ -399,21 +399,21 @@ class ProjectTree(QtGui.QTreeView):
         settingsDict = {}
         while node.isNull() == False:
             tag = node.toElement()
-            
+
             settingsDict["Type"] = tag.attribute("Type")
             settingsDict["Name"] = tag.attribute("Name")
             settingsDict["MainScript"] = tag.attribute("MainScript")
             settingsDict["Version"] = tag.attribute("Version")
-                
+
             node = node.nextSibling()
 
         settingsDict["MainScript"] = fileName
-            
+
         # save data
         dom_document = QtXml.QDomDocument("Project")
         properties = dom_document.createElement("properties")
         dom_document.appendChild(properties)
-        
+
         tag = dom_document.createElement("pcode_project")
         for key, value in settingsDict.items():
             tag.setAttribute(key, value)
@@ -462,7 +462,7 @@ class ProjectViewer(QtGui.QWidget):
         mainLayout.setContentsMargins(0, 0, 0, 5)
         mainLayout.setSpacing(0)
         self.setLayout(mainLayout)
-        
+
         self.viewStack = QtGui.QStackedWidget()
         mainLayout.addWidget(self.viewStack)
 
@@ -483,7 +483,7 @@ class ProjectViewer(QtGui.QWidget):
 
         self.clearButton = QtGui.QToolButton()
         self.clearButton.setAutoRaise(True)
-        self.clearButton.setIcon(QtGui.QIcon("Resources\\images\\disabled"))
+        self.clearButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","disabled")))
         self.clearButton.clicked.connect(self.clearSearch)
         hbox.addWidget(self.clearButton)
 

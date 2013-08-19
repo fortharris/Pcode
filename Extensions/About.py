@@ -5,6 +5,7 @@ from Xtra import pep8
 import pyflakes
 import rope
 import cx_Freeze
+import os.path
 
 
 class About(QtGui.QDialog):
@@ -42,7 +43,7 @@ class About(QtGui.QDialog):
         licenseButton.setCheckable(True)
         licenseButton.clicked.connect(self.showLicense)
         hbox.addWidget(licenseButton)
-        
+
         self.view = QtGui.QStackedWidget()
         mainLayout.addWidget(self.view)
 
@@ -66,14 +67,14 @@ class About(QtGui.QDialog):
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["CxFreeze", cx_Freeze.version, "Anthony Tuininga"]))
         self.view.addWidget(table)
-        
+
         self.licenseEdit = QtGui.QTextEdit()
-        file = open("Resources\\LICENSE.GPL3", "r")
+        file = open(os.path.join("Resources","LICENSE.GPL3"), "r")
         self.licenseEdit.setText(file.read())
         file.close()
-        
+
         self.view.addWidget(self.licenseEdit)
-        
+
         self.hide()
 
     def showLicense(self, checked):

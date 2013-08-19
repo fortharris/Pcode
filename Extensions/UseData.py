@@ -431,9 +431,9 @@ class UseData(QtCore.QObject):
             "projectsdir": os.path.join(self.workspaceDir, "Projects"),
             "venvdir": os.path.join(self.workspaceDir, "Venv"),
             "settingsdir": os.path.join(self.workspaceDir, "Settings"),
-            "stylesdir": os.path.join(self.workspaceDir, "Settings\\ColorSchemes"),
-            "usedata": os.path.join(self.workspaceDir, "Settings\\usedata.xml"),
-            "keymap": os.path.join(self.workspaceDir, "Settings\\keymap.xml")
+            "stylesdir": os.path.join(self.workspaceDir, "Settings","ColorSchemes"),
+            "usedata": os.path.join(self.workspaceDir, "Settings","usedata.xml"),
+            "keymap": os.path.join(self.workspaceDir, "Settings","keymap.xml")
         }
 
     def loadUseData(self):

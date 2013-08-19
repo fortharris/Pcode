@@ -1,4 +1,5 @@
 import re
+import os.path
 from PyQt4 import QtCore, QtGui
 
 
@@ -67,7 +68,7 @@ class Tasks(QtGui.QTreeWidget):
         for i in results:
             item = QtGui.QTreeWidgetItem()
             item.setIcon(0, QtGui.QIcon(
-                "Resources\\images\\Clear Green Button"))
+                os.path.join("Resources","images","Clear Green Button")))
             item.setText(1, i[0])
             item.setText(2, str(i[1]))
             item.setText(3, i[2])

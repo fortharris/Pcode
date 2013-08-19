@@ -4,7 +4,7 @@ from PyQt4.Qsci import QsciScintilla
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions import StyleSheet
-
+import os.path
 
 class CodeSnapshot(BaseScintilla):
 
@@ -39,7 +39,7 @@ class CodeSnapshot(BaseScintilla):
                                           triggered=self.selectAllText)
 
         self.selectToMatchingBraceAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\compose"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","compose")),
                           "Select to Matching Brace", self,
                           statusTip="Select to Matching Brace",
                           triggered=self.selectToMatchingBrace)

@@ -256,7 +256,7 @@ class Refactor(QtGui.QWidget):
             self.moduleToPackageFinished)
 
         self.createActions()
-        
+
         self.refactorMenu = QtGui.QMenu("Refactor")
         self.refactorMenu.addAction(self.renameAttributeAct)
         self.refactorMenu.addAction(self.inlineAct)
@@ -267,7 +267,7 @@ class Refactor(QtGui.QWidget):
 
     def createActions(self):
         self.findDefAct = \
-            QtGui.QAction(QtGui.QIcon("Resources\\images\\map_marker"),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","map_marker")),
                           "Go-to Definition", self, statusTip="Go-to Definition",
                           triggered=self.findDefinition)
 

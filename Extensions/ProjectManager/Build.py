@@ -21,7 +21,7 @@ class BuildThread(QtCore.QThread):
         metadata.author = self.profile["author"]
         metadata.name = self.profile["name"]
 
-        base = os.path.abspath(os.path.join('Build\\bases',
+        base = os.path.abspath(os.path.join('Build','bases',
                                             self.profile["base"]))
 
         icon = self.profile["icon"]
@@ -29,7 +29,7 @@ class BuildThread(QtCore.QThread):
             icon = None
 
         initScript = os.path.abspath(os.path.join(
-            'Build\\initscripts', self.profile["initscript"]))
+            'Build','initscripts', self.profile["initscript"]))
 
         if self.profile["compress"] == 'Compress':
             compress = True
@@ -84,14 +84,14 @@ class BuildThread(QtCore.QThread):
                 path = [self.pathDict['sourcedir'],
                         os.path.join(venv_path, 'Scripts'),
                         os.path.join(venv_path, 'Lib'),
-                        os.path.join(venv_path, 'Lib\\site-packages'),
+                        os.path.join(venv_path, 'Lib','site-packages'),
                         os.path.join(venv_path, 'Include')]
             else:
                 py_path = os.path.dirname(self.projectSettings["DefaultInterpreter"])
                 path = [self.pathDict['sourcedir'],
                         py_path,
                         os.path.join(py_path, 'Lib'),
-                        os.path.join(py_path, 'Lib\\site-packages'),
+                        os.path.join(py_path, 'Lib','site-packages'),
                         os.path.join(py_path, 'include')]
             freezer = Cx_Freeze(executables,
                                 self.pathDict,
@@ -245,14 +245,14 @@ class Build(QtGui.QWidget):
         self.busyWidget.showBusy(False)
         if self.buildThread.error:
             self.messagesWidget.addMessage(
-                1, "Build Completed in {0} [Errors]".format(str(elapsed)), 
+                1, "Build Completed in {0} [Errors]".format(str(elapsed)),
                     [self.buildThread.error])
         else:
             if len(self.buildThread.missing) > 0:
                 self.messagesWidget.addMessage(
-                    1, "Build Completed in {0} [missing modules]".format(elapsed), 
+                    1, "Build Completed in {0} [missing modules]".format(elapsed),
                         self.buildThread.missing)
             else:
                 self.messagesWidget.addMessage(
-                    0, "Build Completed in {0} ".format(elapsed), 
+                    0, "Build Completed in {0} ".format(elapsed),
                         ["Build Completed Successfully!"])

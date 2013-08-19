@@ -2,6 +2,7 @@ from PyQt4 import QtCore, QtGui
 
 from Extensions import StyleSheet
 
+import os.path
 
 class ViewSwitcher(QtGui.QLabel):
 
@@ -29,20 +30,20 @@ class ViewSwitcher(QtGui.QLabel):
 
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
-        self.hideButton.setIcon(QtGui.QIcon("Resources\\images\\exit"))
+        self.hideButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","exit")))
         self.hideButton.clicked.connect(self.hide)
         self.mainLayout.addWidget(self.hideButton)
 
         self.setStyleSheet(StyleSheet.subTaskSwitcherStyle)
 
         self.addButton(QtGui.QIcon(
-            "Resources\\images\\notes_selected"), "Editor")
+            os.path.join("Resources","images","notes_selected")), "Editor")
         self.addButton(QtGui.QIcon(
-            "Resources\\images\\notes"), "Snapshot")
+            os.path.join("Resources","images","notes")), "Snapshot")
         self.addButton(QtGui.QIcon(
-            "Resources\\images\\links_selected"), "Unified Diff")
+            os.path.join("Resources","images","links_selected")), "Unified Diff")
         self.addButton(QtGui.QIcon(
-            "Resources\\images\\links"), "Context Diff")
+            os.path.join("Resources","images","links")), "Context Diff")
 
     def setCurrentView(self):
         index = self.editorTabWidget.currentWidget().currentIndex()
