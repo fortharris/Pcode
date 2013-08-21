@@ -78,7 +78,7 @@ class Start(QtGui.QLabel):
         label.setMinimumWidth(35)
         label.setMaximumHeight(35)
         label.setMinimumHeight(35)
-        label.setPixmap(QtGui.QPixmap(os.path.join("Resources","images","compass")))
+        label.setPixmap(QtGui.QPixmap(os.path.join("Resources", "images", "compass")))
         hbox.addWidget(label)
 
         frame = QtGui.QFrame()
@@ -118,19 +118,19 @@ class Start(QtGui.QLabel):
         centralLayout.addLayout(hbox)
 
         openButton = QtGui.QPushButton("Open Project")
-        openButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","wooden-box")))
+        openButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "wooden-box")))
         openButton.clicked.connect(self.openProject)
         hbox.addWidget(openButton)
 
         newButton = QtGui.QPushButton("New Project")
-        newButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","inbox--plus")))
+        newButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "inbox--plus")))
         newButton.clicked.connect(self.createProject)
         hbox.addWidget(newButton)
 
         hbox.addStretch(1)
 
         homePageButton = QtGui.QPushButton("Visit Homepage")
-        homePageButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","Web")))
+        homePageButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "Web")))
         homePageButton.clicked.connect(self.visitHomepage)
         hbox.addWidget(homePageButton)
 

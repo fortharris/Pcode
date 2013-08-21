@@ -1,5 +1,6 @@
 from PyQt4 import QtCore, QtGui
 
+
 class BuildStatusWidget(QtGui.QWidget):
 
     cancel = QtCore.pyqtSignal()

@@ -1,7 +1,9 @@
 import os
 import sys
-import inspect
 from zipimport import zipimporter
+import tokenize
+from io import StringIO
+
 from PyQt4 import QtCore, QtGui
 from PyQt4.Qsci import QsciScintilla
 
@@ -10,6 +12,23 @@ from Extensions.Exporter import Exporter
 from Extensions.ZoomWidget import ZoomWidget
 from Extensions.Notification import Notification
 from Extensions import StyleSheet
+
+
+class TokenizeThread(QtCore.QThread):
+
+    def run(self):
+        self.tokenList = []
+        for tkn_type, tkn_rep, tkn_begin, tkn_end, tkn_expr in \
+                tokenize.generate_tokens(StringIO(self.source).readline):
+            if tkn_type == tokenize.OP:
+                line = tkn_begin[0]
+                if line not in self.tokenList:
+                    self.tokenList.append(line)
+
+    def tokenize(self, source):
+        self.source = source
+
+        self.start()
 
 
 class DocThread(QtCore.QThread):
@@ -28,6 +47,22 @@ class DocThread(QtCore.QThread):
 
 
 class AutoCompletionThread(QtCore.QThread):
+    # Most portions of this code taken from spyder ide
+
+    #*****************************************************************************
+    #
+    #  The functions in this class were taken from the file ipy_completers,
+    #  which belongs to the IPython project. They were added here because a)
+    #  IPython is not a runtime dependency of Spyder, and b) we want to perfom
+    #  module completion not only on an ipython shell, but also on a regular
+    #  python interpreter and a source code editor.
+    #  Besides, we needed to modify moduleCompletion to make it work as a regular
+    #  python function, and not as a mix of python and readline completion, which
+    #  is how we think it works on IPython.
+    #
+    #  Distributed under the terms of the BSD License.
+    #
+    #*************************************************************************
 
     """
     Returns a list containing the completion possibilities for an import line.
@@ -40,7 +75,7 @@ class AutoCompletionThread(QtCore.QThread):
 
     def run(self):
         result = self.moduleCompletion()
-        if result == None:
+        if result is None:
             return
         self.completions.emit(self.completionCallPos, result)
 
@@ -138,11 +173,6 @@ class AutoCompletionThread(QtCore.QThread):
         return sorted(modules)
 
     def tryImport(self, module, only_modules=False):
-        def isImportable(mod, attr):
-            if only_modules:
-                return inspect.ismodule(getattr(mod, attr))
-            else:
-                return not(attr[:2] == '__' and attr[-2:] == '__')
         try:
             modulesDir = os.path.join(
                 self.refactor.root, module.replace('.', '//'))
@@ -208,6 +238,15 @@ class CodeEditor(BaseScintilla):
         self.docThreadTimer.setInterval(500)
         self.docThreadTimer.timeout.connect(self.getDoc)
 
+        self.tokenizeThread = TokenizeThread()
+        self.tokenizeThread.finished.connect(
+            self.displayTokenLines)
+
+        self.tokenizeTimer = QtCore.QTimer()
+        self.tokenizeTimer.setSingleShot(True)
+        self.tokenizeTimer.setInterval(1000)
+        self.tokenizeTimer.timeout.connect(self.getOperationTokens)
+
         self.occurrencesTimer = QtCore.QTimer()
         self.occurrencesTimer.setSingleShot(True)
         self.occurrencesTimer.setInterval(1000)
@@ -253,7 +292,6 @@ class CodeEditor(BaseScintilla):
         self.setStyleSheet(StyleSheet.editorStyle)
 
         self.setAutoCompletion()
-        self.registerImages()
 
         " Initialises indicators "
         self.syntaxErrorIndicator = self.indicatorDefine(
@@ -289,6 +327,7 @@ class CodeEditor(BaseScintilla):
         self.textChangedTimer.timeout.connect(self.redoActModifier)
 
         self.textChanged.connect(self.textChangedTimer.start)
+        self.textChanged.connect(self.tokenizeTimer.start)
         self.textChanged.connect(self.completionThreadTimer.start)
 
         self.linesChanged.connect(self.updateLineCount)
@@ -326,7 +365,7 @@ class CodeEditor(BaseScintilla):
             self.setFolding(QsciScintilla.BoxedTreeFoldStyle, 2)
 
         # Braces matching
-        # XXX: Todo Causes flicker when selecting text. I suspect it has
+        # TODO: Causes flicker when selecting text. I suspect it has
         # do with my graphics card since it wasnt always this way
         if self.useData.SETTINGS["MatchBraces"] == "True":
             self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
@@ -355,27 +394,28 @@ class CodeEditor(BaseScintilla):
 
         # define markers
         # the background markers will not show until the editor has focus
-        self.currentline = self.markerDefine(QsciScintilla.Background)
-        self.breakpointLine = self.markerDefine(QsciScintilla.Background)
-
+        self.breakpointMarker = self.markerDefine(QsciScintilla.Background)
         self.setMarkerForegroundColor(QtGui.QColor("#000000"),
-                                      self.currentline)
-        self.setMarkerBackgroundColor(QtGui.QColor("#0099CC"),
-                                      self.currentline)
-        self.setMarkerForegroundColor(QtGui.QColor("#000000"),
-                                      self.breakpointLine)
+                                      self.breakpointMarker)
         self.setMarkerBackgroundColor(QtGui.QColor("#ffe1e1"),
-                                      self.breakpointLine)
+                                      self.breakpointMarker)
 
         self.markerDefine(QtGui.QPixmap(
-            os.path.join("Resources","images","ui-button-navigation")), 8)
+            os.path.join("Resources", "images", "ui-button-navigation")), 8)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 8)
 
-        self.markerDefine(QtGui.QPixmap(os.path.join("Resources","images","err_mark")), 9)
+        self.markerDefine(
+            QtGui.QPixmap(os.path.join("Resources", "images", "err_mark")), 9)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 9)
 
-        self.markerDefine(QtGui.QPixmap(os.path.join("Resources","images","brk_point")), 10)
+        self.markerDefine(
+            QtGui.QPixmap(os.path.join("Resources", "images", "brk_point")), 10)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 10)
+
+        self.markerDefine(QsciScintilla.VerticalLine, 11)
+        self.setMarkerBackgroundColor(QtGui.QColor("#EEEE11"), 11)
+        self.setMarkerForegroundColor(QtGui.QColor("#EEEE11"), 11)
+        self.setMarginWidth(3, self.fontMetrics.width("0"))
 
         self.showLineNumbers()
 
@@ -386,10 +426,17 @@ class CodeEditor(BaseScintilla):
 
         self.install_shortcuts()
 
+    def getOperationTokens(self):
+        self.tokenizeThread.tokenize(self.text())
+
+    def displayTokenLines(self):
+        return
+        print(self.tokenizeThread.tokenList)
+
     def showDoc(self, doc, pos):
         if self.isListActive():
             return
-        if doc != None:
+        if doc is not None:
             QtGui.QToolTip.showText(self.lastHoverPos, doc, self)
 
     def getDoc(self):
@@ -398,35 +445,32 @@ class CodeEditor(BaseScintilla):
     def findMatches(self):
         self.clearAllIndicators(self.matchIndicator)
         if self.useData.SETTINGS['MarkSearchOccurrence'] == 'True':
-            word = self.get_current_word()
-            if not word:
-                self.clearSearchIndicators()
-                return
-        selectionOnly = False
-        isRegexp = False
-        caseSensitive = True
-        wholeWord = True
-
-        lineFrom = 0
-        indexFrom = 0
-        lineTo = -1
-        indexTo = -1
-
-        if selectionOnly:
-            lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
-
-        found = self.findFirstTarget(word, isRegexp, caseSensitive,
-                                     wholeWord, lineFrom, indexFrom, lineTo, indexTo)
-        foundCount = 0
-        while found:
-            tgtPos, tgtLen = self.getFoundTarget()
-            line, pos = self.lineIndexFromPosition(tgtPos)
-            self.setIndicatorRange(self.matchIndicator, tgtPos, tgtLen)
-            foundCount += 1
-            found = self.findNextTarget()
-        if foundCount == 1:
-            self.clearIndicatorRange(
-                line, 0, line, self.lineLength(line), self.matchIndicator)
+            wholeWord = True
+            if self.hasSelectedText():
+                lineFrom_, indexFrom_, lineTo_, indexTo_ = self.getSelection()
+                if lineFrom_ != lineTo_:
+                    return
+                word = self.selectedText().strip()
+                if word == '':
+                    return
+                wholeWord = False
+            else:
+                word = self.get_current_word()
+                if not word:
+                    self.clearSearchIndicators()
+                    return
+            found = self.findFirstTarget(word, False, True,
+                                         wholeWord, 0, 0, -1, -1)
+            foundCount = 0
+            while found:
+                tgtPos, tgtLen = self.getFoundTarget()
+                line, pos = self.lineIndexFromPosition(tgtPos)
+                self.setIndicatorRange(self.matchIndicator, tgtPos, tgtLen)
+                foundCount += 1
+                found = self.findNextTarget()
+            if foundCount == 1:
+                self.clearIndicatorRange(
+                    line, 0, line, self.lineLength(line), self.matchIndicator)
 
     def mouseMoveEvent(self, event):
         if self.useData.SETTINGS["DocOnHover"] == "True":
@@ -458,9 +502,10 @@ class CodeEditor(BaseScintilla):
                           triggered=self.selectToMatchingBrace)
 
         self.snippetsAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","edit2")),
-                          "Insert Snippet...", self,
-                          statusTip="Insert Snippet...",
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "edit2")),
+                "Insert Snippet...", self,
+                statusTip="Insert Snippet...",
                           triggered=self.showSnippets)
 
         self.toggleBookmarkAct = \
@@ -480,14 +525,16 @@ class CodeEditor(BaseScintilla):
                           statusTip="Take Snapshot",
                           triggered=self.takeSnapshot)
 
-        self.zoomAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","zoom")),
-                                     "Zoom", self,
-                                     statusTip="Zoom", triggered=self.showZoomWidget)
+        self.zoomAct = QtGui.QAction(
+            QtGui.QIcon(os.path.join("Resources", "images", "zoom")),
+            "Zoom", self,
+            statusTip="Zoom", triggered=self.showZoomWidget)
 
         self.indentationGuideAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","guide")),
-                          "Indentation Guide", self,
-                          statusTip="Indentation Guide",
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "guide")),
+                "Indentation Guide", self,
+                statusTip="Indentation Guide",
                           triggered=self.showIndentationGuide)
 
         self.contextMenu = QtGui.QMenu()
@@ -584,7 +631,7 @@ class CodeEditor(BaseScintilla):
             type = x[2].strip(")")
             self.insert(cmpl)
         elif id == 3:
-            cmpl = text.rstrip('\\')
+            cmpl = text.rstrip(os.path.sep)
             self.insert(cmpl)
         self.moveCursorWordRight()
 
@@ -601,9 +648,9 @@ class CodeEditor(BaseScintilla):
     def toggleLineBreakpoint(self):
         line, index = self.getCursorPosition()
         if self.markersAtLine(line) != 0:
-            self.markerDelete(line, self.breakpointLine)
+            self.markerDelete(line, self.breakpointMarker)
         else:
-            self.markerAdd(line, self.breakpointLine)
+            self.markerAdd(line, self.breakpointMarker)
         self.ensureLineVisible(line - 1)
 
     def updateLexer(self, lexer):
@@ -674,52 +721,6 @@ class CodeEditor(BaseScintilla):
         else:
             self.notify.showMessage("No snippets available.")
 
-    def registerImages(self):
-        """
-        Private method to register images for autocompletion lists.
-        """
-
-        # Autocompletion icon definitions
-        ClassID = 1
-        ClassProtectedID = 2
-        ClassPrivateID = 3
-        MethodID = 4
-        MethodProtectedID = 5
-        MethodPrivateID = 6
-        AttributeID = 7
-        AttributeProtectedID = 8
-        AttributePrivateID = 9
-        EnumID = 10
-        FromDocumentID = 99
-        TemplateImageID = 100
-
-        self.registerImage(ClassID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-        self.registerImage(ClassProtectedID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-        self.registerImage(ClassPrivateID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-        self.registerImage(MethodID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-        self.registerImage(MethodProtectedID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-        self.registerImage(MethodPrivateID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-        self.registerImage(AttributeID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-        self.registerImage(AttributeProtectedID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-        self.registerImage(AttributePrivateID,
-                           QtGui.QPixmap(os.path.join("Resources\word = self.get_current_word()\images","auto-images","_0028_Tag")))
-        self.registerImage(EnumID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-
-        self.registerImage(FromDocumentID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-
-        self.registerImage(TemplateImageID,
-                           QtGui.QPixmap(os.path.join("Resources","images","auto-images","_0028_Tag")))
-
     def clearErrorMarkerAndIndicator(self):
         self.clearAllIndicators(self.syntaxErrorIndicator)
         self.clearAnnotations()
@@ -739,7 +740,7 @@ class CodeEditor(BaseScintilla):
         return offset
 
     def showLine(self, lineNum, highlight=True):
-        if highlight == True:
+        if highlight is True:
             self.setSelection(
                 lineNum, 0, lineNum, self.lineLength(lineNum) - 1)
         self.ensureLineVisible(lineNum)
@@ -798,7 +799,7 @@ class CodeEditor(BaseScintilla):
             pass
 
     def comment(self):
-        if self.hasSelectedText() == True:
+        if self.hasSelectedText() is True:
             lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
             if lineFrom == lineTo:
                 self.addCommentPrefix(lineFrom)
@@ -813,7 +814,7 @@ class CodeEditor(BaseScintilla):
             self.addCommentPrefix(line)
 
     def unComment(self):
-        if self.hasSelectedText() == True:
+        if self.hasSelectedText() is True:
             lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
             if lineFrom == lineTo:
                 self.removeCommentPrefix(lineFrom)

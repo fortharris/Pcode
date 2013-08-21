@@ -1,3 +1,5 @@
+import os
+
 from PyQt4 import QtGui, QtCore
 
 from Xtra import autopep8
@@ -5,7 +7,6 @@ from Xtra import pep8
 import pyflakes
 import rope
 import cx_Freeze
-import os.path
 
 
 class About(QtGui.QDialog):
@@ -69,7 +70,7 @@ class About(QtGui.QDialog):
         self.view.addWidget(table)
 
         self.licenseEdit = QtGui.QTextEdit()
-        file = open(os.path.join("Resources","LICENSE.GPL3"), "r")
+        file = open(os.path.join("Resources", "LICENSE.GPL3"), "r")
         self.licenseEdit.setText(file.read())
         file.close()
 

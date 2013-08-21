@@ -145,7 +145,8 @@ class SetRunParameters(QtGui.QLabel):
         label = QtGui.QLabel("Installed Python")
         hbox.addWidget(label)
 
-        mainLayout.addWidget(QtGui.QLabel("NB: Python must be installed for virtual environment to work."))
+        mainLayout.addWidget(
+            QtGui.QLabel("NB: Python must be installed for virtual environment to work."))
         mainLayout.addStretch(1)
 
         hbox = QtGui.QHBoxLayout()
@@ -231,16 +232,17 @@ class SetRunParameters(QtGui.QLabel):
         if self.useVirtualEnvBox.isChecked():
             self.projectData["DefaultInterpreter"] = \
                 os.path.join(self.projectData["venvdir"],
-                             venv, "Scripts","python.exe")
+                             venv, os.path.join("Scripts", "python.exe"))
         else:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) > 0:
                 self.projectData["DefaultInterpreter"] = \
-                                    self.useData.SETTINGS["InstalledInterpreters"][
-                                        self.installedPythonVersionBox.currentText()]
+                    self.useData.SETTINGS["InstalledInterpreters"][
+                        self.installedPythonVersionBox.currentText()]
             else:
                 self.projectData["DefaultInterpreter"] = 'None'
         self.projectData["UseVirtualEnv"] = str(
             self.useVirtualEnvBox.isChecked())
+
 
 class OutputLexer(QsciLexerCustom):
 
@@ -356,6 +358,7 @@ class RunWidget(BaseScintilla):
         self.tracebackRe = re.compile(r'(\s)*File "(.*?)", line \d.+')
 
         self.setMarginWidth(1, 0)
+        self.toggleInsertOrOvertype()
 
         self.lexer = OutputLexer(self)
         self.setLexer(self.lexer)
@@ -379,9 +382,6 @@ class RunWidget(BaseScintilla):
 
         self.copyAct = QtGui.QAction("Copy", self,
                                      statusTip="Copy", triggered=self.copyText)
-
-        self.menu = QtGui.QMenu(self)
-        self.menu.addAction(self.copyAct)
 
         self.setReadOnly(True)
         self.blocking_cursor_pos = (0, 0)
@@ -498,14 +498,14 @@ class RunWidget(BaseScintilla):
 
     def runModule(self, runScript, fileName, run_internal, run_with_args, args):
         pythonPath = self.pythonPath()
-        if pythonPath == None:
+        if pythonPath is None:
             return
         env = QtCore.QProcessEnvironment().systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
 
-        if run_internal == True:
+        if run_internal is True:
             self.currentProcess = fileName
-            if run_with_args == True:
+            if run_with_args is True:
                 self.printout(">>> Running: {0} <arguments={1}>\n".format(
                     self.currentProcess, args), 4)
                 self.runProcess.start(pythonPath, [
@@ -516,7 +516,7 @@ class RunWidget(BaseScintilla):
                 self.runProcess.start(pythonPath, [runScript], self.openMode)
             self.runProcess.waitForStarted()
         else:
-            if run_with_args == True:
+            if run_with_args is True:
                 self.runProcess.startDetached(
                     pythonPath, ["-i", runScript, args])
             else:
@@ -527,19 +527,19 @@ class RunWidget(BaseScintilla):
 
     def runTrace(self, runScript, fileName, run_internal, run_with_args, args, option):
         pythonPath = self.pythonPath()
-        if pythonPath == None:
+        if pythonPath is None:
             return
 
         env = QtCore.QProcessEnvironment().systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
 
-        if run_internal == True:
+        if run_internal is True:
             self.currentProcess = fileName
             self.printout(">>> Trace Execution: {0}\n".format(
                 self.currentProcess), 4)
             if option == 0:
                 # calling relationships
-                if run_with_args == True:
+                if run_with_args is True:
                     self.runProcess.start(pythonPath, ['-m', "trace",
                                                        '--trackcalls', runScript, args], self.openMode)
                 else:
@@ -547,7 +547,7 @@ class RunWidget(BaseScintilla):
                                                        '--trackcalls', runScript], self.openMode)
             elif option == 1:
                 # functions called
-                if run_with_args == True:
+                if run_with_args is True:
                     self.runProcess.start(pythonPath, ['-m', "trace",
                                                        '--listfuncs', runScript, args], self.openMode)
                 else:
@@ -556,7 +556,7 @@ class RunWidget(BaseScintilla):
             elif option == 2:
                 # creates a file with same code but showing how many times
                 # each line of code runs
-                if run_with_args == True:
+                if run_with_args is True:
                     self.runProcess.start(pythonPath, ['-m', "trace",
                                                        '--count', runScript, args], self.openMode)
                 else:
@@ -565,7 +565,7 @@ class RunWidget(BaseScintilla):
             elif option == 3:
                 # show in real time what lines of code are currently being
                 # executed
-                if run_with_args == True:
+                if run_with_args is True:
                     self.runProcess.start(
                         pythonPath, ['-m', "trace", '--timing',
                                      '--trace', runScript, args], self.openMode)
@@ -576,7 +576,7 @@ class RunWidget(BaseScintilla):
         else:
             if option == 0:
                 # calling relationships
-                if run_with_args == True:
+                if run_with_args is True:
                     self.runProcess.startDetached(
                         pythonPath, ['-i', '-m', "trace",
                                                  '--trackcalls', runScript, args], self.openMode)
@@ -586,7 +586,7 @@ class RunWidget(BaseScintilla):
                                                  '--trackcalls', runScript])
             elif option == 1:
                 # functions called
-                if run_with_args == True:
+                if run_with_args is True:
                     self.runProcess.startDetached(
                         pythonPath, ['-i', '-m', "trace",
                                                  '--listfuncs', runScript, args])
@@ -597,7 +597,7 @@ class RunWidget(BaseScintilla):
             elif option == 2:
                 # creates a file with same code but showing how many times each
                 # line of code runs
-                if run_with_args == True:
+                if run_with_args is True:
                     self.runProcess.startDetached(
                         pythonPath, ['-i', '-m', "trace",
                                                  '--count', runScript, args])
@@ -608,7 +608,7 @@ class RunWidget(BaseScintilla):
             elif option == 3:
                 # show in real time what lines of code are currently being
                 # executed
-                if run_with_args == True:
+                if run_with_args is True:
                     self.runProcess.startDetached(
                         pythonPath, ['-i', '-m', "trace",
                                                  '--timing', '--trace', runScript, args])
@@ -619,12 +619,13 @@ class RunWidget(BaseScintilla):
 
     def runProfiler(self, runScript, fileName, run_internal, run_with_args, args):
         pythonPath = self.pythonPath()
-        if pythonPath == None:
+        if pythonPath is None:
             return
         env = QtCore.QProcessEnvironment().systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
 
-        p_args = ['-m', 'cProfile', '-o', os.path.abspath(os.path.join("temp","profile"))]
+        p_args = ['-m', 'cProfile', '-o',
+                  os.path.abspath(os.path.join("temp", "profile"))]
         if os.name == 'nt':
             # On Windows, one has to replace backslashes by slashes to avoid
             # confusion with escape characters (otherwise, for example, '\t'
@@ -634,9 +635,9 @@ class RunWidget(BaseScintilla):
             p_args.append(runScript)
 
         self.profileMode = True
-        if run_internal == True:
+        if run_internal is True:
             self.currentProcess = fileName
-            if run_with_args == True:
+            if run_with_args is True:
                 self.printout(">>> Profiling: {0} <arguments={1}>\n".format(
                     self.currentProcess, args), 4)
             else:
@@ -679,7 +680,7 @@ class RunWidget(BaseScintilla):
         if project:
             filePath = self.editorTabWidget.pathDict["mainscript"]
             fileName = self.editorTabWidget.pathDict["name"]
-            if os.path.exists(filePath) != True:
+            if os.path.exists(filePath) is not True:
                 message = QtGui.QMessageBox.warning(self, "Run Project",
                                                     "Main script is missing: " + fileName)
                 return
@@ -688,7 +689,7 @@ class RunWidget(BaseScintilla):
                 message = QtGui.QMessageBox.warning(self, "Run",
                                                     "Source code must be present!")
                 return
-            if rerun == False:
+            if rerun is False:
                 self.filePath = self.editorTabWidget.getEditorData("filePath")
                 filePath = self.filePath
                 self.fileName = self.editorTabWidget.getTabName()
@@ -730,7 +731,7 @@ class RunWidget(BaseScintilla):
             self.runProfiler(filePath, fileName, run_internal, run_with_args,
                              args)
         elif runType == "Trace":
-            option = self.projectData["TraceType"]
+            option = int(self.projectData["TraceType"])
             self.runTrace(filePath, fileName, run_internal, run_with_args,
                           args, option)
 
@@ -738,7 +739,7 @@ class RunWidget(BaseScintilla):
         self.runProcess.kill()
 
     def contextMenuEvent(self, event):
-        self.menu.exec_(event.globalPos())
+        event.ignore()
 
     def mouseDoubleClickEvent(self, event):
         x = event.x()

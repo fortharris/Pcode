@@ -1,8 +1,8 @@
-from PyQt4 import QtCore, QtGui
+import os
+from PyQt4 import QtGui
 
 from Extensions import StyleSheet
 
-import os.path
 
 class ViewSwitcher(QtGui.QLabel):
 
@@ -30,31 +30,38 @@ class ViewSwitcher(QtGui.QLabel):
 
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
-        self.hideButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","exit")))
+        self.hideButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "exit")))
         self.hideButton.clicked.connect(self.hide)
         self.mainLayout.addWidget(self.hideButton)
 
         self.setStyleSheet(StyleSheet.subTaskSwitcherStyle)
 
         self.addButton(QtGui.QIcon(
-            os.path.join("Resources","images","notes_selected")), "Editor")
+            os.path.join("Resources", "images", "notes_selected")), "Editor")
         self.addButton(QtGui.QIcon(
-            os.path.join("Resources","images","notes")), "Snapshot")
+            os.path.join("Resources", "images", "notes")), "Snapshot")
         self.addButton(QtGui.QIcon(
-            os.path.join("Resources","images","links_selected")), "Unified Diff")
+            os.path.join("Resources", "images", "links_selected")), "Unified Diff")
         self.addButton(QtGui.QIcon(
-            os.path.join("Resources","images","links")), "Context Diff")
+            os.path.join("Resources", "images", "links")), "Context Diff")
 
     def setCurrentView(self):
         index = self.editorTabWidget.currentWidget().currentIndex()
-        self.setIndex(None, index)
-        
-    def viewChanged(self, button):
-        index = self.buttonGroup.id(button)
-        self.setIndex(button, index)
-        if index == 2:
-            self.editorTabWidget.getUnifiedDiff().generateUnifiedDiff()
-        if index == 3:
+        self.setIndex(None, index)
+
+    def viewChanged(self, button):
+
+        index = self.buttonGroup.id(button)
+
+        self.setIndex(button, index)
+
+        if index == 2:
+
+            self.editorTabWidget.getUnifiedDiff().generateUnifiedDiff()
+
+        if index == 3:
+
             self.editorTabWidget.getContextDiff().generateContextDiff()
 
     def addButton(self, icon, toolTip):

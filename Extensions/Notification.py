@@ -1,7 +1,8 @@
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtGui
 
 
 class Notification(QtGui.QLabel):
+
     def __init__(self, parent=None):
         QtGui.QLabel.__init__(self, parent)
 

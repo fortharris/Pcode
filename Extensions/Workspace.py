@@ -9,7 +9,8 @@ class CreateWorkSpaceThread(QtCore.QThread):
     def run(self):
         self.errors = None
         try:
-            zip = zipfile.ZipFile(os.path.join("Resources","PcodeProjects.zip"), 'r')
+            zip = zipfile.ZipFile(
+                os.path.join("Resources", "PcodeProjects.zip"), 'r')
             zip.extractall(self.path)
         except Exception as err:
             self.errors = str(err)
@@ -24,32 +25,32 @@ class GetPathLine(QtGui.QWidget):
 
     textChanged = QtCore.pyqtSignal(str)
 
-    def __init__(self, defaultText=None, parent=None):
+    def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
         mainLayout = QtGui.QHBoxLayout()
         mainLayout.setMargin(0)
         self.setLayout(mainLayout)
 
-        self.locationLine = QtGui.QLineEdit()
-        self.locationLine.textChanged.connect(self.textChanged.emit)
-        if defaultText != None:
-            self.locationLine.setText(defaultText)
-        mainLayout.addWidget(self.locationLine)
+        self.destinationLine = QtGui.QLineEdit()
+        self.destinationLine.textChanged.connect(self.textChanged.emit)
+        mainLayout.addWidget(self.destinationLine)
 
         homePath = QtCore.QDir().homePath()
 
+        # XXX: Todo: Workspace must unpack to the platform specific home
+        # directory by default
         if sys.platform == 'win32':
             path = os.path.join(homePath,
-                                "My Documents","PcodeProjects")
+                                "My Documents", "PcodeProjects")
         elif sys.platform == 'darwin':
             path = os.path.join(homePath,
-                                "Documents","PcodeProjects")
+                                "Documents", "PcodeProjects")
         else:
             path = os.path.join(homePath,
-                                "My Documents","PcodeProjects")
+                                "My Documents", "PcodeProjects")
         path = os.path.normpath(path)
-        self.locationLine.setText(path)
+        self.destinationLine.setText(path)
 
         self.browseButton = QtGui.QPushButton('...')
         self.browseButton.clicked.connect(self.browsePath)
@@ -61,10 +62,10 @@ class GetPathLine(QtGui.QWidget):
             self, "Select Folder",
             homePath)
         if directory:
-            self.locationLine.setText(os.path.normpath(directory))
+            self.destinationLine.setText(os.path.normpath(directory))
 
     def text(self):
-        return self.locationLine.text()
+        return self.destinationLine.text()
 
 
 class WorkSpace(QtGui.QDialog):
@@ -73,7 +74,8 @@ class WorkSpace(QtGui.QDialog):
         QtGui.QDialog.__init__(self, parent)
 
         self.setWindowTitle("Workspace")
-        self.setWindowIcon(QtGui.QIcon(os.path.join("Resources","images","Icon")))
+        self.setWindowIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "Icon")))
         self.setFixedSize(500, 130)
 
         self.createWorkSpaceThread = CreateWorkSpaceThread()
@@ -117,7 +119,7 @@ class WorkSpace(QtGui.QDialog):
 
     def completeWorkspace(self):
         QtGui.QApplication.restoreOverrideCursor()
-        if self.createWorkSpaceThread.errors == None:
+        if self.createWorkSpaceThread.errors is None:
             self.path = os.path.join(
                 self.createWorkSpaceThread.path, "PcodeProjects")
             self.created = True

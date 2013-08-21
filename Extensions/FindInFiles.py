@@ -2,7 +2,6 @@ import os
 import ctypes
 import re
 from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintilla
 
 from Extensions import Global
 from Extensions.Diff import DiffWindow
@@ -16,10 +15,10 @@ class FinderThread(QtCore.QThread):
     def run(self):
         for dirname, _, files in os.walk(self.directory):
             self.currentDir.emit(dirname)
-            if self.stop == True:
+            if self.stop is True:
                 break
             for f in files:
-                if self.stop == True:
+                if self.stop is True:
                     break
                 if re.match(self.filterRe, f):
                     file = os.path.join(dirname, f)
@@ -34,7 +33,7 @@ class FinderThread(QtCore.QThread):
                     # now perform the search and display the lines found
                     count = 0
                     for line in lines:
-                        if self.stop == True:
+                        if self.stop is True:
                             break
 
                         count += 1
@@ -52,7 +51,7 @@ class FinderThread(QtCore.QThread):
                             QtGui.QColor("#003366")))
                         self.found.append(parentItem)
                         self.listItemAvailable.emit()
-            if self.recursive == False:
+            if self.recursive is False:
                 return
 
     def find(self, directory, filterRe, search, recursive):
@@ -77,6 +76,7 @@ class FinderThread(QtCore.QThread):
 
     def stopThread(self):
         self.stop = True
+
 
 class ConfirmReplaceDialog(QtGui.QDialog):
 
@@ -108,7 +108,8 @@ class ConfirmReplaceDialog(QtGui.QDialog):
         if diffExists:
             mainLayout.addWidget(diff)
         else:
-            message = QtGui.QMessageBox.information(self, "Replace", "Both files are the same.")
+            message = QtGui.QMessageBox.information(
+                self, "Replace", "Both files are the same.")
             return
 
         hbox = QtGui.QHBoxLayout()
@@ -140,6 +141,7 @@ class ConfirmReplaceDialog(QtGui.QDialog):
 
         QtGui.QApplication.restoreOverrideCursor()
         self.close()
+
 
 class FoundFilesView(QtGui.QTreeWidget):
 
@@ -210,7 +212,8 @@ class FindInFiles(QtGui.QWidget):
         label.setMaximumWidth(25)
         label.setMaximumHeight(25)
         label.setScaledContents(True)
-        label.setPixmap(QtGui.QPixmap(os.path.join("Resources","images","cascade")))
+        label.setPixmap(
+            QtGui.QPixmap(os.path.join("Resources", "images", "cascade")))
         hbox.addWidget(label)
 
         self.dirLabel = QtGui.QLabel()
@@ -222,7 +225,7 @@ class FindInFiles(QtGui.QWidget):
         self.filesView.activated.connect(self.viewFile)
         mainLayout.addWidget(self.filesView)
 
-        ### create finder controls
+        # create finder controls
 
         self.dashboard = QtGui.QWidget()
 
@@ -232,7 +235,7 @@ class FindInFiles(QtGui.QWidget):
         hbox = QtGui.QHBoxLayout()
         vbox.addLayout(hbox)
 
-        label = QtGui.QLabel("Find:        ") # extra space is for alignment
+        label = QtGui.QLabel("Find:        ")  # extra space is for alignment
         label.setMinimumWidth(30)
 
         hbox.addWidget(label)
@@ -265,7 +268,8 @@ class FindInFiles(QtGui.QWidget):
 
         hbox.setStretch(1, 1)
 
-        self.projectBox = QtGui.QCheckBox("Project  ") # extra space is for alignment
+        self.projectBox = QtGui.QCheckBox(
+            "Project  ")  # extra space is for alignment
         self.projectBox.toggled.connect(self.projectBoxToggled)
         hbox.addWidget(self.projectBox)
 
@@ -274,7 +278,8 @@ class FindInFiles(QtGui.QWidget):
         hbox.addWidget(self.browseButton)
 
         self.stopButton = QtGui.QPushButton("Stop")
-        self.stopButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","stop")))
+        self.stopButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "stop")))
         self.stopButton.clicked.connect(self.stopFinder)
         self.stopButton.hide()
         hbox.addWidget(self.stopButton)
@@ -314,7 +319,7 @@ class FindInFiles(QtGui.QWidget):
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources","images","exit")))
+            QtGui.QIcon(os.path.join("Resources", "images", "exit")))
         self.hideButton.clicked.connect(self.dashboard.hide)
         hbox.addWidget(self.hideButton)
 

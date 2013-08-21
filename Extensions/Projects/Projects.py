@@ -29,12 +29,12 @@ class CreateProjectThread(QtCore.QThread):
 
             ropeFolder = os.path.join(self.projectPath, "Rope")
             os.mkdir(ropeFolder)
-            shutil.copy(os.path.join("Resources","default_config.py"),
+            shutil.copy(os.path.join("Resources", "default_config.py"),
                         os.path.join(ropeFolder, "config.py"))
 
             os.mkdir(os.path.join(self.projectPath, "temp"))
-            os.mkdir(os.path.join(self.projectPath, "temp","Backup"))
-            os.mkdir(os.path.join(self.projectPath, "temp","Backup","Files"))
+            os.mkdir(os.path.join(self.projectPath, "temp", "Backup"))
+            os.mkdir(os.path.join(self.projectPath, "temp", "Backup", "Files"))
 
             sourceDir = os.path.join(self.projectPath, "src")
             if self.projDataDict["importdir"] != '':
@@ -124,7 +124,7 @@ class CreateProjectThread(QtCore.QThread):
             tag.appendChild(t)
             s += 1
 
-        path = os.path.join(self.projectPath, "Data","projectdata.xml")
+        path = os.path.join(self.projectPath, "Data", "projectdata.xml")
         file = open(path, "w")
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(domDocument.toString())
@@ -136,7 +136,7 @@ class CreateProjectThread(QtCore.QThread):
         session = dom_document.createElement("session")
         dom_document.appendChild(session)
 
-        file = open(os.path.join(self.projectPath, "Data","session.xml"), "w")
+        file = open(os.path.join(self.projectPath, "Data", "session.xml"), "w")
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(dom_document.toString())
         file.close()
@@ -188,7 +188,7 @@ class CreateProjectThread(QtCore.QThread):
         root = dom_document.createElement("CustomFolders")
         main_data.appendChild(root)
 
-        file = open(os.path.join(self.projectPath, 'Rope','profile.xml'), "w")
+        file = open(os.path.join(self.projectPath, "Rope", "profile.xml"), "w")
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(dom_document.toString())
         file.close()
@@ -301,7 +301,7 @@ class CreateProjectThread(QtCore.QThread):
             root = dom_document.createElement(i.replace(' ', '-'))
             main_data.appendChild(root)
 
-        file = open(os.path.join(self.projectPath, 'Build','profile.xml'), "w")
+        file = open(os.path.join(self.projectPath, "Build", "profile.xml"), "w")
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(dom_document.toString())
         file.close()
@@ -339,7 +339,7 @@ class Projects(QtGui.QWidget):
     def readProject(self, path):
         # validate project
         project_file = os.path.join(path, "project.xml")
-        if os.path.exists(project_file) == False:
+        if os.path.exists(project_file) is False:
             return False
         dom_document = QtXml.QDomDocument()
         file = open(os.path.join(path, "project.xml"), "r")
@@ -350,7 +350,7 @@ class Projects(QtGui.QWidget):
 
         elements = dom_document.documentElement()
         node = elements.firstChild()
-        while node.isNull() == False:
+        while node.isNull() is False:
             tag = node.toElement()
             name = tag.tagName()
             data["Version"] = tag.attribute("Version")
@@ -368,36 +368,36 @@ class Projects(QtGui.QWidget):
         if not self.pcode.showProject(path):
             QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
             pathDict = {
-                "notes": os.path.join(path, "Data","wpad.txt"),
-                "log": os.path.join(path, "Data","log.txt"),
-                "session": os.path.join(path, "Data","session.xml"),
-                "usedata": os.path.join(path, "Data","usedata.xml"),
-                "windata": os.path.join(path, "Data","windata.xml"),
-                "projectdata": os.path.join(path, "Data","projectdata.xml"),
-                "snippetsdir": os.path.join(path, "Data","templates"),
+                "notes": os.path.join(path, "Data", "wpad.txt"),
+                "log": os.path.join(path, "Data", "log.txt"),
+                "session": os.path.join(path, "Data", "session.xml"),
+                "usedata": os.path.join(path, "Data", "usedata.xml"),
+                "windata": os.path.join(path, "Data", "windata.xml"),
+                "projectdata": os.path.join(path, "Data", "projectdata.xml"),
+                "snippetsdir": os.path.join(path, "Data", "templates"),
                 "tempdir": os.path.join(path, "temp"),
-                "backupdir": os.path.join(path, "temp","Backup","Files"),
-                "backupfile": os.path.join(path, "temp","Backup","bak"),
+                "backupdir": os.path.join(path, "temp", "Backup", "Files"),
+                "backupfile": os.path.join(path, "temp", "Backup", "bak"),
                 "sourcedir": os.path.join(path, "src"),
                 "ropeFolder": os.path.join(path, "Rope"),
-                "buildprofile": os.path.join(path, "Build","profile.xml"),
-                "ropeprofile": os.path.join(path, "Rope","profile.xml"),
+                "buildprofile": os.path.join(path, "Build", "profile.xml"),
+                "ropeprofile": os.path.join(path, "Rope", "profile.xml"),
                 "projectmainfile": os.path.join(path, "project.xml"),
                 "root": path
             }
             if sys.platform == 'win32':
                 pathDict["python"] = os.path.join(path,
-                                                  "Venv","Windows","Scripts","python.exe")
+                                                  "Venv", "Windows", "Scripts", "python.exe")
             elif sys.platform == 'darwin':  # needs fixing
                 pathDict["python"] = os.path.join(path,
-                                                  "Venv","Mac","Scripts","python.exe")
+                                                  "Venv", "Mac", "Scripts", "python.exe")
             else:  # needs fixing
                 pathDict["python"] = os.path.join(path,
-                                                  "Venv","Linux","Scripts","python.exe")
+                                                  "Venv", "Linux", "Scripts", "python.exe")
 
             try:
                 project_data = self.readProject(path)
-                if project_data == False:
+                if project_data is False:
                     QtGui.QApplication.restoreOverrideCursor()
                     message = QtGui.QMessageBox.warning(self, "Open Project",
                                                         "Failed:\n\n" + path)
@@ -407,11 +407,11 @@ class Projects(QtGui.QWidget):
                 pathDict["mainscript"] = os.path.join(path, "src",
                                                       project_data[1]["MainScript"])
                 if sys.platform == 'win32':
-                    pathDict["builddir"] = os.path.join(path, "Build","Windows")
+                    pathDict["builddir"] = os.path.join(path, "Build", "Windows")
                 elif sys.platform == 'darwin':
-                    pathDict["builddir"] = os.path.join(path, "Build","Mac")
+                    pathDict["builddir"] = os.path.join(path, "Build", "Mac")
                 else:
-                    pathDict["builddir"] = os.path.join(path, "Build","Linux")
+                    pathDict["builddir"] = os.path.join(path, "Build", "Linux")
 
                 p_name = os.path.basename(path)
 
@@ -454,7 +454,7 @@ class Projects(QtGui.QWidget):
 
     def finalizeNewProject(self):
         self.busyWidget.showBusy(False)
-        if self.createProjectThread.error != False:
+        if self.createProjectThread.error is not False:
             message = QtGui.QMessageBox.warning(self, "New Project",
                                                 "Failed to create project:\n\n" + self.createProjectThread.error)
         else:

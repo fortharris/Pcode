@@ -1,6 +1,15 @@
-from PyQt4 import QtGui
+import sys
 
+from PyQt4 import QtGui
 from PyQt4.Qsci import QsciLexerCSS
+
+# Platform specific fonts
+if sys.platform == 'win32':
+    defaultFont = 'Consolas'
+elif sys.platform == 'darwin':
+    defaultFont = 'Monaco'
+else:
+    defaultFont = 'Bitstream Vera Sans Mono'
 
 propertyID = {
                 'UnknownPseudoClass': 4, 
@@ -35,29 +44,29 @@ def styleDescriptions():
 
 def defaultStyle():
     defaultStyle = {
-        'UnknownPseudoClass': ['Consolas', '#D9007E', 10, False, False, '#ffffff'],
-        'DoubleQuotedString': ['Consolas', '#00cc00', 10, False, False, '#ffffff'],
-        'Tag': ['Consolas', '#E72500', 10, False, False, '#ffffff'],
-        'Comment': ['Consolas', '#00CC00', 10, False, False, '#ffffff'],
-        'AtRule': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'CSS1Property': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'UnknownProperty': ['Consolas', '#00aa00', 10, False, False, '#ffffff'],
-        'Attribute': ['Consolas', '#000000', 10, False, False, '#ffffff'],
-        'CSS2Property': ['Consolas', '#00aa00', 10, False, False, '#ffffff'],
-        'PseudoElement': ['Consolas', '#000000', 10, False, False, '#ffffff'],
-        'Operator': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'PseudoClass': ['Consolas', '#000000', 10, False, False, '#ffffff'],
-        'ExtendedCSSProperty': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'Value': ['Consolas', '#000000', 10, False, False, '#ffffff'],
-        'MediaRule': ['Consolas', '#00aa00', 10, False, False, '#ffffff'],
-        'Variable': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'ExtendedPseudoClass': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'CSS3Property': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'IDSelector': ['Consolas', '#71AB71', 10, False, False, '#ffffff'],
-        'Important': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'ExtendedPseudoElement': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'Default': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'SingleQuotedString': ['Consolas', '#00cc00', 10, False, False, '#ffffff'],
+        'UnknownPseudoClass': [defaultFont, '#D9007E', 10, False, False, '#ffffff'],
+        'DoubleQuotedString': [defaultFont, '#00cc00', 10, False, False, '#ffffff'],
+        'Tag': [defaultFont, '#E72500', 10, False, False, '#ffffff'],
+        'Comment': [defaultFont, '#00CC00', 10, False, False, '#ffffff'],
+        'AtRule': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'CSS1Property': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'UnknownProperty': [defaultFont, '#00aa00', 10, False, False, '#ffffff'],
+        'Attribute': [defaultFont, '#000000', 10, False, False, '#ffffff'],
+        'CSS2Property': [defaultFont, '#00aa00', 10, False, False, '#ffffff'],
+        'PseudoElement': [defaultFont, '#000000', 10, False, False, '#ffffff'],
+        'Operator': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'PseudoClass': [defaultFont, '#000000', 10, False, False, '#ffffff'],
+        'ExtendedCSSProperty': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'Value': [defaultFont, '#000000', 10, False, False, '#ffffff'],
+        'MediaRule': [defaultFont, '#00aa00', 10, False, False, '#ffffff'],
+        'Variable': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'ExtendedPseudoClass': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'CSS3Property': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'IDSelector': [defaultFont, '#71AB71', 10, False, False, '#ffffff'],
+        'Important': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'ExtendedPseudoElement': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'Default': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'SingleQuotedString': [defaultFont, '#00cc00', 10, False, False, '#ffffff'],
         }
 
     return defaultStyle

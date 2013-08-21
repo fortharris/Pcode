@@ -114,27 +114,28 @@ class Keymap(QtGui.QDialog):
         """
         if keysequence.isEmpty():
             return True
-            
+
         currentItem = self.shortcutsView.currentItem()
         keystr = keysequence.toString()
-        
+
         for index in range(self.shortcutsView.topLevelItemCount()):
             topLevelItem = self.shortcutsView.topLevelItem(index)
-            
+
             for i in range(topLevelItem.childCount()):
                 item = topLevelItem.child(i)
                 if item.text(1) == keystr:
                     if currentItem != item:
                         reply = QtGui.QMessageBox.warning(self,
-                                                        'Shortcut',
-                                                        "Shortcut already in use by '{0}'\n\nReplace it?".format(item.text(0)),
-                                                        QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                                                          'Shortcut',
+                                                          "Shortcut already in use by '{0}'\n\nReplace it?".format(
+                                                              item.text(0)),
+                                                          QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                         if reply == QtGui.QMessageBox.Yes:
                             item.setText(1, "")
                             return True
                         else:
                             return False
-            
+
         return True
 
     def getShortcut(self, item, column):
@@ -152,7 +153,8 @@ class Keymap(QtGui.QDialog):
                 topLevelItem = item.parent()
                 item.setText(
                     1, getShortcut.keysequence.toString())
-                self.useData.CUSTOM_DEFAULT_SHORTCUTS[topLevelItem.text(0)][item.text(0)][0] = getShortcut.keysequence.toString()
+                self.useData.CUSTOM_DEFAULT_SHORTCUTS[topLevelItem.text(0)][
+                    item.text(0)][0] = getShortcut.keysequence.toString()
 
     def save(self):
         self.applyKeyBindings()
@@ -179,7 +181,7 @@ class Keymap(QtGui.QDialog):
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(dom_document.toString())
         file.close()
-                
+
     def applyKeyBindings(self):
         for i in range(self.projectWindowStack.count() - 1):
             window = self.projectWindowStack.widget(i)
@@ -204,19 +206,19 @@ class Keymap(QtGui.QDialog):
                 treeData = [function, key]
                 item = QtGui.QTreeWidgetItem(mainItem, treeData)
                 item.setToolTip(0, desc)
-                item.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                item.setFlags(
+                    QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             mainItem.setExpanded(True)
 
     def setDefaultShortcuts(self):
         reply = QtGui.QMessageBox.warning(self, "Set Default",
-                    "Setting keymap to default will wipe away your current keymap.\n\nProceed?",
-                    QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
+                                          "Setting keymap to default will wipe away your current keymap.\n\nProceed?",
+                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             self.shortcutsView.clear()
             self.useData.CUSTOM_DEFAULT_SHORTCUTS = self.useData.DEFAULT_SHORTCUTS
             self.updateShortcutsView()
-        
+
             self.save()
         else:
             return
-

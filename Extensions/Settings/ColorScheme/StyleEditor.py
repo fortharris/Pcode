@@ -221,87 +221,89 @@ class StyleEditor(QtGui.QWidget):
             self.currentPropertyAttrib[4] = bold
             self.currentPropertyAttrib[5] = italic
 
-    def applyChanges(self, viewWidget):
+    def applyChanges(self, viewWidget, properties=None):
+        if properties == None:
+            properties = self.currentProperties
 
         viewWidget.setSelectionBackgroundColor(
-            QtGui.QColor(self.currentProperties["Selection"][0]))
+            QtGui.QColor(properties["Selection"][0]))
         viewWidget.setSelectionForegroundColor(
-            QtGui.QColor(self.currentProperties["Selection"][1]))
+            QtGui.QColor(properties["Selection"][1]))
 
         viewWidget.setIndentationGuidesBackgroundColor(
-            QtGui.QColor(self.currentProperties["Indentation Guide"][0]))
+            QtGui.QColor(properties["Indentation Guide"][0]))
         viewWidget.setIndentationGuidesForegroundColor(
-            QtGui.QColor(self.currentProperties["Indentation Guide"][1]))
+            QtGui.QColor(properties["Indentation Guide"][1]))
 
         viewWidget.setCallTipsBackgroundColor(
-            QtGui.QColor(self.currentProperties["Calltips"][0]))
+            QtGui.QColor(properties["Calltips"][0]))
         viewWidget.setCallTipsForegroundColor(
-            QtGui.QColor(self.currentProperties["Calltips"][1]))
+            QtGui.QColor(properties["Calltips"][1]))
         viewWidget.setCallTipsHighlightColor(QtGui.QColor(
-            self.currentProperties["Calltips"][2]))
+            properties["Calltips"][2]))
 
         ## Margins colors
         # line numbers margin
         viewWidget.setMarginsBackgroundColor(
-            QtGui.QColor(self.currentProperties["Number Margin"][0]))
+            QtGui.QColor(properties["Number Margin"][0]))
         viewWidget.setMarginsForegroundColor(
-            QtGui.QColor(self.currentProperties["Number Margin"][1]))
+            QtGui.QColor(properties["Number Margin"][1]))
 
-        marginFont = QtGui.QFont(self.currentProperties["Number Margin"][2],
-                                 self.currentProperties["Number Margin"][3])
-        marginFont.setBold(self.currentProperties["Number Margin"][4])
-        marginFont.setItalic(self.currentProperties["Number Margin"][5])
+        marginFont = QtGui.QFont(properties["Number Margin"][2],
+                                 properties["Number Margin"][3])
+        marginFont.setBold(properties["Number Margin"][4])
+        marginFont.setItalic(properties["Number Margin"][5])
         viewWidget.setMarginsFont(marginFont)
 
         # folding margin colors (foreground, background)
         viewWidget.setFoldMarginColors(
-            QtGui.QColor(self.currentProperties["Fold Margin"][0]),
-            QtGui.QColor(self.currentProperties["Fold Margin"][1]))
+            QtGui.QColor(properties["Fold Margin"][0]),
+            QtGui.QColor(properties["Fold Margin"][1]))
 
         ## Edge Mode shows a vertical bar at specific number of chars
         viewWidget.setEdgeColor(QtGui.QColor(
-            self.currentProperties["Edge Line"][1]))
+            properties["Edge Line"][1]))
 
         ## Folding visual : we will use boxes
         viewWidget.setFoldMarkersColors(
-            QtGui.QColor(self.currentProperties["Fold Markers"][0]),
-            QtGui.QColor(self.currentProperties["Fold Markers"][1]))
+            QtGui.QColor(properties["Fold Markers"][0]),
+            QtGui.QColor(properties["Fold Markers"][1]))
 
         ## Braces matching
         viewWidget.setMatchedBraceBackgroundColor(
-            QtGui.QColor(self.currentProperties["Matched Braces"][0]))
+            QtGui.QColor(properties["Matched Braces"][0]))
         viewWidget.setMatchedBraceForegroundColor(
-            QtGui.QColor(self.currentProperties["Matched Braces"][1]))
+            QtGui.QColor(properties["Matched Braces"][1]))
         viewWidget.setUnmatchedBraceBackgroundColor(
-            QtGui.QColor(self.currentProperties["Unmatched Braces"][0]))
+            QtGui.QColor(properties["Unmatched Braces"][0]))
         viewWidget.setUnmatchedBraceForegroundColor(
-            QtGui.QColor(self.currentProperties["Unmatched Braces"][1]))
+            QtGui.QColor(properties["Unmatched Braces"][1]))
 
         ## Editing line color
         viewWidget.setCaretWidth(2)
         viewWidget.setCaretLineBackgroundColor(
-            QtGui.QColor(self.currentProperties["Active Line"][0]))
+            QtGui.QColor(properties["Active Line"][0]))
         viewWidget.setCaretForegroundColor(
-            QtGui.QColor(self.currentProperties["Active Line"][1]))
+            QtGui.QColor(properties["Active Line"][1]))
 
         viewWidget.setWhitespaceBackgroundColor(
-            QtGui.QColor(self.currentProperties["White Spaces"][0]))
+            QtGui.QColor(properties["White Spaces"][0]))
         viewWidget.setWhitespaceForegroundColor(
-            QtGui.QColor(self.currentProperties["White Spaces"][1]))
+            QtGui.QColor(properties["White Spaces"][1]))
 
         viewWidget.annotationWarningStyle = QsciScintilla.STYLE_LASTPREDEFINED + 1
         viewWidget.SendScintilla(QsciScintilla.SCI_STYLESETFORE,
-                                 viewWidget.annotationWarningStyle, QtGui.QColor(self.currentProperties["Warnings"][0]))
+                                 viewWidget.annotationWarningStyle, QtGui.QColor(properties["Warnings"][0]))
         viewWidget.SendScintilla(QsciScintilla.SCI_STYLESETBACK,
-                                 viewWidget.annotationWarningStyle, QtGui.QColor(self.currentProperties["Warnings"][1]))
+                                 viewWidget.annotationWarningStyle, QtGui.QColor(properties["Warnings"][1]))
 
         viewWidget.annotationErrorStyle = viewWidget.annotationWarningStyle + 1
         viewWidget.SendScintilla(QsciScintilla.SCI_STYLESETFORE,
-                                 viewWidget.annotationErrorStyle, QtGui.QColor(self.currentProperties["Errors"][0]))
+                                 viewWidget.annotationErrorStyle, QtGui.QColor(properties["Errors"][0]))
         viewWidget.SendScintilla(QsciScintilla.SCI_STYLESETBACK,
-                                 viewWidget.annotationErrorStyle, QtGui.QColor(self.currentProperties["Errors"][1]))
+                                 viewWidget.annotationErrorStyle, QtGui.QColor(properties["Errors"][1]))
 
-        return self.currentProperties["Paper"]
+        return properties["Paper"]
 
     def loadProperties(self, style_name, groupName):
         if style_name == "Default":

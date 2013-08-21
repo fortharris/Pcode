@@ -12,14 +12,15 @@ def sizeformat(size):
     if byteSize < 4:
         return str(size) + "Bytes"
     elif 3 < byteSize < 7:
-        return str(round(size/1024, 2)) + "KB"
+        return str(round(size / 1024, 2)) + "KB"
     elif 6 < byteSize < 10:
-        return str(round(size/1048576, 2)) + "MB"
+        return str(round(size / 1048576, 2)) + "MB"
     else:
-        return str(round(size/1073741824, 2)) + "GB"
+        return str(round(size / 1073741824, 2)) + "GB"
 
 
 class EditComment(QtGui.QDialog):
+
     def __init__(self, text, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)
@@ -56,6 +57,7 @@ class EditComment(QtGui.QDialog):
 
 
 class GetName(QtGui.QDialog):
+
     def __init__(self, caption, path, defaultText=None, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)
@@ -68,7 +70,7 @@ class GetName(QtGui.QDialog):
         mainLayout.addWidget(QtGui.QLabel("Name:"))
 
         self.nameLine = QtGui.QLineEdit()
-        if defaultText != None:
+        if defaultText is not None:
             self.nameLine.setText(defaultText)
             self.nameLine.selectAll()
         self.nameLine.textChanged.connect(self.enableAcceptButton)
@@ -124,6 +126,7 @@ class GetName(QtGui.QDialog):
 
 
 class CodeViewer(BaseScintilla):
+
     def __init__(self, parent=None):
         BaseScintilla.__init__(self, parent)
 
@@ -145,7 +148,9 @@ class CodeViewer(BaseScintilla):
     def updateLexer(self, lexer):
         self.setLexer(lexer)
 
+
 class Library(QtGui.QMainWindow):
+
     def __init__(self, useData):
         super(Library, self).__init__()
 
@@ -154,7 +159,7 @@ class Library(QtGui.QMainWindow):
 
         self.advancedSearch = AdvancedSearch(self)
 
-        ## define the font to use
+        # define the font to use
         self.font = QtGui.QFont("Courier New")
         self.font.setFixedPitch(True)
         self.font.setPointSize(10)
@@ -201,9 +206,9 @@ class Library(QtGui.QMainWindow):
         snippetsWidget.setLayout(snippetsVbox)
 
         self.tabWidget.addTab(snippetsWidget,
-                              QtGui.QIcon(os.path.join("Resources","images","envelope")), "Modules")
+                              QtGui.QIcon(os.path.join("Resources", "images", "envelope")), "Modules")
         self.tabWidget.addTab(self.advancedSearch,
-                              QtGui.QIcon(os.path.join("Resources","images","search")), "Search")
+                              QtGui.QIcon(os.path.join("Resources", "images", "search")), "Search")
 
         vbox.addWidget(self.tabWidget)
         widget.setLayout(vbox)
@@ -217,7 +222,7 @@ class Library(QtGui.QMainWindow):
         self.showDetailsButton.setToolButtonStyle(2)
         self.showDetailsButton.setText("More")
         self.showDetailsButton.setIcon(QtGui.QIcon(
-            os.path.join("Resources","images","extender-up")))
+            os.path.join("Resources", "images", "extender-up")))
         self.showDetailsButton.clicked.connect(self.showComments)
         hbox.addWidget(self.showDetailsButton)
 
@@ -254,7 +259,7 @@ class Library(QtGui.QMainWindow):
 
         self.setCentralWidget(self.mainSplitter)
 
-        ########## create menu widget
+        # create menu widget
         menuWidget = QtGui.QLabel()
         menuWidget.setMinimumHeight(30)
         menuWidget.setScaledContents(True)
@@ -312,34 +317,42 @@ class Library(QtGui.QMainWindow):
 
     def createActions(self):
         self.editCommentAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","edit")),
-                          "Edit Comment", self,
-                          statusTip="Edit Comment", triggered=self.editComment)
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "edit")),
+                "Edit Comment", self,
+                statusTip="Edit Comment", triggered=self.editComment)
 
         self.removeAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","remove")),
-                          "Remove", self,
-                          statusTip="Remove", triggered=self.removeItem)
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "remove")),
+                "Remove", self,
+                statusTip="Remove", triggered=self.removeItem)
 
         self.renameAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","ui-text-field")),
-                          "Rename", self,
-                          statusTip="Rename", triggered=self.rename)
+            QtGui.QAction(
+                QtGui.QIcon(
+                    os.path.join("Resources", "images", "ui-text-field")),
+                "Rename", self,
+                statusTip="Rename", triggered=self.rename)
 
         self.printAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","_0013_Printer")),
-                          "Print", self,
-                          statusTip="Print", triggered=self.printFile)
+            QtGui.QAction(
+                QtGui.QIcon(
+                    os.path.join("Resources", "images", "_0013_Printer")),
+                "Print", self,
+                statusTip="Print", triggered=self.printFile)
 
         self.exportAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","archive")),
-                          "Export Library", self,
-                          statusTip="Export Library", triggered=self.export)
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "archive")),
+                "Export Library", self,
+                statusTip="Export Library", triggered=self.export)
 
         self.toggleSidebarViewAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","out")),
-                          "Toggle Sidebar View", self,
-                          statusTip="Toggle Sidebar View", triggered=self.viewSideBar)
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "out")),
+                "Toggle Sidebar View", self,
+                statusTip="Toggle Sidebar View", triggered=self.viewSideBar)
 
     def gotoAlpha(self):
         alpha = self.alphaSearchBox.currentText()
@@ -424,26 +437,26 @@ class Library(QtGui.QMainWindow):
             self.viewLibraryItem(self.currentSnippetItem)
 
     def showComments(self):
-        if self.commentViewer.isVisible() == True:
+        if self.commentViewer.isVisible() is True:
             self.detailsWidget.hide()
             self.showDetailsButton.setText("More")
             self.showDetailsButton.setIcon(QtGui.QIcon(
-                os.path.join("Resources","images","extender-up")))
+                os.path.join("Resources", "images", "extender-up")))
         else:
             self.detailsWidget.show()
             self.showDetailsButton.setText("Less")
             self.showDetailsButton.setIcon(QtGui.QIcon(
-                os.path.join("Resources","images","extender-down")))
+                os.path.join("Resources", "images", "extender-down")))
 
     def viewSideBar(self):
-        if self.subSplitter.isHidden() == False:
+        if self.subSplitter.isHidden() is False:
             self.subSplitter.hide()
             self.toggleSidebarViewAct.setIcon(
-                QtGui.QIcon(os.path.join("Resources","images","in")))
+                QtGui.QIcon(os.path.join("Resources", "images", "in")))
         else:
             self.subSplitter.show()
             self.toggleSidebarViewAct.setIcon(
-                QtGui.QIcon(os.path.join("Resources","images","out")))
+                QtGui.QIcon(os.path.join("Resources", "images", "out")))
 
     def loadLibrary(self):
         self.snippetsListWidget.clear()
@@ -515,7 +528,7 @@ class Library(QtGui.QMainWindow):
         documentElement = dom_document.documentElement()
         childElement = documentElement.firstChild().toElement()
         source = ''  # for compatibilty with older versions of library files
-        while childElement.isNull() == False:
+        while childElement.isNull() is False:
             if childElement.nodeName() == 'comments':
                 comments = childElement.firstChild().nodeValue()
             elif childElement.nodeName() == 'code':
@@ -632,7 +645,7 @@ class Library(QtGui.QMainWindow):
                 tag = dom_document.createElement('source')
                 root.appendChild(tag)
 
-                if add.entireModuleButton.isChecked() == True:
+                if add.entireModuleButton.isChecked() is True:
                     t = dom_document.createCDATASection("Main")
                     tag.appendChild(t)
                 else:
@@ -643,7 +656,7 @@ class Library(QtGui.QMainWindow):
                 tag = dom_document.createElement('code')
                 root.appendChild(tag)
 
-                if add.entireModuleButton.isChecked() == True:
+                if add.entireModuleButton.isChecked() is True:
                     t = dom_document.createCDATASection(
                         editorTabWidget.getSource())
                 else:

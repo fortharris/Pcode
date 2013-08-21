@@ -20,15 +20,6 @@ class FinderThread(QtCore.QThread):
 
         self.start()
 
-    def stripEol(self, txt):
-        """
-        Private method to strip the eol part.
-
-        @param txt line of text that should be treated (string)
-        @return text with eol stripped (string)
-        """
-        return txt.replace("\r", "").replace("\n", "")
-
     def run(self):
         self.found = []
         if self.reg:
@@ -48,7 +39,7 @@ class FinderThread(QtCore.QThread):
         files = os.listdir(self.libraryDir)
         dom_document = QtXml.QDomDocument()
         for i in range(len(files)):
-            if self.stop == True:
+            if self.stop is True:
                 break
             file = os.path.abspath(os.path.join(self.libraryDir, files[i]))
 
@@ -60,7 +51,7 @@ class FinderThread(QtCore.QThread):
 
             documentElement = dom_document.documentElement()
             childElement = documentElement.firstChild().toElement()
-            while childElement.isNull() == False:
+            while childElement.isNull() is False:
                 if childElement.nodeName() == 'comments':
                     if (self.searchLoc == 0) or (self.searchLoc == 2):
                         comments = childElement.firstChild().nodeValue()
@@ -82,6 +73,7 @@ class FinderThread(QtCore.QThread):
 
 
 class AdvancedSearch(QtGui.QWidget):
+
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)

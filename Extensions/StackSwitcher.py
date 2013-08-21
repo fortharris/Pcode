@@ -22,12 +22,12 @@ class StackSwitcher(QtGui.QWidget):
 
     def addButton(self, name=None, icon=None, toolTip=None):
         button = QtGui.QPushButton()
-        if name != None:
+        if name is not None:
             button.setText(name)
-        if toolTip != None:
+        if toolTip is not None:
             button.setToolTip(toolTip)
         button.setCheckable(True)
-        if icon != None:
+        if icon is not None:
             button.setIcon(icon)
         self.buttonGroup.addButton(button)
         self.buttonGroup.setId(button, self.lastIndex)
@@ -49,7 +49,7 @@ class StackSwitcher(QtGui.QWidget):
         button = self.buttonGroup.button(index)
         button.setChecked(True)
         self.stack.setCurrentWidget(widget)
-        
+
         self.changed.emit(button.text())
 
     def setDefault(self):

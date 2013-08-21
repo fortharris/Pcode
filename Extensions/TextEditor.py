@@ -105,27 +105,17 @@ class TextEditor(BaseScintilla):
         self.setMarginsForegroundColor(QtGui.QColor("#666666"))
 
         # define markers
-        # the background markers will not show until the editor has focus
-        self.currentline = self.markerDefine(QsciScintilla.Background)
-        self.breakpointLine = self.markerDefine(QsciScintilla.Background)
-
-        self.setMarkerForegroundColor(QtGui.QColor("#000000"),
-                                      self.currentline)
-        self.setMarkerBackgroundColor(QtGui.QColor("#0099CC"),
-                                      self.currentline)
-        self.setMarkerForegroundColor(QtGui.QColor("#000000"),
-                                      self.breakpointLine)
-        self.setMarkerBackgroundColor(QtGui.QColor("#ffe1e1"),
-                                      self.breakpointLine)
 
         self.markerDefine(QtGui.QPixmap(
-            os.path.join("Resources","images","ui-button-navigation")), 8)
+            os.path.join("Resources", "images", "ui-button-navigation")), 8)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 8)
 
-        self.markerDefine(QtGui.QPixmap(os.path.join("Resources","images","err_mark")), 9)
+        self.markerDefine(
+            QtGui.QPixmap(os.path.join("Resources", "images", "err_mark")), 9)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 9)
 
-        self.markerDefine(QtGui.QPixmap(os.path.join("Resources","images","brk_point")), 10)
+        self.markerDefine(
+            QtGui.QPixmap(os.path.join("Resources", "images", "brk_point")), 10)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 10)
 
         self.showLineNumbers()
@@ -144,7 +134,7 @@ class TextEditor(BaseScintilla):
             QtGui.QColor("#FFDB4A"), self.searchIndicator)
         self.setIndicatorDrawUnder(True, self.searchIndicator)
 
-        self.setAutoCompletionSource(QsciScintilla.AcsDocument)
+        self.setAutoCompletion()
 
         self.copyAvailableTimer = QtCore.QTimer()
         self.copyAvailableTimer.setSingleShot(True)
@@ -196,14 +186,17 @@ class TextEditor(BaseScintilla):
                                           triggered=self.selectAllText)
 
         self.selectToMatchingBraceAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","text_select")),
-                          "Select to Matching Brace", self,
-                          statusTip="Select to Matching Brace",
+            QtGui.QAction(
+                QtGui.QIcon(
+                    os.path.join("Resources", "images", "text_select")),
+                "Select to Matching Brace", self,
+                statusTip="Select to Matching Brace",
                           triggered=self.selectToMatchingBrace)
 
-        self.zoomAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","zoom")),
-                                     "Zoom", self,
-                                     statusTip="Zoom", triggered=self.showZoomWidget)
+        self.zoomAct = QtGui.QAction(
+            QtGui.QIcon(os.path.join("Resources", "images", "zoom")),
+            "Zoom", self,
+            statusTip="Zoom", triggered=self.showZoomWidget)
 
         self.contextMenu = QtGui.QMenu()
         self.contextMenu.addAction(self.cutAct)
@@ -219,6 +212,12 @@ class TextEditor(BaseScintilla):
         self.viewMenu.addAction(self.editorTabWidget.noSplitEditorAct)
         self.viewMenu.addSeparator()
         self.viewMenu.addAction(self.zoomAct)
+
+    def setAutoCompletion(self):
+        if self.useData.SETTINGS["EnableAutoCompletion"] == "True":
+            self.setAutoCompletionSource(QsciScintilla.AcsDocument)
+        else:
+            self.setAutoCompletionSource(QsciScintilla.AcsNone)
 
     def export(self):
         options = QtGui.QFileDialog.Options()
@@ -274,7 +273,7 @@ class TextEditor(BaseScintilla):
         self.zoomWidget.show()
 
     def showLine(self, lineNum, highlight=True):
-        if highlight == True:
+        if highlight is True:
             self.setSelection(
                 lineNum, 0, lineNum, self.lineLength(lineNum) - 1)
         self.ensureLineVisible(lineNum)
@@ -355,3 +354,25 @@ class TextEditor(BaseScintilla):
 
     def install_shortcuts(self):
         self.updateShortcuts(self.useData)
+
+        shortcuts = self.useData.CUSTOM_DEFAULT_SHORTCUTS
+
+        self.cutAct.setShortcut(shortcuts["Editor"]["Cut-Selection"][0])
+        self.copyAct.setShortcut(shortcuts["Editor"]["Copy-Selection"][0])
+        self.pasteAct.setShortcut(shortcuts["Editor"]["Paste"][0])
+
+        self.shortNextBookmark = QtGui.QShortcut(
+            shortcuts["Editor"]["Next-Bookmark"][0], self)
+        self.shortNextBookmark.activated.connect(self.findNextBookmark)
+
+        self.shortPreviousBookmark = QtGui.QShortcut(
+            shortcuts["Editor"]["Previous-Bookmark"][0], self)
+        self.shortPreviousBookmark.activated.connect(self.findPreviousBookmark)
+
+        self.shortZoomIn = QtGui.QShortcut(
+            shortcuts["Editor"]["Zoom-In"][0], self)
+        self.shortZoomIn.activated.connect(self.zoomWidget.zoomIn)
+
+        self.shortZoomOut = QtGui.QShortcut(
+            shortcuts["Editor"]["Zoom-Out"][0], self)
+        self.shortZoomOut.activated.connect(self.zoomWidget.zoomOut)

@@ -174,6 +174,7 @@ def context_diff(a, b, fromfile='', tofile='',
 
 
 class DiffWindow(QtGui.QTextEdit):
+
     def __init__(self, editor=None, snapShot=None, parent=None):
         QtGui.QTextEdit.__init__(self, parent)
 
@@ -250,7 +251,7 @@ class DiffWindow(QtGui.QTextEdit):
         self.ensureCursorVisible()
 
         QtGui.QApplication.restoreOverrideCursor()
-        
+
         return (paras != 0)
 
     def generateContextDiff(self):

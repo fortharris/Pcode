@@ -13,7 +13,9 @@ from rope.contrib.findit import (find_occurrences, find_implementations,
                                  find_definition)
 from Extensions.Refactor.UsageDialog import UsageDialog
 
+
 class GetName(QtGui.QDialog):
+
     def __init__(self, caption, defaultText, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)
@@ -73,6 +75,7 @@ class GetName(QtGui.QDialog):
 
 
 class FindUsageThread(QtCore.QThread):
+
     def run(self):
         self.error = None
         self.foundList = []
@@ -102,6 +105,7 @@ class FindUsageThread(QtCore.QThread):
 
 
 class RenameThread(QtCore.QThread):
+
     def run(self):
         self.error = None
         self.changedFiles = []
@@ -128,6 +132,7 @@ class RenameThread(QtCore.QThread):
 
 
 class InlineThread(QtCore.QThread):
+
     def run(self):
         self.error = None
         self.changedFiles = []
@@ -152,6 +157,7 @@ class InlineThread(QtCore.QThread):
 
 
 class LocalToFieldThread(QtCore.QThread):
+
     def run(self):
         self.error = None
         self.changedFiles = []
@@ -176,6 +182,7 @@ class LocalToFieldThread(QtCore.QThread):
 
 
 class ModuleToPackageThread(QtCore.QThread):
+
     def run(self):
         self.error = None
         try:
@@ -194,6 +201,7 @@ class ModuleToPackageThread(QtCore.QThread):
 
 
 class Refactor(QtGui.QWidget):
+
     def __init__(self, editorTabWidget, busyWidget, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
@@ -203,33 +211,33 @@ class Refactor(QtGui.QWidget):
         ropeFolder = editorTabWidget.pathDict["ropeFolder"]
 
         prefs = {
-                'ignored_resources': ['*.pyc', '*~', '.ropeproject',
-                                      '.hg', '.svn', '_svn', '.git',
-                                      '__pycache__'],
-                'python_files': ['*.py'],
-                'save_objectdb': True,
-                'compress_objectdb': False,
-                'automatic_soa': True,
-                'soa_followed_calls': 0,
-                'perform_doa': True,
-                'validate_objectdb': True,
-                'max_history_items': 32,
-                'save_history': True,
-                'compress_history': False,
-                'indent_size': 4,
-                'extension_modules': [
-                                    "PyQt4", "PyQt4.QtGui", "QtGui", "PyQt4.QtCore", "QtCore",
-                                    "PyQt4.QtScript", "QtScript", "os.path", "numpy", "scipy", "PIL",
-                                    "OpenGL", "array", "audioop", "binascii", "cPickle", "cStringIO",
-                                    "cmath", "collections", "datetime", "errno", "exceptions", "gc",
-                                    "imageop", "imp", "itertools", "marshal", "math", "mmap", "msvcrt",
-                                    "nt", "operator", "os", "parser", "rgbimg", "signal", "strop", "sys",
-                                    "thread", "time", "wx", "wxPython", "xxsubtype", "zipimport", "zlib"
-                                    ],
-                'import_dynload_stdmods': True,
-                'ignore_syntax_errors': True,
-                'ignore_bad_imports': True
-                }
+            'ignored_resources': ['*.pyc', '*~', '.ropeproject',
+                                  '.hg', '.svn', '_svn', '.git',
+                                  '__pycache__'],
+            'python_files': ['*.py'],
+            'save_objectdb': True,
+            'compress_objectdb': False,
+            'automatic_soa': True,
+            'soa_followed_calls': 0,
+            'perform_doa': True,
+            'validate_objectdb': True,
+            'max_history_items': 32,
+            'save_history': True,
+            'compress_history': False,
+            'indent_size': 4,
+            'extension_modules': [
+                "PyQt4", "PyQt4.QtGui", "QtGui", "PyQt4.QtCore", "QtCore",
+                "PyQt4.QtScript", "QtScript", "os.path", "numpy", "scipy", "PIL",
+                "OpenGL", "array", "audioop", "binascii", "cPickle", "cStringIO",
+                "cmath", "collections", "datetime", "errno", "exceptions", "gc",
+                "imageop", "imp", "itertools", "marshal", "math", "mmap", "msvcrt",
+                "nt", "operator", "os", "parser", "rgbimg", "signal", "strop", "sys",
+                "thread", "time", "wx", "wxPython", "xxsubtype", "zipimport", "zlib"
+            ],
+            'import_dynload_stdmods': True,
+            'ignore_syntax_errors': True,
+            'ignore_bad_imports': True
+        }
 
         self.ropeProject = Project(
             projectroot=self.root, ropefolder=ropeFolder, **prefs)
@@ -267,9 +275,10 @@ class Refactor(QtGui.QWidget):
 
     def createActions(self):
         self.findDefAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","map_marker")),
-                          "Go-to Definition", self, statusTip="Go-to Definition",
-                          triggered=self.findDefinition)
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "map_marker")),
+                "Go-to Definition", self, statusTip="Go-to Definition",
+                triggered=self.findDefinition)
 
         self.findOccurrencesAct = \
             QtGui.QAction("Usages", self, statusTip="Usages",
@@ -331,7 +340,7 @@ class Refactor(QtGui.QWidget):
 
     def renameFinished(self):
         self.busyWidget.showBusy(False)
-        if self.renameThread.error != None:
+        if self.renameThread.error is not None:
             message = QtGui.QMessageBox.warning(self, "Failed Rename",
                                                 self.renameThread.error)
             return
@@ -359,7 +368,7 @@ class Refactor(QtGui.QWidget):
 
     def inlineFinished(self):
         self.busyWidget.showBusy(False)
-        if self.inlineThread.error != None:
+        if self.inlineThread.error is not None:
             message = QtGui.QMessageBox.warning(self, "Failed Inline",
                                                 self.inlineThread.error)
             return
@@ -374,11 +383,12 @@ class Refactor(QtGui.QWidget):
         saved = self.editorTabWidget.saveProject()
         if saved:
             self.localToFieldThread.convert(project, resource, offset)
-            self.busyWidget.showBusy(True, "Converting Local to Field... please wait!")
+            self.busyWidget.showBusy(
+                True, "Converting Local to Field... please wait!")
 
     def localToFieldFinished(self):
         self.busyWidget.showBusy(False)
-        if self.localToFieldThread.error != None:
+        if self.localToFieldThread.error is not None:
             message = QtGui.QMessageBox.warning(self, "Failed Local-to-Field",
                                                 self.localToFieldThread.error)
             return
@@ -429,7 +439,7 @@ class Refactor(QtGui.QWidget):
 
     def moduleToPackageFinished(self):
         self.busyWidget.showBusy(False)
-        if self.moduleToPackageThread.error != None:
+        if self.moduleToPackageThread.error is not None:
             message = QtGui.QMessageBox.warning(self, "Failed to convert",
                                                 self.moduleToPackageThread.error)
 
@@ -445,7 +455,7 @@ class Refactor(QtGui.QWidget):
 
     def findOccurrencesFinished(self):
         self.busyWidget.showBusy(False)
-        if self.findThread.error != None:
+        if self.findThread.error is not None:
             self.editorTabWidget.showNotification(self.findThread.error)
             return
         if len(self.findThread.itemsDict) > 0:
@@ -461,7 +471,8 @@ class Refactor(QtGui.QWidget):
                     childItem.setFirstColumnSpanned(True)
                     parentItem.addChild(childItem)
                     foundList.append(parentItem)
-            usageDialog = UsageDialog(self.editorTabWidget, "Usages: " + self.objectName, foundList, self)
+            usageDialog = UsageDialog(
+                self.editorTabWidget, "Usages: " + self.objectName, foundList, self)
         else:
             self.editorTabWidget.showNotification("No usages found.")
 

@@ -5,6 +5,7 @@ from PyQt4 import QtGui, QtCore, QtXml
 
 
 class GetName(QtGui.QDialog):
+
     def __init__(self, caption, path, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)
@@ -68,6 +69,7 @@ class GetName(QtGui.QDialog):
 
 
 class IconProvider(QtGui.QFileIconProvider):
+
     def __init__(self, parent=None):
         QtGui.QFileIconProvider.__init__(self)
 
@@ -82,16 +84,18 @@ class IconProvider(QtGui.QFileIconProvider):
                 dir = QtCore.QDir(fname)
                 dirList = dir.entryList(QtCore.QDir.Files)
                 if "__init__.py" in dirList:
-                    icon = QtGui.QIcon(os.path.join("Resources","images","box"))
+                    icon = QtGui.QIcon(
+                        os.path.join("Resources", "images", "box"))
                 else:
-                    icon = QtGui.QIcon(os.path.join("Resources","images","folder-horizontal"))
+                    icon = QtGui.QIcon(
+                        os.path.join("Resources", "images", "folder-horizontal"))
                 return icon
             else:
                 if os.path.basename(fname) == "__init__.py":
-                    return QtGui.QIcon(os.path.join("Resources","images","haiku-wide"))
+                    return QtGui.QIcon(os.path.join("Resources", "images", "haiku-wide"))
                 ext = os.path.splitext(fname)[1][1:]
                 if ext == "py" or ext == "pyw":
-                    return QtGui.QIcon(os.path.join("Resources","images","gear"))
+                    return QtGui.QIcon(os.path.join("Resources", "images", "gear"))
                 else:
                     return super(IconProvider, self).icon(qfileinfo)
 
@@ -177,7 +181,7 @@ class ProjectTree(QtGui.QTreeView):
             statusTip="Directory", triggered=self.newDirectory)
 
         self.addPackageAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources","images","box")),
+            QtGui.QIcon(os.path.join("Resources", "images", "box")),
             "Package", self,
             statusTip="Package", triggered=self.newPackage)
 
@@ -197,12 +201,13 @@ class ProjectTree(QtGui.QTreeView):
                                                  statusTip="Convert to Package", triggered=self.dirToPackage)
 
         self.addExistingItems = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","login")),
-                          "Add Existing items", self,
-                          statusTip="Add Existing items", triggered=self.addExistingItems)
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "login")),
+                "Add Existing items", self,
+                statusTip="Add Existing items", triggered=self.addExistingItems)
 
         self.mainScriptsAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources","images","location")),
+            QtGui.QIcon(os.path.join("Resources", "images", "location")),
             "Set as Main Script", self, statusTip="Set as Main Script",
             triggered=self.setMainScript)
 
@@ -325,9 +330,8 @@ class ProjectTree(QtGui.QTreeView):
 
     def addExistingItems(self):
         options = QtGui.QFileDialog.Options()
-        # TODO: change default path from c:\\ to qdir.rrot or previous dir
         files = QtGui.QFileDialog.getOpenFileNames(self,
-                                                   "Select Items", "c:\\", "All Files (*);", options)
+                                                   "Select Items", QtCore.QDir.homePath(), "All Files (*);", options)
         if files:
             dest = self.getCurrentDirectory()
             try:
@@ -364,17 +368,17 @@ class ProjectTree(QtGui.QTreeView):
                                                 "Directory not found!")
 
     def disableFilter(self):
-        if self.disableFilterAct.isChecked() == True:
+        if self.disableFilterAct.isChecked() is True:
             self.fileSystemModel.setNameFilters([])
         else:
             self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
 
     def treeItemActivated(self, modelIndex):
-        if self.fileSystemModel.isDir(modelIndex) == False:
+        if self.fileSystemModel.isDir(modelIndex) is False:
             path = self.getCurrentFilePath()
             self.parent.fileActivated.emit(path)
         else:
-            if self.isExpanded(modelIndex) == True:
+            if self.isExpanded(modelIndex) is True:
                 self.collapse(modelIndex)
             else:
                 self.expand(modelIndex)
@@ -397,7 +401,7 @@ class ProjectTree(QtGui.QTreeView):
         node = elements.firstChild()
 
         settingsDict = {}
-        while node.isNull() == False:
+        while node.isNull() is False:
             tag = node.toElement()
 
             settingsDict["Type"] = tag.attribute("Type")
@@ -477,28 +481,28 @@ class ProjectViewer(QtGui.QWidget):
         mainLayout.addWidget(self.searchLine)
 
         hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(0)
+        hbox.setMargin(1)
         hbox.addStretch(1)
         self.searchLine.setLayout(hbox)
 
         self.clearButton = QtGui.QToolButton()
         self.clearButton.setAutoRaise(True)
-        self.clearButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","disabled")))
+        self.clearButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "disabled")))
         self.clearButton.clicked.connect(self.clearSearch)
         hbox.addWidget(self.clearButton)
 
         self.progressBar = QtGui.QProgressBar()
-        self.progressBar.setMaximumHeight(3)
+        self.progressBar.setMaximumHeight(2)
         self.progressBar.setStyleSheet(
             """
 
                   QProgressBar {
-                     border: 1px solid lightgray;
-                     border-top: none;
+                     border: None;
                      text-align: center;
                      padding: 0px;
                      border-radius: 0px;
-                     background-color: white;
+                     background-color: Transparent;
                  }
 
                  QProgressBar::chunk {

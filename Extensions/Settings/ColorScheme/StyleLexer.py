@@ -7,6 +7,7 @@ from Extensions.Settings.ColorScheme.Lexers import HtmlLexer
 from Extensions.Settings.ColorScheme.Lexers import XmlLexer
 from Extensions.Settings.ColorScheme.ColorChooser import ColorChooser
 
+
 class StyleLexer(QtGui.QWidget):
 
     reloadStyles = QtCore.pyqtSignal()
@@ -107,7 +108,7 @@ class StyleLexer(QtGui.QWidget):
         hbox.addWidget(self.fontButton)
 
         vbox.addStretch(1)
-        
+
     def updatePropertyListWidget(self, groupName):
         if groupName == "Python":
             styles = PythonLexer.styleDescriptions()
@@ -117,35 +118,22 @@ class StyleLexer(QtGui.QWidget):
             styles = XmlLexer.styleDescriptions()
         elif groupName == "Html":
             styles = HtmlLexer.styleDescriptions()
-            
+
         self.propertyListWidget.clear()
         for i in styles:
             self.propertyListWidget.addItem(i)
         self.propertyListWidget.setCurrentRow(0)
 
-    def createLexer(self, paper, fileType):
-        if fileType == "python":
-            lexer = PythonLexer.PythonLexer(self.loadStyle(self.useData.SETTINGS["EditorStylePython"], 
-                                            "Python"),
-                                            paper)
-        elif fileType == ".xml":
-            lexer = XmlLexer.XmlLexer(self.loadStyle(self.useData.SETTINGS["EditorStyleXml"], 
-                                            "Xml"),
-                                            paper)
-                                            
-        elif fileType == ".html":
-            lexer = HtmlLexer.HtmlLexer(self.loadStyle(self.useData.SETTINGS["EditorStyleHtml"], 
-                                            "Html"),
-                                            paper)
-                                            
-        elif fileType == ".css":
-            lexer = CssLexer.CssLexer(self.loadStyle(self.useData.SETTINGS["EditorStyleCss"], 
-                                            "Css"),
-                                            paper)
-                                            
-        else:
-            lexer = None
-
+    def createLexer(self, paper, style_name, groupName):
+        style = self.loadStyle(style_name, groupName)
+        if groupName == "Python":
+            lexer = PythonLexer.PythonLexer(style, paper)
+        elif groupName == "Xml":
+            lexer = XmlLexer.XmlLexer(style, paper)
+        elif groupName == "Html":
+            lexer = HtmlLexer.HtmlLexer(style, paper)
+        elif groupName == "Css":
+            lexer = CssLexer.CssLexer(style, paper)
         return lexer
 
     def setCurrentStyle(self, styleName, groupName):
@@ -163,11 +151,11 @@ class StyleLexer(QtGui.QWidget):
                 return HtmlLexer.defaultStyle()
         else:
             pass
-        
+
         style = {}
-    
-        stylePath = os.path.join(self.useData.appPathDict["stylesdir"], 
-                    groupName, styleName + ".xml")
+
+        stylePath = os.path.join(self.useData.appPathDict["stylesdir"],
+                                 groupName, styleName + ".xml")
         dom_document = QtXml.QDomDocument()
         file = open(stylePath, "r")
         x = dom_document.setContent(file.read())

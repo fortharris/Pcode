@@ -1,8 +1,10 @@
+import os
+
 from PyQt4 import QtGui
-import os.path
 
 
 class GotoLineWidget(QtGui.QLabel):
+
     def __init__(self, editorTabWidget, parent=None):
         QtGui.QLabel.__init__(self, parent=None)
 
@@ -14,9 +16,10 @@ class GotoLineWidget(QtGui.QLabel):
         self.setMaximumWidth(200)
 
         self.gotoLineAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","mail_check")),
-                          "Goto Line", self, statusTip="Goto Line",
-                          triggered=self.gotoLine)
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "mail_check")),
+                "Goto Line", self, statusTip="Goto Line",
+                triggered=self.gotoLine)
 
         mainLayout = QtGui.QHBoxLayout()
         mainLayout.setMargin(3)
@@ -25,7 +28,8 @@ class GotoLineWidget(QtGui.QLabel):
 
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
-        self.hideButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","exit")))
+        self.hideButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "exit")))
         self.hideButton.clicked.connect(self.hide)
         mainLayout.addWidget(self.hideButton)
 
@@ -50,6 +54,6 @@ class GotoLineWidget(QtGui.QLabel):
                              """)
 
     def gotoLine(self, lineno):
-        if lineno == False:
+        if lineno is False:
             lineno = self.lineNumberLine.value()
         self.editorTabWidget.focusedEditor().showLine(lineno - 1)

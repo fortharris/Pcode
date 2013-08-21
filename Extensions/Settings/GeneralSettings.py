@@ -260,7 +260,7 @@ class GeneralSettings(QtGui.QDialog):
         self.useData.SETTINGS["EnableAssistance"] = str(state)
         for i in range(self.projectWindowStack.count() - 1):
             alertsWidget = self.projectWindowStack.widget(i).assistantWidget
-            if state == True:
+            if state is True:
                 alertsWidget.setAssistance()
             else:
                 alertsWidget.setAssistance(0)
@@ -270,7 +270,7 @@ class GeneralSettings(QtGui.QDialog):
         for i in range(self.projectWindowStack.count() - 1):
             alertsWidget = self.projectWindowStack.widget(i).assistantWidget
             alertsWidget.setAssistance(1)
-            if state == False:
+            if state is False:
                 editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
                 for i in range(editorTabWidget.count()):
                     editor = editorTabWidget.getEditor(i)
@@ -346,7 +346,7 @@ class GeneralSettings(QtGui.QDialog):
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
                 editor2 = editorTabWidget.getCloneEditor(i)
-                if state == True:
+                if state is True:
                     editor.setBraceMatching(QsciScintilla.SloppyBraceMatch)
                     editor2.setBraceMatching(
                         QsciScintilla.SloppyBraceMatch)
@@ -362,7 +362,7 @@ class GeneralSettings(QtGui.QDialog):
                 editor = editorTabWidget.getEditor(i)
                 if editor.DATA["fileType"] == "python":
                     editor2 = editorTabWidget.getCloneEditor(i)
-                    if state == True:
+                    if state is True:
                         editor.setFolding(QsciScintilla.BoxedTreeFoldStyle, 2)
                         editor2.setFolding(QsciScintilla.BoxedTreeFoldStyle, 2)
                     else:
@@ -385,14 +385,11 @@ class GeneralSettings(QtGui.QDialog):
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
             for i in range(editorTabWidget.count()):
-                fileType = editorTabWidget.getEditorData(
-                    "fileType", i)
-                if fileType == "python":
-                    editorTabWidget.getEditor(i).setAutoCompletion()
-                    editorTabWidget.getCloneEditor(i).setAutoCompletion()
+                editorTabWidget.getEditor(i).setAutoCompletion()
+                editorTabWidget.getCloneEditor(i).setAutoCompletion()
 
     def setAutoCompletion(self):
-        if self.autoCompDocBox.isChecked() is True:
+        if self.autoCompDocBox.isChecked():
             self.useData.SETTINGS["AutoCompletion"] = "Document"
         elif self.autoCompApiBox.isChecked() is True:
             self.useData.SETTINGS["AutoCompletion"] = "Api"
@@ -400,10 +397,9 @@ class GeneralSettings(QtGui.QDialog):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
-                if editor.DATA["fileType"] == "python":
-                    editor.setAutoCompletion()
-                    editor2 = editorTabWidget.getCloneEditor(i)
-                    editor2.setAutoCompletion()
+                editor.setAutoCompletion()
+                editor2 = editorTabWidget.getCloneEditor(i)
+                editor2.setAutoCompletion()
 
     def setDynamicSearch(self, state):
         self.useData.SETTINGS["DynamicSearch"] = str(state)
@@ -427,7 +423,7 @@ class GeneralSettings(QtGui.QDialog):
                     editor2 = editorTabWidget.getCloneEditor(i)
                     editor.showWhiteSpaces()
                     editor2.showWhiteSpaces()
-                    if state == True:
+                    if state is True:
                         editor.setEdgeMode(QsciScintilla.EdgeLine)
                         editor2.setEdgeMode(QsciScintilla.EdgeLine)
                     else:

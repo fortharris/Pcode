@@ -16,7 +16,7 @@ class GetPathLine(QtGui.QWidget):
         self.setLayout(mainLayout)
 
         self.locationLine = QtGui.QLineEdit()
-        if defaultText != None:
+        if defaultText is not None:
             self.locationLine.setText(defaultText)
         self.locationLine.textChanged.connect(self.textChanged.emit)
         mainLayout.addWidget(self.locationLine)
@@ -92,7 +92,7 @@ class NewProjectDialog(QtGui.QDialog):
         hbox.addWidget(self.helpButton)
 
         mainLayout.addLayout(hbox)
-        
+
         self.validateFields()
 
     def validateFields(self):
@@ -105,11 +105,11 @@ class NewProjectDialog(QtGui.QDialog):
         elif self.projectLocation == '':
             self.okButton.setDisabled(True)
             return
-        if os.path.exists(self.projectLocation) == False:
+        if os.path.exists(self.projectLocation) is False:
             self.okButton.setDisabled(True)
             return
         if self.importPath != '':
-            if os.path.exists(self.importPath) == False:
+            if os.path.exists(self.importPath) is False:
                 self.okButton.setDisabled(True)
                 return
         if os.path.exists(os.path.join(self.projectLocation, self.projectName)):

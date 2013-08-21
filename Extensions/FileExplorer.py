@@ -28,24 +28,24 @@ class ManageShortcuts(QtGui.QDialog):
 
         self.removeShortcutButton = QtGui.QPushButton()
         self.removeShortcutButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources","images","minus")))
+            QtGui.QIcon(os.path.join("Resources", "images", "minus")))
         self.removeShortcutButton.clicked.connect(self.removeShorcut)
         hbox.addWidget(self.removeShortcutButton)
 
         self.addShortcutButton = QtGui.QPushButton()
-        self.addShortcutButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","add")))
+        self.addShortcutButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "add")))
         self.addShortcutButton.clicked.connect(self.addShortcut)
         hbox.addWidget(self.addShortcutButton)
 
         hbox.addStretch(1)
 
         self.moveDownButton = QtGui.QPushButton()
-        self.moveDownButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","down")))
+        self.moveDownButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "down")))
         self.moveDownButton.clicked.connect(self.moveDown)
         hbox.addWidget(self.moveDownButton)
 
         self.moveUpButton = QtGui.QPushButton()
-        self.moveUpButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","up")))
+        self.moveUpButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "up")))
         self.moveUpButton.clicked.connect(self.moveUp)
         hbox.addWidget(self.moveUpButton)
 
@@ -171,7 +171,7 @@ class FileExplorer(QtGui.QTreeView):
         self.contextMenu.exec_(event.globalPos())
 
     def createActions(self):
-        self.homeAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","home")),
+        self.homeAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "home")),
                                      "Home", self,
                                      statusTip="Home", triggered=self.refreshFileSytemModel)
 
@@ -191,19 +191,19 @@ class FileExplorer(QtGui.QTreeView):
                           triggered=self.locate)
 
         self.createShortcutAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","brainstorming")),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "brainstorming")),
                           "Create Shortcut", self, statusTip="Create Shortcut",
                           triggered=self.createShortcut)
 
         self.manageShortcutsAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","settings")),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "settings")),
                           "Manage Shortcuts", self, statusTip="Manage Shortcuts",
                           triggered=self.manageShortcuts.exec_)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             urls = event.mimeData().urls()
-            if os.path.isdir(urls[0].toLocalFile()) == True:
+            if os.path.isdir(urls[0].toLocalFile()) is True:
                 event.acceptProposedAction()
             else:
                 event.ignore()
@@ -250,7 +250,7 @@ class FileExplorer(QtGui.QTreeView):
                                                 "Directory is not available.")
 
     def disable_filter(self):
-        if self.disableFilterAct.isChecked() == True:
+        if self.disableFilterAct.isChecked() is True:
             self.fileSystemModel.setNameFilters([])
         else:
             self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
@@ -264,12 +264,12 @@ class FileExplorer(QtGui.QTreeView):
         self.setColumnWidth(0, 300)
 
     def treeItemActivated(self, modelIndex):
-        if self.fileSystemModel.isDir(modelIndex) == False:
+        if self.fileSystemModel.isDir(modelIndex) is False:
             filePath = os.path.normpath(
                 self.fileSystemModel.filePath(modelIndex))
             self.fileActivated.emit(filePath)
         else:
-            if self.isExpanded(modelIndex) == True:
+            if self.isExpanded(modelIndex) is True:
                 self.collapse(modelIndex)
             else:
                 self.expand(modelIndex)

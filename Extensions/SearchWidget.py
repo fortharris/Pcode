@@ -1,5 +1,5 @@
+import os
 from PyQt4 import QtCore, QtGui
-import os.path
 
 
 class SearchWidget(QtGui.QLabel):
@@ -41,7 +41,7 @@ class SearchWidget(QtGui.QLabel):
         self.findDownButton.setAutoRaise(True)
         self.findDownButton.setIconSize(QtCore.QSize(20, 20))
         self.findDownButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","findDown")),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "findDown")),
                           "Find Next", self, triggered=self.findNext))
         hbox.addWidget(self.findDownButton)
 
@@ -49,7 +49,7 @@ class SearchWidget(QtGui.QLabel):
         self.findUpButton.setAutoRaise(True)
         self.findUpButton.setIconSize(QtCore.QSize(20, 20))
         self.findUpButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","findUp")),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "findUp")),
                           "Find Previous", self,
                           triggered=self.findPrevious))
         hbox.addWidget(self.findUpButton)
@@ -80,7 +80,7 @@ class SearchWidget(QtGui.QLabel):
         self.hideFindWidgetButton = QtGui.QToolButton()
         self.hideFindWidgetButton.setAutoRaise(True)
         self.hideFindWidgetButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources","images","exit")))
+            QtGui.QIcon(os.path.join("Resources", "images", "exit")))
         self.hideFindWidgetButton.clicked.connect(self.hideFindWidget)
         hbox.addWidget(self.hideFindWidgetButton)
 
@@ -165,10 +165,9 @@ class SearchWidget(QtGui.QLabel):
             editor.clearAllIndicators(editor.searchIndicator)
         else:
             if self.useData.SETTINGS['DynamicSearch'] == 'True':
-                editor.setCursorPosition(0, 0)
                 editor.clearAllIndicators(editor.searchIndicator)
                 found = editor.findFirst(text, self.matchRegExp,
-                                         self.matchCase, self.matchWholeWord, self.wrapAround, True, -1, -1, True)
+                                         self.matchCase, self.matchWholeWord, self.wrapAround, True, 0, 0, True)
                 if found:
                     self.findLine.setStyleSheet(
                         "QLineEdit {border-bottom: 1px solid lightgrey;}")
@@ -203,7 +202,7 @@ class SearchWidget(QtGui.QLabel):
         text = self.findLine.text()
         replaceText = self.replaceLine.text()
         editor = self.editorTabWidget.focusedEditor()
-        if editor.hasSelectedText() == True:
+        if editor.hasSelectedText() is True:
             pass
         else:
             editor.findFirst(text, self.matchRegExp,
@@ -224,7 +223,7 @@ class SearchWidget(QtGui.QLabel):
                                 self.matchCase, self.matchWholeWord, self.wrapAround,
                                 True, 1, 1, True)
         editor.beginUndoAction()
-        while find == True:
+        while find is True:
             editor.replace(replaceText)
             find = editor.findNext()
         editor.endUndoAction()

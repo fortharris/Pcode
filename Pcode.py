@@ -18,7 +18,7 @@ class Pcode(QtGui.QWidget):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
-        self.setWindowIcon(QtGui.QIcon(os.path.join("Resources","images","Icon")))
+        self.setWindowIcon(QtGui.QIcon(os.path.join("Resources", "images", "Icon")))
         self.setWindowTitle("Pcode - Loading...")
 
         screen = QtGui.QDesktopWidget().screenGeometry()
@@ -54,7 +54,7 @@ class Pcode(QtGui.QWidget):
 
         startWindow = Start(self.useData, self)
         self.addProject(startWindow, "Start",
-                        "Start", os.path.join("Resources","images","flag-green"))
+                        "Start", os.path.join("Resources", "images", "flag-green"))
 
         self.projects = Projects(self.useData, self.busyWidget,
                                  self.library, self.settingsWidget, app,
@@ -76,10 +76,10 @@ class Pcode(QtGui.QWidget):
         hbox.addWidget(self.projectSwitcher)
 
         self.addPage(self.projectWindowStack, "EDITOR", QtGui.QIcon(
-            os.path.join("Resources","images","hire-me")))
+            os.path.join("Resources", "images", "hire-me")))
 
         self.addPage(self.library, "LIBRARY", QtGui.QIcon(
-            os.path.join("Resources","images","library")))
+            os.path.join("Resources", "images", "library")))
         self.projectSwitcher.setDefault()
 
         hbox.addWidget(self.projectTitleBox)
@@ -112,18 +112,18 @@ class Pcode(QtGui.QWidget):
 
     def createActions(self):
         self.aboutAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources","images","properties")),
+            QtGui.QIcon(os.path.join("Resources", "images", "properties")),
             "About Pcode", self, statusTip="About Pcode",
             triggered=self.showAbout)
 
         self.showFullScreenAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","fullscreen")),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "fullscreen")),
                           "Fullscreen", self,
                           statusTip="Fullscreen",
                           triggered=self.showFullScreenMode)
 
         self.settingsAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources","images","config")),
+            QtGui.QIcon(os.path.join("Resources", "images", "config")),
             "Settings", self,
             statusTip="Settings", triggered=self.showSettings)
 
@@ -155,7 +155,7 @@ class Pcode(QtGui.QWidget):
         self.projectWindowStack.insertWidget(0, window)
         if type == 'Project':
             self.projectTitleBox.insertItem(0, QtGui.QIcon(
-                os.path.join("Resources","images","project")), name, [window, type])
+                os.path.join("Resources", "images", "project")), name, [window, type])
         else:
             self.projectTitleBox.insertItem(0, QtGui.QIcon(
                 iconPath), name, [window, type])
@@ -282,7 +282,7 @@ class Pcode(QtGui.QWidget):
 app = QtGui.QApplication(sys.argv)
 app.setStyleSheet(StyleSheet.globalStyle)
 
-splash = QtGui.QSplashScreen(QtGui.QPixmap(os.path.join("Resources","images","splash")))
+splash = QtGui.QSplashScreen(QtGui.QPixmap(os.path.join("Resources", "images", "splash")))
 splash.show()
 
 main = Pcode()

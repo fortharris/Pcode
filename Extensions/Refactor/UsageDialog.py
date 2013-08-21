@@ -1,11 +1,13 @@
 import os
 from PyQt4 import QtCore, QtGui
 
+
 class UsageDialog(QtGui.QDialog):
+
     def __init__(self, editorTabWidget, title, itemsList, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)
-        
+
         self.setWindowTitle(title)
         self.resize(600, 300)
 
@@ -25,14 +27,15 @@ class UsageDialog(QtGui.QDialog):
 
         for item in itemsList:
             self.view.addTopLevelItem(item)
-            
+
         self.exec_()
 
     def showLine(self, item):
         if item.parent() is None:
             return
         path = item.parent().text(0)
-        fullPath = os.path.join(self.editorTabWidget.pathDict["sourcedir"], path)
+        fullPath = os.path.join(
+            self.editorTabWidget.pathDict["sourcedir"], path)
         self.editorTabWidget.loadfile(fullPath)
         line = int(item.text(0)) - 1
         self.editorTabWidget.showLine(line)

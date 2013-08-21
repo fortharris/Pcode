@@ -3,6 +3,7 @@ from PyQt4 import QtCore, QtGui, QtXml
 
 
 class GetText(QtGui.QDialog):
+
     def __init__(self, caption, format, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)
@@ -61,6 +62,7 @@ class GetText(QtGui.QDialog):
 
 
 class RopeConfig(QtGui.QWidget):
+
     def __init__(self, pathDict, useData, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
@@ -110,14 +112,14 @@ class RopeConfig(QtGui.QWidget):
             "Extensions": "Specify which files should be considered python files.",
             "Ignored Resources": "Specify which files and folders to ignore in the project.",
             "Custom Folders": (
-            "By default rope searches the project for finding source folders\n"
-            "(folders that should be searched for finding modules).\n"
-            "You can add paths to that list. Note that rope guesses project \n"
-            "source folders correctly most of the time; use this if you have \n"
-            "any problems.\n"
-            "The folders should be relative to project root and use '/' for\n"
-            "separating folders regardless of the platform rope is running on.\n"
-            "src/my_source_folder' for instance."
+                "By default rope searches the project for finding source folders\n"
+                "(folders that should be searched for finding modules).\n"
+                "You can add paths to that list. Note that rope guesses project \n"
+                "source folders correctly most of the time; use this if you have \n"
+                "any problems.\n"
+                "The folders should be relative to project root and use '/' for\n"
+                "separating folders regardless of the platform rope is running on.\n"
+                "src/my_source_folder' for instance."
             )
         }
 
@@ -130,13 +132,14 @@ class RopeConfig(QtGui.QWidget):
         mainLayout.addLayout(hbox)
 
         self.addButton = QtGui.QPushButton()
-        self.addButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","add")))
+        self.addButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "add")))
 #        self.addButton.clicked.connect(self.appendToList)
         hbox.addWidget(self.addButton)
 
         self.removeButton = QtGui.QPushButton()
         self.removeButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources","images","minus")))
+            QtGui.QIcon(os.path.join("Resources", "images", "minus")))
 #        self.removeButton.clicked.connect(self.removeItem)
         hbox.addWidget(self.removeButton)
 
@@ -198,23 +201,24 @@ class RopeConfig(QtGui.QWidget):
         file.write(dom_document.toString())
         file.close()
 
+
 class LibrariesConfig(QtGui.QWidget):
+
     def __init__(self, pathDict, useData, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
         self.pathDict = pathDict
         self.useData = useData
 
-        self.libraries = {"PyQt4": ["PyQt4", "PyQt4.QtGui", "QtGui", "PyQt4.QtCore", "QtCore",
-                                    "PyQt4.QtScript", "QtScript"],
-                          "wxPython": ["wxPython", "wx"],
-                          "numpy": ["numpy"],
-                          "scipy": ["scipy"],
-                          "OpenGL": ["OpenGL"],
-                          "gc": ["gc"]
-                          }
-
-
+        self.libraries = {
+            "PyQt4": ["PyQt4", "PyQt4.QtGui", "QtGui", "PyQt4.QtCore", "QtCore",
+                      "PyQt4.QtScript", "QtScript"],
+            "wxPython": ["wxPython", "wx"],
+            "numpy": ["numpy"],
+            "scipy": ["scipy"],
+            "OpenGL": ["OpenGL"],
+            "gc": ["gc"]
+        }
 
         mainLayout = QtGui.QVBoxLayout()
         self.setLayout(mainLayout)
@@ -228,6 +232,7 @@ class LibrariesConfig(QtGui.QWidget):
 
 
 class BuildConfig(QtGui.QTabWidget):
+
     def __init__(self, pathDict, useData, parent=None):
         QtGui.QTabWidget.__init__(self, parent)
 
@@ -251,8 +256,9 @@ class BuildConfig(QtGui.QTabWidget):
 
         versionWidget = QtGui.QWidget()
         self.addTab(versionWidget,
-                     QtGui.QIcon(os.path.join("Resources","images","arrow-045")),
-                     "Version Information")
+                    QtGui.QIcon(
+                    os.path.join("Resources", "images", "arrow-045")),
+                    "Version Information")
 
         versionLayout = QtGui.QFormLayout()
         versionLayout.setMargin(0)
@@ -297,7 +303,7 @@ class BuildConfig(QtGui.QTabWidget):
 
         optionsWidget = QtGui.QWidget()
         self.addTab(optionsWidget, QtGui.QIcon(
-            os.path.join("Resources","images","arrow-045")), "Options")
+            os.path.join("Resources", "images", "arrow-045")), "Options")
 
         optionsLayout = QtGui.QFormLayout()
         optionsLayout.setMargin(0)
@@ -338,14 +344,14 @@ class BuildConfig(QtGui.QTabWidget):
         optionsLayout.addRow('', self.appendScriptToLibraryBox)
 
         self.baseBox = QtGui.QComboBox()
-        for i in os.listdir(os.path.join("Build","bases")):
+        for i in os.listdir(os.path.join("Build", "bases")):
             self.baseBox.addItem(i)
         self.baseBox.setCurrentIndex(
             self.baseBox.findText(profileData["base"]))
         optionsLayout.addRow("Base", self.baseBox)
 
         self.initScriptBox = QtGui.QComboBox()
-        for i in os.listdir(os.path.join("Build","initscripts")):
+        for i in os.listdir(os.path.join("Build", "initscripts")):
             self.initScriptBox.addItem(i)
         self.initScriptBox.setCurrentIndex(
             self.initScriptBox.findText(profileData["initscript"]))
@@ -366,7 +372,7 @@ class BuildConfig(QtGui.QTabWidget):
 
         advancedWidget = QtGui.QWidget()
         self.addTab(advancedWidget, QtGui.QIcon(
-            os.path.join("Resources","images","arrow-045")), "Advanced")
+            os.path.join("Resources", "images", "arrow-045")), "Advanced")
 
         advancedLayout = QtGui.QVBoxLayout()
         advancedLayout.setMargin(0)
@@ -423,13 +429,14 @@ class BuildConfig(QtGui.QTabWidget):
         advancedLayout.addLayout(hbox)
 
         self.addButton = QtGui.QPushButton()
-        self.addButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","add")))
+        self.addButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "add")))
         self.addButton.clicked.connect(self.appendToList)
         hbox.addWidget(self.addButton)
 
         self.removeButton = QtGui.QPushButton()
         self.removeButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources","images","minus")))
+            QtGui.QIcon(os.path.join("Resources", "images", "minus")))
         self.removeButton.clicked.connect(self.removeItem)
         hbox.addWidget(self.removeButton)
 
@@ -603,12 +610,12 @@ class BuildConfig(QtGui.QTabWidget):
 
         elements = dom_document.documentElement()
         node = elements.firstChild()
-        while node.isNull() == False:
+        while node.isNull() is False:
             name = node.nodeName()
             expandedName = name.replace('-', ' ')
             if expandedName in self.lists:
                 sub_node = node.firstChild()
-                while sub_node.isNull() == False:
+                while sub_node.isNull() is False:
                     sub_prop = sub_node.toElement()
                     self.lists[expandedName].append(sub_prop.text())
                     sub_node = sub_node.nextSibling()
@@ -621,9 +628,9 @@ class BuildConfig(QtGui.QTabWidget):
 
 
 class ConfigureProject(QtGui.QLabel):
+
     def __init__(self, pathDict, useData, parent=None):
         QtGui.QLabel.__init__(self, parent)
-
 
         self.setBackgroundRole(QtGui.QPalette.Background)
         self.setAutoFillBackground(True)
@@ -634,7 +641,7 @@ class ConfigureProject(QtGui.QLabel):
         mainLayout = QtGui.QVBoxLayout()
         self.setLayout(mainLayout)
 
-        label = QtGui.QLabel("Configure Project")
+        label = QtGui.QLabel("Project Configuration")
         label.setStyleSheet("font: 14px; color: grey;")
         mainLayout.addWidget(label)
 
@@ -643,17 +650,17 @@ class ConfigureProject(QtGui.QLabel):
         if pathDict["type"] == "Desktop Application":
             self.buildConfig = BuildConfig(pathDict, useData)
             self.tabWidget.addTab(self.buildConfig,
-                                  QtGui.QIcon(os.path.join("Resources","images","build")), "Build")
+                                  QtGui.QIcon(os.path.join("Resources", "images", "build")), "Build")
             self.pagesList.append(self.buildConfig)
 
         self.libraries = LibrariesConfig(pathDict, useData)
         self.tabWidget.addTab(self.libraries,
-                            QtGui.QIcon(os.path.join("Resources","images","erase")), "Libraries")
+                              QtGui.QIcon(os.path.join("Resources", "images", "erase")), "Libraries")
 #        self.pagesList.append(self.libraries)
 
         self.refactorConfig = RopeConfig(pathDict, useData)
-        #self.tabWidget.addTab(self.refactorConfig,
-                              #QtGui.QIcon(os.path.join("Resources","images","erase")), "Refactor")
+        # self.tabWidget.addTab(self.refactorConfig,
+                              # QtGui.QIcon(os.path.join("Resources", "images", "erase"), "Refactor")
 #        self.pagesList.append(self.libraries)
 
         mainLayout.addWidget(self.tabWidget)
@@ -661,7 +668,8 @@ class ConfigureProject(QtGui.QLabel):
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        hbox.addWidget(QtGui.QLabel("The module 're' must be imported for frozen scripts to work."))
+        hbox.addWidget(
+            QtGui.QLabel("The module 're' must be imported for frozen scripts to work."))
 
         hbox.addStretch(1)
 

@@ -1,5 +1,5 @@
+import os
 from PyQt4 import QtCore, QtGui
-import os.path
 
 
 class ZoomWidget(QtGui.QLabel):
@@ -18,6 +18,7 @@ class ZoomWidget(QtGui.QLabel):
 
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.setMargin(1)
+        mainLayout.setSpacing(0)
         self.setLayout(mainLayout)
 
         self.increaseButton = QtGui.QToolButton()
@@ -49,7 +50,8 @@ class ZoomWidget(QtGui.QLabel):
         self.hideButton.setMaximumWidth(36)
         self.hideButton.setMaximumHeight(36)
         self.hideButton.setAutoRaise(True)
-        self.hideButton.setIcon(QtGui.QIcon(os.path.join("Resources","images","exit")))
+        self.hideButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "exit")))
         self.hideButton.clicked.connect(self.hide)
         mainLayout.addWidget(self.hideButton)
 

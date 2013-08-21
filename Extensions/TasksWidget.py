@@ -1,11 +1,11 @@
 import re
-import os.path
+import os
 from PyQt4 import QtCore, QtGui
 
 
 class TaskFinderThread(QtCore.QThread):
 
-    TASKS_PATTERN = r"(^|#)[ ]*(TODO|FIXME|XXX|HINT|TIP)( |:)([^#]*)"
+    TASKS_PATTERN = r"(^|#)[ ]*(TODO|FIXME|XXX|HINT|TIP)( |:)([^#]*)" 
     newTasks = QtCore.pyqtSignal(list)
     results = []
 
@@ -15,7 +15,7 @@ class TaskFinderThread(QtCore.QThread):
         results = []
         for line, text in enumerate(self.editorTabWidget.getSource().splitlines()):
             for todo in re.findall(self.TASKS_PATTERN, text):
-                results.append((todo[1], line+1, todo[
+                results.append((todo[1], line + 1, todo[
                                -1].strip().capitalize()))
         if results != self.results:
             self.results = []
@@ -28,6 +28,7 @@ class TaskFinderThread(QtCore.QThread):
 
 
 class Tasks(QtGui.QTreeWidget):
+
     def __init__(self, editorTabWidget, bottomStackSwitcher, parent=None):
         QtGui.QTreeWidget.__init__(self, parent)
 
@@ -57,7 +58,7 @@ class Tasks(QtGui.QTreeWidget):
                          show-decoration-selected: 1; /* make the selection span the entire width of the view */
                          border: none;
                     }
-                    """ )
+                    """)
 
     def startTimer(self):
         self.taskFinderTimer.start(1000)
@@ -68,7 +69,7 @@ class Tasks(QtGui.QTreeWidget):
         for i in results:
             item = QtGui.QTreeWidgetItem()
             item.setIcon(0, QtGui.QIcon(
-                os.path.join("Resources","images","Clear Green Button")))
+                os.path.join("Resources", "images", "Clear Green Button")))
             item.setText(1, i[0])
             item.setText(2, str(i[1]))
             item.setText(3, i[2])

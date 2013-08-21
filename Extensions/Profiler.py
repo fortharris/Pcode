@@ -5,6 +5,7 @@ from PyQt4 import QtCore, QtGui
 
 
 class Profiler(QtGui.QTreeWidget):
+
     def __init__(self, useData, bottomStackSwitcher, parent=None):
         QtGui.QTreeWidget.__init__(self, parent)
 
@@ -12,7 +13,7 @@ class Profiler(QtGui.QTreeWidget):
         self.bottomStackSwitcher = bottomStackSwitcher
 
         self.setHeaderLabels(["ncalls", "tottime", "percall",
-                                       "cumtime", "filename", "# line", "function"])
+                              "cumtime", "filename", "# line", "function"])
         self.setSortingEnabled(True)
         self.sortByColumn(4, QtCore.Qt.AscendingOrder)
 
@@ -35,11 +36,11 @@ class Profiler(QtGui.QTreeWidget):
 
     def viewProfile(self, file=None):
         if file is None:
-            file = os.path.join("temp","profile")
+            file = os.path.join("temp", "profile")
         self.p = pstats.Stats(file)
         self.p.calc_callees()
         self.stats = self.p.stats
-        #self.saveButton.setDisabled(False)
+        # self.saveButton.setDisabled(False)
 
         self.clear()
 
@@ -56,7 +57,8 @@ class Profiler(QtGui.QTreeWidget):
 
             child = QtGui.QTreeWidgetItem()
             for caller, (cc1, nc1, tt1, ct1) in callers.items():
-                child.setIcon(0, QtGui.QIcon(os.path.join("Resources","images","lightning")))
+                child.setIcon(
+                    0, QtGui.QIcon(os.path.join("Resources", "images", "lightning")))
                 child.setText(0, str(cc))
                 child.setText(1, str(nc1))
                 child.setText(2, str(tt1))

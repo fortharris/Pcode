@@ -58,7 +58,7 @@ class ExternalLauncher(QtGui.QLabel):
         self.setLayout(mainLayout)
 
         self.manageLauncherAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources","images","settings")),
+            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "settings")),
                           "Manage Launchers", self, statusTip="Manage Launchers",
                           triggered=self.showMe.emit)
 

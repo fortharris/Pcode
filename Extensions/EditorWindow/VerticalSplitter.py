@@ -1,12 +1,15 @@
-from PyQt4 import QtCore, QtGui
+from PyQt4 import QtGui
+
 
 class VerticalSplitter(QtGui.QSplitter):
+
     def __init__(self, parent=None):
         QtGui.QSplitter.__init__(self, parent)
 
         self.setObjectName("vSplitter")
         self.setOrientation(2)
 
+        self.bottomTabCollapsed = False
         self.splitterMoved.connect(self.updateStatus)
 
     def updateStatus(self):

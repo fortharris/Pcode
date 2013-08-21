@@ -3,6 +3,7 @@ from PyQt4 import QtCore, QtGui
 
 
 class LibraryAddDialog(QtGui.QDialog):
+
     def __init__(self, editorTabWidget, parent):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)
@@ -58,7 +59,7 @@ class LibraryAddDialog(QtGui.QDialog):
         self.showDetailsButton.setToolButtonStyle(2)
         self.showDetailsButton.setText("Comments")
         self.showDetailsButton.setIcon(QtGui.QIcon(
-            os.path.join("Resources","images","extender-down")))
+            os.path.join("Resources", "images", "extender-down")))
         self.showDetailsButton.clicked.connect(self.showComments)
         hbox.addWidget(self.showDetailsButton)
 
@@ -80,16 +81,16 @@ class LibraryAddDialog(QtGui.QDialog):
         self.exec_()
 
     def showComments(self):
-        if self.moreWidget.isVisible() == True:
+        if self.moreWidget.isVisible() is True:
             self.moreWidget.hide()
             self.setFixedSize(400, 120)
             self.showDetailsButton.setIcon(QtGui.QIcon(
-                os.path.join("Resources","images","extender-down")))
+                os.path.join("Resources", "images", "extender-down")))
         else:
             self.moreWidget.show()
             self.setFixedSize(400, 300)
             self.showDetailsButton.setIcon(QtGui.QIcon(
-                os.path.join("Resources","images","extender-up")))
+                os.path.join("Resources", "images", "extender-up")))
 
     def textChanged(self):
         if self.nameLine.text().strip() == '':

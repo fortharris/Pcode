@@ -1,15 +1,25 @@
+# -*- coding: utf-8 -*-
+
+# Copyright (c) 2004 - 2012 Detlev Offenbach <detlev@die-offenbachs.de>
+#
+
+"""
+Module implementing a compatability interface class to QsciScintilla.
+"""
+
 import re
 from PyQt4 import QtGui, QtCore
 from PyQt4.Qsci import QsciScintilla
 
 
 class BaseScintilla(QsciScintilla):
+
     def __init__(self, useData, parent=None):
         QsciScintilla.__init__(self, parent)
-    
+
     def updateShortcuts(self, useData):
         self.clearKeys()
-        
+
         shortcuts = useData.CUSTOM_DEFAULT_SHORTCUTS
 
         self.shortUndo = QtGui.QShortcut(
@@ -22,15 +32,15 @@ class BaseScintilla(QsciScintilla):
 
         self.shortCut = QtGui.QShortcut(
             shortcuts["Editor"]["Cut-Selection"][0], self)
-        self.shortCut.activatedAmbiguously.connect(self.cut)
-        
+        self.shortCut.activated.connect(self.cut)
+
         self.shortCopy = QtGui.QShortcut(
             shortcuts["Editor"]["Copy-Selection"][0], self)
-        self.shortCopy.activatedAmbiguously.connect(self.cut)
+        self.shortCopy.activated.connect(self.copy)
 
         self.shortPaste = QtGui.QShortcut(
             shortcuts["Editor"]["Paste"][0], self)
-        self.shortPaste.activatedAmbiguously.connect(self.paste)
+        self.shortPaste.activated.connect(self.paste)
 
         self.shortSelectToMatchingBrace = QtGui.QShortcut(
             shortcuts["Editor"]["Select-to-Matching-Brace"][0], self)
@@ -84,7 +94,8 @@ class BaseScintilla(QsciScintilla):
 
         self.shortDeleteCurrentCharacter = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Current-Character"][0], self)
-        self.shortDeleteCurrentCharacter.activated.connect(self.deleteCurrentCharacter)
+        self.shortDeleteCurrentCharacter.activated.connect(
+            self.deleteCurrentCharacter)
 
         self.shortDeleteWordLeft = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Word-To-Left"][0], self)
@@ -115,440 +126,440 @@ class BaseScintilla(QsciScintilla):
         self.shortExtendSelectionWordLeft = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Left-One-Word"][0], self)
         self.shortExtendSelectionWordLeft.activated.connect(
-            self.extendSelectionRight)
+            self.extendSelectionWordLeft)
 
         self.shortExtendSelectionWordRight = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Right-One-Word"][0], self)
         self.shortExtendSelectionWordRight.activated.connect(
             self.extendSelectionWordRight)
-            
+
         self.shortMoveLeftOneWordPart = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Left-One-Word-Part"][0], self)
         self.shortMoveLeftOneWordPart.activated.connect(
-            self.extendSelectionWordLeft)
-            
+            self.moveLeftOneWordPart)
+
         self.shortMoveRightOneWordPart = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Right-One-Word-Part"][0], self)
         self.shortMoveRightOneWordPart.activated.connect(
-            self.extendSelectionWordRight)
-            
+            self.moveRightOneWordPart)
+
         self.shortStutteredMoveUpOnePage = QtGui.QShortcut(
             shortcuts["Editor"]["Stuttered-Move-Up-One-Page"][0], self)
         self.shortStutteredMoveUpOnePage.activated.connect(
             self.stutteredMoveUpOnePage)
-            
+
         self.shortStutteredMoveDownOnePage = QtGui.QShortcut(
             shortcuts["Editor"]["Stuttered-Move-Down-One-Page"][0], self)
         self.shortStutteredMoveDownOnePage.activated.connect(
             self.stutteredMoveDownOnePage)
-            
+
         self.shortMoveToStartOfDocument = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-Start-Of-Document"][0], self)
         self.shortMoveToStartOfDocument.activated.connect(
             self.moveToStartOfDocument)
-            
+
         self.shortMoveToEndOfDocument = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-End-Of-Document"][0], self)
         self.shortMoveToEndOfDocument.activated.connect(
             self.moveToEndOfDocument)
-            
+
         self.shortMoveDownOneParagraph = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Down-One-Paragraph"][0], self)
         self.shortMoveDownOneParagraph.activated.connect(
             self.moveDownOneParagraph)
-            
+
         self.shortMoveUpOneParagraph = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Up-One-Paragraph"][0], self)
         self.shortMoveUpOneParagraph.activated.connect(
             self.moveUpOneParagraph)
-            
+
         self.shortExtendSelectionUpOneParagraph = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Up-One-Paragraph"][0], self)
         self.shortExtendSelectionUpOneParagraph.activated.connect(
             self.extendSelectionUpOneParagraph)
-            
+
         self.shortExtendSelectionDownOneParagraph = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Down-One-Paragraph"][0], self)
         self.shortExtendSelectionDownOneParagraph.activated.connect(
             self.extendSelectionDownOneParagraph)
-            
+
         self.shortExtendSelectionDownOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Down-One-Line"][0], self)
         self.shortExtendSelectionDownOneLine.activated.connect(
             self.extendSelectionDownOneLine)
-            
+
         self.shortExtendSelectionUpOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Up-One-Line"][0], self)
         self.shortExtendSelectionUpOneLine.activated.connect(
             self.extendSelectionUpOneLine)
-            
+
         self.shortExtendSelectionLeftOneCharacter = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Left-One-Character"][0], self)
         self.shortExtendSelectionLeftOneCharacter.activated.connect(
             self.extendSelectionLeftOneCharacter)
-            
+
         self.shortExtendSelectionRightOneCharacter = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Right-One-Character"][0], self)
         self.shortExtendSelectionRightOneCharacter.activated.connect(
             self.extendSelectionRightOneCharacter)
-            
+
         self.shortExtendSelectionUpOnePage = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Up-One-Page"][0], self)
         self.shortExtendSelectionUpOnePage.activated.connect(
             self.extendSelectionUpOnePage)
-            
+
         self.shortExtendSelectionDownOnePage = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Down-One-Page"][0], self)
         self.shortExtendSelectionDownOnePage.activated.connect(
             self.extendSelectionDownOnePage)
-            
+
         self.shortExtendRectangularSelectionDownOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Rectangular-Selection-Down-One-Line"][0], self)
         self.shortExtendRectangularSelectionDownOneLine.activated.connect(
             self.extendRectangularSelectionDownOneLine)
-            
+
         self.shortCopyCurrentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Copy-Current-Line"][0], self)
         self.shortCopyCurrentLine.activated.connect(
             self.copyCurrentLine)
-            
+
         self.shortCutCurrentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Cut-Current-Line"][0], self)
         self.shortCutCurrentLine.activated.connect(
             self.cutCurrentLine)
-            
+
         self.shortDuplicateTheCurrentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Duplicate-The-Current-Line"][0], self)
         self.shortDuplicateTheCurrentLine.activated.connect(
             self.duplicateTheCurrentLine)
-            
+
         self.shortDuplicateSelection = QtGui.QShortcut(
             shortcuts["Editor"]["Duplicate-Selection"][0], self)
         self.shortDuplicateSelection.activated.connect(
             self.duplicateSelection)
-            
+
         self.shortTransposeCurrentAndPreviousLines = QtGui.QShortcut(
             shortcuts["Editor"]["Transpose-Current-And-Previous-Lines"][0], self)
         self.shortTransposeCurrentAndPreviousLines.activated.connect(
             self.transposeCurrentAndPreviousLines)
-            
+
         self.shortMoveSelectedLinesDownOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Selected-Lines-Down-One-Line"][0], self)
         self.shortMoveSelectedLinesDownOneLine.activated.connect(
             self.moveSelectedLinesDownOneLine)
-            
+
         self.shortMoveSelectedLinesUpOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Selected-Lines-Up-One-Line"][0], self)
         self.shortMoveSelectedLinesUpOneLine.activated.connect(
             self.moveSelectedLinesUpOneLine)
-            
+
         self.shortExtendRectangularSelectionRightOneCharacter = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Rectangular-Selection-Right-One-Character"][0], self)
         self.shortExtendRectangularSelectionRightOneCharacter.activated.connect(
             self.extendRectangularSelectionRightOneCharacter)
-            
+
         self.shortExtendRectangularSelectionLeftOneCharacter = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Rectangular-Selection-Left-One-Character"][0], self)
         self.shortExtendRectangularSelectionLeftOneCharacter.activated.connect(
             self.extendRectangularSelectionLeftOneCharacter)
-            
+
         self.shortExtendSelectionToStartOfDocument = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-Start-Of-Document"][0], self)
         self.shortExtendSelectionToStartOfDocument.activated.connect(
             self.extendSelectionToStartOfDocument)
-            
+
         self.shortExtendSelectionToEndOfDocument = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-End-Of-Document"][0], self)
         self.shortExtendSelectionToEndOfDocument.activated.connect(
             self.extendSelectionToEndOfDocument)
-            
+
         self.shortFormfeed = QtGui.QShortcut(
             shortcuts["Editor"]["Formfeed"][0], self)
         self.shortFormfeed.activated.connect(
             self.formfeed)
-            
+
         self.shortCancel = QtGui.QShortcut(
             shortcuts["Editor"]["Cancel"][0], self)
         self.shortCancel.activated.connect(
             self.cancel)
-            
+
         self.shortScrollViewDownOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Scroll-View-Down-One-Line"][0], self)
         self.shortScrollViewDownOneLine.activated.connect(
             self.scrollViewDownOneLine)
-            
+
         self.shortScrollViewUpOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Scroll-View-Up-One-Line"][0], self)
         self.shortScrollViewUpOneLine.activated.connect(
             self.scrollViewUpOneLine)
-            
+
         self.shortScrollToStartOfDocument = QtGui.QShortcut(
             shortcuts["Editor"]["Scroll-To-Start-Of-Document"][0], self)
         self.shortScrollToStartOfDocument.activated.connect(
             self.scrollToStartOfDocument)
-            
+
         self.shortScrollToEndOfDocument = QtGui.QShortcut(
             shortcuts["Editor"]["Scroll-To-End-Of-Document"][0], self)
         self.shortScrollToEndOfDocument.activated.connect(
             self.scrollToEndOfDocument)
-            
+
         self.shortScrollVerticallyToCentreCurrentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Scroll-Vertically-To-Centre-Current-Line"][0], self)
         self.shortScrollVerticallyToCentreCurrentLine.activated.connect(
             self.scrollVerticallyToCentreCurrentLine)
-            
+
         self.shortMoveDownOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Down-One-Line"][0], self)
         self.shortMoveDownOneLine.activated.connect(
             self.moveDownOneLine)
-            
+
         self.shortMoveUpOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Up-One-Line"][0], self)
         self.shortMoveUpOneLine.activated.connect(
             self.moveUpOneLine)
-            
+
         self.shortToggleInsertOrOvertype = QtGui.QShortcut(
             shortcuts["Editor"]["Toggle-Insert-or-Overtype"][0], self)
         self.shortToggleInsertOrOvertype.activated.connect(
             self.toggleInsertOrOvertype)
-            
+
         self.shortDeleteRightToEndOfNextWord = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Right-To-End-Of-Next-Word"][0], self)
         self.shortDeleteRightToEndOfNextWord.activated.connect(
             self.deleteRightToEndOfNextWord)
-            
+
         self.shortMoveCursorToEOL = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-End-Of-Document-Line"][0], self)
         self.shortMoveCursorToEOL.activated.connect(
             self.moveCursorToEOL)
-            
+
         self.shortMoveCursorToBOL = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-Start-Of-Document-Line"][0], self)
         self.shortMoveCursorToBOL.activated.connect(
             self.moveCursorToBOL)
-            
+
     def deleteRightToEndOfNextWord(self):
         """
         Delete right to the end of the next word.
         """
         self.SendScintilla(QsciScintilla.SCI_DELWORDRIGHTEND)
-            
+
     def toggleInsertOrOvertype(self):
         """
         Toggle insert/overtype.
         """
         self.SendScintilla(QsciScintilla.SCI_EDITTOGGLEOVERTYPE)
-            
+
     def deleteCurrentCharacter(self):
         """
         Delete the current character.
         """
         self.SendScintilla(QsciScintilla.SCI_CLEAR)
-            
+
     def moveUpOneLine(self):
         """
         Move up one line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEUP)
-            
+
     def moveDownOneLine(self):
         """
         Move down one line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEDOWN)
-            
+
     def scrollVerticallyToCentreCurrentLine(self):
         """
         Scroll vertically to centre the current line.
         """
         self.SendScintilla(QsciScintilla.SCI_VERTICALCENTRECARET)
-            
+
     def scrollToEndOfDocument(self):
         """
         Scroll to the end of the document.
         """
         self.SendScintilla(QsciScintilla.SCI_SCROLLTOEND)
-            
+
     def scrollToStartOfDocument(self):
         """
         Scroll to the start of the document.
         """
         self.SendScintilla(QsciScintilla.SCI_SCROLLTOSTART)
-            
+
     def scrollViewUpOneLine(self):
         """
         Scroll the view up one line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINESCROLLUP)
-            
+
     def scrollViewDownOneLine(self):
         """
         Scroll the view down one line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINESCROLLDOWN)
-            
+
     def cancel(self):
         """
         Cancel any current operation.
         """
         self.SendScintilla(QsciScintilla.SCI_CANCEL)
-            
+
     def formfeed(self):
         """
         Insert a formfeed.
         """
         self.SendScintilla(QsciScintilla.SCI_FORMFEED)
-            
+
     def extendSelectionToEndOfDocument(self):
         """
         Extend the selection to the end of the document.
         """
         self.SendScintilla(QsciScintilla.SCI_DOCUMENTENDEXTEND)
-            
+
     def extendSelectionToStartOfDocument(self):
         """
         Extend the selection to the start of the document.
         """
         self.SendScintilla(QsciScintilla.SCI_DOCUMENTSTARTEXTEND)
-            
+
     def extendRectangularSelectionLeftOneCharacter(self):
         """
         Extend the rectangular selection left one character.
         """
         self.SendScintilla(QsciScintilla.SCI_CHARLEFTRECTEXTEND)
-            
+
     def extendRectangularSelectionRightOneCharacter(self):
         """
         Extend the rectangular selection right one character.
         """
         self.SendScintilla(QsciScintilla.SCI_CHARRIGHTRECTEXTEND)
-            
+
     def moveSelectedLinesUpOneLine(self):
         """
         Move the selected lines up one line.
         """
         self.SendScintilla(QsciScintilla.SCI_MOVESELECTEDLINESUP)
-            
+
     def moveSelectedLinesDownOneLine(self):
         """
         Move the selected lines down one line.
         """
         self.SendScintilla(QsciScintilla.SCI_MOVESELECTEDLINESDOWN)
-            
+
     def transposeCurrentAndPreviousLines(self):
         """
         Transpose the current and previous lines.
         """
         self.SendScintilla(QsciScintilla.SCI_LINETRANSPOSE)
-            
+
     def duplicateSelection(self):
         """
         Duplicate the selection.
         """
         self.SendScintilla(QsciScintilla.SCI_SELECTIONDUPLICATE)
-            
+
     def duplicateTheCurrentLine(self):
         """
         Duplicate the current line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEDUPLICATE)
-            
+
     def cutCurrentLine(self):
         """
         Cut the current line to the clipboard.
         """
         self.SendScintilla(QsciScintilla.SCI_LINECUT)
-            
+
     def copyCurrentLine(self):
         """
         Copy the current line to the clipboard.
         """
         self.SendScintilla(QsciScintilla.SCI_LINECOPY)
-            
+
     def extendRectangularSelectionDownOneLine(self):
         """
         Extend the rectangular selection down one line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEDOWNRECTEXTEND)
-            
+
     def extendRectangularSelectionUpOneLine(self):
         """
         Extend the rectangular selection up one line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEUPRECTEXTEND)
-            
+
     def extendSelectionDownOnePage(self):
         """
         Extend the selection down one page.
         """
         self.SendScintilla(QsciScintilla.SCI_PAGEDOWNEXTEND)
-            
+
     def extendSelectionUpOnePage(self):
         """
         Extend the selection up one page.
         """
         self.SendScintilla(QsciScintilla.SCI_PAGEUPEXTEND)
-            
+
     def extendSelectionRightOneCharacter(self):
         """
         Extend the selection right one character.
         """
         self.SendScintilla(QsciScintilla.SCI_CHARRIGHTEXTEND)
-            
+
     def extendSelectionLeftOneCharacter(self):
         """
         Extend the selection left one character.
         """
         self.SendScintilla(QsciScintilla.SCI_CHARLEFTEXTEND)
-            
+
     def extendSelectionUpOneLine(self):
         """
         Extend the selection up one line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEUPEXTEND)
-            
+
     def extendSelectionDownOneLine(self):
         """
         Extend the selection down one line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEDOWNEXTEND)
-            
+
     def extendSelectionDownOneParagraph(self):
         """
         Extend the selection down one paragraph.
         """
         self.SendScintilla(QsciScintilla.SCI_PARADOWNEXTEND)
-            
+
     def extendSelectionUpOneParagraph(self):
         """
         Extend the selection up one paragraph.
         """
         self.SendScintilla(QsciScintilla.SCI_PARAUPEXTEND)
-            
+
     def moveDownOneParagraph(self):
         """
         Move down one paragraph.
         """
         self.SendScintilla(QsciScintilla.SCI_PARADOWN)
-        
+
     def moveUpOneParagraph(self):
         """
         Move up one paragraph.
         """
         self.SendScintilla(QsciScintilla.SCI_PARAUP)
-            
+
     def moveToStartOfDocument(self):
         """
         Move to the start of the document.
         """
         self.SendScintilla(QsciScintilla.SCI_DOCUMENTSTART)
-            
+
     def moveToEndOfDocument(self):
         """
         Move to the end of the document.
         """
         self.SendScintilla(QsciScintilla.SCI_DOCUMENTEND)
-            
+
     def scrollVertical(self, lines):
         """
         Public method to scroll the text area.
@@ -563,7 +574,7 @@ class BaseScintilla(QsciScintilla):
         Move to the end of the document line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEEND)
-        
+
     def moveCursorToBOL(self):
         """
         Move to the start of the displayed or document line.
@@ -671,38 +682,38 @@ class BaseScintilla(QsciScintilla):
         Public method to extend the selection to the end of the line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEENDEXTEND)
-        
+
     def moveLeftOneWordPart(self):
         """
         Public method to extend the selection to the end of the line.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDPARTLEFT)
-        
+
     def moveRightOneWordPart(self):
         """
         Public method to extend the selection to the end of the line.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDPARTRIGHT)
-        
+
     def stutteredMoveUpOnePage(self):
         """
         Public method to extend the selection to the end of the line.
         """
         self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEUP)
-        
+
     def stutteredMoveDownOnePage(self):
         """
         Stuttered move down one page.
         """
         self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEDOWN)
-        
+
     def clearKeys(self):
         """
         Protected method to clear the key commands.
         """
         # call into the QsciCommandSet
         self.standardCommands().clearKeys()
-        
+
     def increaseIndent(self):
         if self.hasSelectedText() == False:
             pos = self.getCursorPosition()

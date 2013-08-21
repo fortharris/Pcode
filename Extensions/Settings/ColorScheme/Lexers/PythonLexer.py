@@ -1,7 +1,16 @@
 import keyword
-from PyQt4 import QtGui
+import sys
 
+from PyQt4 import QtGui
 from PyQt4.Qsci import QsciLexerPython
+
+# Platform specific fonts
+if sys.platform == 'win32':
+    defaultFont = 'Consolas'
+elif sys.platform == 'darwin':
+    defaultFont = 'Monaco'
+else:
+    defaultFont = 'Bitstream Vera Sans Mono'
 
 propertyID = {
     'Default': 0,
@@ -29,22 +38,22 @@ def styleDescriptions():
 
 def defaultStyle():
     defaultStyle = {
-        'UnclosedString': ['Consolas', '#000000', 10, False, False, '#00fd00'],
-        'Decorator': ['Consolas', '#00cc00', 10, False, False, '#ffffff'],
-        'Default': ['Consolas', '#000000', 10, False, False, '#ffffff'],
-        'HighlightedIdentifier': ['Consolas', '#900090', 10, False, False, '#ffffff'],
-        'CommentBlock': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'FunctionMethodName': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'DoubleQuotedString': ['Consolas', '#00aa00', 10, False, False, '#ffffff'],
-        'Operator': ['Consolas', '#000000', 10, False, False, '#ffffff'],
-        'TripleSingleQuotedString': ['Consolas', '#00aa00', 10, False, False, '#ffffff'],
-        'Number': ['Consolas', '#000000', 10, False, False, '#ffffff'],
-        'Keyword': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'Identifier': ['Consolas', '#000000', 10, False, False, '#ffffff'],
-        'ClassName': ['Consolas', '#0000ff', 10, False, False, '#ffffff'],
-        'SingleQuotedString': ['Consolas', '#00aa00', 10, False, False, '#ffffff'],
-        'TripleDoubleQuotedString': ['Consolas', '#00aa00', 10, False, False, '#ffffff'],
-        'Comment': ['Consolas', '#0000ff', 10, False, False, '#ffffff']}
+        'UnclosedString': [defaultFont, '#000000', 10, False, False, '#00fd00'],
+        'Decorator': [defaultFont, '#00cc00', 10, False, False, '#ffffff'],
+        'Default': [defaultFont, '#000000', 10, False, False, '#ffffff'],
+        'HighlightedIdentifier': [defaultFont, '#900090', 10, False, False, '#ffffff'],
+        'CommentBlock': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'FunctionMethodName': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'DoubleQuotedString': [defaultFont, '#00aa00', 10, False, False, '#ffffff'],
+        'Operator': [defaultFont, '#000000', 10, False, False, '#ffffff'],
+        'TripleSingleQuotedString': [defaultFont, '#00aa00', 10, False, False, '#ffffff'],
+        'Number': [defaultFont, '#000000', 10, False, False, '#ffffff'],
+        'Keyword': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'Identifier': [defaultFont, '#000000', 10, False, False, '#ffffff'],
+        'ClassName': [defaultFont, '#0000ff', 10, False, False, '#ffffff'],
+        'SingleQuotedString': [defaultFont, '#00aa00', 10, False, False, '#ffffff'],
+        'TripleDoubleQuotedString': [defaultFont, '#00aa00', 10, False, False, '#ffffff'],
+        'Comment': [defaultFont, '#0000ff', 10, False, False, '#ffffff']}
 
     return defaultStyle
 
