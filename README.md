@@ -37,9 +37,9 @@ Then perhaps:
 ### License:
 * GPL v3
 
-### Latest version: 0.1 Beta 2
+### Latest version: 0.1 Beta 3
         
-###Download: [Windows Installer](https://www.dropbox.com/s/81lwjngr4yxcdkg/Pcode%200.1%20Beta%202.exe)
+###Download: [Windows Installer](https://www.dropbox.com/s/7kzeeiq6wd1bnrd/Pcode%200.1%20Beta%203.exe)
 
 Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
 
