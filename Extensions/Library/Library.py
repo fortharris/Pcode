@@ -437,7 +437,7 @@ class Library(QtGui.QMainWindow):
             self.viewLibraryItem(self.currentSnippetItem)
 
     def showComments(self):
-        if self.commentViewer.isVisible() is True:
+        if self.commentViewer.isVisible():
             self.detailsWidget.hide()
             self.showDetailsButton.setText("More")
             self.showDetailsButton.setIcon(QtGui.QIcon(
@@ -645,7 +645,7 @@ class Library(QtGui.QMainWindow):
                 tag = dom_document.createElement('source')
                 root.appendChild(tag)
 
-                if add.entireModuleButton.isChecked() is True:
+                if add.entireModuleButton.isChecked():
                     t = dom_document.createCDATASection("Main")
                     tag.appendChild(t)
                 else:
@@ -656,7 +656,7 @@ class Library(QtGui.QMainWindow):
                 tag = dom_document.createElement('code')
                 root.appendChild(tag)
 
-                if add.entireModuleButton.isChecked() is True:
+                if add.entireModuleButton.isChecked():
                     t = dom_document.createCDATASection(
                         editorTabWidget.getSource())
                 else:

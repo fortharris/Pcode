@@ -102,7 +102,7 @@ class CreateProjectThread(QtCore.QThread):
         s = 0
         defaults = {
 
-            'ClearOutputWindowOnRun': '2',
+            'ClearOutputWindowOnRun': 'False',
             'LastOpenedPath': '',
             'RunType': 'Run',
             'BufferSize': '900',
@@ -112,7 +112,7 @@ class CreateProjectThread(QtCore.QThread):
             'RunWithArguments': 'False',
             'DefaultVenv': 'Default',
             'RunInternal': 'True',
-            'UseVirtualEnv': 'True',
+            'UseVirtualEnv': 'False',
             'Closed': 'True',
             'LastCloseSuccessful': 'True'
         }

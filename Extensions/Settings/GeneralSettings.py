@@ -260,7 +260,7 @@ class GeneralSettings(QtGui.QDialog):
         self.useData.SETTINGS["EnableAssistance"] = str(state)
         for i in range(self.projectWindowStack.count() - 1):
             alertsWidget = self.projectWindowStack.widget(i).assistantWidget
-            if state is True:
+            if state:
                 alertsWidget.setAssistance()
             else:
                 alertsWidget.setAssistance(0)
@@ -346,7 +346,7 @@ class GeneralSettings(QtGui.QDialog):
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
                 editor2 = editorTabWidget.getCloneEditor(i)
-                if state is True:
+                if state:
                     editor.setBraceMatching(QsciScintilla.SloppyBraceMatch)
                     editor2.setBraceMatching(
                         QsciScintilla.SloppyBraceMatch)
@@ -362,7 +362,7 @@ class GeneralSettings(QtGui.QDialog):
                 editor = editorTabWidget.getEditor(i)
                 if editor.DATA["fileType"] == "python":
                     editor2 = editorTabWidget.getCloneEditor(i)
-                    if state is True:
+                    if state:
                         editor.setFolding(QsciScintilla.BoxedTreeFoldStyle, 2)
                         editor2.setFolding(QsciScintilla.BoxedTreeFoldStyle, 2)
                     else:
@@ -391,7 +391,7 @@ class GeneralSettings(QtGui.QDialog):
     def setAutoCompletion(self):
         if self.autoCompDocBox.isChecked():
             self.useData.SETTINGS["AutoCompletion"] = "Document"
-        elif self.autoCompApiBox.isChecked() is True:
+        elif self.autoCompApiBox.isChecked():
             self.useData.SETTINGS["AutoCompletion"] = "Api"
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
@@ -423,7 +423,7 @@ class GeneralSettings(QtGui.QDialog):
                     editor2 = editorTabWidget.getCloneEditor(i)
                     editor.showWhiteSpaces()
                     editor2.showWhiteSpaces()
-                    if state is True:
+                    if state:
                         editor.setEdgeMode(QsciScintilla.EdgeLine)
                         editor2.setEdgeMode(QsciScintilla.EdgeLine)
                     else:

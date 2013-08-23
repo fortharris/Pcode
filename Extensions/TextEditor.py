@@ -273,7 +273,7 @@ class TextEditor(BaseScintilla):
         self.zoomWidget.show()
 
     def showLine(self, lineNum, highlight=True):
-        if highlight is True:
+        if highlight:
             self.setSelection(
                 lineNum, 0, lineNum, self.lineLength(lineNum) - 1)
         self.ensureLineVisible(lineNum)

@@ -471,7 +471,7 @@ def continued_indentation(logical_line, tokens, indent_level, hang_closing,
                 # closing bracket matches indentation of opening bracket's line
                 if hang_closing:
                     yield start, "E133 closing bracket is missing indentation"
-            elif visual_indent is True:
+            elif visual_indent:
                 # visual indent is verified
                 if not indent[depth]:
                     indent[depth] = start[1]
@@ -1814,7 +1814,7 @@ def process_options(arglist=None, parse_argv=False, config_file=None,
     if not parser:
         parser = get_parser()
     if not parser.has_option('--config'):
-        if config_file is True:
+        if config_file:
             config_file = DEFAULT_CONFIG
         group = parser.add_option_group("Configuration", description=(
             "The project options are read from the [%s] section of the "

@@ -669,7 +669,7 @@ class ConfigureProject(QtGui.QLabel):
         mainLayout.addLayout(hbox)
 
         hbox.addWidget(
-            QtGui.QLabel("The module 're' must be imported for frozen scripts to work."))
+            QtGui.QLabel("The module 're' must be imported for frozen scripts to work.\nThis is a glitch in cxFreeze."))
 
         hbox.addStretch(1)
 

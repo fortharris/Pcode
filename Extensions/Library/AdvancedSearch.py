@@ -39,7 +39,7 @@ class FinderThread(QtCore.QThread):
         files = os.listdir(self.libraryDir)
         dom_document = QtXml.QDomDocument()
         for i in range(len(files)):
-            if self.stop is True:
+            if self.stop:
                 break
             file = os.path.abspath(os.path.join(self.libraryDir, files[i]))
 

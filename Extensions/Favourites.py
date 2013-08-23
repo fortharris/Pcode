@@ -67,7 +67,7 @@ class Favourites(QtGui.QLabel):
             self.favouritesList.sort()
             self.loadFavourites()
             self.messagesWidget.addMessage(0, "Favourites",
-                                           ["'{0}' added to Favourites".format(path)])
+                                           ["'{0}' added!".format(path)])
 
     def loadFavourites(self):
         self.favouritesMenu.clear()
@@ -98,7 +98,7 @@ class Favourites(QtGui.QLabel):
 
     def favouriteActivated(self, action):
         path = action.text()
-        if os.path.exists(path) is True:
+        if os.path.exists(path):
             self.openFile.emit(path)
         else:
             message = QtGui.QMessageBox.warning(self, "Open",

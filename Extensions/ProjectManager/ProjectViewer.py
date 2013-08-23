@@ -368,7 +368,7 @@ class ProjectTree(QtGui.QTreeView):
                                                 "Directory not found!")
 
     def disableFilter(self):
-        if self.disableFilterAct.isChecked() is True:
+        if self.disableFilterAct.isChecked():
             self.fileSystemModel.setNameFilters([])
         else:
             self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
@@ -378,7 +378,7 @@ class ProjectTree(QtGui.QTreeView):
             path = self.getCurrentFilePath()
             self.parent.fileActivated.emit(path)
         else:
-            if self.isExpanded(modelIndex) is True:
+            if self.isExpanded(modelIndex):
                 self.collapse(modelIndex)
             else:
                 self.expand(modelIndex)
@@ -522,7 +522,7 @@ class ProjectViewer(QtGui.QWidget):
 
         self.searchResultsTree = QtGui.QTreeWidget(self)
         self.searchResultsTree.setHeaderItem(
-            QtGui.QTreeWidgetItem(["Search Results"]))
+            QtGui.QTreeWidgetItem(["Search Results:"]))
         self.searchResultsTree.activated.connect(self.loadFile)
         self.viewStack.addWidget(self.searchResultsTree)
 

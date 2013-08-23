@@ -81,7 +81,7 @@ class LibraryAddDialog(QtGui.QDialog):
         self.exec_()
 
     def showComments(self):
-        if self.moreWidget.isVisible() is True:
+        if self.moreWidget.isVisible():
             self.moreWidget.hide()
             self.setFixedSize(400, 120)
             self.showDetailsButton.setIcon(QtGui.QIcon(

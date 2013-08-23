@@ -113,16 +113,6 @@ class BaseScintilla(QsciScintilla):
             shortcuts["Editor"]["Delete-Line-To-Right"][0], self)
         self.shortDeleteLineRight.activated.connect(self.deleteLineRight)
 
-        self.shortExtendSelectionLeft = QtGui.QShortcut(
-            shortcuts["Editor"]["Extend-Selection-Left-One-Character"][0], self)
-        self.shortExtendSelectionLeft.activated.connect(
-            self.extendSelectionLeft)
-
-        self.shortExtendSelectionRight = QtGui.QShortcut(
-            shortcuts["Editor"]["Extend-Selection-Right-One-Character"][0], self)
-        self.shortExtendSelectionRight.activated.connect(
-            self.extendSelectionRight)
-
         self.shortExtendSelectionWordLeft = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Left-One-Word"][0], self)
         self.shortExtendSelectionWordLeft.activated.connect(
@@ -141,7 +131,7 @@ class BaseScintilla(QsciScintilla):
         self.shortMoveRightOneWordPart = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Right-One-Word-Part"][0], self)
         self.shortMoveRightOneWordPart.activated.connect(
-            self.moveRightOneWordPart)
+            self.extendSelectionWordRight)
 
         self.shortStutteredMoveUpOnePage = QtGui.QShortcut(
             shortcuts["Editor"]["Stuttered-Move-Up-One-Page"][0], self)
@@ -337,6 +327,341 @@ class BaseScintilla(QsciScintilla):
             shortcuts["Editor"]["Move-To-Start-Of-Document-Line"][0], self)
         self.shortMoveCursorToBOL.activated.connect(
             self.moveCursorToBOL)
+            
+        self.shortExtendSelectionToStartOfDisplayLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-Start-Of-Display-Line"][0], self)
+        self.shortExtendSelectionToStartOfDisplayLine.activated.connect(
+            self.extendSelectionToStartOfDisplayLine)
+            
+        self.shortExtendRectangularSelectionUpOneLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Rectangular-Selection-Up-One-Line"][0], self)
+        self.shortExtendRectangularSelectionUpOneLine.activated.connect(
+            self.extendRectangularSelectionUpOneLine)
+            
+        self.shortMoveToFirstVisibleCharacterInDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Move-To-First-Visible-Character-In-Document-Line"][0], self)
+        self.shortMoveToFirstVisibleCharacterInDocumentLine.activated.connect(
+            self.moveToFirstVisibleCharacterInDocumentLine)
+            
+        self.shortExtendRectangularSelectionToFirstVisibleCharacterInDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Rectangular-Selection-To-First-Visible-Character-In-Document-Line"][0], self)
+        self.shortExtendRectangularSelectionToFirstVisibleCharacterInDocumentLine.activated.connect(
+            self.extendRectangularSelectionToFirstVisibleCharacterInDocumentLine)
+            
+        self.shortExtendRectangularSelectionToStartOfDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Rectangular-Selection-To-Start-Of-Document-Line"][0], self)
+        self.shortExtendRectangularSelectionToStartOfDocumentLine.activated.connect(
+            self.extendRectangularSelectionToStartOfDocumentLine)
+            
+        self.shortExtendSelectionLeftOneWordPart = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-Left-One-Word-Part"][0], self)
+        self.shortExtendSelectionLeftOneWordPart.activated.connect(
+            self.extendSelectionLeftOneWordPart)
+            
+        self.shortExtendSelectionToEndOfPreviousWord = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-End-Of-Previous-Word"][0], self)
+        self.shortExtendSelectionToEndOfPreviousWord.activated.connect(
+            self.extendSelectionToEndOfPreviousWord)
+            
+        self.shortExtendSelectionToStartOfDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-Start-Of-Document-Line"][0], self)
+        self.shortExtendSelectionToStartOfDocumentLine.activated.connect(
+            self.extendSelectionToStartOfDocumentLine)
+
+        self.shortStutteredExtendSelectionDownOnePage = QtGui.QShortcut(
+            shortcuts["Editor"]["Stuttered-Extend-Selection-Down-One-Page"][0], self)
+        self.shortStutteredExtendSelectionDownOnePage.activated.connect(
+            self.stutteredExtendSelectionDownOnePage)
+            
+        self.shortExtendSelectionToEndOfDisplayOrDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-End-Of-Display-Or-Document-Line"][0], self)
+        self.shortExtendSelectionToEndOfDisplayOrDocumentLine.activated.connect(
+            self.extendSelectionToEndOfDisplayOrDocumentLine)
+            
+        self.shortExtendRectangularSelectionToEndOfDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Rectangular-Selection-To-End-Of-Document-Line"][0], self)
+        self.shortExtendRectangularSelectionToEndOfDocumentLine.activated.connect(
+            self.extendSelectionToEndOfDisplayOrDocumentLine)
+            
+        self.shortMoveToEndOfDisplayOrDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Move-To-End-Of-Display-Or-Document-Line"][0], self)
+        self.shortMoveToEndOfDisplayOrDocumentLine.activated.connect(
+            self.moveToEndOfDisplayOrDocumentLine)
+            
+        self.shortMoveToEndOfPreviousWord = QtGui.QShortcut(
+            shortcuts["Editor"]["Move-To-End-Of-Previous-Word"][0], self)
+        self.shortMoveToEndOfPreviousWord.activated.connect(
+            self.moveToEndOfPreviousWord)
+            
+        self.shortExtendSelectionToFirstVisibleCharacterInDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-First-Visible-Character-In-Document-Line"][0], self)
+        self.shortExtendSelectionToFirstVisibleCharacterInDocumentLine.activated.connect(
+            self.extendSelectionToFirstVisibleCharacterInDocumentLine)
+            
+        self.shortExtendSelectionToStartOfDisplayOrDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-Start-Of-Display-Or-Document-Line"][0], self)
+        self.shortExtendSelectionToStartOfDisplayOrDocumentLine.activated.connect(
+            self.extendSelectionToStartOfDisplayOrDocumentLine)
+            
+        self.shortDeleteCurrentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Delete-Current-Line"][0], self)
+        self.shortDeleteCurrentLine.activated.connect(
+            self.deleteCurrentLine)
+            
+        self.shortExtendSelectionRightOneWordPart = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-Right-One-Word-Part"][0], self)
+        self.shortExtendSelectionRightOneWordPart.activated.connect(
+            self.extendSelectionRightOneWordPart)
+            
+        self.shortExtendSelectionToFirstVisibleCharacterInDisplayOrDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-First-Visible-Character-In-Display-Or-Document-Line"][0], self)
+        self.shortExtendSelectionToFirstVisibleCharacterInDisplayOrDocumentLine.activated.connect(
+            self.extendSelectionToFirstVisibleCharacterInDisplayOrDocumentLine)
+            
+        self.shortExtendSelectionToEndOfNextWorde = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-End-Of-Next-Word"][0], self)
+        self.shortExtendSelectionToEndOfNextWorde.activated.connect(
+            self.extendSelectionToEndOfNextWord)
+            
+        self.shortStutteredExtendSelectionUpOnePage = QtGui.QShortcut(
+            shortcuts["Editor"]["Stuttered-Extend-Selection-Up-One-Page"][0], self)
+        self.shortStutteredExtendSelectionUpOnePage.activated.connect(
+            self.stutteredExtendSelectionUpOnePage)
+            
+        self.shortExtendSelectionToEndOfDisplayLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-End-Of-Display-Line"][0], self)
+        self.shortExtendSelectionToEndOfDisplayLine.activated.connect(
+            self.extendSelectionToEndOfDisplayLine)
+            
+        self.shortExtendSelectionToEndOfDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Selection-To-End-Of-Document-Line"][0], self)
+        self.shortExtendSelectionToEndOfDocumentLine.activated.connect(
+            self.extendSelectionToEndOfDocumentLine)
+            
+        self.shortExtendRectangularSelectionUpOnePage = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Rectangular-Selection-Up-One-Page"][0], self)
+        self.shortExtendRectangularSelectionUpOnePage.activated.connect(
+            self.extendRectangularSelectionUpOnePage)
+            
+        self.shortExtendRectangularSelectionDownOnePage = QtGui.QShortcut(
+            shortcuts["Editor"]["Extend-Rectangular-Selection-Down-One-Page"][0], self)
+        self.shortExtendRectangularSelectionDownOnePage.activated.connect(
+            self.extendRectangularSelectionDownOnePage)
+            
+        self.shortDeletePreviousCharacterIfNotAtStartOfLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Delete-Previous-Character-If-Not-At-Start-Of-Line"][0], self)
+        self.shortDeletePreviousCharacterIfNotAtStartOfLine.activated.connect(
+            self.deletePreviousCharacterIfNotAtStartOfLine)
+            
+        self.shortMoveToStartOfDisplayOrDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Move-To-Start-Of-Display-Or-Document-Line"][0], self)
+        self.shortMoveToStartOfDisplayOrDocumentLine.activated.connect(
+            self.moveToStartOfDisplayOrDocumentLine)
+            
+        self.shortMoveToFirstVisibleCharacterOfDisplayInDocumentLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Move-To-First-Visible-Character-Of-Display-In-Document-Line"][0], self)
+        self.shortMoveToFirstVisibleCharacterOfDisplayInDocumentLine.activated.connect(
+            self.moveToFirstVisibleCharacterOfDisplayInDocumentLine)
+            
+        self.shortMoveToStartOfDisplayLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Move-To-Start-Of-Display-Line"][0], self)
+        self.shortMoveToStartOfDisplayLine.activated.connect(
+            self.moveToStartOfDisplayLine)
+            
+        self.shortMoveToEndOfNextWord = QtGui.QShortcut(
+            shortcuts["Editor"]["Move-To-End-Of-Next-Word"][0], self)
+        self.shortMoveToEndOfNextWord.activated.connect(
+            self.moveToEndOfNextWord)
+            
+        self.shortMoveToEndOfDisplayLine = QtGui.QShortcut(
+            shortcuts["Editor"]["Move-To-End-Of-Display-Line"][0], self)
+        self.shortMoveToEndOfDisplayLine.activated.connect(
+            self.moveToEndOfDisplayLine)
+            
+    def moveToEndOfDisplayLine(self):
+        """
+        Move to the end of the displayed line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_LINEENDDISPLAY)
+            
+    def moveToEndOfNextWord(self):
+        """
+        Move to the end of the next word.
+        """
+        self.SendScintilla(QsciScintilla.SCI_WORDRIGHTEND)
+            
+    def moveToStartOfDisplayLine(self):
+        """
+        Move to the start of the displayed line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_HOMEDISPLAY)
+            
+    def moveToFirstVisibleCharacterOfDisplayInDocumentLine(self):
+        """
+        Move to the first visible character of the displayed or document
+        line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_VCHOMEWRAP)
+            
+    def moveToStartOfDisplayOrDocumentLine(self):
+        """
+        Move to the start of the displayed or document line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_HOMEWRAP)
+            
+    def deletePreviousCharacterIfNotAtStartOfLine(self):
+        """
+        Delete the previous character if not at start of line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_DELETEBACKNOTLINE)
+            
+    def extendRectangularSelectionDownOnePage(self):
+        """
+        Extend the rectangular selection down one page.
+        """
+        self.SendScintilla(QsciScintilla.SCI_PAGEDOWNRECTEXTEND)
+            
+    def extendRectangularSelectionUpOnePage(self):
+        """
+        Extend the rectangular selection up one page.
+        """
+        self.SendScintilla(QsciScintilla.SCI_PAGEUPRECTEXTEND)
+            
+    def extendSelectionToEndOfDocumentLine(self):
+        """
+        Extend the selection to the end of the document line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_LINEENDEXTEND)
+            
+    def extendSelectionToEndOfDisplayLine(self):
+        """
+        Extend the selection to the end of the displayed line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_LINEENDDISPLAYEXTEND)
+            
+    def stutteredExtendSelectionUpOnePage(self):
+        """
+        Stuttered extend the selection up one page.
+        """
+        self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEUPEXTEND)
+            
+    def extendSelectionToEndOfNextWord(self):
+        """
+        Extend the selection to the end of the next word.
+        """
+        self.SendScintilla(QsciScintilla.SCI_WORDRIGHTENDEXTEND)
+            
+    def extendSelectionToFirstVisibleCharacterInDisplayOrDocumentLine(self):
+        """
+        Extend the selection to the first visible character of the
+        displayed or document line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_VCHOMEWRAPEXTEND)
+            
+    def extendSelectionRightOneWordPart(self):
+        """
+        Extend the selection right one word part.
+        """
+        self.SendScintilla(QsciScintilla.SCI_WORDPARTRIGHTEXTEND)
+            
+    def deleteCurrentLine(self):
+        """
+        Delete the current line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_LINEDELETE)
+            
+    def extendSelectionToStartOfDisplayOrDocumentLine(self):
+        """
+        Extend the selection to the start of the displayed or document
+        line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_HOMEWRAPEXTEND)
+            
+    def extendSelectionToFirstVisibleCharacterInDocumentLine(self):
+        """
+        Extend the selection to the first visible character in the document
+        line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_VCHOMEEXTEND)
+            
+    def moveToEndOfPreviousWord(self):
+        """
+        Move to the end of the previous word.
+        """
+        self.SendScintilla(QsciScintilla.SCI_WORDLEFTEND)
+            
+    def moveToEndOfDisplayOrDocumentLine(self):
+        """
+        Move to the end of the displayed or document line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_LINEENDWRAP)
+            
+    def extendRectangularSelectionToEndOfDocumentLine(self):
+        """
+        Extend the rectangular selection to the end of the document line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_LINEENDRECTEXTEND)
+            
+    def extendSelectionToEndOfDisplayOrDocumentLine(self):
+        """
+        Extend the selection to the start of the displayed line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_HOMEDISPLAYEXTEND)
+
+    def stutteredExtendSelectionDownOnePage(self):
+        """
+        Stuttered extend the selection down one page.
+        """
+        self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEDOWNEXTEND)
+            
+    def extendSelectionToStartOfDocumentLine(self):
+        """
+        Extend the selection to the start of the document line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_HOMEEXTEND)
+            
+    def extendSelectionToEndOfPreviousWord(self):
+        """
+        Extend the selection to the end of the previous word.
+        """
+        self.SendScintilla(QsciScintilla.SCI_WORDLEFTENDEXTEND)
+            
+    def extendSelectionLeftOneWordPart(self):
+        """
+        Extend the selection left one word part.
+        """
+        self.SendScintilla(QsciScintilla.SCI_WORDPARTLEFTEXTEND)
+            
+    def extendRectangularSelectionToStartOfDocumentLine(self):
+        """
+        Extend the rectangular selection to the start of the document line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_HOMERECTEXTEND)
+            
+    def extendRectangularSelectionToFirstVisibleCharacterInDocumentLine(self):
+        """
+        Extend the rectangular selection to the first visible character in
+        the document line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_VCHOMERECTEXTEND)
+            
+    def moveToFirstVisibleCharacterInDocumentLine(self):
+        """
+        Move to the first visible character in the document line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_VCHOME)
+            
+    def extendRectangularSelectionUpOneLine(self):
+        """
+        Extend the rectangular selection up one line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_LINEUPRECTEXTEND)
+            
+    def extendSelectionToStartOfDisplayLine(self):
+        """
+        Extend the selection to the start of the displayed line.
+        """
+        self.SendScintilla(QsciScintilla.SCI_HOMEDISPLAYEXTEND)
 
     def deleteRightToEndOfNextWord(self):
         """
@@ -646,18 +971,6 @@ class BaseScintilla(QsciScintilla):
         Public method to delete the line to the right of the cursor.
         """
         self.SendScintilla(QsciScintilla.SCI_DELLINERIGHT)
-
-    def extendSelectionLeft(self):
-        """
-        Public method to extend the selection one character to the left.
-        """
-        self.SendScintilla(QsciScintilla.SCI_CHARLEFTEXTEND)
-
-    def extendSelectionRight(self):
-        """
-        Public method to extend the selection one character to the right.
-        """
-        self.SendScintilla(QsciScintilla.SCI_CHARRIGHTEXTEND)
 
     def extendSelectionWordLeft(self):
         """

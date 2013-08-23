@@ -202,7 +202,7 @@ class SearchWidget(QtGui.QLabel):
         text = self.findLine.text()
         replaceText = self.replaceLine.text()
         editor = self.editorTabWidget.focusedEditor()
-        if editor.hasSelectedText() is True:
+        if editor.hasSelectedText():
             pass
         else:
             editor.findFirst(text, self.matchRegExp,
@@ -223,7 +223,7 @@ class SearchWidget(QtGui.QLabel):
                                 self.matchCase, self.matchWholeWord, self.wrapAround,
                                 True, 1, 1, True)
         editor.beginUndoAction()
-        while find is True:
+        while find:
             editor.replace(replaceText)
             find = editor.findNext()
         editor.endUndoAction()

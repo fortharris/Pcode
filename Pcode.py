@@ -22,7 +22,7 @@ class Pcode(QtGui.QWidget):
         self.setWindowTitle("Pcode - Loading...")
 
         screen = QtGui.QDesktopWidget().screenGeometry()
-        self.resize(screen.width() - 200, screen.height() - 400)
+        self.resize(screen.width() - 200, screen.height() - 200)
         size = self.geometry()
         self.move((screen.width() - size.width()) / 2, (
             screen.height() - size.height()) / 2)
@@ -102,9 +102,10 @@ class Pcode(QtGui.QWidget):
 
         self.install_shortcuts()
 
-        if self.useData.settings["firstRun"] == 'False':
+        if self.useData.settings["firstRun"] == 'True':
+            self.showMaximized()
+        else:
             self.restoreUiState()
-        self.show()
 
         self.useData.settings["running"] = 'True'
         self.useData.settings["firstRun"] = 'False'
@@ -224,9 +225,10 @@ class Pcode(QtGui.QWidget):
         settings = QtCore.QSettings("Clean Code Inc.", "Pcode")
         settings.beginGroup("MainWindow")
         if settings.value("windowMaximized", True, type=bool):
-            self.setWindowState(QtCore.Qt.WindowMaximized)
+            self.showMaximized()
         else:
             self.setGeometry(settings.value("geometry"))
+            self.show()
         self.library.mainSplitter.restoreState(settings.value("lsplitter"))
         self.settingsWidget.snippetEditor.mainSplitter.restoreState(
             settings.value("snippetsMainsplitter"))

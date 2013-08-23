@@ -296,7 +296,10 @@ class ColorScheme(QtGui.QDialog):
                                           "Save changes to the current theme?",
                                           QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
+            currentScheme = self.schemeNameBox.currentText()
             self.save()
+            f = self.schemeNameBox.findText(currentScheme)
+            self.schemeNameBox.setCurrentIndex(f)
         else:
             pass
 

@@ -15,10 +15,10 @@ class FinderThread(QtCore.QThread):
     def run(self):
         for dirname, _, files in os.walk(self.directory):
             self.currentDir.emit(dirname)
-            if self.stop is True:
+            if self.stop:
                 break
             for f in files:
-                if self.stop is True:
+                if self.stop:
                     break
                 if re.match(self.filterRe, f):
                     file = os.path.join(dirname, f)
@@ -33,7 +33,7 @@ class FinderThread(QtCore.QThread):
                     # now perform the search and display the lines found
                     count = 0
                     for line in lines:
-                        if self.stop is True:
+                        if self.stop:
                             break
 
                         count += 1

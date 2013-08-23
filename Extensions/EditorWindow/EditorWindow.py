@@ -182,10 +182,10 @@ class EditorWindow(QtGui.QWidget):
         self.mainMenu.addAction(self.gotoLineAct)
         self.mainMenu.addAction(self.viewSwitcherAct)
         helpMenu = self.mainMenu.addMenu("Help")
-        helpMenu.addAction(self.helpAct)
+        helpMenu.addAction(self.userGuideAct)
         helpMenu.addAction(self.pythonManualsAct)
         helpMenu.addSeparator()
-#        helpMenu.addAction(self.feedbackAct)
+        helpMenu.addAction(self.feedbackAct)
         helpMenu.addAction(self.checkUpdatesAct)
         self.mainMenu.addSeparator()
         self.mainMenu.addMenu(self.manageFavourites.favouritesMenu)
@@ -223,7 +223,7 @@ class EditorWindow(QtGui.QWidget):
         self.statusbar.addPermanentWidget(self.uptimeLabel)
 
         self.runWidget = RunWidget(
-            self.bottomStackSwitcher, self.PROJECT_DATA["settings"],
+            self.bottomStackSwitcher, self.PROJECT_DATA["settings"], self.useData,
             self.editorTabWidget, self.vSplitter,
             self.runProjectAct, self.stopRunAct, self.runFileAct)
         self.addBottomWidget(self.runWidget,
@@ -306,9 +306,8 @@ class EditorWindow(QtGui.QWidget):
 
         # Menubar Actions ----------------------------------------------------
 
-        self.helpAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "help")),
-            "Help", self, statusTip="Help",
+        self.userGuideAct = QtGui.QAction(
+            "User Guide", self, statusTip="User Guide",
                                     triggered=self.launchHelp)
 
         self.pythonManualsAct = QtGui.QAction("Python Manuals", self,
@@ -320,7 +319,8 @@ class EditorWindow(QtGui.QWidget):
                                              triggered=self.visitHomepage)
 
         self.feedbackAct = QtGui.QAction("Send Feedback", self,
-                                         statusTip="Send Feedback")
+                                         statusTip="Send Feedback",
+                                             triggered=self.showFeedbackWidget)
         #----------------------------------------------------------------------
         self.runFileAct = QtGui.QAction(
             QtGui.QIcon(os.path.join("Resources", "images", "rerun")),
@@ -459,6 +459,9 @@ class EditorWindow(QtGui.QWidget):
     def showFindInFilesWidget(self):
         self.searchWidget.hide()
         self.findInFiles.dashboard.show()
+        
+    def showFeedbackWidget(self):
+        self.editorTabWidget.showFeedbackWidget()
 
     def createToolbars(self):
 
@@ -613,7 +616,7 @@ class EditorWindow(QtGui.QWidget):
 
     def launchHelp(self):
         message = QtGui.QMessageBox.warning(
-            self, "Help", "Will be available when i am out of beta.")
+            self, "User Guide", "Will be available when i am out of beta.")
 
     def launchPythonHelp(self):
         try:
@@ -686,7 +689,7 @@ class EditorWindow(QtGui.QWidget):
                 return False
         modified = []
         for i in range(self.editorTabWidget.count()):
-            if self.editorTabWidget.getEditor(i).isModified() is True:
+            if self.editorTabWidget.getEditor(i).isModified():
                 modified.append(i)
         if len(modified) == 0:
             pass
@@ -743,7 +746,7 @@ class EditorWindow(QtGui.QWidget):
                 if node.nodeName() == "shortcuts":
                     shortcuts.append(sub_prop.text())
                 elif node.nodeName() == "recentfiles":
-                    if os.path.exists(sub_prop.text()) is True:
+                    if os.path.exists(sub_prop.text()):
                         recentfiles.append(sub_prop.text())
                     else:
                         pass

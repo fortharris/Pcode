@@ -1592,7 +1592,7 @@ class Wrapper(object):
 
                 if token_type == tokenize.OP and text in ']})':
                     pass
-                elif visual_indent is True:
+                elif visual_indent:
                     if not indent[depth]:
                         indent[depth] = start[1]
 

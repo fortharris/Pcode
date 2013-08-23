@@ -17,6 +17,7 @@ from Extensions import Global
 from Extensions.Refactor.Refactor import Refactor
 from Extensions.RunWidget import SetRunParameters
 from Extensions.ProjectManager.ConfigureProject import ConfigureProject
+from Extensions.Feedback import Feedback
 
 
 class EditorTabBar(QtGui.QTabBar):
@@ -169,6 +170,8 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.busyWidget = busyWidget
         self.projectSettings = projectSettings
         self.bookmarkToolbar = bookmarkToolbar
+        
+        self.feedbackForm = Feedback()
 
         self.toolWidgetList = []
         # backup keys are generated from the system time, but sometimes
@@ -210,6 +213,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.addToolWidget(self.setRunParameters)
         self.addToolWidget(self.viewSwitcher)
         self.addToolWidget(self.gotoLineWidget)
+        self.addToolWidget(self.feedbackForm, 1)
 
         self.mainLayout.addStretch(1)
 
@@ -249,10 +253,14 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.newFileMenu.addAction(self.newHtmlFileAct)
         self.newFileMenu.addAction(self.newCssFileAct)
 
-    def addToolWidget(self, widget):
+    def addToolWidget(self, widget, position=0):
         hbox = QtGui.QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(widget)
+        if position == 0:
+            pass
+        else:
+            hbox.addStretch(1)
         self.mainLayout.addLayout(hbox)
 
         self.toolWidgetList.append(widget)
@@ -482,7 +490,7 @@ class EditorTabWidget(QtGui.QTabWidget):
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             urls = event.mimeData().urls()
-            if os.path.isfile(urls[0].toLocalFile()) is True:
+            if os.path.isfile(urls[0].toLocalFile()):
                 event.acceptProposedAction()
             else:
                 event.ignore()
@@ -706,7 +714,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         return self.currentEditor.selectedText()
 
     def closeEditorTab(self, index):
-        if self.getEditor(index).isModified() is True:
+        if self.getEditor(index).isModified():
             self.requestSaveMess(index)
         else:
             if self.count() == 1:
@@ -799,6 +807,9 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def showLine(self, lineNum, highlight=True):
         self.focusedEditor().showLine(lineNum, highlight)
+        
+    def showFeedbackWidget(self):
+        self.showMe(self.feedbackForm)
 
     def writeLock(self):
         if self.focusedEditor().isReadOnly() is False:
@@ -808,7 +819,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         else:
             self.focusedEditor().setReadOnly(False)
             if self.getEditorData("fileType") == "python":
-                if self.focusedEditor().isModified() is True:
+                if self.focusedEditor().isModified():
                     self.setTabIcon(self.currentIndex(),
                                     QtGui.QIcon(os.path.join("Resources", "images", "script_grey")))
                 else:
@@ -1225,7 +1236,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             snapshotWidget.setEolMode(eolMode)
         except Exception as err:
             QtGui.QApplication.restoreOverrideCursor()
-            if showError is True:
+            if showError:
                 message = QtGui.QMessageBox.warning(self, "Open", str(err))
             else:
                 pass

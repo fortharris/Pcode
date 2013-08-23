@@ -203,7 +203,7 @@ class FileExplorer(QtGui.QTreeView):
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():
             urls = event.mimeData().urls()
-            if os.path.isdir(urls[0].toLocalFile()) is True:
+            if os.path.isdir(urls[0].toLocalFile()):
                 event.acceptProposedAction()
             else:
                 event.ignore()
@@ -250,7 +250,7 @@ class FileExplorer(QtGui.QTreeView):
                                                 "Directory is not available.")
 
     def disable_filter(self):
-        if self.disableFilterAct.isChecked() is True:
+        if self.disableFilterAct.isChecked():
             self.fileSystemModel.setNameFilters([])
         else:
             self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
@@ -269,7 +269,7 @@ class FileExplorer(QtGui.QTreeView):
                 self.fileSystemModel.filePath(modelIndex))
             self.fileActivated.emit(filePath)
         else:
-            if self.isExpanded(modelIndex) is True:
+            if self.isExpanded(modelIndex):
                 self.collapse(modelIndex)
             else:
                 self.expand(modelIndex)

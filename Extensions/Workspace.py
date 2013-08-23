@@ -71,7 +71,8 @@ class GetPathLine(QtGui.QWidget):
 class WorkSpace(QtGui.QDialog):
 
     def __init__(self, parent=None):
-        QtGui.QDialog.__init__(self, parent)
+        QtGui.QDialog.__init__(self, parent,
+                               QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint)
 
         self.setWindowTitle("Workspace")
         self.setWindowIcon(

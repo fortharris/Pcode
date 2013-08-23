@@ -7,7 +7,7 @@ class WritePad(QtGui.QMainWindow):
         QtGui.QMainWindow.__init__(self, parent)
 
         self.setWindowTitle(name + " - Notes")
-        self.resize(500, 300)
+        self.resize(600, 300)
         screen = QtGui.QDesktopWidget().screenGeometry()
         size = self.geometry()
         self.move((screen.width() - size.width()) / 2,
@@ -35,6 +35,86 @@ class WritePad(QtGui.QMainWindow):
             file.close()
 
         self.writePad.textChanged.connect(self.noteSaveTimer.start)
+        
+        self.setStyleSheet("""
+        
+                            QScrollBar:vertical{
+                                padding: 0px;
+                                border-left-width: 1px;
+                                background: #ffffff;
+                                width: 11px;
+                            }
+
+                            QScrollBar:horizontal{
+                                padding: 0px;
+                                border-top-width: 1px;
+                                border-style:solid;
+                                border: none;
+                                background: #ffffff;
+                                height: 10px;
+                            }
+
+                            QScrollBar::handle:vertical{
+                                margin-top: 0px;
+                                margin-bottom: 0px;
+                                background: #B3B3B3;
+                                border-radius: 0px;
+                                border: none;
+                                min-height: 30px;
+                            }
+
+                            QScrollBar::handle:horizontal{
+                                margin-left: 0px;
+                                margin-right: 0px;
+                                background: #B3B3B3;
+                                border-radius: 0px;
+                                border: none;
+                                min-width: 30px;
+                            }
+
+                            QScrollBar::add-line:vertical,
+                            QScrollBar::sub-line:vertical,
+                            QScrollBar::add-page:vertical,
+                            QScrollBar::sub-page:vertical,
+                            QScrollBar::add-line:horizontal,
+                            QScrollBar::sub-line:horizontal,
+                            QScrollBar::add-page:horizontal,
+                            QScrollBar::sub-page:horizontal{
+                                background: none;
+                                border: none;
+                            }
+
+                            QScrollBar::up-arrow:vertical {
+                              border: none;
+                              width: 10px;
+                              height: 10px;
+                              margin-left: 0px;
+                              image: none;
+                            }
+
+                            QScrollBar::down-arrow:vertical {
+                              border: none;
+                              width: 10px;
+                              height: 10px;
+                              margin-left: 0px;
+                              image: none;
+                            }
+
+                            QScrollBar::left-arrow:horizontal {
+                              border: none;
+                              width: 10px;
+                              height: 10px;
+                              image: none;
+                            }
+
+                            QScrollBar::right-arrow:horizontal {
+                              border: none;
+                              width: 10px;
+                              height: 10px;
+                              image: none;
+                            }
+                            
+                            """)
 
     def saveNotes(self):
         file = open(self.path, "w")

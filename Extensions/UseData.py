@@ -471,7 +471,7 @@ class UseData(QtCore.QObject):
             node = node.nextSibling()
 
     def getLastOpenedDir(self):
-        if os.path.exists(self.SETTINGS["LastOpenedPath"]) is True:
+        if os.path.exists(self.SETTINGS["LastOpenedPath"]):
             pass
         else:
             self.SETTINGS["LastOpenedPath"] = QtCore.QDir().homePath()

@@ -565,10 +565,14 @@ class CodeEditor(BaseScintilla):
         self.contextMenu.addAction(self.takeSnapshotAct)
 
     def contextMenuEvent(self, event):
-        state = self.hasSelectedText()
-
-        self.copyAct.setEnabled(state)
-        self.cutAct.setEnabled(state)
+        filePath = self.DATA['filePath']
+        isProjectFile = self.editorTabWidget.isProjectFile(filePath)
+        self.refactor.refactorMenu.setEnabled(isProjectFile)
+        self.refactor.findOccurrencesAct.setEnabled(isProjectFile)
+        
+        hasSelection = self.hasSelectedText()
+        self.copyAct.setEnabled(hasSelection)
+        self.cutAct.setEnabled(hasSelection)
 
         self.contextMenu.exec_(event.globalPos())
 
@@ -740,7 +744,7 @@ class CodeEditor(BaseScintilla):
         return offset
 
     def showLine(self, lineNum, highlight=True):
-        if highlight is True:
+        if highlight:
             self.setSelection(
                 lineNum, 0, lineNum, self.lineLength(lineNum) - 1)
         self.ensureLineVisible(lineNum)
@@ -799,7 +803,7 @@ class CodeEditor(BaseScintilla):
             pass
 
     def comment(self):
-        if self.hasSelectedText() is True:
+        if self.hasSelectedText():
             lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
             if lineFrom == lineTo:
                 self.addCommentPrefix(lineFrom)
@@ -814,7 +818,7 @@ class CodeEditor(BaseScintilla):
             self.addCommentPrefix(line)
 
     def unComment(self):
-        if self.hasSelectedText() is True:
+        if self.hasSelectedText():
             lineFrom, indexFrom, lineTo, indexTo = self.getSelection()
             if lineFrom == lineTo:
                 self.removeCommentPrefix(lineFrom)

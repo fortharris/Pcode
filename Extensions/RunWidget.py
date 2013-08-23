@@ -145,10 +145,6 @@ class SetRunParameters(QtGui.QLabel):
         label = QtGui.QLabel("Installed Python")
         hbox.addWidget(label)
 
-        mainLayout.addWidget(
-            QtGui.QLabel("NB: Python must be installed for virtual environment to work."))
-        mainLayout.addStretch(1)
-
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
 
@@ -232,7 +228,7 @@ class SetRunParameters(QtGui.QLabel):
         if self.useVirtualEnvBox.isChecked():
             self.projectData["DefaultInterpreter"] = \
                 os.path.join(self.projectData["venvdir"],
-                             venv, os.path.join("Scripts", "python.exe"))
+                             venv, "Scripts", "python.exe")
         else:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) > 0:
                 self.projectData["DefaultInterpreter"] = \
@@ -341,7 +337,7 @@ class RunWidget(BaseScintilla):
     loadProfile = QtCore.pyqtSignal()
 
     def __init__(
-        self, bottomStackSwitcher, projectData, editorTabWidget, vSplitter, runProjectAct, stopRunAct,
+        self, bottomStackSwitcher, projectData, useData, editorTabWidget, vSplitter, runProjectAct, stopRunAct,
             runFileAct, parent=None):
         BaseScintilla.__init__(self, parent)
 
@@ -353,6 +349,7 @@ class RunWidget(BaseScintilla):
         self.parent = parent
         self.vSplitter = vSplitter
         self.bottomStackSwitcher = bottomStackSwitcher
+        self.useData = useData
 
         self.profileMode = False
         self.tracebackRe = re.compile(r'(\s)*File "(.*?)", line \d.+')
@@ -402,6 +399,8 @@ class RunWidget(BaseScintilla):
         if newState == 2:
             self.vSplitter.showRunning()
             self.setReadOnly(False)
+            self.bottomStackSwitcher.setCurrentWidget(self)
+            self.setFocus(True)
         else:
             self.setReadOnly(True)
 
@@ -486,14 +485,19 @@ class RunWidget(BaseScintilla):
     def pythonPath(self):
         if self.projectData["DefaultInterpreter"] == "None":
             message = QtGui.QMessageBox.critical(
-                self, "Run", "No python interpreter to run your code.")
+                self, "Run", "No Python interpreter to run your code. Please install Python.")
             return None
         else:
             if os.path.exists(self.projectData["DefaultInterpreter"]):
-                return self.projectData["DefaultInterpreter"]
+                if len(self.useData.SETTINGS["InstalledInterpreters"]) == 0:
+                    message = QtGui.QMessageBox.critical(
+                        self, "Run", "Python must be installed for virtual environment to work.")
+                    return None
+                else:
+                    return self.projectData["DefaultInterpreter"]
             else:
                 message = QtGui.QMessageBox.critical(
-                    self, "Run", "Your current python interpreter of choice is not available.")
+                    self, "Run", "The current Python interpreter is not available.")
                 return None
 
     def runModule(self, runScript, fileName, run_internal, run_with_args, args):
@@ -503,9 +507,9 @@ class RunWidget(BaseScintilla):
         env = QtCore.QProcessEnvironment().systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
 
-        if run_internal is True:
+        if run_internal:
             self.currentProcess = fileName
-            if run_with_args is True:
+            if run_with_args:
                 self.printout(">>> Running: {0} <arguments={1}>\n".format(
                     self.currentProcess, args), 4)
                 self.runProcess.start(pythonPath, [
@@ -516,7 +520,7 @@ class RunWidget(BaseScintilla):
                 self.runProcess.start(pythonPath, [runScript], self.openMode)
             self.runProcess.waitForStarted()
         else:
-            if run_with_args is True:
+            if run_with_args:
                 self.runProcess.startDetached(
                     pythonPath, ["-i", runScript, args])
             else:
@@ -533,13 +537,17 @@ class RunWidget(BaseScintilla):
         env = QtCore.QProcessEnvironment().systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
 
-        if run_internal is True:
+        if run_internal:
             self.currentProcess = fileName
-            self.printout(">>> Trace Execution: {0}\n".format(
-                self.currentProcess), 4)
+            if run_with_args:
+                self.printout(">>> Trace Execution: {0} <arguments={1}>\n".format(
+                    self.currentProcess, args), 4)
+            else:
+                self.printout(">>> Trace Execution: {0} <arguments=None>\n".format(
+                    self.currentProcess), 4)
             if option == 0:
                 # calling relationships
-                if run_with_args is True:
+                if run_with_args:
                     self.runProcess.start(pythonPath, ['-m', "trace",
                                                        '--trackcalls', runScript, args], self.openMode)
                 else:
@@ -547,7 +555,7 @@ class RunWidget(BaseScintilla):
                                                        '--trackcalls', runScript], self.openMode)
             elif option == 1:
                 # functions called
-                if run_with_args is True:
+                if run_with_args:
                     self.runProcess.start(pythonPath, ['-m', "trace",
                                                        '--listfuncs', runScript, args], self.openMode)
                 else:
@@ -555,17 +563,20 @@ class RunWidget(BaseScintilla):
                                                        '--listfuncs', runScript], self.openMode)
             elif option == 2:
                 # creates a file with same code but showing how many times
-                # each line of code runs
-                if run_with_args is True:
+                # each line of code args
+                countfile = os.path.abspath(os.path.join("temp", "count.txt"))
+                file = open(countfile, 'w')
+                file.close()
+                if run_with_args:
                     self.runProcess.start(pythonPath, ['-m', "trace",
-                                                       '--count', runScript, args], self.openMode)
+                                                       '--count', '--file={0}'.format(countfile), runScript, args], self.openMode)
                 else:
                     self.runProcess.start(pythonPath, ['-m', "trace",
-                                                       '--count', '--file=<file>', runScript], self.openMode)
+                                                       '--count', '--file={0}'.format(countfile), runScript], self.openMode)
             elif option == 3:
                 # show in real time what lines of code are currently being
                 # executed
-                if run_with_args is True:
+                if run_with_args:
                     self.runProcess.start(
                         pythonPath, ['-m', "trace", '--timing',
                                      '--trace', runScript, args], self.openMode)
@@ -576,7 +587,7 @@ class RunWidget(BaseScintilla):
         else:
             if option == 0:
                 # calling relationships
-                if run_with_args is True:
+                if run_with_args:
                     self.runProcess.startDetached(
                         pythonPath, ['-i', '-m', "trace",
                                                  '--trackcalls', runScript, args], self.openMode)
@@ -586,7 +597,7 @@ class RunWidget(BaseScintilla):
                                                  '--trackcalls', runScript])
             elif option == 1:
                 # functions called
-                if run_with_args is True:
+                if run_with_args:
                     self.runProcess.startDetached(
                         pythonPath, ['-i', '-m', "trace",
                                                  '--listfuncs', runScript, args])
@@ -597,7 +608,7 @@ class RunWidget(BaseScintilla):
             elif option == 2:
                 # creates a file with same code but showing how many times each
                 # line of code runs
-                if run_with_args is True:
+                if run_with_args:
                     self.runProcess.startDetached(
                         pythonPath, ['-i', '-m', "trace",
                                                  '--count', runScript, args])
@@ -608,7 +619,7 @@ class RunWidget(BaseScintilla):
             elif option == 3:
                 # show in real time what lines of code are currently being
                 # executed
-                if run_with_args is True:
+                if run_with_args:
                     self.runProcess.startDetached(
                         pythonPath, ['-i', '-m', "trace",
                                                  '--timing', '--trace', runScript, args])
@@ -635,9 +646,9 @@ class RunWidget(BaseScintilla):
             p_args.append(runScript)
 
         self.profileMode = True
-        if run_internal is True:
+        if run_internal:
             self.currentProcess = fileName
-            if run_with_args is True:
+            if run_with_args:
                 self.printout(">>> Profiling: {0} <arguments={1}>\n".format(
                     self.currentProcess, args), 4)
             else:
