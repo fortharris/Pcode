@@ -28,18 +28,18 @@ Pcode seeks to simplify the process of python development by means of:
 1. Etc.
 
 ### Dependencies:
-1. Python 3 (for running programs)
-1. PyQt4 (if you are running from source)
+1. Python 3 ( for running programs )
+1. PyQt4 ( if you are running from source )
 
 Then perhaps:
-* Pywin32 for windows ( if you want to stamp executable )
+* Pywin32 for windows ( for stamping executable )
 
 ### License:
 * GPL v3
 
-### Latest version: 0.1 Beta 3
+### Latest version: 0.1 Beta 4
         
-###Download: [Windows Installer](https://www.dropbox.com/s/7kzeeiq6wd1bnrd/Pcode%200.1%20Beta%203.exe)
+###Download: [Windows Installer](https://www.dropbox.com/s/nkz8nobasytqa6j/Pcode%200.1%20Beta%204.exe)
 
 Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
 
