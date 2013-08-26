@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 from zipimport import zipimporter
 import tokenize
@@ -8,7 +9,6 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.Qsci import QsciScintilla
 
 from Extensions.BaseScintilla import BaseScintilla
-from Extensions.Exporter import Exporter
 from Extensions.ZoomWidget import ZoomWidget
 from Extensions.Notification import Notification
 from Extensions import StyleSheet
@@ -18,15 +18,47 @@ class TokenizeThread(QtCore.QThread):
 
     def run(self):
         self.tokenList = []
-        for tkn_type, tkn_rep, tkn_begin, tkn_end, tkn_expr in \
-                tokenize.generate_tokens(StringIO(self.source).readline):
-            if tkn_type == tokenize.OP:
-                line = tkn_begin[0]
-                if line not in self.tokenList:
-                    self.tokenList.append(line)
+        try:
+            for type, rep, begin, end, expr in \
+                    tokenize.generate_tokens(StringIO(self.source).readline):
+                if type == tokenize.OP:
+                    line = begin[0]
+                    if line not in self.tokenList:
+                        self.tokenList.append(line)
+        except:
+            print("Token Error")
 
     def tokenize(self, source):
         self.source = source
+
+        self.start()
+
+
+class FindOccurenceThread(QtCore.QThread):
+
+    marckOccurrence = QtCore.pyqtSignal(list)
+
+    def run(self):
+        word = re.escape(self.word)
+        if self.wholeWord:
+            word = "\\b{0}\\b".format(word)
+        flags = re.UNICODE | re.LOCALE
+        search = re.compile(word, flags)
+
+        lineno = 0
+        foundList = []
+        for lineText in self.source.splitlines():
+            for i in search.finditer(lineText):
+                start = i.start()
+                end = i.end()
+                foundList.append([lineno, start, end])
+            lineno += 1
+        self.marckOccurrence.emit(foundList)
+
+    def find(self, word, wholeWord, source):
+        self.source = source
+        self.word = word
+        self.wholeWord = wholeWord
 
         self.start()
 
@@ -225,9 +257,11 @@ class CodeEditor(BaseScintilla):
 
         self.setMouseTracking(True)
 
-        self.exporter = Exporter(self)
         self.autoCompletionThread = AutoCompletionThread()
         self.autoCompletionThread.completions.connect(self.showCompletion)
+
+        self.findOccurenceThread = FindOccurenceThread()
+        self.findOccurenceThread.marckOccurrence.connect(self.markOccurence)
 
         self.docThread = DocThread()
         self.docThread.docAvailable.connect(
@@ -250,7 +284,7 @@ class CodeEditor(BaseScintilla):
         self.occurrencesTimer = QtCore.QTimer()
         self.occurrencesTimer.setSingleShot(True)
         self.occurrencesTimer.setInterval(1000)
-        self.occurrencesTimer.timeout.connect(self.findMatches)
+        self.occurrencesTimer.timeout.connect(self.findOccurrences)
 
         self.completionThreadTimer = QtCore.QTimer()
         self.completionThreadTimer.setSingleShot(True)
@@ -442,7 +476,7 @@ class CodeEditor(BaseScintilla):
     def getDoc(self):
         self.docThread.getDoc(self.refactor, self.hoverOffset)
 
-    def findMatches(self):
+    def findOccurrences(self):
         self.clearAllIndicators(self.matchIndicator)
         if self.useData.SETTINGS['MarkSearchOccurrence'] == 'True':
             wholeWord = True
@@ -457,20 +491,17 @@ class CodeEditor(BaseScintilla):
             else:
                 word = self.get_current_word()
                 if not word:
-                    self.clearSearchIndicators()
+                    self.clearMatchIndicators()
                     return
-            found = self.findFirstTarget(word, False, True,
-                                         wholeWord, 0, 0, -1, -1)
-            foundCount = 0
-            while found:
-                tgtPos, tgtLen = self.getFoundTarget()
-                line, pos = self.lineIndexFromPosition(tgtPos)
-                self.setIndicatorRange(self.matchIndicator, tgtPos, tgtLen)
-                foundCount += 1
-                found = self.findNextTarget()
-            if foundCount == 1:
-                self.clearIndicatorRange(
-                    line, 0, line, self.lineLength(line), self.matchIndicator)
+            self.findOccurenceThread.find(word, wholeWord, self.text())
+
+    def markOccurence(self, foundList):
+        self.clearAllIndicators(self.matchIndicator)
+        if len(foundList) == 1:
+            return
+        for i in foundList:
+            self.fillIndicatorRange(
+                i[0], i[1], i[0], i[2], self.matchIndicator)
 
     def mouseMoveEvent(self, event):
         if self.useData.SETTINGS["DocOnHover"] == "True":
@@ -569,7 +600,7 @@ class CodeEditor(BaseScintilla):
         isProjectFile = self.editorTabWidget.isProjectFile(filePath)
         self.refactor.refactorMenu.setEnabled(isProjectFile)
         self.refactor.findOccurrencesAct.setEnabled(isProjectFile)
-        
+
         hasSelection = self.hasSelectedText()
         self.copyAct.setEnabled(hasSelection)
         self.cutAct.setEnabled(hasSelection)
@@ -620,7 +651,7 @@ class CodeEditor(BaseScintilla):
         if not word:
             pass
         else:
-            self.deleteWordLeft()
+            self.deleteWordToLeft()
         self.removeSelectedText()
         if id == 1:
             file = open(os.path.join(self.useData.appPathDict[
@@ -660,27 +691,6 @@ class CodeEditor(BaseScintilla):
     def updateLexer(self, lexer):
         self.lexer = lexer
         self.setLexer(lexer)
-
-    def export(self):
-        options = QtGui.QFileDialog.Options()
-        if self.DATA["filePath"] is None:
-            name = "Untitled"
-        else:
-            name = os.path.splitext(os.path.basename(self.DATA["filePath"]))[0]
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
-                                                     "Export",
-                                                     os.path.join(
-                                                         self.useData.getLastOpenedDir(
-                                                         ), name + '.html'),
-                                                     "Html (*.html);;ODT(*.odt);;PDF (*.pdf);;RTF (*.rtf);;TeX (*.tex)", options)
-        if fileName:
-            self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
-
-            fileName = os.path.normpath(fileName)
-            t = os.path.split(fileName)[1]
-            ext = os.path.splitext(t)[1]
-
-            self.exporter.export(ext, fileName)
 
     def _toggleBookmark(self):
         nmargin = 0

@@ -17,7 +17,7 @@ from Extensions import Global
 from Extensions.Refactor.Refactor import Refactor
 from Extensions.RunWidget import SetRunParameters
 from Extensions.ProjectManager.ConfigureProject import ConfigureProject
-from Extensions.Feedback import Feedback
+from Extensions import StyleSheet
 
 
 class EditorTabBar(QtGui.QTabBar):
@@ -170,8 +170,6 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.busyWidget = busyWidget
         self.projectSettings = projectSettings
         self.bookmarkToolbar = bookmarkToolbar
-        
-        self.feedbackForm = Feedback()
 
         self.toolWidgetList = []
         # backup keys are generated from the system time, but sometimes
@@ -203,9 +201,14 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.viewSwitcher = ViewSwitcher(self)
         self.gotoLineWidget = GotoLineWidget(self)
 
-        self.mainLayout = QtGui.QVBoxLayout()
-        self.mainLayout.setContentsMargins(0, 22, 14, 12)
-        self.setLayout(self.mainLayout)
+        mainLayout = QtGui.QVBoxLayout()
+        mainLayout.setContentsMargins(0, 22, 14, 12)
+        self.setLayout(mainLayout)
+
+        self.topVBox = QtGui.QVBoxLayout()
+        mainLayout.addLayout(self.topVBox)
+
+        mainLayout.addStretch(1)
 
         self.addToolWidget(self.configDialog)
         self.addToolWidget(self.externalLauncher)
@@ -213,9 +216,6 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.addToolWidget(self.setRunParameters)
         self.addToolWidget(self.viewSwitcher)
         self.addToolWidget(self.gotoLineWidget)
-        self.addToolWidget(self.feedbackForm, 1)
-
-        self.mainLayout.addStretch(1)
 
         self.filesWatch = QtCore.QFileSystemWatcher()
         self.filesWatch.fileChanged.connect(self.fileChanged)
@@ -253,15 +253,11 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.newFileMenu.addAction(self.newHtmlFileAct)
         self.newFileMenu.addAction(self.newCssFileAct)
 
-    def addToolWidget(self, widget, position=0):
+    def addToolWidget(self, widget):
         hbox = QtGui.QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(widget)
-        if position == 0:
-            pass
-        else:
-            hbox.addStretch(1)
-        self.mainLayout.addLayout(hbox)
+        self.topVBox.addLayout(hbox)
 
         self.toolWidgetList.append(widget)
         widget.hide()
@@ -390,10 +386,6 @@ class EditorTabWidget(QtGui.QTabWidget):
                                            self, statusTip="Save Copy As",
                                            triggered=self.saveCopyAs)
 
-        self.exportAct = QtGui.QAction("Export...", self,
-                                       statusTip="Export to other formats",
-                                       triggered=self.export)
-
         self.printAct = \
             QtGui.QAction(
                 QtGui.QIcon(
@@ -514,9 +506,6 @@ class EditorTabWidget(QtGui.QTabWidget):
         if index is None:
             index = self.currentIndex()
         self.focusedEditor(index).notify.showMessage(message)
-
-    def export(self):
-        self.currentEditor.export()
 
     def undoAction(self):
         self.currentEditor.undo()
@@ -807,9 +796,6 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def showLine(self, lineNum, highlight=True):
         self.focusedEditor().showLine(lineNum, highlight)
-        
-    def showFeedbackWidget(self):
-        self.showMe(self.feedbackForm)
 
     def writeLock(self):
         if self.focusedEditor().isReadOnly() is False:
@@ -1124,8 +1110,12 @@ class EditorTabWidget(QtGui.QTabWidget):
         editor2.setDocument(editor.document())
         subStack.addWidget(editorSplitter)
         subStack.addWidget(snapShot)
-        subStack.addWidget(DiffWindow(editor, snapShot))
-        subStack.addWidget(DiffWindow(editor, snapShot))
+        diffWindow = DiffWindow(editor, snapShot)
+        diffWindow.setStyleSheet(StyleSheet.editorStyle)
+        subStack.addWidget(diffWindow)
+        diffWindow = DiffWindow(editor, snapShot)
+        diffWindow.setStyleSheet(StyleSheet.editorStyle)
+        subStack.addWidget(diffWindow)
 
         if extension in self.useData.supportedFileTypes:
             icon = QtGui.QIcon(os.path.join("Resources", "images", "script"))

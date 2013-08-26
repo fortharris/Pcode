@@ -38,7 +38,7 @@ class GetPathLine(QtGui.QWidget):
 
         homePath = QtCore.QDir().homePath()
 
-        # XXX: Todo: Workspace must unpack to the platform specific home
+        # Todo: Workspace must unpack to the platform specific home
         # directory by default
         if sys.platform == 'win32':
             path = os.path.join(homePath,

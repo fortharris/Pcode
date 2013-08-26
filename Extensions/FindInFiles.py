@@ -109,7 +109,7 @@ class ConfirmReplaceDialog(QtGui.QDialog):
             mainLayout.addWidget(diff)
         else:
             message = QtGui.QMessageBox.information(
-                self, "Replace", "Both files are the same.")
+                self, "Replace", "There is nothing to replace.")
             return
 
         hbox = QtGui.QHBoxLayout()
@@ -252,7 +252,7 @@ class FindInFiles(QtGui.QWidget):
         hbox.setStretch(1, 1)
         hbox.setStretch(3, 1)
 
-        hbox.addWidget(QtGui.QLabel("Filter (*.ext; ...)"))
+        hbox.addWidget(QtGui.QLabel("Extensions (*.ext; ...)"))
 
         self.filterEdit = QtGui.QLineEdit()
         self.filterEdit.setText('*')
@@ -398,16 +398,16 @@ class FindInFiles(QtGui.QWidget):
     def find(self):
         self.text = self.findtextLine.text()
         if self.regExp:
-            txt = self.text
+            text = self.text
         else:
-            txt = re.escape(self.text)
+            text = re.escape(self.text)
         if self.matchWholeWord:
-            txt = "\\b{0}\\b".format(txt)
+            text = "\\b{0}\\b".format(text)
         flags = re.UNICODE | re.LOCALE
         if not self.matchCase:
             flags |= re.IGNORECASE
         try:
-            self.search = re.compile(txt, flags)
+            self.search = re.compile(text, flags)
         except re.error as err:
             message = QtGui.QMessageBox.warning(self, "Find-in-Files",
                                                 "Wrong regular expression: {0}!".format(str(err).capitalize()))

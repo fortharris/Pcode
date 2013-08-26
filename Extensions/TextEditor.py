@@ -7,7 +7,6 @@ from Extensions.ZoomWidget import ZoomWidget
 from Extensions import Global
 from Extensions.Notification import Notification
 from Extensions import StyleSheet
-from Extensions.Exporter import Exporter
 
 
 class TextEditor(BaseScintilla):
@@ -21,8 +20,6 @@ class TextEditor(BaseScintilla):
         self.DATA = DATA
         self.colorScheme = colorScheme
         self.editorTabWidget = editorTabWidget
-
-        self.exporter = Exporter(self)
 
         self.setFont(Global.getDefaultFont())
         self.setWrapMode(QsciScintilla.WrapWord)
@@ -218,27 +215,6 @@ class TextEditor(BaseScintilla):
             self.setAutoCompletionSource(QsciScintilla.AcsDocument)
         else:
             self.setAutoCompletionSource(QsciScintilla.AcsNone)
-
-    def export(self):
-        options = QtGui.QFileDialog.Options()
-        if self.DATA["filePath"] is None:
-            name = "Untitled"
-        else:
-            name = os.path.splitext(os.path.basename(self.DATA["filePath"]))[0]
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
-                                                     "Export",
-                                                     os.path.join(
-                                                         self.useData.getLastOpenedDir(
-                                                         ), name + '.html'),
-                                                     "Html (*.html);;ODT(*.odt);;PDF (*.pdf);;RTF (*.rtf);;TeX (*.tex)", options)
-        if fileName:
-            self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
-
-            fileName = os.path.normpath(fileName)
-            t = os.path.split(fileName)[1]
-            ext = os.path.splitext(t)[1]
-
-            self.exporter.export(ext, fileName)
 
     def contextMenuEvent(self, event):
         state = self.hasSelectedText()

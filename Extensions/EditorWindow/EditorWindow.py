@@ -14,7 +14,6 @@ from Extensions.Favourites import Favourites
 from Extensions.ExternalLauncher import ExternalLauncher
 from Extensions.Assistant import Assistant
 from Extensions.TasksWidget import Tasks
-from Xtra.ClipBoard import ClipBoard
 from Extensions.BookmarkWidget import BookmarkWidget
 from Extensions.RunWidget import RunWidget
 from Extensions.Messages import MessagesWidget
@@ -93,7 +92,7 @@ class EditorWindow(QtGui.QWidget):
 
         self.writePad = WritePad(self.pathDict[
                                  "notes"], self.pathDict["name"], self)
-                                 
+
         self.bookmarkToolbar = QtGui.QToolBar("Bookmarks")
         self.bookmarkToolbar.setMovable(False)
         self.bookmarkToolbar.setFloatable(False)
@@ -152,7 +151,7 @@ class EditorWindow(QtGui.QWidget):
             os.path.join("Resources", "images", "tree")), "Project")
 
         self.fileExplorer = FileExplorer(
-            self.useData, self.PROJECT_DATA['shortcuts'], self.messagesWidget)
+            self.useData, self.PROJECT_DATA['shortcuts'], self.messagesWidget, self.editorTabWidget)
         self.fileExplorer.fileActivated.connect(self.editorTabWidget.loadfile)
         self.sideBottomTab.addTab(self.fileExplorer, QtGui.QIcon(
             os.path.join("Resources", "images", "tree")), "File System")
@@ -165,7 +164,6 @@ class EditorWindow(QtGui.QWidget):
         self.mainMenu.addAction(self.editorTabWidget.saveAllAct)
         self.mainMenu.addAction(self.editorTabWidget.saveAsAct)
         self.mainMenu.addAction(self.editorTabWidget.saveCopyAsAct)
-        self.mainMenu.addAction(self.editorTabWidget.exportAct)
         self.mainMenu.addAction(self.editorTabWidget.printAct)
 
         self.projectMenu = QtGui.QMenu("Project")
@@ -223,7 +221,8 @@ class EditorWindow(QtGui.QWidget):
         self.statusbar.addPermanentWidget(self.uptimeLabel)
 
         self.runWidget = RunWidget(
-            self.bottomStackSwitcher, self.PROJECT_DATA["settings"], self.useData,
+            self.bottomStackSwitcher, self.PROJECT_DATA[
+                "settings"], self.useData,
             self.editorTabWidget, self.vSplitter,
             self.runProjectAct, self.stopRunAct, self.runFileAct)
         self.addBottomWidget(self.runWidget,
@@ -245,10 +244,6 @@ class EditorWindow(QtGui.QWidget):
 
         self.addBottomWidget(self.messagesWidget,
                              QtGui.QIcon(os.path.join("Resources", "images", "speech_bubble")), "Messages")
-
-        clipBoard = ClipBoard()
-        self.addBottomWidget(clipBoard,
-                             QtGui.QIcon(os.path.join("Resources", "images", "product")), "Clipboard")
 
         self.profiler = Profiler(self.useData, self.bottomStackSwitcher)
         self.addBottomWidget(self.profiler,
@@ -308,7 +303,7 @@ class EditorWindow(QtGui.QWidget):
 
         self.userGuideAct = QtGui.QAction(
             "User Guide", self, statusTip="User Guide",
-                                    triggered=self.launchHelp)
+                                         triggered=self.launchHelp)
 
         self.pythonManualsAct = QtGui.QAction("Python Manuals", self,
                                               statusTip="Python Manuals",
@@ -320,7 +315,7 @@ class EditorWindow(QtGui.QWidget):
 
         self.feedbackAct = QtGui.QAction("Send Feedback", self,
                                          statusTip="Send Feedback",
-                                             triggered=self.showFeedbackWidget)
+                                        triggered=self.openFeedbackLink)
         #----------------------------------------------------------------------
         self.runFileAct = QtGui.QAction(
             QtGui.QIcon(os.path.join("Resources", "images", "rerun")),
@@ -459,9 +454,6 @@ class EditorWindow(QtGui.QWidget):
     def showFindInFilesWidget(self):
         self.searchWidget.hide()
         self.findInFiles.dashboard.show()
-        
-    def showFeedbackWidget(self):
-        self.editorTabWidget.showFeedbackWidget()
 
     def createToolbars(self):
 
@@ -561,6 +553,10 @@ class EditorWindow(QtGui.QWidget):
 
     def addToLibrary(self):
         self.library.addToLibrary(self.editorTabWidget)
+
+    def openFeedbackLink(self):
+        QtGui.QDesktopServices().openUrl(QtCore.QUrl(
+            """https://twitter.com/PcodeIDE"""))
 
     def updateUptime(self):
         self.uptime += 1

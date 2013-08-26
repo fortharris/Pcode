@@ -64,8 +64,6 @@ class About(QtGui.QDialog):
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["AutoPep8", autopep8.__version__, "Hideo Hattori"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
-            ["Export Formats", "5.2.2", "Detlev Offenbach"]))
-        table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["CxFreeze", cx_Freeze.version, "Anthony Tuininga"]))
         self.view.addWidget(table)
 

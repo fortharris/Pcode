@@ -1,11 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# Copyright (c) 2004 - 2012 Detlev Offenbach <detlev@die-offenbachs.de>
-#
-
-"""
-Module implementing a compatability interface class to QsciScintilla.
-"""
 
 import re
 from PyQt4 import QtGui, QtCore
@@ -18,7 +10,7 @@ class BaseScintilla(QsciScintilla):
         QsciScintilla.__init__(self, parent)
 
     def updateShortcuts(self, useData):
-        self.clearKeys()
+        self.standardCommands().clearKeys()
 
         shortcuts = useData.CUSTOM_DEFAULT_SHORTCUTS
 
@@ -80,47 +72,49 @@ class BaseScintilla(QsciScintilla):
             shortcuts["Editor"]["Move-Right-One-Character"][0], self)
         self.shortMoveCursorRight.activated.connect(self.moveCursorRight)
 
-        self.shortMoveCursorLeft = QtGui.QShortcut(
+        self.shortMoveLeftOneCharacter = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Left-One-Character"][0], self)
-        self.shortMoveCursorLeft.activated.connect(self.moveCursorLeft)
+        self.shortMoveLeftOneCharacter.activated.connect(
+            self.moveLeftOneCharacter)
 
-        self.shortNewLineBelow = QtGui.QShortcut(
+        self.shortInsertNewline = QtGui.QShortcut(
             shortcuts["Editor"]["Insert-Newline"][0], self)
-        self.shortNewLineBelow.activated.connect(self.newLineBelow)
+        self.shortInsertNewline.activated.connect(self.insertNewline)
 
-        self.shortDeleteBack = QtGui.QShortcut(
+        self.shortDeletePreviousCharacter = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Previous-Character"][0], self)
-        self.shortDeleteBack.activated.connect(self.deleteBack)
+        self.shortDeletePreviousCharacter.activated.connect(
+            self.deletePreviousCharacter)
 
         self.shortDeleteCurrentCharacter = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Current-Character"][0], self)
         self.shortDeleteCurrentCharacter.activated.connect(
             self.deleteCurrentCharacter)
 
-        self.shortDeleteWordLeft = QtGui.QShortcut(
+        self.shortDeleteWordToLeft = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Word-To-Left"][0], self)
-        self.shortDeleteWordLeft.activated.connect(self.deleteWordLeft)
+        self.shortDeleteWordToLeft.activated.connect(self.deleteWordToLeft)
 
-        self.shortDeleteWordRight = QtGui.QShortcut(
+        self.shortDeleteWordToRight = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Word-To-Right"][0], self)
-        self.shortDeleteWordRight.activated.connect(self.deleteWordRight)
+        self.shortDeleteWordToRight.activated.connect(self.deleteWordToRight)
 
-        self.shortDeleteLineRight = QtGui.QShortcut(
+        self.shortDeleteLineToRight = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Line-To-Left"][0], self)
-        self.shortDeleteLineRight.activated.connect(self.deleteLineLeft)
+        self.shortDeleteLineToRight.activated.connect(self.deleteLineLeft)
 
-        self.shortDeleteLineRight = QtGui.QShortcut(
+        self.shortDeleteLineToRight = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Line-To-Right"][0], self)
-        self.shortDeleteLineRight.activated.connect(self.deleteLineRight)
+        self.shortDeleteLineToRight.activated.connect(self.deleteLineToRight)
 
         self.shortExtendSelectionWordLeft = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Left-One-Word"][0], self)
         self.shortExtendSelectionWordLeft.activated.connect(
-            self.extendSelectionWordLeft)
+            self.extendSelectionLeftOneWord)
 
-        self.shortExtendSelectionWordRight = QtGui.QShortcut(
+        self.shortExtendSelectionLeftOneWord = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Right-One-Word"][0], self)
-        self.shortExtendSelectionWordRight.activated.connect(
+        self.shortExtendSelectionLeftOneWord.activated.connect(
             self.extendSelectionWordRight)
 
         self.shortMoveLeftOneWordPart = QtGui.QShortcut(
@@ -131,7 +125,7 @@ class BaseScintilla(QsciScintilla):
         self.shortMoveRightOneWordPart = QtGui.QShortcut(
             shortcuts["Editor"]["Move-Right-One-Word-Part"][0], self)
         self.shortMoveRightOneWordPart.activated.connect(
-            self.extendSelectionWordRight)
+            self.moveRightOneWordPart)
 
         self.shortStutteredMoveUpOnePage = QtGui.QShortcut(
             shortcuts["Editor"]["Stuttered-Move-Up-One-Page"][0], self)
@@ -318,51 +312,51 @@ class BaseScintilla(QsciScintilla):
         self.shortDeleteRightToEndOfNextWord.activated.connect(
             self.deleteRightToEndOfNextWord)
 
-        self.shortMoveCursorToEOL = QtGui.QShortcut(
+        self.shortMoveCursorToEndOfDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-End-Of-Document-Line"][0], self)
-        self.shortMoveCursorToEOL.activated.connect(
-            self.moveCursorToEOL)
+        self.shortMoveCursorToEndOfDocumentLine.activated.connect(
+            self.moveCursorToEndOfDocumentLine)
 
-        self.shortMoveCursorToBOL = QtGui.QShortcut(
+        self.shortMoveCursorToStartOfDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-Start-Of-Document-Line"][0], self)
-        self.shortMoveCursorToBOL.activated.connect(
-            self.moveCursorToBOL)
-            
+        self.shortMoveCursorToStartOfDocumentLine.activated.connect(
+            self.moveCursorToStartOfDocumentLine)
+
         self.shortExtendSelectionToStartOfDisplayLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-Start-Of-Display-Line"][0], self)
         self.shortExtendSelectionToStartOfDisplayLine.activated.connect(
             self.extendSelectionToStartOfDisplayLine)
-            
+
         self.shortExtendRectangularSelectionUpOneLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Rectangular-Selection-Up-One-Line"][0], self)
         self.shortExtendRectangularSelectionUpOneLine.activated.connect(
             self.extendRectangularSelectionUpOneLine)
-            
+
         self.shortMoveToFirstVisibleCharacterInDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-First-Visible-Character-In-Document-Line"][0], self)
         self.shortMoveToFirstVisibleCharacterInDocumentLine.activated.connect(
             self.moveToFirstVisibleCharacterInDocumentLine)
-            
+
         self.shortExtendRectangularSelectionToFirstVisibleCharacterInDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Rectangular-Selection-To-First-Visible-Character-In-Document-Line"][0], self)
         self.shortExtendRectangularSelectionToFirstVisibleCharacterInDocumentLine.activated.connect(
             self.extendRectangularSelectionToFirstVisibleCharacterInDocumentLine)
-            
+
         self.shortExtendRectangularSelectionToStartOfDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Rectangular-Selection-To-Start-Of-Document-Line"][0], self)
         self.shortExtendRectangularSelectionToStartOfDocumentLine.activated.connect(
             self.extendRectangularSelectionToStartOfDocumentLine)
-            
+
         self.shortExtendSelectionLeftOneWordPart = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Left-One-Word-Part"][0], self)
         self.shortExtendSelectionLeftOneWordPart.activated.connect(
             self.extendSelectionLeftOneWordPart)
-            
+
         self.shortExtendSelectionToEndOfPreviousWord = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-End-Of-Previous-Word"][0], self)
         self.shortExtendSelectionToEndOfPreviousWord.activated.connect(
             self.extendSelectionToEndOfPreviousWord)
-            
+
         self.shortExtendSelectionToStartOfDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-Start-Of-Document-Line"][0], self)
         self.shortExtendSelectionToStartOfDocumentLine.activated.connect(
@@ -372,236 +366,242 @@ class BaseScintilla(QsciScintilla):
             shortcuts["Editor"]["Stuttered-Extend-Selection-Down-One-Page"][0], self)
         self.shortStutteredExtendSelectionDownOnePage.activated.connect(
             self.stutteredExtendSelectionDownOnePage)
-            
+
         self.shortExtendSelectionToEndOfDisplayOrDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-End-Of-Display-Or-Document-Line"][0], self)
         self.shortExtendSelectionToEndOfDisplayOrDocumentLine.activated.connect(
             self.extendSelectionToEndOfDisplayOrDocumentLine)
-            
+
         self.shortExtendRectangularSelectionToEndOfDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Rectangular-Selection-To-End-Of-Document-Line"][0], self)
         self.shortExtendRectangularSelectionToEndOfDocumentLine.activated.connect(
             self.extendSelectionToEndOfDisplayOrDocumentLine)
-            
+
         self.shortMoveToEndOfDisplayOrDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-End-Of-Display-Or-Document-Line"][0], self)
         self.shortMoveToEndOfDisplayOrDocumentLine.activated.connect(
             self.moveToEndOfDisplayOrDocumentLine)
-            
+
         self.shortMoveToEndOfPreviousWord = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-End-Of-Previous-Word"][0], self)
         self.shortMoveToEndOfPreviousWord.activated.connect(
             self.moveToEndOfPreviousWord)
-            
+
         self.shortExtendSelectionToFirstVisibleCharacterInDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-First-Visible-Character-In-Document-Line"][0], self)
         self.shortExtendSelectionToFirstVisibleCharacterInDocumentLine.activated.connect(
             self.extendSelectionToFirstVisibleCharacterInDocumentLine)
-            
+
         self.shortExtendSelectionToStartOfDisplayOrDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-Start-Of-Display-Or-Document-Line"][0], self)
         self.shortExtendSelectionToStartOfDisplayOrDocumentLine.activated.connect(
             self.extendSelectionToStartOfDisplayOrDocumentLine)
-            
+
         self.shortDeleteCurrentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Current-Line"][0], self)
         self.shortDeleteCurrentLine.activated.connect(
             self.deleteCurrentLine)
-            
+
         self.shortExtendSelectionRightOneWordPart = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-Right-One-Word-Part"][0], self)
         self.shortExtendSelectionRightOneWordPart.activated.connect(
             self.extendSelectionRightOneWordPart)
-            
+
         self.shortExtendSelectionToFirstVisibleCharacterInDisplayOrDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-First-Visible-Character-In-Display-Or-Document-Line"][0], self)
         self.shortExtendSelectionToFirstVisibleCharacterInDisplayOrDocumentLine.activated.connect(
             self.extendSelectionToFirstVisibleCharacterInDisplayOrDocumentLine)
-            
+
         self.shortExtendSelectionToEndOfNextWorde = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-End-Of-Next-Word"][0], self)
         self.shortExtendSelectionToEndOfNextWorde.activated.connect(
             self.extendSelectionToEndOfNextWord)
-            
+
         self.shortStutteredExtendSelectionUpOnePage = QtGui.QShortcut(
             shortcuts["Editor"]["Stuttered-Extend-Selection-Up-One-Page"][0], self)
         self.shortStutteredExtendSelectionUpOnePage.activated.connect(
             self.stutteredExtendSelectionUpOnePage)
-            
+
         self.shortExtendSelectionToEndOfDisplayLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-End-Of-Display-Line"][0], self)
         self.shortExtendSelectionToEndOfDisplayLine.activated.connect(
             self.extendSelectionToEndOfDisplayLine)
-            
+
         self.shortExtendSelectionToEndOfDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Selection-To-End-Of-Document-Line"][0], self)
         self.shortExtendSelectionToEndOfDocumentLine.activated.connect(
             self.extendSelectionToEndOfDocumentLine)
-            
+
         self.shortExtendRectangularSelectionUpOnePage = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Rectangular-Selection-Up-One-Page"][0], self)
         self.shortExtendRectangularSelectionUpOnePage.activated.connect(
             self.extendRectangularSelectionUpOnePage)
-            
+
         self.shortExtendRectangularSelectionDownOnePage = QtGui.QShortcut(
             shortcuts["Editor"]["Extend-Rectangular-Selection-Down-One-Page"][0], self)
         self.shortExtendRectangularSelectionDownOnePage.activated.connect(
             self.extendRectangularSelectionDownOnePage)
-            
+
         self.shortDeletePreviousCharacterIfNotAtStartOfLine = QtGui.QShortcut(
             shortcuts["Editor"]["Delete-Previous-Character-If-Not-At-Start-Of-Line"][0], self)
         self.shortDeletePreviousCharacterIfNotAtStartOfLine.activated.connect(
             self.deletePreviousCharacterIfNotAtStartOfLine)
-            
+
         self.shortMoveToStartOfDisplayOrDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-Start-Of-Display-Or-Document-Line"][0], self)
         self.shortMoveToStartOfDisplayOrDocumentLine.activated.connect(
             self.moveToStartOfDisplayOrDocumentLine)
-            
+
         self.shortMoveToFirstVisibleCharacterOfDisplayInDocumentLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-First-Visible-Character-Of-Display-In-Document-Line"][0], self)
         self.shortMoveToFirstVisibleCharacterOfDisplayInDocumentLine.activated.connect(
             self.moveToFirstVisibleCharacterOfDisplayInDocumentLine)
-            
+
         self.shortMoveToStartOfDisplayLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-Start-Of-Display-Line"][0], self)
         self.shortMoveToStartOfDisplayLine.activated.connect(
             self.moveToStartOfDisplayLine)
-            
+
         self.shortMoveToEndOfNextWord = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-End-Of-Next-Word"][0], self)
         self.shortMoveToEndOfNextWord.activated.connect(
             self.moveToEndOfNextWord)
-            
+
         self.shortMoveToEndOfDisplayLine = QtGui.QShortcut(
             shortcuts["Editor"]["Move-To-End-Of-Display-Line"][0], self)
         self.shortMoveToEndOfDisplayLine.activated.connect(
             self.moveToEndOfDisplayLine)
-            
+
+    def moveRightOneWordPart(self):
+        """
+        Move right one word part.
+        """
+        self.SendScintilla(QsciScintilla.SCI_WORDPARTRIGHT)
+
     def moveToEndOfDisplayLine(self):
         """
         Move to the end of the displayed line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEENDDISPLAY)
-            
+
     def moveToEndOfNextWord(self):
         """
         Move to the end of the next word.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDRIGHTEND)
-            
+
     def moveToStartOfDisplayLine(self):
         """
         Move to the start of the displayed line.
         """
         self.SendScintilla(QsciScintilla.SCI_HOMEDISPLAY)
-            
+
     def moveToFirstVisibleCharacterOfDisplayInDocumentLine(self):
         """
         Move to the first visible character of the displayed or document
         line.
         """
         self.SendScintilla(QsciScintilla.SCI_VCHOMEWRAP)
-            
+
     def moveToStartOfDisplayOrDocumentLine(self):
         """
         Move to the start of the displayed or document line.
         """
         self.SendScintilla(QsciScintilla.SCI_HOMEWRAP)
-            
+
     def deletePreviousCharacterIfNotAtStartOfLine(self):
         """
         Delete the previous character if not at start of line.
         """
         self.SendScintilla(QsciScintilla.SCI_DELETEBACKNOTLINE)
-            
+
     def extendRectangularSelectionDownOnePage(self):
         """
         Extend the rectangular selection down one page.
         """
         self.SendScintilla(QsciScintilla.SCI_PAGEDOWNRECTEXTEND)
-            
+
     def extendRectangularSelectionUpOnePage(self):
         """
         Extend the rectangular selection up one page.
         """
         self.SendScintilla(QsciScintilla.SCI_PAGEUPRECTEXTEND)
-            
+
     def extendSelectionToEndOfDocumentLine(self):
         """
         Extend the selection to the end of the document line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEENDEXTEND)
-            
+
     def extendSelectionToEndOfDisplayLine(self):
         """
         Extend the selection to the end of the displayed line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEENDDISPLAYEXTEND)
-            
+
     def stutteredExtendSelectionUpOnePage(self):
         """
         Stuttered extend the selection up one page.
         """
         self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEUPEXTEND)
-            
+
     def extendSelectionToEndOfNextWord(self):
         """
         Extend the selection to the end of the next word.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDRIGHTENDEXTEND)
-            
+
     def extendSelectionToFirstVisibleCharacterInDisplayOrDocumentLine(self):
         """
         Extend the selection to the first visible character of the
         displayed or document line.
         """
         self.SendScintilla(QsciScintilla.SCI_VCHOMEWRAPEXTEND)
-            
+
     def extendSelectionRightOneWordPart(self):
         """
         Extend the selection right one word part.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDPARTRIGHTEXTEND)
-            
+
     def deleteCurrentLine(self):
         """
         Delete the current line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEDELETE)
-            
+
     def extendSelectionToStartOfDisplayOrDocumentLine(self):
         """
         Extend the selection to the start of the displayed or document
         line.
         """
         self.SendScintilla(QsciScintilla.SCI_HOMEWRAPEXTEND)
-            
+
     def extendSelectionToFirstVisibleCharacterInDocumentLine(self):
         """
         Extend the selection to the first visible character in the document
         line.
         """
         self.SendScintilla(QsciScintilla.SCI_VCHOMEEXTEND)
-            
+
     def moveToEndOfPreviousWord(self):
         """
         Move to the end of the previous word.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDLEFTEND)
-            
+
     def moveToEndOfDisplayOrDocumentLine(self):
         """
         Move to the end of the displayed or document line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEENDWRAP)
-            
+
     def extendRectangularSelectionToEndOfDocumentLine(self):
         """
         Extend the rectangular selection to the end of the document line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEENDRECTEXTEND)
-            
+
     def extendSelectionToEndOfDisplayOrDocumentLine(self):
         """
         Extend the selection to the start of the displayed line.
@@ -613,50 +613,50 @@ class BaseScintilla(QsciScintilla):
         Stuttered extend the selection down one page.
         """
         self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEDOWNEXTEND)
-            
+
     def extendSelectionToStartOfDocumentLine(self):
         """
         Extend the selection to the start of the document line.
         """
         self.SendScintilla(QsciScintilla.SCI_HOMEEXTEND)
-            
+
     def extendSelectionToEndOfPreviousWord(self):
         """
         Extend the selection to the end of the previous word.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDLEFTENDEXTEND)
-            
+
     def extendSelectionLeftOneWordPart(self):
         """
         Extend the selection left one word part.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDPARTLEFTEXTEND)
-            
+
     def extendRectangularSelectionToStartOfDocumentLine(self):
         """
         Extend the rectangular selection to the start of the document line.
         """
         self.SendScintilla(QsciScintilla.SCI_HOMERECTEXTEND)
-            
+
     def extendRectangularSelectionToFirstVisibleCharacterInDocumentLine(self):
         """
         Extend the rectangular selection to the first visible character in
         the document line.
         """
         self.SendScintilla(QsciScintilla.SCI_VCHOMERECTEXTEND)
-            
+
     def moveToFirstVisibleCharacterInDocumentLine(self):
         """
         Move to the first visible character in the document line.
         """
         self.SendScintilla(QsciScintilla.SCI_VCHOME)
-            
+
     def extendRectangularSelectionUpOneLine(self):
         """
         Extend the rectangular selection up one line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEUPRECTEXTEND)
-            
+
     def extendSelectionToStartOfDisplayLine(self):
         """
         Extend the selection to the start of the displayed line.
@@ -886,131 +886,126 @@ class BaseScintilla(QsciScintilla):
         self.SendScintilla(QsciScintilla.SCI_DOCUMENTEND)
 
     def scrollVertical(self, lines):
-        """
-        Public method to scroll the text area.
-
-        @param lines number of lines to scroll (negative scrolls up,
-            positive scrolls down) (integer)
-        """
         self.SendScintilla(QsciScintilla.SCI_LINESCROLL, 0, lines)
 
-    def moveCursorToEOL(self):
+    def moveCursorToEndOfDocumentLine(self):
         """
         Move to the end of the document line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEEND)
 
-    def moveCursorToBOL(self):
+    def moveCursorToStartOfDocumentLine(self):
         """
         Move to the start of the displayed or document line.
         """
         self.SendScintilla(QsciScintilla.SCI_HOMEWRAP)
 
-    def moveCursorLeft(self):
+    def moveLeftOneCharacter(self):
         """
-        Public method to move the cursor left.
+        Move left one character.
         """
         self.SendScintilla(QsciScintilla.SCI_CHARLEFT)
 
     def moveCursorRight(self):
         """
-        Public method to move the cursor right.
+        Move right one character.
         """
         self.SendScintilla(QsciScintilla.SCI_CHARRIGHT)
 
     def moveCursorWordLeft(self):
         """
-        Public method to move the cursor left one word.
+        Move left one word.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDLEFT)
 
     def moveCursorWordRight(self):
         """
-        Public method to move the cursor right one word.
+        Move right one word.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDRIGHT)
 
-    def newLineBelow(self):
+    def insertNewline(self):
         """
         Insert a platform dependent newline.
         """
         self.SendScintilla(QsciScintilla.SCI_NEWLINE)
 
-    def deleteBack(self):
+    def deletePreviousCharacter(self):
         """
-        Public method to delete the character to the left of the cursor.
+        Delete the previous character.
         """
         self.SendScintilla(QsciScintilla.SCI_DELETEBACK)
 
     def delete(self):
         """
-        Public method to delete the character to the right of the cursor.
+        Delete the current character.
         """
         self.SendScintilla(QsciScintilla.SCI_CLEAR)
 
-    def deleteWordLeft(self):
+    def deleteWordToLeft(self):
         """
-        Public method to delete the word to the left of the cursor.
+        Delete the word to the left.
         """
         self.SendScintilla(QsciScintilla.SCI_DELWORDLEFT)
 
-    def deleteWordRight(self):
+    def deleteWordToRight(self):
         """
-        Public method to delete the word to the right of the cursor.
+        Delete the word to the right.
         """
         self.SendScintilla(QsciScintilla.SCI_DELWORDRIGHT)
 
     def deleteLineLeft(self):
         """
-        Public method to delete the line to the left of the cursor.
+        Delete the line to the left.
         """
         self.SendScintilla(QsciScintilla.SCI_DELLINELEFT)
 
-    def deleteLineRight(self):
+    def deleteLineToRight(self):
         """
-        Public method to delete the line to the right of the cursor.
+        Delete the line to the right.
         """
         self.SendScintilla(QsciScintilla.SCI_DELLINERIGHT)
 
-    def extendSelectionWordLeft(self):
+    def extendSelectionLeftOneWord(self):
         """
-        Public method to extend the selection one word to the left.
+        Extend the selection left one word.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDLEFTEXTEND)
 
     def extendSelectionWordRight(self):
         """
-        Public method to extend the selection one word to the right.
+        Extend the selection right one word.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDRIGHTEXTEND)
 
     def extendSelectionToBOL(self):
         """
-        Public method to extend the selection to the beginning of the line.
+        Extend the selection to the first visible character in the document
+        line.
         """
         self.SendScintilla(QsciScintilla.SCI_VCHOMEEXTEND)
 
     def extendSelectionToEOL(self):
         """
-        Public method to extend the selection to the end of the line.
+        Extend the selection to the end of the document line.
         """
         self.SendScintilla(QsciScintilla.SCI_LINEENDEXTEND)
 
     def moveLeftOneWordPart(self):
         """
-        Public method to extend the selection to the end of the line.
+        Move left one word part.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDPARTLEFT)
 
     def moveRightOneWordPart(self):
         """
-        Public method to extend the selection to the end of the line.
+        Move right one word part.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDPARTRIGHT)
 
     def stutteredMoveUpOnePage(self):
         """
-        Public method to extend the selection to the end of the line.
+        Stuttered move up one page.
         """
         self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEUP)
 
@@ -1019,13 +1014,6 @@ class BaseScintilla(QsciScintilla):
         Stuttered move down one page.
         """
         self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEDOWN)
-
-    def clearKeys(self):
-        """
-        Protected method to clear the key commands.
-        """
-        # call into the QsciCommandSet
-        self.standardCommands().clearKeys()
 
     def increaseIndent(self):
         if self.hasSelectedText() == False:
@@ -1059,7 +1047,7 @@ class BaseScintilla(QsciScintilla):
             self.setMarginLineNumbers(0, False)
             self.setMarginWidth(0, 0)
 
-    def get_position(self, position):
+    def position(self, position):
         if position == 'cursor':
             return self.getCursorPosition()
         elif position == 'sol':
@@ -1067,117 +1055,66 @@ class BaseScintilla(QsciScintilla):
             return (line, 0)
         elif position == 'eol':
             line, _index = self.getCursorPosition()
-            return (line, self.__get_line_end_index(line))
+            pos = self.SendScintilla(
+                QsciScintilla.SCI_GETLINEENDPOSITION, line)
+            _, index = self.lineIndexFromPosition(pos)
+            return (line, index)
         elif position == 'eof':
             line = self.lines() - 1
             return (line, len(self.text(line)))
         elif position == 'sof':
             return (0, 0)
         else:
-            # Assuming that input argument was already a position
             return position
 
-    def __get_line_end_index(self, line):
-        """Return the line end index"""
-        pos = self.SendScintilla(QsciScintilla.SCI_GETLINEENDPOSITION, line)
-        _, index = self.lineIndexFromPosition(pos)
-        return index
+    def coordinates(self, position):
+        line, index = self.position(position)
 
-    def get_character(self, position):
-        """Return character at *position*"""
-        line, index = self.get_position(position)
-        return self.text(line)[index]
-
-    def get_coordinates(self, position):
-        line, index = self.get_position(position)
-        return self.get_coordinates_from_lineindex(line, index)
-
-    def get_coordinates_from_lineindex(self, line, index):
-        """Return cursor x, y point coordinates for line, index position"""
         pos = self.positionFromLineIndex(line, index)
         x_pt = self.SendScintilla(QsciScintilla.SCI_POINTXFROMPOSITION, 0, pos)
         y_pt = self.SendScintilla(QsciScintilla.SCI_POINTYFROMPOSITION, 0, pos)
         return x_pt, y_pt
 
     def currentPosition(self):
-        """
-        Public method to get the current position.
-
-        @return absolute position of the cursor (integer)
-        """
         return self.SendScintilla(QsciScintilla.SCI_GETCURRENTPOS)
 
     def positionFromPoint(self, point):
-        """
-        Public method to calculate the scintilla position from a point in the
-        window.
-
-        @param point point in the window (QPoint)
-        @return scintilla position (integer) or -1 to indicate, that the point
-            is not near any character
-        """
         return self.SendScintilla(QsciScintilla.SCI_POSITIONFROMPOINTCLOSE,
                                   point.x(), point.y())
 
-    def clear_selection(self):
-        """Clear current selection"""
-        line, index = self.getCursorPosition()
-        self.setSelection(line, index, line, index)
-
-    def get_text(self, position_from=None, position_to=None):
+    def getText(self, positionFrom=None, positionTo=None):
         """
-        Return text between *position_from* and *position_to*
+        Return text between *positionFrom* and *positionTo*
         Positions may be positions or 'sol', 'eol', 'sof', 'eof' or 'cursor'
         """
-        if position_from is None and position_to is None:
+        if positionFrom is None and positionTo is None:
             return self.text()
-        self.__select_text(position_from, position_to)
+        self.selectText(positionFrom, positionTo)
         text = self.selectedText()
-        self.clear_selection()
         return text
 
-    def __select_text(self, position_from, position_to):
-        line_from, index_from = self.get_position(position_from)
-        line_to, index_to = self.get_position(position_to)
+    def selectText(self, position_from, position_to):
+        line_from, index_from = self.position(position_from)
+        line_to, index_to = self.position(position_to)
         self.setSelection(line_from, index_from, line_to, index_to)
 
-    def setLexer(self, lex=None):
-        """
-        Public method to set the lexer.
-
-        @param lex the lexer to be set or None to reset it.
-        """
-        super().setLexer(lex)
-        if lex is None:
-            self.clearStyles()
-
-    def clearStyles(self):
-        """
-        Public method to set the styles according the selected Qt style.
-        """
-        palette = QtGui.QApplication.palette()
-        self.SendScintilla(QsciScintilla.SCI_STYLESETFORE,
-                           QsciScintilla.STYLE_DEFAULT, palette.color(QtGui.QPalette.Text))
-        self.SendScintilla(QsciScintilla.SCI_STYLESETBACK,
-                           QsciScintilla.STYLE_DEFAULT, palette.color(QtGui.QPalette.Base))
-        self.SendScintilla(QsciScintilla.SCI_STYLECLEARALL)
-        self.SendScintilla(QsciScintilla.SCI_CLEARDOCUMENTSTYLE)
-
     def get_absolute_coordinates(self):
-        cx, cy = self.get_coordinates('cursor')
+        cx, cy = self.coordinates('cursor')
         qPoint = QtCore.QPoint(cx, cy)
         point = self.mapToGlobal(qPoint)
         return point
 
     def get_current_word(self):
-        """Return current word, i.e. word at cursor position"""
+        """
+        Return current word at cursor position
+        """
         line, index = self.getCursorPosition()
         text = self.text(line)
         wc = self.wordCharacters()
         if wc is None:
             regexp = QtCore.QRegExp('[^\w_]')
         else:
-            regexp = QtCore.QRegExp('[^%s]' % re.escape(wc))
+            regexp = QtCore.QRegExp('[^{0}]'.format(re.escape(wc)))
         start = regexp.lastIndexIn(text, index) + 1
         end = regexp.indexIn(text, index)
         if start == end + 1 and index > 0:
@@ -1193,347 +1130,44 @@ class BaseScintilla(QsciScintilla):
             word = ''
         return word
 
-    def lineAt(self, pos):
-        """
-        Public method to calculate the line at a position.
-
-        This variant is able to calculate the line for positions in the
-        margins and for empty lines.
-
-        @param pos position to calculate the line for (integer or QPoint)
-        @return linenumber at position or -1, if there is no line at pos
-            (integer, zero based)
-        """
-        if isinstance(pos, int):
-            scipos = pos
-        else:
-            scipos = \
-                self.SendScintilla(QsciScintilla.SCI_POSITIONFROMPOINT,
-                                   pos.x(), pos.y())
-        line = self.SendScintilla(QsciScintilla.SCI_LINEFROMPOSITION, scipos)
-        if line >= self.lines():
-            line = -1
-        return line
-
-    def foldLevelAt(self, line):
-        """
-        Public method to get the fold level of a line of the document.
-
-        @param line line number (integer)
-        @return fold level of the given line (integer)
-        """
-        lvl = self.SendScintilla(QsciScintilla.SCI_GETFOLDLEVEL, line)
-        return \
-            (lvl & QsciScintilla.SC_FOLDLEVELNUMBERMASK) - \
-            QsciScintilla.SC_FOLDLEVELBASE
-
-    def styleAt(self, pos):
-        """
-        Public method to get the style at a position in the text.
-
-        @param pos position in the text (integer)
-        @return style at the requested position or 0, if the position
-            is negative or past the end of the document (integer)
-        """
-        return self.SendScintilla(QsciScintilla.SCI_GETSTYLEAT, pos)
-
-    def linesOnScreen(self):
-        """
-        Public method to get the amount of visible lines.
-
-        @return amount of visible lines (integer)
-        """
-        return self.SendScintilla(QsciScintilla.SCI_LINESONSCREEN)
-
-    def charAt(self, pos):
-        """
-        Public method to get the character at a position in the text observing
-        multibyte characters.
-
-        @param pos position in the text (integer)
-        @return character at the requested position or empty string, if the
-            position is negative or past the end of the document (string)
-        """
-        ch = self.byteAt(pos)
-        if ch and ord(ch) > 127 and self.isUtf8():
-            if (ch[0] & 0xF0) == 0xF0:
-                utf8Len = 4
-            elif (ch[0] & 0xE0) == 0xE0:
-                utf8Len = 3
-            elif (ch[0] & 0xC0) == 0xC0:
-                utf8Len = 2
-            while len(ch) < utf8Len:
-                pos += 1
-                ch += self.byteAt(pos)
-            return ch.decode('utf8')
-        else:
-            return ch.decode()
-
-    def byteAt(self, pos):
-        """
-        Public method to get the raw character (bytes) at a position in the
-        text.
-
-        @param pos position in the text (integer)
-        @return raw character at the requested position or empty bytes, if the
-            position is negative or past the end of the document (bytes)
-        """
-        char = self.SendScintilla(QsciScintilla.SCI_GETCHARAT, pos)
-        if char == 0:
-            return b""
-        if char < 0:
-            char += 256
-        return bytes.fromhex("{0:02x}".format(char))
-
-    def foldFlagsAt(self, line):
-        """
-        Public method to get the fold flags of a line of the document.
-
-        @param line line number (integer)
-        @return fold flags of the given line (integer)
-        """
-        lvl = self.SendScintilla(QsciScintilla.SCI_GETFOLDLEVEL, line)
-        return lvl & ~QsciScintilla.SC_FOLDLEVELNUMBERMASK
-
-    def clearIndicator(self, indicator, sline, sindex, eline, eindex):
-        """
-        Public method to clear an indicator for the given range.
-
-        @param indicator number of the indicator (integer,
-            QsciScintilla.INDIC_CONTAINER .. QsciScintilla.INDIC_MAX)
-        @param sline line number of the indicator start (integer)
-        @param sindex index of the indicator start (integer)
-        @param eline line number of the indicator end (integer)
-        @param eindex index of the indicator end (integer)
-        """
-        spos = self.positionFromLineIndex(sline, sindex)
-        epos = self.positionFromLineIndex(eline, eindex)
-        self.clearIndicatorRange(indicator, spos, epos - spos)
-
     def clearAllIndicators(self, indicator):
-        """
-        Public method to clear all occurrences of an indicator.
-
-        @param indicator number of the indicator (integer,
-            QsciScintilla.INDIC_CONTAINER .. QsciScintilla.INDIC_MAX)
-        """
         self.clearIndicatorRange(0, 0, self.lines(), 0, indicator)
 
-    def setFoldMarkersColors(self, foreColor, backColor):
-        """
-        Public method to set the foreground and background colors of the
-        fold markers.
-
-        @param foreColor foreground color (QColor)
-        @param backColor background color (QColor)
-        """
+    def setFoldMarkersColors(self, foreground, background):
         self.SendScintilla(QsciScintilla.SCI_MARKERSETFORE,
-                           QsciScintilla.SC_MARKNUM_FOLDER, foreColor)
+                           QsciScintilla.SC_MARKNUM_FOLDER, foreground)
         self.SendScintilla(QsciScintilla.SCI_MARKERSETBACK,
-                           QsciScintilla.SC_MARKNUM_FOLDER, backColor)
+                           QsciScintilla.SC_MARKNUM_FOLDER, background)
 
         self.SendScintilla(QsciScintilla.SCI_MARKERSETFORE,
-                           QsciScintilla.SC_MARKNUM_FOLDEROPEN, foreColor)
+                           QsciScintilla.SC_MARKNUM_FOLDEROPEN, foreground)
         self.SendScintilla(QsciScintilla.SCI_MARKERSETBACK,
-                           QsciScintilla.SC_MARKNUM_FOLDEROPEN, backColor)
+                           QsciScintilla.SC_MARKNUM_FOLDEROPEN, background)
 
         self.SendScintilla(QsciScintilla.SCI_MARKERSETFORE,
-                           QsciScintilla.SC_MARKNUM_FOLDEROPENMID, foreColor)
+                           QsciScintilla.SC_MARKNUM_FOLDEROPENMID, foreground)
         self.SendScintilla(QsciScintilla.SCI_MARKERSETBACK,
-                           QsciScintilla.SC_MARKNUM_FOLDEROPENMID, backColor)
+                           QsciScintilla.SC_MARKNUM_FOLDEROPENMID, background)
 
         self.SendScintilla(QsciScintilla.SCI_MARKERSETFORE,
-                           QsciScintilla.SC_MARKNUM_FOLDERSUB, foreColor)
+                           QsciScintilla.SC_MARKNUM_FOLDERSUB, foreground)
         self.SendScintilla(QsciScintilla.SCI_MARKERSETBACK,
-                           QsciScintilla.SC_MARKNUM_FOLDERSUB, backColor)
+                           QsciScintilla.SC_MARKNUM_FOLDERSUB, background)
 
         self.SendScintilla(QsciScintilla.SCI_MARKERSETFORE,
-                           QsciScintilla.SC_MARKNUM_FOLDERTAIL, foreColor)
+                           QsciScintilla.SC_MARKNUM_FOLDERTAIL, foreground)
         self.SendScintilla(QsciScintilla.SCI_MARKERSETBACK,
-                           QsciScintilla.SC_MARKNUM_FOLDERTAIL, backColor)
+                           QsciScintilla.SC_MARKNUM_FOLDERTAIL, background)
 
         self.SendScintilla(QsciScintilla.SCI_MARKERSETFORE,
-                           QsciScintilla.SC_MARKNUM_FOLDERMIDTAIL, foreColor)
+                           QsciScintilla.SC_MARKNUM_FOLDERMIDTAIL, foreground)
         self.SendScintilla(QsciScintilla.SCI_MARKERSETBACK,
-                           QsciScintilla.SC_MARKNUM_FOLDERMIDTAIL, backColor)
+                           QsciScintilla.SC_MARKNUM_FOLDERMIDTAIL, background)
 
         self.SendScintilla(QsciScintilla.SCI_MARKERSETFORE,
-                           QsciScintilla.SC_MARKNUM_FOLDEREND, foreColor)
+                           QsciScintilla.SC_MARKNUM_FOLDEREND, foreground)
         self.SendScintilla(QsciScintilla.SCI_MARKERSETBACK,
-                           QsciScintilla.SC_MARKNUM_FOLDEREND, backColor)
+                           QsciScintilla.SC_MARKNUM_FOLDEREND, background)
 
-    def clearSearchIndicators(self):
-        " Hides the search indicator "
+    def clearMatchIndicators(self):
         self.clearAllIndicators(self.matchIndicator)
-        return
-
-    def setSearchIndicator(self, startPos, indicLength):
-        " Sets a single search indicator "
-        self.setIndicatorRange(self.matchIndicator, startPos, indicLength)
-        return
-
-    def __doSearchTarget(self):
-        """
-        Private method to perform the search in target.
-
-        @return flag indicating a successful search (boolean)
-        """
-        if self.__targetSearchStart == self.__targetSearchEnd:
-            self.__targetSearchActive = False
-            return False
-
-        self.SendScintilla(QsciScintilla.SCI_SETTARGETSTART,
-                           self.__targetSearchStart)
-        self.SendScintilla(QsciScintilla.SCI_SETTARGETEND,
-                           self.__targetSearchEnd)
-        self.SendScintilla(QsciScintilla.SCI_SETSEARCHFLAGS,
-                           self.__targetSearchFlags)
-        targetSearchExpr = self._encodeString(self.__targetSearchExpr)
-        pos = self.SendScintilla(QsciScintilla.SCI_SEARCHINTARGET,
-                                 len(targetSearchExpr),
-                                 targetSearchExpr)
-
-        if pos == -1:
-            self.__targetSearchActive = False
-            return False
-
-        targend = self.SendScintilla(QsciScintilla.SCI_GETTARGETEND)
-        self.__targetSearchStart = targend
-
-        return True
-
-    def _encodeString(self, string):
-        """
-        Protected method to encode a string depending on the current mode.
-
-        @param string string to be encoded (str)
-        @return encoded string (bytes)
-        """
-        if isinstance(string, bytes):
-            return string
-        else:
-            if self.isUtf8():
-                return string.encode("utf-8")
-            else:
-                return string.encode("latin-1")
-
-    def findFirstTarget(self, expr_, re_, cs_, wo_,
-                        begline=-1, begindex=-1, endline=-1, endindex=-1,
-                        ws_=False):
-        """
-        Public method to search in a specified range of text without
-        setting the selection.
-
-        @param expr_ search expression (string)
-        @param re_ flag indicating a regular expression (boolean)
-        @param cs_ flag indicating a case sensitive search (boolean)
-        @param wo_ flag indicating a word only search (boolean)
-        @keyparam begline line number to start from (-1 to indicate current
-            position) (integer)
-        @keyparam begindex index to start from (-1 to indicate current
-            position) (integer)
-        @keyparam endline line number to stop at (-1 to indicate end of
-            document) (integer)
-        @keyparam endindex index number to stop at (-1 to indicate end of
-            document) (integer)
-        @keyparam ws_ flag indicating a word start search (boolean)
-        @return flag indicating a successful search (boolean)
-        """
-        self.__targetSearchFlags = 0
-        if re_:
-            self.__targetSearchFlags |= QsciScintilla.SCFIND_REGEXP
-        if cs_:
-            self.__targetSearchFlags |= QsciScintilla.SCFIND_MATCHCASE
-        if wo_:
-            self.__targetSearchFlags |= QsciScintilla.SCFIND_WHOLEWORD
-        if ws_:
-            self.__targetSearchFlags |= QsciScintilla.SCFIND_WORDSTART
-
-        if begline < 0 or begindex < 0:
-            self.__targetSearchStart = self.SendScintilla(
-                QsciScintilla.SCI_GETCURRENTPOS)
-        else:
-            self.__targetSearchStart = self.positionFromLineIndex(
-                begline, begindex)
-
-        if endline < 0 or endindex < 0:
-            self.__targetSearchEnd = self.SendScintilla(
-                QsciScintilla.SCI_GETTEXTLENGTH)
-        else:
-            self.__targetSearchEnd = self.positionFromLineIndex(
-                endline, endindex)
-
-        self.__targetSearchExpr = expr_
-
-        if self.__targetSearchExpr:
-            self.__targetSearchActive = True
-
-            return self.__doSearchTarget()
-
-        return False
-
-    def findNextTarget(self):
-        """
-        Public method to find the next occurrence in the target range.
-
-        @return flag indicating a successful search (boolean)
-        """
-        if not self.__targetSearchActive:
-            return False
-
-        return self.__doSearchTarget()
-
-    def setCurrentIndicator(self, indicator):
-        """
-        Public method to set the current indicator.
-
-        @param indicator number of the indicator (integer,
-            QsciScintilla.INDIC_CONTAINER .. QsciScintilla.INDIC_MAX)
-        @exception ValueError the indicator or style are not valid
-        """
-        if indicator < QsciScintilla.INDIC_CONTAINER or \
-           indicator > QsciScintilla.INDIC_MAX:
-            raise ValueError("indicator number out of range")
-
-        self.SendScintilla(QsciScintilla.SCI_SETINDICATORCURRENT, indicator)
-
-    def setIndicatorRange(self, indicator, spos, length):
-        """
-        Public method to set an indicator for the given range.
-
-        @param indicator number of the indicator (integer,
-            QsciScintilla.INDIC_CONTAINER .. QsciScintilla.INDIC_MAX)
-        @param spos position of the indicator start (integer)
-        @param length length of the indicator (integer)
-        @exception ValueError the indicator or style are not valid
-        """
-        self.setCurrentIndicator(indicator)
-        self.SendScintilla(QsciScintilla.SCI_INDICATORFILLRANGE, spos, length)
-
-    def getFoundTarget(self):
-        """
-        Public method to get the recently found target.
-
-        @return found target as a tuple of starting position and target length
-            (integer, integer)
-        """
-        if self.__targetSearchActive:
-            spos = self.SendScintilla(QsciScintilla.SCI_GETTARGETSTART)
-            epos = self.SendScintilla(QsciScintilla.SCI_GETTARGETEND)
-            return (spos, epos - spos)
-        else:
-            return (0, 0)
-
-    def getTargets(self, txt,
-                   isRegexp, caseSensitive, wholeWord,
-                   lineFrom, indexFrom, lineTo, indexTo):
-        " Provides a list of the targets start points and the target length "
-        found = self.findFirstTarget(txt, isRegexp, caseSensitive, wholeWord,
-                                     lineFrom, indexFrom, lineTo, indexTo)
-        foundTargets = []
-        while found:
-            tgtPos, tgtLen = self.getFoundTarget()
-            line, pos = self.lineIndexFromPosition(tgtPos)
-            foundTargets.append([line, pos, tgtLen])
-            found = self.findNextTarget()
-        return foundTargets

@@ -3,16 +3,17 @@ import ctypes
 from PyQt4 import QtCore, QtGui
 
 
-class ManageShortcuts(QtGui.QDialog):
+class ManageShortcuts(QtGui.QLabel):
 
     updateShortcuts = QtCore.pyqtSignal()
 
     def __init__(self, useData, FILE_EXPLORER_SHORTCUTS, parent=None):
-        super(ManageShortcuts, self).__init__(parent,
-                                              QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint)
+        super(ManageShortcuts, self).__init__(parent)
 
-        self.setWindowTitle("Manage Shortcuts")
-        self.resize(500, 300)
+        self.setMinimumSize(600, 230)
+
+        self.setBackgroundRole(QtGui.QPalette.Background)
+        self.setAutoFillBackground(True)
 
         self.useData = useData
         self.FILE_EXPLORER_SHORTCUTS = FILE_EXPLORER_SHORTCUTS
@@ -26,26 +27,29 @@ class ManageShortcuts(QtGui.QDialog):
 
         hbox = QtGui.QHBoxLayout()
 
-        self.removeShortcutButton = QtGui.QPushButton()
+        self.removeShortcutButton = QtGui.QToolButton()
         self.removeShortcutButton.setIcon(
             QtGui.QIcon(os.path.join("Resources", "images", "minus")))
         self.removeShortcutButton.clicked.connect(self.removeShorcut)
         hbox.addWidget(self.removeShortcutButton)
 
-        self.addShortcutButton = QtGui.QPushButton()
-        self.addShortcutButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "add")))
+        self.addShortcutButton = QtGui.QToolButton()
+        self.addShortcutButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "add")))
         self.addShortcutButton.clicked.connect(self.addShortcut)
         hbox.addWidget(self.addShortcutButton)
 
         hbox.addStretch(1)
 
-        self.moveDownButton = QtGui.QPushButton()
-        self.moveDownButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "down")))
+        self.moveDownButton = QtGui.QToolButton()
+        self.moveDownButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "down")))
         self.moveDownButton.clicked.connect(self.moveDown)
         hbox.addWidget(self.moveDownButton)
 
-        self.moveUpButton = QtGui.QPushButton()
-        self.moveUpButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "up")))
+        self.moveUpButton = QtGui.QToolButton()
+        self.moveUpButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "up")))
         self.moveUpButton.clicked.connect(self.moveUp)
         hbox.addWidget(self.moveUpButton)
 
@@ -126,7 +130,7 @@ class FileExplorer(QtGui.QTreeView):
 
     fileActivated = QtCore.pyqtSignal(str)
 
-    def __init__(self, useData, FILE_EXPLORER_SHORTCUTS, messagesWidget, parent=None):
+    def __init__(self, useData, FILE_EXPLORER_SHORTCUTS, messagesWidget, editorTabWidget, parent=None):
         QtGui.QTreeView.__init__(self, parent)
 
         self.setAcceptDrops(True)
@@ -145,10 +149,13 @@ class FileExplorer(QtGui.QTreeView):
         self.useData = useData
         self.FILE_EXPLORER_SHORTCUTS = FILE_EXPLORER_SHORTCUTS
         self.messagesWidget = messagesWidget
+        self.editorTabWidget = editorTabWidget
+
         self.manageShortcuts = ManageShortcuts(
             useData, self.FILE_EXPLORER_SHORTCUTS, self)
         self.manageShortcuts.updateShortcuts.connect(
             self.updateShortcutsActionGroup)
+        editorTabWidget.addToolWidget(self.manageShortcuts)
 
         self.createActions()
         self.shortcutsMenu = QtGui.QMenu("Shortcuts")
@@ -171,9 +178,10 @@ class FileExplorer(QtGui.QTreeView):
         self.contextMenu.exec_(event.globalPos())
 
     def createActions(self):
-        self.homeAct = QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "home")),
-                                     "Home", self,
-                                     statusTip="Home", triggered=self.refreshFileSytemModel)
+        self.homeAct = QtGui.QAction(
+            QtGui.QIcon(os.path.join("Resources", "images", "home")),
+            "Home", self,
+            statusTip="Home", triggered=self.refreshFileSytemModel)
 
         self.collapseAllAct = \
             QtGui.QAction(
@@ -191,14 +199,20 @@ class FileExplorer(QtGui.QTreeView):
                           triggered=self.locate)
 
         self.createShortcutAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "brainstorming")),
-                          "Create Shortcut", self, statusTip="Create Shortcut",
-                          triggered=self.createShortcut)
+            QtGui.QAction(
+                QtGui.QIcon(
+                    os.path.join("Resources", "images", "brainstorming")),
+                "Create Shortcut", self, statusTip="Create Shortcut",
+                triggered=self.createShortcut)
 
         self.manageShortcutsAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "settings")),
-                          "Manage Shortcuts", self, statusTip="Manage Shortcuts",
-                          triggered=self.manageShortcuts.exec_)
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "settings")),
+                "Manage Shortcuts", self, statusTip="Manage Shortcuts",
+                triggered=self.showManageShortcuts)
+
+    def showManageShortcuts(self):
+        self.editorTabWidget.showMe(self.manageShortcuts)
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasUrls():

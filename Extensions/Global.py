@@ -9,7 +9,7 @@ def getDefaultFont():
         font_size = 10
     elif sys.platform == 'darwin':
         font = 'Monaco'
-        font_size = 12
+        font_size = 10
     else:
         font = 'Bitstream Vera Sans Mono'
         font_size = 10

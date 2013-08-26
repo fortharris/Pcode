@@ -288,7 +288,6 @@ class OutputLexer(QsciLexerCustom):
         return QtGui.QColor('#000000')
 
     def defaultEolFill(self, style):
-        # This allowed to colorize all the background of a line.
         return True
 
     def styleText(self, start, end):
@@ -385,11 +384,11 @@ class RunWidget(BaseScintilla):
 
         self.setStyleSheet("""
 
-                 QsciScintilla {
-                         border: none;
-                 }
+                             QsciScintilla {
+                                     border: none;
+                             }
 
-                              """)
+                          """)
 
     def copyText(self):
         cb = self.editorTabWidget.app.clipboard()
@@ -399,8 +398,6 @@ class RunWidget(BaseScintilla):
         if newState == 2:
             self.vSplitter.showRunning()
             self.setReadOnly(False)
-            self.bottomStackSwitcher.setCurrentWidget(self)
-            self.setFocus(True)
         else:
             self.setReadOnly(True)
 
@@ -478,7 +475,7 @@ class RunWidget(BaseScintilla):
                            styleNum)
         QtCore.QCoreApplication.processEvents()
         self.ensureLineVisible(self.lines())
-        self.blocking_cursor_pos = self.get_position('eof')
+        self.blocking_cursor_pos = self.position('eof')
         self.setCursorPosition(self.blocking_cursor_pos[
                                0], self.blocking_cursor_pos[1])
 
@@ -709,12 +706,8 @@ class RunWidget(BaseScintilla):
             else:
                 filePath = self.filePath
                 fileName = self.fileName
-        if filePath is None:
-            cwd = os.path.dirname(filePath)
-            self.runProcess.setWorkingDirectory(cwd)
-        else:
-            cwd = os.path.dirname(filePath)
-            self.runProcess.setWorkingDirectory(cwd)
+        cwd = os.path.dirname(filePath)
+        self.runProcess.setWorkingDirectory(cwd)
 
         if self.projectData["RunInternal"] == "True":
             run_internal = True
@@ -763,10 +756,13 @@ class RunWidget(BaseScintilla):
 
         if self.tracebackRe.match(lineText):
             file_word_index = lineText.find('File')
-            comma_min_index = lineText.find(',')
-            comma_max_index = lineText.rfind(',')
-            path = lineText[file_word_index + 6:comma_min_index - 1]
-            lineno = int(lineText[comma_min_index + 7:comma_max_index]) - 1
+            min_index = lineText.find('"') + 1
+            max_index = lineText.find('"', min_index)
+            path = lineText[min_index:max_index]
+            
+            max_index += 7
+            line_end_index = lineText.find(',', max_index)
+            lineno = int(lineText[max_index:line_end_index]) - 1
 
             self.editorTabWidget.loadfile(path)
             self.editorTabWidget.showLine(lineno)
@@ -805,8 +801,8 @@ class RunWidget(BaseScintilla):
             self.scrollVertical(1)
         elif key == QtCore.Qt.Key_Return:
             # get input text
-            text = self.get_text(
-                self.blocking_cursor_pos, self.get_position("eof"))
+            text = self.getText(
+                self.blocking_cursor_pos, self.position("eof"))
             self.insertInput(text)
         else:
             QsciScintilla.keyPressEvent(self, event)

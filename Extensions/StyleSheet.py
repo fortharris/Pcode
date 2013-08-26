@@ -359,7 +359,7 @@ globalStyle = """
              color: white;
              background: grey;
         }
-        
+
         QTreeView::item:hover {
              border: none;
              background: #CCCCCC;
@@ -404,7 +404,7 @@ globalStyle = """
         QScrollBar::handle:vertical{
             margin-top: 15px;
             margin-bottom: 15px;
-            background: #969ea7;
+            background: #B2B8BE;
             border-radius: 0px;
             border: none;
             min-height: 30px;
@@ -413,10 +413,18 @@ globalStyle = """
         QScrollBar::handle:horizontal{
             margin-left: 15px;
             margin-right: 15px;
-            background: #969ea7;
+            background: #B2B8BE;
             border-radius: 0px;
             border: none;
             min-width: 30px;
+        }
+
+        QScrollBar::handle:hover{
+            background: #969ea7;
+        }
+
+        QScrollBar::handle:pressed{
+            background: #717880;
         }
 
         QScrollBar::add-line:vertical,
@@ -725,7 +733,7 @@ sidebarStyle = """
                 QTabBar::tab:!selected {
                      margin-top: 0px; /* make non-selected tabs look smaller */
                 }
-                
+
                  QSplitter {
                      margin-top: 20px;
                      background: none;

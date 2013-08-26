@@ -388,10 +388,10 @@ class Projects(QtGui.QWidget):
             if sys.platform == 'win32':
                 pathDict["python"] = os.path.join(path,
                                                   "Venv", "Windows", "Scripts", "python.exe")
-            elif sys.platform == 'darwin':  # needs fixing
+            elif sys.platform == 'darwin':  # FIXME needs fixing
                 pathDict["python"] = os.path.join(path,
                                                   "Venv", "Mac", "Scripts", "python.exe")
-            else:  # needs fixing
+            else:  # FIXME needs fixing
                 pathDict["python"] = os.path.join(path,
                                                   "Venv", "Linux", "Scripts", "python.exe")
 

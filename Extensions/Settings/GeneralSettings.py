@@ -411,7 +411,7 @@ class GeneralSettings(QtGui.QDialog):
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
                 if editor.DATA["fileType"] == "python":
-                    editor.clearSearchIndicators()
+                    editor.clearMatchIndicators()
 
     def setShowEdgeLine(self, state):
         self.useData.SETTINGS["ShowEdgeLine"] = str(state)
