@@ -77,16 +77,14 @@ class Outline(QtGui.QTreeWidget):
                                         QtGui.QIcon(os.path.join("Resources", "images", "function")))
                     self.addTopLevelItem(functionItem)
             elif obj.objectType == "Function":
-               # obj.name, obj.lineno
-                methods = sorted(obj.methods.items(), key=itemgetter(1))
-                for name, lineno in methods:
-                    print("  def", name, lineno)
-                    functionItem = QtGui.QTreeWidgetItem()
-                    functionItem.setText(0, name)
-                    functionItem.setData(0, 3, lineno)
-                    functionItem.setIcon(0,
-                                        QtGui.QIcon(os.path.join("Resources", "images", "function")))
-                    self.addTopLevelItem(functionItem)
+                # obj.name, obj.lineno
+                #print("  def", obj.name, obj.lineno)
+                functionItem = QtGui.QTreeWidgetItem()
+                functionItem.setText(0, obj.name)
+                functionItem.setData(0, 3, obj.lineno)
+                functionItem.setIcon(0,
+                                    QtGui.QIcon(os.path.join("Resources", "images", "function")))
+                self.addTopLevelItem(functionItem)
 
         if len(outlineDict) == 0:
             item = QtGui.QTreeWidgetItem()
