@@ -170,8 +170,7 @@ class DiffWindow(BaseScintilla):
             lines += 1
 
         if lines == 0:
-            self.appendText(self.trUtf8(
-                'Nothing has changed.'), self.cNormalFormat)
+            self.appendText('Nothing has changed.', 0)
 
         QtGui.QApplication.restoreOverrideCursor()
 

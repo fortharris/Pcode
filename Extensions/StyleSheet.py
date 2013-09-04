@@ -407,6 +407,7 @@ globalStyle = """
             background: #B2B8BE;
             border-radius: 0px;
             border: none;
+            border-bottom: 2px solid #6FBDFF;
             min-height: 30px;
         }
 
@@ -420,11 +421,11 @@ globalStyle = """
         }
 
         QScrollBar::handle:hover{
-            background: #969ea7;
+            background: #6F767D;
         }
 
         QScrollBar::handle:pressed{
-            background: #717880;
+            background: #141414;
         }
 
         QScrollBar::add-line:vertical,
@@ -597,7 +598,7 @@ settingsTabStyle = """
         QTabWidget::pane { /* The tab widget frame */
              border-top: 1px solid #007ACC;
              position: absolute;
-             top: -0.5em;
+             top: 0em;
         }
 
         QTabWidget::tab-bar {
@@ -641,7 +642,7 @@ editorStyle = """
                         border: 1px solid black;
                         color: lightgrey;
                         min-width: 500px;
-                        min-height: 200;
+                        min-height: 190px;
                         background: #1C1C1C;
                         show-decoration-selected: 1; /* make the selection span the entire width of the view */
                  }
@@ -783,34 +784,32 @@ mainMenuStyle = """
 
                 """
 
-subTaskSwitcherStyle = """
+viewSwitcherStyle = """
 
-        QLabel {
-            background:  rgba(138, 201, 255, 200);
-            padding: 1px;
-        }
+                    QLabel {
+                        background:  rgba(138, 201, 255, 200);
+                        padding: 1px;
+                    }
 
-        QToolButton {
-            min-width: 30px;
-            min-height: 30px;
-            background: #A3D5FF;
-            border-radius: 0px;
-            border: 1px solid #A3D5FF;
-        }
+                    QToolButton {
+                        min-width: 30px;
+                        min-height: 30px;
+                        background: #A3D5FF;
+                        border-radius: 0px;
+                        border: 1px solid #A3D5FF;
+                    }
 
-        QToolButton:hover {
-            background: white;
-            border: 1px solid white;
-        }
+                    QToolButton:hover {
+                        background: white;
+                        border: 1px solid white;
+                    }
 
-        QToolButton:checked {
-            background: white;
-            border: 1px solid white;
-        }
+                    QToolButton:checked {
+                        background: white;
+                        border: 1px solid white;
+                    }
 
-        QToolButton:disabled {
-            background: #FFFFFF;
-        }
-
-
-"""
+                    QToolButton:disabled {
+                        background: #FFFFFF;
+                    }
+                """

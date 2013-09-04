@@ -146,7 +146,7 @@ class ColorScheme(QtGui.QDialog):
         hbox.addStretch(1)
 
         self.saveButton = QtGui.QPushButton("Save")
-        self.saveButton.clicked.connect(self.saveStyle)
+        self.saveButton.clicked.connect(self.saveStyleChanges)
         self.saveButton.setDisabled(True)
         hbox.addWidget(self.saveButton)
 
@@ -289,30 +289,12 @@ class ColorScheme(QtGui.QDialog):
                                                 "Saving failed: {0}".format(str(err)))
             file.close()
             return
-        self.loadSchemeNames()
 
-    def saveStyle(self):
-        reply = QtGui.QMessageBox.warning(self, "Save",
-                                          "Save changes to the current theme?",
-                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
-            currentScheme = self.schemeNameBox.currentText()
-            self.save()
-            f = self.schemeNameBox.findText(currentScheme)
-            self.schemeNameBox.setCurrentIndex(f)
-        else:
-            pass
-
-    def styleAlreadyExistsMess(self, text):
-        mess = \
-            "Scheme '{0}' already exists! Would you like to replace it?".format(
-                text)
-        reply = QtGui.QMessageBox.warning(self, "Save", mess,
-                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.No:
-            self.saveStyle()
-        elif reply == QtGui.QMessageBox.Yes:
-            self.save(text)
+    def saveStyleChanges(self):
+        currentScheme = self.schemeNameBox.currentText()
+        self.save()
+        f = self.schemeNameBox.findText(currentScheme)
+        self.schemeNameBox.setCurrentIndex(f)
 
     def newScheme(self):
         themeName = GetName(
@@ -320,6 +302,7 @@ class ColorScheme(QtGui.QDialog):
             None, self)
         if themeName.accepted:
             self.save(themeName.name)
+            self.loadSchemeNames()
             f = self.schemeNameBox.findText(themeName.name)
             self.schemeNameBox.setCurrentIndex(f)
 
@@ -377,10 +360,12 @@ class ColorScheme(QtGui.QDialog):
             pass
 
     def applyScheme(self):
-        name = self.schemeNameBox.currentText()
         schemeType = self.schemeTypeBox.currentText()
+        schemeName = self.schemeNameBox.currentText()
+        if schemeName is not "Default":
+            self.save()
         self.useData.SETTINGS[
-            "EditorStyle" + schemeType] = name
+            "EditorStyle" + schemeType] = schemeName
         for i in range(self.projectWindowStack.count() - 1):
             window = self.projectWindowStack.widget(i)
             editorTabWidget = window.editorTabWidget

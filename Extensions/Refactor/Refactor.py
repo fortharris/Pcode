@@ -8,7 +8,7 @@ from rope.refactor import inline
 from rope.refactor.localtofield import LocalToField
 from rope.base.project import Project
 from rope.base import libutils
-from rope.contrib import codeassist
+
 from rope.contrib.findit import (find_occurrences, find_implementations,
                                  find_definition)
 from Extensions.Refactor.UsageDialog import UsageDialog
@@ -209,12 +209,92 @@ class Refactor(QtGui.QWidget):
         self.busyWidget = busyWidget
         self.root = editorTabWidget.pathDict["sourcedir"]
         ropeFolder = editorTabWidget.pathDict["ropeFolder"]
-
+        
+        self.libraryDict = {"PyQt4": ["PyQt4", 
+                                      "PyQt4.QtGui", 
+                                      "QtGui", 
+                                      "PyQt4.QtCore", 
+                                      "QtCore",
+                                      "PyQt4.QtScript", 
+                                      "QtScript",
+                                      "PyQt4.QtDBus", 
+                                      "QtDBus",
+                                      "PyQt4.QtDeclarative", 
+                                      "QtDeclarative",
+                                      "PyQt4.QtHelp", 
+                                      "QtHelp",
+                                      "PyQt4.QtMultimedia", 
+                                      "QtMultimedia",
+                                      "PyQt4.QtNetwork", 
+                                      "QtNetwork",
+                                      "PyQt4.QtOpenGL",
+                                      "QtOpenGL",
+                                      "PyQt4.QtScriptTools",
+                                      "QtScriptTools",
+                                      "PyQt4.QtSql",
+                                      "QtSql",
+                                      "PyQt4.QtSvg",
+                                      "QtSvg",
+                                      "PyQt4.QtTest",
+                                      "QtTest",
+                                      "PyQt4.QtWebKit",
+                                      "QtWebKit",
+                                      "PyQt4.QtXml",
+                                      "QtXml",
+                                      "PyQt4.QtXmlPatterns",
+                                      "QtXmlPatterns",
+                                      "PyQt4.phonon",
+                                      "phonon",
+                                      "PyQt4.QtAssistant",
+                                      "QtAssistant",
+                                      "PyQt4.QtDesigner",
+                                      "QtDesigner",
+                                      "PyQt4.QAxContainer",
+                                      "QAxContainer",
+                                      ],
+                            "Python": ["array", 
+                                        "audioop", 
+                                        "binascii", 
+                                        "cPickle", 
+                                        "cStringIO",
+                                        "cmath", 
+                                        "collections", 
+                                        "datetime", 
+                                        "errno", 
+                                        "exceptions", 
+                                        "gc",
+                                        "imageop", 
+                                        "imp", 
+                                        "itertools", 
+                                        "marshal", 
+                                        "math", 
+                                        "mmap", 
+                                        "msvcrt",
+                                        "nt", 
+                                        "operator", 
+                                        "os", 
+                                        "parser", 
+                                        "rgbimg", 
+                                        "signal", 
+                                        "strop", 
+                                        "sys",
+                                        "thread", 
+                                        "time",
+                                        "os.path",
+                                        "zipimport", 
+                                        "zlib"
+                                        ],
+                            "wx": ["wx", 
+                                   "wxPython"
+                                   ]}
+        libraryList = []
+        for i, v in self.libraryDict.items():
+            libraryList.extend(v)
         prefs = {
             'ignored_resources': ['*.pyc', '*~', '.ropeproject',
                                   '.hg', '.svn', '_svn', '.git',
                                   '__pycache__'],
-            'python_files': ['*.py'],
+            'python_files': ['*.py', '*.pyw'],
             'save_objectdb': True,
             'compress_objectdb': False,
             'automatic_soa': True,
@@ -225,15 +305,7 @@ class Refactor(QtGui.QWidget):
             'save_history': True,
             'compress_history': False,
             'indent_size': 4,
-            'extension_modules': [
-                "PyQt4", "PyQt4.QtGui", "QtGui", "PyQt4.QtCore", "QtCore",
-                "PyQt4.QtScript", "QtScript", "os.path", "numpy", "scipy", "PIL",
-                "OpenGL", "array", "audioop", "binascii", "cPickle", "cStringIO",
-                "cmath", "collections", "datetime", "errno", "exceptions", "gc",
-                "imageop", "imp", "itertools", "marshal", "math", "mmap", "msvcrt",
-                "nt", "operator", "os", "parser", "rgbimg", "signal", "strop", "sys",
-                "thread", "time", "wx", "wxPython", "xxsubtype", "zipimport", "zlib"
-            ],
+            'extension_modules': libraryList,
             'import_dynload_stdmods': True,
             'ignore_syntax_errors': True,
             'ignore_bad_imports': True
@@ -304,10 +376,6 @@ class Refactor(QtGui.QWidget):
         self.localToFieldAct = \
             QtGui.QAction("Local-to-Field", self, statusTip="Local-to-Field",
                           triggered=self.localToField)
-
-        self.getDocAct = \
-            QtGui.QAction("Documentation", self, statusTip="Documentation",
-                          triggered=self.getDoc)
 
         self.getCallTipAct = \
             QtGui.QAction("CallTip", self, statusTip="CallTip",
@@ -483,32 +551,6 @@ class Refactor(QtGui.QWidget):
         editor = self.editorTabWidget.focusedEditor()
         point = editor.get_absolute_coordinates()
         return point
-
-    def getCompletions(self):
-        offset = self.getOffset()
-        project = self.getProject()
-        proposals = codeassist.code_assist(project,
-                                           self.editorTabWidget.getSource(), offset)
-        proposals = codeassist.sorted_proposals(proposals)
-        if len(proposals) > 0:
-            cmpl = []
-            for i in proposals:
-                cmpl.append(str(i))
-
-            return cmpl
-        else:
-            return []
-
-    def getDoc(self, offset=None):
-        if offset is None:
-            offset = self.getOffset()
-        project = self.getProject()
-        try:
-            doc = codeassist.get_doc(project,
-                                     self.editorTabWidget.getSource(), offset)
-            return doc
-        except Exception as err:
-            return None
 
     def getCallTip(self, offset=None):
         if offset is None:

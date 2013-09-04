@@ -635,7 +635,7 @@ class ConfigureProject(QtGui.QLabel):
         self.setBackgroundRole(QtGui.QPalette.Background)
         self.setAutoFillBackground(True)
 
-        self.setMinimumSize(500, 350)
+        self.setMinimumSize(500, 360)
         self.pagesList = []
 
         mainLayout = QtGui.QVBoxLayout()

@@ -42,7 +42,7 @@ class WritePad(QtGui.QMainWindow):
                                 padding: 0px;
                                 border-left-width: 1px;
                                 background: #ffffff;
-                                width: 11px;
+                                width: 10px;
                             }
 
                             QScrollBar:horizontal{
@@ -60,6 +60,7 @@ class WritePad(QtGui.QMainWindow):
                                 background: #B2B8BE;
                                 border-radius: 0px;
                                 border: none;
+                                border-bottom: 2px solid #6FBDFF;
                                 min-height: 30px;
                             }
 
@@ -73,11 +74,11 @@ class WritePad(QtGui.QMainWindow):
                             }
                             
                             QScrollBar::handle:hover{
-                                background: #969ea7;
+                                background: #6F767D;
                             }
-                            
+
                             QScrollBar::handle:pressed{
-                                background: #717880;
+                                background: #141414;
                             }
 
                             QScrollBar::add-line:vertical,

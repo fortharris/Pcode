@@ -707,7 +707,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             self.requestSaveMess(index)
         else:
             if self.count() == 1:
-                self.newFile()
+                self._newPythonFile()
             self.removeTabBackup(index)
             path = self.getEditorData('filePath')
             if path is None:

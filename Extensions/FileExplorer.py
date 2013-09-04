@@ -141,7 +141,6 @@ class FileExplorer(QtGui.QTreeView):
 
         self.fileSystemModel = QtGui.QFileSystemModel()
         self.fileSystemModel.setRootPath(QtCore.QDir.rootPath())
-        self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
         self.fileSystemModel.setNameFilterDisables(False)
         self.setModel(self.fileSystemModel)
         self.setColumnWidth(0, 300)
@@ -165,7 +164,7 @@ class FileExplorer(QtGui.QTreeView):
         self.contextMenu = QtGui.QMenu()
 
         self.contextMenu.addAction(self.homeAct)
-        self.contextMenu.addAction(self.disableFilterAct)
+        self.contextMenu.addAction(self.enableFilterAct)
         self.contextMenu.addAction(self.collapseAllAct)
         indexList = self.selectedIndexes()
         if len(indexList) != 0:
@@ -188,11 +187,11 @@ class FileExplorer(QtGui.QTreeView):
                 "Collapse All", self,
                 statusTip="Collapse Tree", triggered=self.collapseAll)
 
-        self.disableFilterAct = \
+        self.enableFilterAct = \
             QtGui.QAction(
-                "Disable Filter", self, statusTip="Disable Filter",
-                toggled=self.disable_filter)
-        self.disableFilterAct.setCheckable(True)
+                "Enable Filter", self, statusTip="Enable Filter",
+                toggled=self.enableFilter)
+        self.enableFilterAct.setCheckable(True)
 
         self.locateAct = \
             QtGui.QAction("Locate", self, statusTip="Locate",
@@ -263,16 +262,17 @@ class FileExplorer(QtGui.QTreeView):
             message = QtGui.QMessageBox.warning(self, "Open",
                                                 "Directory is not available.")
 
-    def disable_filter(self):
-        if self.disableFilterAct.isChecked():
-            self.fileSystemModel.setNameFilters([])
-        else:
+    def enableFilter(self):
+        if self.enableFilterAct.isChecked():
             self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
+        else:
+            self.fileSystemModel.setNameFilters([])
 
     def refreshFileSytemModel(self):
         self.fileSystemModel = QtGui.QFileSystemModel()
         self.fileSystemModel.setRootPath(QtCore.QDir.rootPath())
-        self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
+        if self.enableFilterAct.isChecked():
+            self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
         self.fileSystemModel.setNameFilterDisables(False)
         self.setModel(self.fileSystemModel)
         self.setColumnWidth(0, 300)

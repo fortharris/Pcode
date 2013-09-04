@@ -77,8 +77,7 @@ class Outline(QtGui.QTreeWidget):
                                         QtGui.QIcon(os.path.join("Resources", "images", "function")))
                     self.addTopLevelItem(functionItem)
             elif obj.objectType == "Function":
-                # obj.name, obj.lineno
-                #print("  def", obj.name, obj.lineno)
+               # obj.name, obj.lineno
                 functionItem = QtGui.QTreeWidgetItem()
                 functionItem.setText(0, obj.name)
                 functionItem.setData(0, 3, obj.lineno)

@@ -34,6 +34,7 @@ class GotoLineWidget(QtGui.QLabel):
         mainLayout.addWidget(self.hideButton)
 
         self.lineNumberLine = QtGui.QSpinBox()
+        self.lineNumberLine.setMinimumHeight(25)
         self.lineNumberLine.setMinimum(1)
         self.lineNumberLine.setMaximum(100000000)
         self.lineNumberLine.valueChanged.connect(self.gotoLine)

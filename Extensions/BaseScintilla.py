@@ -807,12 +807,6 @@ class BaseScintilla(QsciScintilla):
         """
         self.SendScintilla(QsciScintilla.SCI_LINEDOWNRECTEXTEND)
 
-    def extendRectangularSelectionUpOneLine(self):
-        """
-        Extend the rectangular selection up one line.
-        """
-        self.SendScintilla(QsciScintilla.SCI_LINEUPRECTEXTEND)
-
     def extendSelectionDownOnePage(self):
         """
         Extend the selection down one page.
@@ -996,12 +990,6 @@ class BaseScintilla(QsciScintilla):
         Move left one word part.
         """
         self.SendScintilla(QsciScintilla.SCI_WORDPARTLEFT)
-
-    def moveRightOneWordPart(self):
-        """
-        Move right one word part.
-        """
-        self.SendScintilla(QsciScintilla.SCI_WORDPARTRIGHT)
 
     def stutteredMoveUpOnePage(self):
         """

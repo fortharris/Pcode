@@ -90,9 +90,16 @@ class BuildThread(QtCore.QThread):
                 py_path = os.path.dirname(self.projectSettings["DefaultInterpreter"])
                 path = [self.pathDict['sourcedir'],
                         py_path,
+                        os.path.join(py_path, "DLLs"),
+                        os.path.join(py_path, "libs"),
                         os.path.join(py_path, "Lib"),
                         os.path.join(py_path, "Lib", "site-packages"),
                         os.path.join(py_path, "include")]
+            extraPathList = []
+            for i in path:
+                extraPathList.extend(self.pathListFromDir(i))
+            path.extend(extraPathList)
+            
             freezer = Cx_Freeze(executables,
                                 self.pathDict,
                                 self.useData,
@@ -131,6 +138,28 @@ class BuildThread(QtCore.QThread):
                                    (name, ", ".join(callers)))
         except Exception as err:
             self.error = str(err)
+            
+    def pathListFromDir(self, dirPath):
+        """
+        This is to get the list of module search paths from .pth files
+        """
+        pathList = []
+        for i in  os.listdir(dirPath):
+            path = os.path.join(dirPath, i)
+            if os.path.isfile(path):
+                if i.endswith('.pth'):
+                    file = open(path, 'r')
+                    lines = file.readlines()
+                    file.close()
+                    for line in lines:
+                        lineText = line.rstrip()
+                        if os.path.exists(lineText):
+                            pathList.append(lineText)
+                        else:
+                            fullPath = os.path.join(dirPath, lineText)
+                            if os.path.exists(fullPath):
+                                pathList.append(fullPath)
+        return pathList
 
     def build(self, profile, pathDict, projectSettings, useData):
         self.profile = profile

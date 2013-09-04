@@ -32,6 +32,8 @@ class CreateProjectThread(QtCore.QThread):
             shutil.copy(os.path.join("Resources", "default_config.py"),
                         os.path.join(ropeFolder, "config.py"))
 
+            os.mkdir(os.path.join(self.projectPath, "Resources"))
+            
             os.mkdir(os.path.join(self.projectPath, "temp"))
             os.mkdir(os.path.join(self.projectPath, "temp", "Backup"))
             os.mkdir(os.path.join(self.projectPath, "temp", "Backup", "Files"))

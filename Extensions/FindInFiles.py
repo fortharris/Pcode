@@ -294,14 +294,17 @@ class FindInFiles(QtGui.QWidget):
         vbox.addLayout(hbox)
 
         self.matchCaseBox = QtGui.QCheckBox("MC")
+        self.matchCaseBox.setToolTip("Match Case")
         self.matchCaseBox.stateChanged.connect(self.searchOptionsChanged)
         hbox.addWidget(self.matchCaseBox)
 
         self.matchWholeWordBox = QtGui.QCheckBox("WW")
+        self.matchWholeWordBox.setToolTip("Whole Word")
         self.matchWholeWordBox.stateChanged.connect(self.searchOptionsChanged)
         hbox.addWidget(self.matchWholeWordBox)
 
         self.regExpBox = QtGui.QCheckBox("RE")
+        self.regExpBox.setToolTip("Regular Expression")
         self.regExpBox.stateChanged.connect(self.searchOptionsChanged)
         hbox.addWidget(self.regExpBox)
 

@@ -130,7 +130,7 @@ class EditorWindow(QtGui.QWidget):
             self.editorTabWidget, self.messagesWidget, pathDict, self.PROJECT_DATA[
                 "settings"], self.useData, app,
             self.busyWidget, self.buildStatusWidget, self.projects)
-        self.projectManager.projectViewer.fileActivated.connect(
+        self.projectManager.projectView.fileActivated.connect(
             self.editorTabWidget.loadfile)
 
         self.outline = Outline(
@@ -147,7 +147,7 @@ class EditorWindow(QtGui.QWidget):
         self.sideBottomTab = QtGui.QTabWidget()
         self.sideSplitter.addWidget(self.sideBottomTab)
 
-        self.sideBottomTab.addTab(self.projectManager.projectViewer, QtGui.QIcon(
+        self.sideBottomTab.addTab(self.projectManager.projectView, QtGui.QIcon(
             os.path.join("Resources", "images", "tree")), "Project")
 
         self.fileExplorer = FileExplorer(

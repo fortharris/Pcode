@@ -1,6 +1,3 @@
-import re
+from PyQt4 import QtNetwork, QtOpenGL
 
-x = input("Please enter your name: ")
-print("Your name is {0}".format(x))
-
-x = input()
+PyQ

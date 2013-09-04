@@ -2,7 +2,7 @@ import os
 import shutil
 from PyQt4 import QtCore, QtGui
 
-from Extensions.ProjectManager.ProjectViewer import ProjectViewer
+from Extensions.ProjectManager.ProjectView.ProjectView import ProjectView
 from Extensions.ProjectManager.Build import Build
 
 
@@ -25,7 +25,8 @@ class ExportThread(QtCore.QThread):
 class ProjectManager(QtGui.QWidget):
 
     def __init__(
-        self, editorTabWidget, messagesWidget, pathDict, projectSettings, useData, app,
+        self, editorTabWidget, messagesWidget, pathDict, projectSettings, 
+            useData, app,
             busyWidget, buildStatusWidget, parent):
         QtGui.QWidget.__init__(self, parent)
 
@@ -33,6 +34,7 @@ class ProjectManager(QtGui.QWidget):
         self.editorTabWidget = editorTabWidget
 
         self.useData = useData
+        self.projects = parent
         self.projects = parent
 
         self.configDialog = editorTabWidget.configDialog
@@ -45,7 +47,7 @@ class ProjectManager(QtGui.QWidget):
         self.exportThread = ExportThread()
         self.exportThread.finished.connect(self.finishExport)
 
-        self.projectViewer = ProjectViewer(
+        self.projectView = ProjectView(
             self.editorTabWidget, pathDict["sourcedir"], app)
 
     def buildProject(self):

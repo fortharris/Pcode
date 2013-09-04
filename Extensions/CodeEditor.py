@@ -13,6 +13,8 @@ from Extensions.ZoomWidget import ZoomWidget
 from Extensions.Notification import Notification
 from Extensions import StyleSheet
 
+from rope.contrib import codeassist
+
 
 class TokenizeThread(QtCore.QThread):
 
@@ -26,7 +28,7 @@ class TokenizeThread(QtCore.QThread):
                     if line not in self.tokenList:
                         self.tokenList.append(line)
         except:
-            print("Token Error")
+            pass
 
     def tokenize(self, source):
         self.source = source
@@ -68,11 +70,16 @@ class DocThread(QtCore.QThread):
     docAvailable = QtCore.pyqtSignal(str, int)
 
     def run(self):
-        doc = self.refactor.getDoc(self.hoverOffset)
-        self.docAvailable.emit(doc, self.hoverOffset)
+        try:
+            doc = codeassist.get_doc(self.ropeProject,
+                                     self.source, self.hoverOffset)
+            self.docAvailable.emit(doc, self.hoverOffset)
+        except Exception as err:
+            pass
 
-    def getDoc(self, refactor, hoverOffset):
-        self.refactor = refactor
+    def getDoc(self, ropeProject, source, hoverOffset):
+        self.ropeProject = ropeProject
+        self.source = source
         self.hoverOffset = hoverOffset
 
         self.start()
@@ -103,13 +110,26 @@ class AutoCompletionThread(QtCore.QThread):
     'from xml.dom import'
     """
 
-    completions = QtCore.pyqtSignal(tuple, list)
+    completions = QtCore.pyqtSignal(list)
 
     def run(self):
         result = self.moduleCompletion()
         if result is None:
             return
-        self.completions.emit(self.completionCallPos, result)
+        self.completions.emit(result)
+
+    def ropeCompletions(self):
+        proposals = codeassist.code_assist(self.ropeProject,
+                                           self.source, self.offset)
+        proposals = codeassist.sorted_proposals(proposals)
+        if len(proposals) > 0:
+            cmpl = []
+            for i in proposals:
+                cmpl.append(str(i))
+
+            return cmpl
+        else:
+            return []
 
     def moduleCompletion(self):
         self.completionType = 3
@@ -156,7 +176,7 @@ class AutoCompletionThread(QtCore.QThread):
 
         if self.column != 0:
             if len(self.lineText.strip()) >= 2:
-                completions = self.refactor.getCompletions()
+                completions = self.ropeCompletions()
                 self.completionType = 2
                 return completions
 
@@ -193,7 +213,7 @@ class AutoCompletionThread(QtCore.QThread):
         folders of the pythonpath.
         """
         modules = []
-        modules += self.moduleList(self.refactor.root)
+        modules += self.moduleList(self.sourcedir)
 
         modules += sys.builtin_module_names
 
@@ -207,7 +227,7 @@ class AutoCompletionThread(QtCore.QThread):
     def tryImport(self, module, only_modules=False):
         try:
             modulesDir = os.path.join(
-                self.refactor.root, module.replace('.', '//'))
+                self.sourcedir, module.replace('.', '//'))
             m = os.listdir(modulesDir)
             completionList = []
             for item in m:
@@ -226,17 +246,21 @@ class AutoCompletionThread(QtCore.QThread):
 
     def dotCompletion(self, mod):
         if len(mod) < 2:
-            return sorted(list(set(filter(lambda x: x.startswith(mod[0]), self.getRootModules()))))
+            return sorted(list(set(filter(lambda x: x.startswith(mod[0]), 
+                            self.getRootModules()))))
 
         completionList = self.tryImport('.'.join(mod[:-1]), True)
         completionList = list(set(filter(lambda x: x.startswith(mod[-1]),
-                                         completionList)))
+                             completionList)))
 
         return sorted(completionList)
 
-    def complete(self, completionCallPos, refactor, lineText, col):
-        self.completionCallPos = completionCallPos
-        self.refactor = refactor
+    def complete(self, sourcedir, ropeProject, 
+                                        offset, source, lineText, col):
+        self.sourcedir = sourcedir
+        self.ropeProject = ropeProject
+        self.offset = offset
+        self.source = source
         self.lineText = lineText
         self.column = col
 
@@ -474,7 +498,8 @@ class CodeEditor(BaseScintilla):
             QtGui.QToolTip.showText(self.lastHoverPos, doc, self)
 
     def getDoc(self):
-        self.docThread.getDoc(self.refactor, self.hoverOffset)
+        self.docThread.getDoc(
+            self.refactor.getProject(), self.text(), self.hoverOffset)
 
     def findOccurrences(self):
         self.clearAllIndicators(self.matchIndicator)
@@ -563,10 +588,10 @@ class CodeEditor(BaseScintilla):
 
         self.indentationGuideAct = \
             QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "guide")),
                 "Indentation Guide", self,
                 statusTip="Indentation Guide",
                           triggered=self.showIndentationGuide)
+        self.indentationGuideAct.setCheckable(True)
 
         self.contextMenu = QtGui.QMenu()
         self.contextMenu.addAction(self.snippetsAct)
@@ -631,18 +656,18 @@ class CodeEditor(BaseScintilla):
                 self.completionCallPos = self.getCursorPosition()
                 lineText = self.text(lineno)[:col]
 
-                self.autoCompletionThread.complete(
-                    self.completionCallPos, self.refactor, lineText, col)
+                ropeProject = self.refactor.getProject()
+                offset = self.getOffset()
 
-    def showCompletion(self, completionCallPos, result):
+                self.autoCompletionThread.complete(
+                    self.refactor.root,
+                        ropeProject, offset, self.text(), lineText, col)
+
+    def showCompletion(self, result):
         if len(result) > 0:
             if self.hasFocus():
-                currentPos = self.getCursorPosition()
-                if currentPos == completionCallPos:
-                    self.showUserList(
-                        self.autoCompletionThread.completionType, result)
-                else:
-                    self.startCompletion()
+                self.showUserList(
+                    self.autoCompletionThread.completionType, result)
         else:
             self.cancelList()
 

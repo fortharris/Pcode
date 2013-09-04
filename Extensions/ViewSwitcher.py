@@ -35,7 +35,7 @@ class ViewSwitcher(QtGui.QLabel):
         self.hideButton.clicked.connect(self.hide)
         self.mainLayout.addWidget(self.hideButton)
 
-        self.setStyleSheet(StyleSheet.subTaskSwitcherStyle)
+        self.setStyleSheet(StyleSheet.viewSwitcherStyle)
 
         self.addButton(QtGui.QIcon(
             os.path.join("Resources", "images", "notes_selected")), "Editor")
@@ -51,17 +51,12 @@ class ViewSwitcher(QtGui.QLabel):
         self.setIndex(None, index)
 
     def viewChanged(self, button):
-
         index = self.buttonGroup.id(button)
-
         self.setIndex(button, index)
 
         if index == 2:
-
             self.editorTabWidget.getUnifiedDiff().generateUnifiedDiff()
-
-        if index == 3:
-
+        elif index == 3:
             self.editorTabWidget.getContextDiff().generateContextDiff()
 
     def addButton(self, icon, toolTip):

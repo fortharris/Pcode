@@ -35,11 +35,13 @@ class ColorChooser(QtGui.QWidget):
         self.colorHexLine.setText(color.name())
 
     def styleButton(self):
-        color = self.colorHexLine.text()
-        self.colorButton.setAutoFillBackground(True)
-        style = ("""background: {0};
-                     min-width: 70;
-                     max-height: 30;
-                     border: 1px solid lightgrey;
-                     border-radius: 0px;""".format(color))
-        self.colorButton.setStyleSheet(style)
+        colorHex = self.colorHexLine.text()
+        color = QtGui.QColor(colorHex)
+        if color.isValid():
+            self.colorButton.setAutoFillBackground(True)
+            style = ("""background: {0};
+                         min-width: 70;
+                         max-height: 30;
+                         border: 1px solid lightgrey;
+                         border-radius: 0px;""".format(colorHex))
+            self.colorButton.setStyleSheet(style)

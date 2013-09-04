@@ -140,7 +140,7 @@ def _readmodule(source):
                 if not stack:
                     outlineDict[class_name] = cur_class
                 stack.append((cur_class, thisindent))
-    except StopIteration:
+    except:
         pass
 
     f.close()

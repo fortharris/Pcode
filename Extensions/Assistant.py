@@ -138,11 +138,9 @@ class Pep8View(QtGui.QTreeWidget):
     def autoPep8Done(self, fixedCode):
         self.editorTabWidget.busyWidget.showBusy(False)
         editor = self.editorTabWidget.getEditor()
-        editor.beginUndoAction()
-        editor.selectAll()
-        editor.removeSelectedText()
-        editor.insert(fixedCode)
-        editor.endUndoAction()
+        editor.setText(fixedCode)
+        self.editorTabWidget.getEditor(i).removeBookmarks()
+        self.editorTabWidget.enableBookmarkButtons(False)
 
     def contextMenuEvent(self, event):
         selectedItems = self.selectedItems()

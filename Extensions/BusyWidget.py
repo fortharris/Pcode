@@ -22,13 +22,13 @@ class BusyWidget(QtGui.QDialog):
 
         mainLabel = QtGui.QLabel()
         mainLabel.setStyleSheet(
-            """background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                                 stop: 0 #343434,
-                                 stop: 0.7 #343434);
+                            """background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                                 stop: 0 #343434,
+                                                 stop: 0.7 #343434);
 
-                border: 1px solid #C9EAFB;
-                border-radius: 0px;
-            """)
+                                border: 1px solid #C9EAFB;
+                                border-radius: 0px;
+                            """)
         mainLayout.addWidget(mainLabel)
 
         vbox = QtGui.QVBoxLayout()
@@ -37,34 +37,33 @@ class BusyWidget(QtGui.QDialog):
         self.captionLabel = QtGui.QLabel()
         self.captionLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.captionLabel.setStyleSheet(
-            "color: white; background: none; border: none;")
+                            "color: white; background: none; border: none;")
         vbox.addWidget(self.captionLabel)
         vbox.addStretch(1)
 
         self.progressBar = QtGui.QProgressBar()
         self.progressBar.setMaximumHeight(15)
         self.progressBar.setStyleSheet(
-            """
+                    """
+                          QProgressBar {
+                             border: 1px solid #707070;
+                             text-align: center;
+                             font-size: 10px;
+                             padding: 1px;
+                             border-radius: 0px;
+                             background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                                       stop:0 #333333, stop:1 #666666);
+                         }
 
-                  QProgressBar {
-                     border: 1px solid #707070;
-                     text-align: center;
-                     font-size: 10px;
-                     padding: 1px;
-                     border-radius: 0px;
-                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                               stop:0 #333333, stop:1 #666666);
-                 }
+                         QProgressBar::chunk {
+                              color: black;
+                              border-radius: 0px;
+                              background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                                                       stop:0 #95c4f0, stop:1 #5d7a96);
+                         }
 
-                 QProgressBar::chunk {
-                      color: black;
-                      border-radius: 0px;
-                      background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                               stop:0 #95c4f0, stop:1 #5d7a96);
-                 }
-
-            """
-        )
+                    """
+                )
         self.progressBar.setRange(0, 0)
         vbox.addWidget(self.progressBar)
 
