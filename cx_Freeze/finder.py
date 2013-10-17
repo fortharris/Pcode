@@ -8,6 +8,7 @@ import marshal
 import opcode
 import os
 import pkgutil
+import re
 import sys
 import types
 import zipfile
@@ -26,6 +27,14 @@ STORE_GLOBAL = opcode.opmap["STORE_GLOBAL"]
 STORE_OPS = (STORE_NAME, STORE_GLOBAL)
 
 __all__ = [ "Module", "ModuleFinder" ]
+
+try:
+    isidentifier = str.isidentifier  # Built in method in Python 3
+except AttributeError:
+    # Check with regex for Python 2
+    _identifier_re = re.compile(r'^[a-z_]\w*$', re.I)
+    def isidentifier(s):
+        return bool(_identifier_re.match(s))
 
 class ModuleFinder(object):
 
@@ -64,7 +73,10 @@ class ModuleFinder(object):
         self.ExcludeModule("doctest")
         self.ExcludeModule("getopt")
         self.ExcludeModule("logging")
-        self.ExcludeModule("re")
+        if sys.version_info[0] < 3:
+            # On Python 3, traceback -> linecache -> tokenize -> re, so
+            # we need to let it be loaded.
+            self.ExcludeModule("re")
         self.ExcludeModule("subprocess")
         self.IncludeModule("traceback")
         self.IncludeModule("warnings")
@@ -181,6 +193,7 @@ class ModuleFinder(object):
                 fileNames = os.listdir(path)
             except os.error:
                 continue
+            
             for fileName in fileNames:
                 fullName = os.path.join(path, fileName)
                 if os.path.isdir(fullName):
@@ -194,16 +207,18 @@ class ModuleFinder(object):
                     for suffix in suffixes:
                         if fileName.endswith(suffix):
                             name = fileName[:-len(suffix)]
-                            break
+                            # Only modules with valid Python names are importable
+                            if isidentifier(name):
+                                break
                     else:
                         continue
                     if name == "__init__":
                         continue
+                    
                 subModuleName = "%s.%s" % (module.name, name)
-                subModule, returnError = \
-                        self._InternalImportModule(subModuleName,
+                subModule = self._InternalImportModule(subModuleName,
                                 deferredImports)
-                if returnError and subModule is None:
+                if subModule is None:
                     raise ImportError("No module named %r" % subModuleName)
                 module.globalNames[name] = None
                 if subModule.path and recursive:
@@ -229,7 +244,7 @@ class ModuleFinder(object):
         # absolute import (available in Python 2.5 and up)
         # the name given is the only name that will be searched
         if relativeImportIndex == 0:
-            module, returnError = self._InternalImportModule(name,
+            module = self._InternalImportModule(name,
                     deferredImports, namespace = namespace)
 
         # old style relative import (only possibility in Python 2.4 and prior)
@@ -239,13 +254,13 @@ class ModuleFinder(object):
             parent = self._DetermineParent(caller)
             while parent is not None:
                 fullName = "%s.%s" % (parent.name, name)
-                module, returnError = self._InternalImportModule(fullName,
+                module = self._InternalImportModule(fullName,
                         deferredImports, namespace = namespace)
                 if module is not None:
                     parent.globalNames[name] = None
                     return module
                 parent = self._GetParentByName(parent.name)
-            module, returnError = self._InternalImportModule(name,
+            module = self._InternalImportModule(name,
                     deferredImports, namespace = namespace)
 
         # new style relative import (available in Python 2.5 and up)
@@ -260,12 +275,11 @@ class ModuleFinder(object):
                 relativeImportIndex -= 1
             if parent is None:
                 module = None
-                returnError = True
             elif not name:
                 module = parent
             else:
                 name = "%s.%s" % (parent.name, name)
-                module, returnError = self._InternalImportModule(name,
+                module = self._InternalImportModule(name,
                         deferredImports, namespace = namespace)
 
         # if module not found, track that fact
@@ -273,7 +287,7 @@ class ModuleFinder(object):
             if caller is None:
                 raise ImportError("No module named %r" % name)
             self._RunHook("missing", name, caller)
-            if returnError and name not in caller.ignoreNames:
+            if name not in caller.ignoreNames:
                 callers = self._badModules.setdefault(name, {})
                 callers[caller.name] = None
 
@@ -284,44 +298,48 @@ class ModuleFinder(object):
            name given is an absolute name. None is returned if the module
            cannot be found."""
         try:
-            return self._modules[name], False
+            # Check in module cache before trying to import it again.
+            return self._modules[name]
         except KeyError:
             pass
+        
         if name in self._builtinModules:
             module = self._AddModule(name)
             self._RunHook("load", module.name, module)
             module.inImport = False
-            return module, False
+            return module
+        
         pos = name.rfind(".")
-        if pos < 0:
+        if pos < 0:  # Top-level module
             path = self.path
             searchName = name
             parentModule = None
-        else:
+        else:        # Dotted module name - look up the parent module
             parentName = name[:pos]
-            parentModule, returnError = \
+            parentModule = \
                     self._InternalImportModule(parentName, deferredImports,
                             namespace = namespace)
             if parentModule is None:
-                return None, returnError
+                return None
             if namespace:
                 parentModule.ExtendPath()
             path = parentModule.path
             searchName = name[pos + 1:]
+        
         if name in self.aliases:
             actualName = self.aliases[name]
-            module, returnError = \
-                    self._InternalImportModule(actualName, deferredImports)
+            module = self._InternalImportModule(actualName, deferredImports)
             self._modules[name] = module
-            return module, returnError
+            return module
+        
         try:
             fp, path, info = self._FindModule(searchName, path, namespace)
             module = self._LoadModule(name, fp, path, info, deferredImports,
                     parentModule, namespace)
         except ImportError:
             self._modules[name] = None
-            return None, True
-        return module, False
+            return None
+        return module
 
     def _LoadModule(self, name, fp, path, info, deferredImports,
             parent = None, namespace = False):
@@ -333,8 +351,11 @@ class ModuleFinder(object):
         module = self._AddModule(name)
         module.file = path
         module.parent = parent
+        
         if type == imp.PY_SOURCE:
+            # Load & compile Python source code
             if sys.version_info[0] >= 3:
+                # For Python 3, read the file with the correct encoding
                 import tokenize
                 fp = open(path, "rb")
                 encoding, lines = tokenize.detect_encoding(fp.readline)
@@ -343,7 +364,9 @@ class ModuleFinder(object):
             if codeString and codeString[-1] != "\n":
                 codeString = codeString + "\n"
             module.code = compile(codeString, path, "exec")
+        
         elif type == imp.PY_COMPILED:
+            # Load Python bytecode
             if isinstance(fp, str):
                 magic = fp[:4]
             else:
@@ -356,7 +379,10 @@ class ModuleFinder(object):
             else:
                 fp.read(4)
                 module.code = marshal.load(fp)
+        
+        # If there's a custom hook for this module, run it.
         self._RunHook("load", module.name, module)
+        
         if module.code is not None:
             if self.replacePaths:
                 topLevelModule = module
@@ -364,7 +390,10 @@ class ModuleFinder(object):
                     topLevelModule = topLevelModule.parent
                 module.code = self._ReplacePathsInCode(topLevelModule,
                         module.code)
+            
+            # Scan the module code for import statements
             self._ScanCode(module.code, module, deferredImports)
+        
         module.inImport = False
         return module
 
@@ -385,6 +414,7 @@ class ModuleFinder(object):
     def _ReplacePathsInCode(self, topLevelModule, co):
         """Replace paths in the code as directed, returning a new code object
            with the modified paths in place."""
+        # Prepare the new filename.
         origFileName = newFileName = os.path.normpath(co.co_filename)
         for searchValue, replaceValue in self.replacePaths:
             if searchValue == "*":
@@ -397,10 +427,14 @@ class ModuleFinder(object):
                 continue
             newFileName = replaceValue + origFileName[len(searchValue):]
             break
+        
+        # Run on subordinate code objects from function & class definitions.
         constants = list(co.co_consts)
         for i, value in enumerate(constants):
             if isinstance(value, type(co)):
                 constants[i] = self._ReplacePathsInCode(topLevelModule, value)
+        
+        # Build the new code object.
         if sys.version_info[0] < 3:
             return types.CodeType(co.co_argcount, co.co_nlocals,
                     co.co_stacksize, co.co_flags, co.co_code, tuple(constants),
@@ -441,16 +475,21 @@ class ModuleFinder(object):
                 else:
                     opArg = ord(code[opIndex]) + ord(code[opIndex + 1]) * 256
                 opIndex += 2
+            
             if op == LOAD_CONST:
+                # Store an argument to be used later by an IMPORT_NAME operation.
                 arguments.append(co.co_consts[opArg])
+            
             elif op == IMPORT_NAME:
                 name = co.co_names[opArg]
-                if len(arguments) == 2:
-                    relativeImportIndex, fromList = arguments
+                if len(arguments) >= 2:
+                    relativeImportIndex, fromList = arguments[-2:]
                 else:
                     relativeImportIndex = -1
                     fromList, = arguments
+                
                 if name not in module.excludeNames:
+                    # Load the imported module
                     importedModule = self._ImportModule(name, deferredImports,
                             module, relativeImportIndex)
                     if importedModule is not None:
@@ -458,6 +497,7 @@ class ModuleFinder(object):
                                 and importedModule.path is not None:
                             self._EnsureFromList(module, importedModule,
                                     fromList, deferredImports)
+            
             elif op == IMPORT_FROM and topLevel:
                 if is3:
                     op = code[opIndex]
@@ -478,14 +518,19 @@ class ModuleFinder(object):
                     storeName = deferredCaller is not module
                 if storeName:
                     module.globalNames[name] = None
+            
             elif op == IMPORT_STAR and topLevel and importedModule is not None:
                 module.globalNames.update(importedModule.globalNames)
                 arguments = []
+            
             elif op not in (BUILD_LIST, INPLACE_ADD):
+                # The stack was used for something else, so we clear it.
                 if topLevel and op in STORE_OPS:
                     name = co.co_names[opArg]
                     module.globalNames[name] = None
                 arguments = []
+        
+        # Scan the code objects from function & class definitions
         for constant in co.co_consts:
             if isinstance(constant, type(co)):
                 self._ScanCode(constant, module, deferredImports,
@@ -539,6 +584,7 @@ class ModuleFinder(object):
 
     def ReportMissingModules(self):
         return
+        """Display a list of modules that weren't found."""
         if self._badModules:
             sys.stdout.write("Missing modules:\n")
             names = list(self._badModules.keys())
@@ -548,6 +594,8 @@ class ModuleFinder(object):
                 callers.sort()
                 sys.stdout.write("? %s imported from %s\n" % \
                         (name, ", ".join(callers)))
+            sys.stdout.write("This is not necessarily a problem - the modules "
+                             "may not be needed on this platform.\n")
             sys.stdout.write("\n")
 
     def WriteSourceFile(self, fileName):

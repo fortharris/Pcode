@@ -2,16 +2,17 @@ import os
 import shutil
 from PyQt4 import QtCore, QtGui
 from PyQt4.Qsci import QsciScintilla
-
+from Extensions import StyleSheet
 
 class GeneralSettings(QtGui.QDialog):
 
-    def __init__(self, useData, projectWindowStack, parent=None):
+    def __init__(self, useData, mainApp, projectWindowStack, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
                                QtCore.Qt.WindowCloseButtonHint)
 
         self.setWindowTitle("Settings")
         self.useData = useData
+        self.mainApp = mainApp
         self.projectWindowStack = projectWindowStack
 
         mainLayout = QtGui.QHBoxLayout()
@@ -141,6 +142,14 @@ class GeneralSettings(QtGui.QDialog):
             self.docOnHoverBox.setChecked(True)
         self.docOnHoverBox.toggled.connect(self.setDocOnHover)
         vbox.addWidget(self.docOnHoverBox)
+        
+        # MARK OPERATIONAL LINES
+        
+        self.markOperationalLinesBox = QtGui.QCheckBox("Mark Operation Lines")
+        if self.useData.SETTINGS["MarkOperationalLines"] == "True":
+            self.markOperationalLinesBox.setChecked(True)
+        self.markOperationalLinesBox.toggled.connect(self.setMarkOperationalLines)
+        vbox.addWidget(self.markOperationalLinesBox)
 
         vbox.addStretch(1)
 
@@ -221,11 +230,16 @@ class GeneralSettings(QtGui.QDialog):
         vbox.addStretch(1)
 
         # MANAGEMENT
-        mainLayout.addStretch(1)
-
-        mainVbox = QtGui.QVBoxLayout()
-        mainVbox.addStretch(1)
-        mainLayout.addLayout(mainVbox)
+        
+        mainVbox.addWidget(QtGui.QLabel("UI"))
+        
+        self.uiBox = QtGui.QComboBox()
+        self.uiBox.addItem("Custom")
+        self.uiBox.addItem("Native")
+        if self.useData.SETTINGS["UI"] == 'Native':
+            self.uiBox.setCurrentIndex(1)
+        self.uiBox.currentIndexChanged.connect(self.setUI)
+        mainVbox.addWidget(self.uiBox)
 
         self.enableSoundsBox = QtGui.QCheckBox("Enable Sounds")
         if self.useData.SETTINGS["SoundsEnabled"] == 'True':
@@ -236,6 +250,20 @@ class GeneralSettings(QtGui.QDialog):
         self.exportButton = QtGui.QPushButton("Export Settings")
         self.exportButton.clicked.connect(self.exportSettings)
         mainVbox.addWidget(self.exportButton)
+        
+    def setUI(self, index):
+        self.useData.SETTINGS["UI"] = self.uiBox.currentText()
+        if index == 0:
+            self.mainApp.setStyleSheet(StyleSheet.globalStyle)
+        else:
+            self.mainApp.setStyleSheet(None)
+        isCustom = (index == 0)
+        for i in range(self.projectWindowStack.count() - 1):
+            editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
+            if isCustom:
+                editorTabWidget.adjustToStyleSheet(True)
+            else:
+                editorTabWidget.adjustToStyleSheet(False)
 
     def exportSettings(self):
         options = QtGui.QFileDialog.Options()
@@ -410,8 +438,10 @@ class GeneralSettings(QtGui.QDialog):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
-                if editor.DATA["fileType"] == "python":
-                    editor.clearMatchIndicators()
+                snapshot = editorTabWidget.getSnapshot(i)
+                
+                editor.clearMatchIndicators()
+                snapshot.clearMatchIndicators()
 
     def setShowEdgeLine(self, state):
         self.useData.SETTINGS["ShowEdgeLine"] = str(state)
@@ -432,6 +462,17 @@ class GeneralSettings(QtGui.QDialog):
 
     def setDocOnHover(self, state):
         self.useData.SETTINGS["DocOnHover"] = str(state)
+        
+    def setMarkOperationalLines(self, state):
+        self.useData.SETTINGS["MarkOperationalLines"] = str(state)
+        for i in range(self.projectWindowStack.count() - 1):
+            editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
+            for i in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(i)
+                if editor.DATA["fileType"] == "python":
+                    editor2 = editorTabWidget.getCloneEditor(i)
+                    editor.setMarkOperationalLines()
+                    editor2.setMarkOperationalLines()
 
     def updateStyleBox(self):
         self.themeBox.clear()

@@ -229,7 +229,7 @@ class Library(QtGui.QMainWindow):
         hbox.addStretch(1)
 
         self.alphaSearchBox = QtGui.QComboBox()
-        self.alphaSearchBox.setMinimumWidth(50)
+        self.alphaSearchBox.setMinimumWidth(73)
         self.alphaSearchBox.activated.connect(self.gotoAlpha)
         hbox.addWidget(self.alphaSearchBox)
 

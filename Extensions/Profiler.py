@@ -76,7 +76,7 @@ class Profiler(QtGui.QTreeWidget):
     def saveProfile(self):
         options = QtGui.QFileDialog.Options()
         savepath = os.path.join(self.useData.getLastOpenedDir(),
-                                self.projectWindowStack.currentWidget().pathDict["name"] + '_' + QtCore.QDateTime().currentDateTime().toString().replace(' ', '_').replace(':', '-'))
+                                self.projectWindowStack.currentWidget().projectPathDict["name"] + '_' + QtCore.QDateTime().currentDateTime().toString().replace(' ', '_').replace(':', '-'))
         savepath = os.path.normpath(savepath)
         fileName = QtGui.QFileDialog.getSaveFileName(self,
                                                      "Save profile", savepath,

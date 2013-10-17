@@ -136,8 +136,8 @@ class SearchWidget(QtGui.QLabel):
 
     def showReplaceWidget(self):
         self.mainLayout.setContentsMargins(5, 5, 5, 5)
-        self.setMinimumHeight(60)
-        self.setMaximumHeight(60)
+        self.setMinimumHeight(70)
+        self.setMaximumHeight(70)
         self.findLine.setText(self.editorTabWidget.get_current_word())
         self.show()
         self.fixTextAtCursor()

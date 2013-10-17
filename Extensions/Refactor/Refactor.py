@@ -113,7 +113,7 @@ class RenameThread(QtCore.QThread):
             self.ropeProject.validate()
             rename = Rename(self.ropeProject, libutils.path_to_resource(
                 self.ropeProject, self.path), self.offset)
-            changes = rename.get_changes(self.new_name, docs=True)
+            changes = rename.get_changes(self.new_name)
             self.ropeProject.do(changes)
             changed = changes.get_changed_resources()
             # changed is a set
@@ -207,89 +207,13 @@ class Refactor(QtGui.QWidget):
 
         self.editorTabWidget = editorTabWidget
         self.busyWidget = busyWidget
-        self.root = editorTabWidget.pathDict["sourcedir"]
-        ropeFolder = editorTabWidget.pathDict["ropeFolder"]
+        self.root = editorTabWidget.projectPathDict["sourcedir"]
+        self.useData = editorTabWidget.useData
+        ropeFolder = editorTabWidget.projectPathDict["ropeFolder"]
         
-        self.libraryDict = {"PyQt4": ["PyQt4", 
-                                      "PyQt4.QtGui", 
-                                      "QtGui", 
-                                      "PyQt4.QtCore", 
-                                      "QtCore",
-                                      "PyQt4.QtScript", 
-                                      "QtScript",
-                                      "PyQt4.QtDBus", 
-                                      "QtDBus",
-                                      "PyQt4.QtDeclarative", 
-                                      "QtDeclarative",
-                                      "PyQt4.QtHelp", 
-                                      "QtHelp",
-                                      "PyQt4.QtMultimedia", 
-                                      "QtMultimedia",
-                                      "PyQt4.QtNetwork", 
-                                      "QtNetwork",
-                                      "PyQt4.QtOpenGL",
-                                      "QtOpenGL",
-                                      "PyQt4.QtScriptTools",
-                                      "QtScriptTools",
-                                      "PyQt4.QtSql",
-                                      "QtSql",
-                                      "PyQt4.QtSvg",
-                                      "QtSvg",
-                                      "PyQt4.QtTest",
-                                      "QtTest",
-                                      "PyQt4.QtWebKit",
-                                      "QtWebKit",
-                                      "PyQt4.QtXml",
-                                      "QtXml",
-                                      "PyQt4.QtXmlPatterns",
-                                      "QtXmlPatterns",
-                                      "PyQt4.phonon",
-                                      "phonon",
-                                      "PyQt4.QtAssistant",
-                                      "QtAssistant",
-                                      "PyQt4.QtDesigner",
-                                      "QtDesigner",
-                                      "PyQt4.QAxContainer",
-                                      "QAxContainer",
-                                      ],
-                            "Python": ["array", 
-                                        "audioop", 
-                                        "binascii", 
-                                        "cPickle", 
-                                        "cStringIO",
-                                        "cmath", 
-                                        "collections", 
-                                        "datetime", 
-                                        "errno", 
-                                        "exceptions", 
-                                        "gc",
-                                        "imageop", 
-                                        "imp", 
-                                        "itertools", 
-                                        "marshal", 
-                                        "math", 
-                                        "mmap", 
-                                        "msvcrt",
-                                        "nt", 
-                                        "operator", 
-                                        "os", 
-                                        "parser", 
-                                        "rgbimg", 
-                                        "signal", 
-                                        "strop", 
-                                        "sys",
-                                        "thread", 
-                                        "time",
-                                        "os.path",
-                                        "zipimport", 
-                                        "zlib"
-                                        ],
-                            "wx": ["wx", 
-                                   "wxPython"
-                                   ]}
         libraryList = []
-        for i, v in self.libraryDict.items():
-            libraryList.extend(v)
+        for i, v in self.useData.libraryDict.items():
+            libraryList.extend(v[0])
         prefs = {
             'ignored_resources': ['*.pyc', '*~', '.ropeproject',
                                   '.hg', '.svn', '_svn', '.git',
@@ -342,7 +266,7 @@ class Refactor(QtGui.QWidget):
         self.refactorMenu.addAction(self.inlineAct)
         self.refactorMenu.addAction(self.localToFieldAct)
 
-    def close(self):
+    def closeRope(self):
         self.ropeProject.close()
 
     def createActions(self):
@@ -377,10 +301,6 @@ class Refactor(QtGui.QWidget):
             QtGui.QAction("Local-to-Field", self, statusTip="Local-to-Field",
                           triggered=self.localToField)
 
-        self.getCallTipAct = \
-            QtGui.QAction("CallTip", self, statusTip="CallTip",
-                          triggered=self.getCallTip)
-
     def renameModule(self):
         index = self.editorTabWidget.currentIndex()
         moduleName = self.editorTabWidget.tabText(index)
@@ -396,6 +316,10 @@ class Refactor(QtGui.QWidget):
 
     def renameAttribute(self):
         objectName = self.editorTabWidget.get_current_word()
+        if objectName == '':
+            self.editorTabWidget.showNotification(
+                        "No word under cursor.")
+            return
         newName = GetName("Rename", objectName, self)
         if newName.accepted:
             project = self.getProject()
@@ -482,7 +406,7 @@ class Refactor(QtGui.QWidget):
                     offset = result.offset
                     line = result.lineno
                     result_path = result.resource.path
-                    sourcePath = self.editorTabWidget.pathDict["sourcedir"]
+                    sourcePath = self.editorTabWidget.projectPathDict["sourcedir"]
                     if not os.path.isabs(result_path):
                         result_path = os.path.join(sourcePath, result_path)
                     if os.path.samefile(result_path, path):
@@ -512,12 +436,16 @@ class Refactor(QtGui.QWidget):
                                                 self.moduleToPackageThread.error)
 
     def findOccurrences(self):
+        self.objectName = self.editorTabWidget.get_current_word()
+        if self.objectName == '':
+            self.editorTabWidget.showNotification(
+                        "No word under cursor.")
+            return
         offset = self.getOffset()
         project = self.getProject()
         saved = self.editorTabWidget.saveProject()
         if saved:
             path = self.editorTabWidget.getEditorData("filePath")
-            self.objectName = self.editorTabWidget.get_current_word()
             self.findThread.find(path, project, offset)
             self.busyWidget.showBusy(True, "Finding usages... please wait!")
 
@@ -552,23 +480,11 @@ class Refactor(QtGui.QWidget):
         point = editor.get_absolute_coordinates()
         return point
 
-    def getCallTip(self, offset=None):
-        if offset is None:
-            offset = self.getOffset()
-        project = self.getProject()
-        try:
-            calltip = codeassist.get_calltip(project,
-                                             self.editorTabWidget.getSource(), offset)
-
-            return calltip
-        except Exception as err:
-            return None
-
     def getProject(self):
         path = self.editorTabWidget.getEditorData("filePath")
         if path is None:
             return self.noProject
-        if path.startswith(self.editorTabWidget.pathDict["sourcedir"]):
+        if path.startswith(self.editorTabWidget.projectPathDict["sourcedir"]):
             return self.ropeProject
         else:
             return self.noProject

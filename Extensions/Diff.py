@@ -76,24 +76,9 @@ class FormatLexer(QsciLexerCustom):
                 editor.SendScintilla(
                     editor.SCI_GETTEXTRANGE, start, end, source)
             else:
-                # source = unicode(editor.text()
-                                # ).encode('utf-8')[start:end]
-                # scanning entire text is way more efficient that
-                # doing it on demand especially when folding top level text
-                # (Search)
                 source = editor.text().encode('utf-8')
         if not source:
             return
-
-        # the line index will also be needed to implement folding
-        index = editor.SendScintilla(editor.SCI_LINEFROMPOSITION, start)
-        if index > 0:
-            # the previous state may be needed for multi-line styling
-            pos = editor.SendScintilla(
-                editor.SCI_GETLINEENDPOSITION, index - 1)
-            state = editor.SendScintilla(editor.SCI_GETSTYLEAT, pos)
-        else:
-            state = self.ReplacedText
 
         set_style = self.setStyling
         self.startStyling(start, 0x1f)
@@ -108,15 +93,12 @@ class DiffWindow(BaseScintilla):
         self.setMarginWidth(1, 0)
         self.lexer = FormatLexer(self)
         self.setLexer(self.lexer)
+        self.setObjectName("editor")
 
         self.editor = editor
         self.snapShot = snapShot
         
-        self.setStyleSheet("""
-                             QsciScintilla {
-                                     border: none;
-                             }
-                             """)
+        self.setStyleSheet("QsciScintilla {border: none;}")
 
     def generateUnifiedDiff(self, a=None, b=None):
         self.clear()

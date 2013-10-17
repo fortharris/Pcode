@@ -1,5 +1,5 @@
 from PyQt4 import QtCore, QtGui, QtXml
-
+from PyQt4.Qsci import QsciScintilla
 
 class GetShortcut(QtGui.QDialog):
 
@@ -8,8 +8,8 @@ class GetShortcut(QtGui.QDialog):
                                QtCore.Qt.WindowCloseButtonHint)
         self.setWindowTitle("New Shortcut")
 
-        self.keys = 0
         self.accepted = False
+        self.keyValue = None
 
         # Keyword modifiers!
         self.keyword_modifiers = (
@@ -48,25 +48,25 @@ class GetShortcut(QtGui.QDialog):
             return True
         return False
 
-    def keyPressEvent(self, evt):
+    def keyPressEvent(self, event):
         # modifier can not be used as shortcut
-        if evt.key() in self.keyword_modifiers:
+        if event.key() in self.keyword_modifiers:
             return
-        # save the key
-        if evt.key() == QtCore.Qt.Key_Backtab and evt.modifiers() & QtCore.Qt.ShiftModifier:
-            self.keys = QtCore.Qt.Key_Tab
+
+        if event.key() == QtCore.Qt.Key_Backtab and event.modifiers() & QtCore.Qt.ShiftModifier:
+            self.keyValue = QtCore.Qt.Key_Tab
         else:
-            self.keys = evt.key()
-        if evt.modifiers() & QtCore.Qt.ShiftModifier:
-            self.keys += QtCore.Qt.SHIFT
-        if evt.modifiers() & QtCore.Qt.ControlModifier:
-            self.keys += QtCore.Qt.CTRL
-        if evt.modifiers() & QtCore.Qt.AltModifier:
-            self.keys += QtCore.Qt.ALT
-        if evt.modifiers() & QtCore.Qt.MetaModifier:
-            self.keys += QtCore.Qt.META
+            self.keyValue = event.key()
+        if event.modifiers() & QtCore.Qt.ShiftModifier:
+            self.keyValue += QtCore.Qt.SHIFT
+        if event.modifiers() & QtCore.Qt.ControlModifier:
+            self.keyValue += QtCore.Qt.CTRL
+        if event.modifiers() & QtCore.Qt.AltModifier:
+            self.keyValue += QtCore.Qt.ALT
+        if event.modifiers() & QtCore.Qt.MetaModifier:
+            self.keyValue += QtCore.Qt.META
         # set the keys
-        self.setShortcut(QtGui.QKeySequence(self.keys).toString())
+        self.setShortcut(QtGui.QKeySequence(self.keyValue).toString())
 
 
 class Keymap(QtGui.QDialog):
@@ -90,7 +90,7 @@ class Keymap(QtGui.QDialog):
         self.shortcutsView.setColumnWidth(0, 450)
         self.shortcutsView.setSortingEnabled(True)
         self.shortcutsView.sortByColumn(0, QtCore.Qt.AscendingOrder)
-        self.shortcutsView.itemDoubleClicked.connect(self.getShortcut)
+        self.shortcutsView.itemDoubleClicked.connect(self.newShortcut)
         mainLayout.addWidget(self.shortcutsView)
 
         hbox = QtGui.QHBoxLayout()
@@ -138,26 +138,30 @@ class Keymap(QtGui.QDialog):
 
         return True
 
-    def getShortcut(self, item, column):
-        """
-        Open the dialog to set a shortcut
-        """
+    def newShortcut(self, item, column):
         if item.childCount():
             return
-        getShortcut = GetShortcut(self)
-        getShortcut.setShortcut(QtGui.QKeySequence(item.text(1)).toString())
-        getShortcut.exec_()
-        if getShortcut.accepted:
-            if self.validateShortcut(getShortcut.keysequence):
+        shortcut = GetShortcut(self)
+        shortcut.setShortcut(QtGui.QKeySequence(item.text(1)).toString())
+        shortcut.exec_()
+        if shortcut.accepted:
+            if self.validateShortcut(shortcut.keysequence):
                 item = self.shortcutsView.currentItem()
                 topLevelItem = item.parent()
                 item.setText(
-                    1, getShortcut.keysequence.toString())
-                self.useData.CUSTOM_DEFAULT_SHORTCUTS[topLevelItem.text(0)][
-                    item.text(0)][0] = getShortcut.keysequence.toString()
+                    1, shortcut.keysequence.toString())
+                group = topLevelItem.text(0)
+                shortName = shortcut.keysequence.toString()
+                self.useData.CUSTOM_SHORTCUTS[group][
+                    item.text(0)][0] = shortName
+                if group == "Editor":
+                    if shortcut.keyValue is None:
+                        return
+                    self.useData.CUSTOM_SHORTCUTS[group][
+                        item.text(0)][1] = shortcut.keyValue
 
     def save(self):
-        self.applyKeyBindings()
+        self.bindKeymap()
         self.saveKeymap()
 
     def saveKeymap(self, path=None):
@@ -166,13 +170,19 @@ class Keymap(QtGui.QDialog):
         keymap = dom_document.createElement("keymap")
         dom_document.appendChild(keymap)
 
-        for key, value in self.useData.CUSTOM_DEFAULT_SHORTCUTS.items():
+        for key, value in self.useData.CUSTOM_SHORTCUTS.items():
             root = dom_document.createElement(key)
             keymap.appendChild(root)
+            
             for short, func in value.items():
                 tag = dom_document.createElement(short)
-                tag.setAttribute("shortcut", func[0])
-                tag.setAttribute("function", func[1])
+                if key == "Editor":
+                    shortName = func[0]
+                    keyValue = str(func[1])
+                    tag.setAttribute("shortcut", shortName)
+                    tag.setAttribute("value", keyValue)
+                else:
+                    tag.setAttribute("shortcut", func)
                 root.appendChild(tag)
 
         if path is None:
@@ -182,17 +192,17 @@ class Keymap(QtGui.QDialog):
         file.write(dom_document.toString())
         file.close()
 
-    def applyKeyBindings(self):
+    def bindKeymap(self):
         for i in range(self.projectWindowStack.count() - 1):
             window = self.projectWindowStack.widget(i)
-            window.install_shortcuts()
+            window.setShortcuts()
             editorTabWidget = window.editorTabWidget
-            editorTabWidget.install_shortcuts()
+            editorTabWidget.setShortcuts()
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
                 editor2 = editorTabWidget.getCloneEditor(i)
-                editor.install_shortcuts()
-                editor2.install_shortcuts()
+                editor.setShortcuts()
+                editor2.setShortcuts()
 
     def updateShortcutsView(self):
         self.shortcutsView.clear()
@@ -200,25 +210,33 @@ class Keymap(QtGui.QDialog):
         for i in keyList:
             mainItem = QtGui.QTreeWidgetItem(self.shortcutsView)
             mainItem.setText(0, i)
-            for function, action in self.useData.CUSTOM_DEFAULT_SHORTCUTS[i].items():
-                key = action[0]
-                desc = action = action[1]
-                treeData = [function, key]
-                item = QtGui.QTreeWidgetItem(mainItem, treeData)
-                item.setToolTip(0, desc)
-                item.setFlags(
-                    QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            if i == "Editor":
+                for function, action in self.useData.CUSTOM_SHORTCUTS[i].items():
+                    item = QtGui.QTreeWidgetItem(mainItem, [function, action[0]])
+            else:
+                for function, action in self.useData.CUSTOM_SHORTCUTS[i].items():
+                    item = QtGui.QTreeWidgetItem(mainItem, [function, action])
             mainItem.setExpanded(True)
 
     def setDefaultShortcuts(self):
-        reply = QtGui.QMessageBox.warning(self, "Set Default",
+        reply = QtGui.QMessageBox.warning(self, "Default Keymap",
                                           "Setting keymap to default will wipe away your current keymap.\n\nProceed?",
                                           QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
-            self.shortcutsView.clear()
-            self.useData.CUSTOM_DEFAULT_SHORTCUTS = self.useData.DEFAULT_SHORTCUTS
-            self.updateShortcutsView()
+            for key, value in self.useData.DEFAULT_SHORTCUTS['Ide'].items():
+                default = self.useData.DEFAULT_SHORTCUTS['Ide'][key]
+                self.useData.CUSTOM_SHORTCUTS['Ide'][key] = default
+                
+            sc = QsciScintilla()
+            standardCommands = sc.standardCommands()
 
+            for key, value in self.useData.DEFAULT_SHORTCUTS['Editor'].items():
+                default = self.useData.DEFAULT_SHORTCUTS['Editor'][key]
+                command = standardCommands.find(default[1])
+                keyValue = command.key()
+                self.useData.CUSTOM_SHORTCUTS['Editor'][key] = [default[0], keyValue]
             self.save()
+            self.useData.loadKeymap()
+            self.updateShortcutsView()
         else:
             return

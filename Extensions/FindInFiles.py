@@ -126,6 +126,7 @@ class ConfirmReplaceDialog(QtGui.QDialog):
 
         hbox.addStretch(1)
 
+        self.replaced = False
         self.exec_()
 
     def replace(self):
@@ -140,6 +141,8 @@ class ConfirmReplaceDialog(QtGui.QDialog):
         file.close()
 
         QtGui.QApplication.restoreOverrideCursor()
+        
+        self.replaced = True
         self.close()
 
 
@@ -187,11 +190,11 @@ class FoundFilesView(QtGui.QTreeWidget):
 
 class FindInFiles(QtGui.QWidget):
 
-    def __init__(self, useData, editorTabWidget, pathDict, bottomStackSwitcher):
+    def __init__(self, useData, editorTabWidget, projectPathDict, bottomStackSwitcher):
         super(FindInFiles, self).__init__()
 
         self.useData = useData
-        self.pathDict = pathDict
+        self.projectPathDict = projectPathDict
         self.findThread = FinderThread()
         self.editorTabWidget = editorTabWidget
         self.bottomStackSwitcher = bottomStackSwitcher
@@ -352,8 +355,11 @@ class FindInFiles(QtGui.QWidget):
         if self.replaceBox.isChecked():
             name = os.path.basename(
                 path) + " ( '" + self.text + "' --> '" + self.replaceLine.text() + "' )"
-            confirmReplaceDialog = ConfirmReplaceDialog(
+            replaced = confirmReplaceDialog = ConfirmReplaceDialog(
                 path, self.text, self.replaceLine.text(), self.search, self)
+            if replaced.replaced:
+                if self.editorTabWidget.alreadyOpened(path):
+                    message = QtGui.QMessageBox.information(self, "Reload", "This file has changed on disk. You may want to reload it.")
         else:
             line = int(item.text(0)) - 1
             pos = item.data(0, 3)
@@ -421,7 +427,7 @@ class FindInFiles(QtGui.QWidget):
              for filter in fileFilter.split(";")]
         filterRe = re.compile("|".join(fileFilterList))
         if self.projectBox.isChecked():
-            dirName = self.pathDict["sourcedir"]
+            dirName = self.projectPathDict["sourcedir"]
         else:
             dirName = self.directoryLine.text().strip()
             if dirName == '':

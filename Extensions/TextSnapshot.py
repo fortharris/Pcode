@@ -9,7 +9,7 @@ from Extensions import StyleSheet
 
 class TextSnapshot(BaseScintilla):
 
-    def __init__(self, colorScheme, fileType, parent=None):
+    def __init__(self, useData, colorScheme, fileType, parent=None):
         BaseScintilla.__init__(self, parent)
 
         self.setFont(Global.getDefaultFont())
@@ -17,11 +17,11 @@ class TextSnapshot(BaseScintilla):
         self.createContextMenu()
 
         self.DATA = {"fileType": fileType}
+        self.setObjectName("editor")
+        self.enableMarkOccurrence(useData)
 
         self.colorScheme = colorScheme
         self.colorScheme.styleEditor(self)
-
-        self.setStyleSheet(StyleSheet.editorStyle)
 
     def updateLexer(self, lexer):
         self.setLexer(lexer)

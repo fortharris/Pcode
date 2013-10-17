@@ -3,7 +3,7 @@ from PyQt4 import QtCore, QtGui
 
 from Extensions import Global
 from Extensions.PathLineEdit import PathLineEdit
-
+from Extensions import StyleSheet
 
 class ExternalLauncher(QtGui.QLabel):
 
@@ -15,16 +15,31 @@ class ExternalLauncher(QtGui.QLabel):
         self.externalLaunchList = externalLaunchList
 
         self.setMinimumSize(600, 230)
+        self.setObjectName("containerLabel")
+        self.setStyleSheet(StyleSheet.toolWidgetStyle)
 
         self.setBackgroundRole(QtGui.QPalette.Background)
         self.setAutoFillBackground(True)
+        self.setObjectName("containerLabel")
 
         mainLayout = QtGui.QVBoxLayout()
+        
+        hbox = QtGui.QHBoxLayout()
+        mainLayout.addLayout(hbox)
 
         label = QtGui.QLabel("Manage Launchers")
-        label.setStyleSheet("font: 14px; color: grey;")
-        mainLayout.addWidget(label)
-
+        label.setObjectName("toolWidgetNameLabel")
+        hbox.addWidget(label)
+        
+        hbox.addStretch(1)
+        
+        self.hideButton = QtGui.QToolButton()
+        self.hideButton.setAutoRaise(True)
+        self.hideButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "cross_")))
+        self.hideButton.clicked.connect(self.hide)
+        hbox.addWidget(self.hideButton)
+        
         self.listWidget = QtGui.QListWidget()
         mainLayout.addWidget(self.listWidget)
 
@@ -38,6 +53,7 @@ class ExternalLauncher(QtGui.QLabel):
         formLayout.addRow("Parameters:", self.parametersLine)
 
         hbox = QtGui.QHBoxLayout()
+        formLayout.addRow('', hbox)
 
         self.removeButton = QtGui.QPushButton("Remove")
         self.removeButton.clicked.connect(self.removeLauncher)
@@ -48,12 +64,6 @@ class ExternalLauncher(QtGui.QLabel):
         hbox.addWidget(self.addButton)
 
         hbox.addStretch(1)
-
-        self.closeButton = QtGui.QPushButton("Close")
-        self.closeButton.clicked.connect(self.hide)
-        hbox.addWidget(self.closeButton)
-
-        mainLayout.addLayout(hbox)
 
         self.setLayout(mainLayout)
 

@@ -35,7 +35,7 @@ class UsageDialog(QtGui.QDialog):
             return
         path = item.parent().text(0)
         fullPath = os.path.join(
-            self.editorTabWidget.pathDict["sourcedir"], path)
+            self.editorTabWidget.projectPathDict["sourcedir"], path)
         self.editorTabWidget.loadfile(fullPath)
         line = int(item.text(0)) - 1
         self.editorTabWidget.showLine(line)

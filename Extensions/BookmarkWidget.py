@@ -19,7 +19,7 @@ class BookmarkWidget(QtGui.QTreeWidget):
 
         self.loadTimer = QtCore.QTimer()
         self.loadTimer.setSingleShot(True)
-        self.loadTimer.setInterval(0)
+        self.loadTimer.setInterval(1000)
         self.loadTimer.timeout.connect(self.load)
 
         self.editorTabWidget.currentEditorTextChanged.connect(

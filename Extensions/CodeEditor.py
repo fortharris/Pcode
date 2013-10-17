@@ -26,7 +26,7 @@ class TokenizeThread(QtCore.QThread):
                 if type == tokenize.OP:
                     line = begin[0]
                     if line not in self.tokenList:
-                        self.tokenList.append(line)
+                        self.tokenList.append(line - 1)
         except:
             pass
 
@@ -34,36 +34,6 @@ class TokenizeThread(QtCore.QThread):
         self.source = source
 
         self.start()
-
-
-class FindOccurenceThread(QtCore.QThread):
-
-    marckOccurrence = QtCore.pyqtSignal(list)
-
-    def run(self):
-        word = re.escape(self.word)
-        if self.wholeWord:
-            word = "\\b{0}\\b".format(word)
-        flags = re.UNICODE | re.LOCALE
-        search = re.compile(word, flags)
-
-        lineno = 0
-        foundList = []
-        for lineText in self.source.splitlines():
-            for i in search.finditer(lineText):
-                start = i.start()
-                end = i.end()
-                foundList.append([lineno, start, end])
-            lineno += 1
-        self.marckOccurrence.emit(foundList)
-
-    def find(self, word, wholeWord, source):
-        self.source = source
-        self.word = word
-        self.wholeWord = wholeWord
-
-        self.start()
-
 
 class DocThread(QtCore.QThread):
 
@@ -119,17 +89,20 @@ class AutoCompletionThread(QtCore.QThread):
         self.completions.emit(result)
 
     def ropeCompletions(self):
-        proposals = codeassist.code_assist(self.ropeProject,
-                                           self.source, self.offset)
-        proposals = codeassist.sorted_proposals(proposals)
-        if len(proposals) > 0:
-            cmpl = []
-            for i in proposals:
-                cmpl.append(str(i))
+        try:
+            proposals = codeassist.code_assist(self.ropeProject,
+                                               self.source, self.offset)
+            proposals = codeassist.sorted_proposals(proposals)
+            if len(proposals) > 0:
+                cmpl = []
+                for i in proposals:
+                    cmpl.append(str(i))
 
-            return cmpl
-        else:
-            return []
+                return cmpl
+            else:
+                return []
+        except Exception as err:
+            pass
 
     def moduleCompletion(self):
         self.completionType = 3
@@ -175,7 +148,7 @@ class AutoCompletionThread(QtCore.QThread):
                 return completionList
 
         if self.column != 0:
-            if len(self.lineText.strip()) >= 2:
+            if len(self.lineText.strip()) >= 2:  # Autocompetion threshold
                 completions = self.ropeCompletions()
                 self.completionType = 2
                 return completions
@@ -246,8 +219,8 @@ class AutoCompletionThread(QtCore.QThread):
 
     def dotCompletion(self, mod):
         if len(mod) < 2:
-            return sorted(list(set(filter(lambda x: x.startswith(mod[0]), 
-                            self.getRootModules()))))
+            return sorted(list(set(filter(lambda x: x.startswith(mod[0]),
+                         self.getRootModules()))))
 
         completionList = self.tryImport('.'.join(mod[:-1]), True)
         completionList = list(set(filter(lambda x: x.startswith(mod[-1]),
@@ -255,8 +228,8 @@ class AutoCompletionThread(QtCore.QThread):
 
         return sorted(completionList)
 
-    def complete(self, sourcedir, ropeProject, 
-                                        offset, source, lineText, col):
+    def complete(self, sourcedir, ropeProject,
+                offset, source, lineText, col):
         self.sourcedir = sourcedir
         self.ropeProject = ropeProject
         self.offset = offset
@@ -279,13 +252,15 @@ class CodeEditor(BaseScintilla):
         self.colorScheme = colorScheme
         self.editorTabWidget = editorTabWidget
 
+        self.setObjectName("editor")
+        self.enableMarkOccurrence(useData)
+
         self.setMouseTracking(True)
+        self.middleMousePressed = False
+        self.mousePosition = QtCore.QPointF()
 
         self.autoCompletionThread = AutoCompletionThread()
-        self.autoCompletionThread.completions.connect(self.showCompletion)
-
-        self.findOccurenceThread = FindOccurenceThread()
-        self.findOccurenceThread.marckOccurrence.connect(self.markOccurence)
+        self.autoCompletionThread.completions.connect(self.showCompletions)
 
         self.docThread = DocThread()
         self.docThread.docAvailable.connect(
@@ -305,17 +280,10 @@ class CodeEditor(BaseScintilla):
         self.tokenizeTimer.setInterval(1000)
         self.tokenizeTimer.timeout.connect(self.getOperationTokens)
 
-        self.occurrencesTimer = QtCore.QTimer()
-        self.occurrencesTimer.setSingleShot(True)
-        self.occurrencesTimer.setInterval(1000)
-        self.occurrencesTimer.timeout.connect(self.findOccurrences)
-
         self.completionThreadTimer = QtCore.QTimer()
         self.completionThreadTimer.setSingleShot(True)
         self.completionThreadTimer.setInterval(1000)
         self.completionThreadTimer.timeout.connect(self.startCompletion)
-
-        self.cursorPositionChanged.connect(self.occurrencesTimer.start)
 
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.setMargin(0)
@@ -340,14 +308,13 @@ class CodeEditor(BaseScintilla):
         hbox.setContentsMargins(5, 0, 10, 20)
         mainLayout.addLayout(hbox)
 
-        self.notify = Notification()
-        hbox.addWidget(self.notify)
-        self.notify.hide()
+        self.notification = Notification()
+        hbox.addWidget(self.notification)
+        self.notification.hide()
 
         #
 
         self.createActions()
-        self.setStyleSheet(StyleSheet.editorStyle)
 
         self.setAutoCompletion()
 
@@ -358,18 +325,13 @@ class CodeEditor(BaseScintilla):
             "#FF0000"), self.syntaxErrorIndicator)
         self.setIndicatorDrawUnder(True, self.syntaxErrorIndicator)
 
-        self.matchIndicator = self.indicatorDefine(QsciScintilla.INDIC_BOX, 9)
-        self.setIndicatorForegroundColor(
-            QtGui.QColor("#FFCC00"), self.matchIndicator)
-        self.setIndicatorDrawUnder(True, self.matchIndicator)
-
         self.searchIndicator = self.indicatorDefine(
             QsciScintilla.INDIC_ROUNDBOX, 10)
         self.setIndicatorForegroundColor(
             QtGui.QColor("#FFDB4A"), self.searchIndicator)
         self.setIndicatorDrawUnder(True, self.searchIndicator)
 
-        self.userListActivated.connect(self.insertCompletion)
+        self.userListActivated.connect(self.insertTextFromList)
 
         self.copyAvailableTimer = QtCore.QTimer()
         self.copyAvailableTimer.setSingleShot(True)
@@ -411,9 +373,6 @@ class CodeEditor(BaseScintilla):
         # Line numbers
         # conventionnaly, margin 0 is for line numbers
         self.setMarginWidth(0, self.fontMetrics.width("0000") + 5)
-
-        # Clickable margin 1 for showing markers
-        self.setMarginSensitivity(1, True)
 
         self.setAutoCompletionReplaceWord(True)
         # minimum number of letters to be typed before list is displayed
@@ -475,21 +434,32 @@ class CodeEditor(BaseScintilla):
         self.setMarkerForegroundColor(QtGui.QColor("#EEEE11"), 11)
         self.setMarginWidth(3, self.fontMetrics.width("0"))
 
+        mask = (1 << 8) | (1 << 9)
+        self.setMarginMarkerMask(1, mask)
+        self.setMarginSensitivity(1, True)
+        mask = (1 << 11)
+        self.setMarginMarkerMask(3, mask)
+
         self.showLineNumbers()
+        self.setMarkOperationalLines()
 
         if self.useData.SETTINGS["ShowCaretLine"] == 'True':
             self.setCaretLineVisible(True)
 
         self.lexer = self.colorScheme.styleEditor(self)
+        self.setStyleSheet(StyleSheet.editorStyle)
 
-        self.install_shortcuts()
+        self.setShortcuts()
 
     def getOperationTokens(self):
-        self.tokenizeThread.tokenize(self.text())
+        if self.useData.SETTINGS['MarkOperationalLines'] == 'True':
+            self.tokenizeThread.tokenize(self.text())
 
     def displayTokenLines(self):
-        return
-        print(self.tokenizeThread.tokenList)
+        self.markerDeleteAll(11)
+
+        for line in self.tokenizeThread.tokenList:
+            self.markerAdd(line, 11)
 
     def showDoc(self, doc, pos):
         if self.isListActive():
@@ -501,32 +471,18 @@ class CodeEditor(BaseScintilla):
         self.docThread.getDoc(
             self.refactor.getProject(), self.text(), self.hoverOffset)
 
-    def findOccurrences(self):
-        self.clearAllIndicators(self.matchIndicator)
-        if self.useData.SETTINGS['MarkSearchOccurrence'] == 'True':
-            wholeWord = True
-            if self.hasSelectedText():
-                lineFrom_, indexFrom_, lineTo_, indexTo_ = self.getSelection()
-                if lineFrom_ != lineTo_:
-                    return
-                word = self.selectedText().strip()
-                if word == '':
-                    return
-                wholeWord = False
-            else:
-                word = self.get_current_word()
-                if not word:
-                    self.clearMatchIndicators()
-                    return
-            self.findOccurenceThread.find(word, wholeWord, self.text())
+    def mouseReleaseEvent(self, event):
+        self.middleMousePressed = False
+        super(CodeEditor, self).mouseReleaseEvent(event)
 
-    def markOccurence(self, foundList):
-        self.clearAllIndicators(self.matchIndicator)
-        if len(foundList) == 1:
-            return
-        for i in foundList:
-            self.fillIndicatorRange(
-                i[0], i[1], i[0], i[2], self.matchIndicator)
+    def mousePressEvent(self, event):
+        button = event.button()
+        if button == QtCore.Qt.MidButton or button == QtCore.Qt.MiddleButton:
+            self.middleMousePressed = True
+        else:
+            self.middleMousePressed = False
+
+        super(CodeEditor, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
         if self.useData.SETTINGS["DocOnHover"] == "True":
@@ -535,7 +491,27 @@ class CodeEditor(BaseScintilla):
 
             QtGui.QToolTip.hideText()
             self.docThreadTimer.start()
-        super(BaseScintilla, self).mouseMoveEvent(event)
+
+        # resize view if middle mouse button is held down
+        if self.middleMousePressed:
+            pos = event.pos()
+            delta = pos - self.mousePosition
+
+            x = delta.x()
+            y = delta.y()
+            if x > 0:
+                x = 1
+            elif x < 0:
+                x = -1
+            if y > 0:
+                y = 1
+            elif y < 0:
+                y = -1
+
+            self.editorTabWidget.resizeView(x, y)
+
+        self.mousePosition = event.posF()
+        super(CodeEditor, self).mouseMoveEvent(event)
 
     def createActions(self):
         self.cutAct = QtGui.QAction(
@@ -601,7 +577,7 @@ class CodeEditor(BaseScintilla):
         self.contextMenu.addAction(self.pasteAct)
         self.contextMenu.addAction(self.selectToMatchingBraceAct)
         self.contextMenu.addAction(self.toggleBookmarkAct)
-        self.contextMenu.addAction(self.toggleBreakpointAct)
+#        self.contextMenu.addAction(self.toggleBreakpointAct)
 
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.refactor.findDefAct)
@@ -663,7 +639,7 @@ class CodeEditor(BaseScintilla):
                     self.refactor.root,
                         ropeProject, offset, self.text(), lineText, col)
 
-    def showCompletion(self, result):
+    def showCompletions(self, result):
         if len(result) > 0:
             if self.hasFocus():
                 self.showUserList(
@@ -671,7 +647,7 @@ class CodeEditor(BaseScintilla):
         else:
             self.cancelList()
 
-    def insertCompletion(self, id, text):
+    def insertTextFromList(self, id, text):
         word = self.get_current_word()
         if not word:
             pass
@@ -724,14 +700,16 @@ class CodeEditor(BaseScintilla):
         self.toggleBookmark(nmargin, nline)
 
     def toggleBookmark(self, nmargin, nline, modifiers=None):
-        if self.markersAtLine(nline) == 0:
-            handle = self.markerAdd(nline, 8)
-            self.DATA["bookmarkList"].append(handle)
-        else:
-            for handle in self.DATA["bookmarkList"]:
-                if self.markerLine(handle) == nline:
-                    self.DATA["bookmarkList"].remove(handle)
-                    self.markerDeleteHandle(handle)
+        for handle in self.DATA["bookmarkList"]:
+            if self.markerLine(handle) == nline:
+                self.DATA["bookmarkList"].remove(handle)
+                self.markerDeleteHandle(handle)
+
+                markersExist = self.bookmarksExist()
+                self.editorTabWidget.enableBookmarkButtons(markersExist)
+                return
+        handle = self.markerAdd(nline, 8)
+        self.DATA["bookmarkList"].append(handle)
 
         markersExist = self.bookmarksExist()
         self.editorTabWidget.enableBookmarkButtons(markersExist)
@@ -753,12 +731,12 @@ class CodeEditor(BaseScintilla):
             snippetList = os.listdir(
                 self.useData.appPathDict["snippetsdir"])
         except:
-            self.notify.showMessage("Could not fetch snippets.")
+            self.notification.showMessage("Could not fetch snippets.")
             return
         if len(snippetList) > 0:
             self.showUserList(1, snippetList)
         else:
-            self.notify.showMessage("No snippets available.")
+            self.notification.showMessage("No snippets available.")
 
     def clearErrorMarkerAndIndicator(self):
         self.clearAllIndicators(self.syntaxErrorIndicator)
@@ -773,6 +751,14 @@ class CodeEditor(BaseScintilla):
             self.setAutoCompletionSource(QsciScintilla.AcsNone)
         elif self.useData.SETTINGS["AutoCompletion"] == "Document":
             self.setAutoCompletionSource(QsciScintilla.AcsDocument)
+
+    def setMarkOperationalLines(self):
+        if self.useData.SETTINGS["MarkOperationalLines"] == 'True':
+            self.setMarginWidth(3, self.fontMetrics.width("0"))
+            self.getOperationTokens()
+        else:
+            self.markerDeleteAll(11)
+            self.setMarginWidth(3, 0)
 
     def getOffset(self):
         offset = self.currentPosition()
@@ -884,48 +870,45 @@ class CodeEditor(BaseScintilla):
                 self.removeSelectedText()
         self.endUndoAction()
 
-    def notify(self, mess):
-        self.infoBar.showMessage(mess)
-
-    def install_shortcuts(self):
+    def setShortcuts(self):
         self.updateShortcuts(self.useData)
 
-        shortcuts = self.useData.CUSTOM_DEFAULT_SHORTCUTS
+        shortcuts = self.useData.CUSTOM_SHORTCUTS
 
         self.cutAct.setShortcut(shortcuts["Editor"]["Cut-Selection"][0])
         self.copyAct.setShortcut(shortcuts["Editor"]["Copy-Selection"][0])
         self.pasteAct.setShortcut(shortcuts["Editor"]["Paste"][0])
 
         self.shortSnippets = QtGui.QShortcut(
-            shortcuts["Editor"]["Snippets"][0], self)
+            shortcuts["Ide"]["Snippets"], self)
         self.shortSnippets.activated.connect(self.showSnippets)
 
         self.shortIndentationGuide = QtGui.QShortcut(
-            shortcuts["Editor"]["Toggle-Indentation-Guide"][0], self)
+            shortcuts["Ide"]["Toggle-Indentation-Guide"], self)
         self.shortIndentationGuide.activated.connect(self.showIndentationGuide)
 
         self.shortShowCompletion = QtGui.QShortcut(
-            shortcuts["Editor"]["Show-Completion"][0], self)
+            shortcuts["Ide"]["Show-Completion"], self)
         self.shortShowCompletion.activated.connect(self.startCompletion)
 
         self.shortToggleBreakpoint = QtGui.QShortcut(
-            shortcuts["Editor"]["Toggle-Breakpoint"][0], self)
+            shortcuts["Ide"]["Toggle-Breakpoint"], self)
         self.shortToggleBreakpoint.activated.connect(self.toggleLineBreakpoint)
 
         self.shortNextBookmark = QtGui.QShortcut(
-            shortcuts["Editor"]["Next-Bookmark"][0], self)
+            shortcuts["Ide"]["Next-Bookmark"], self)
         self.shortNextBookmark.activated.connect(self.findNextBookmark)
 
         self.shortPreviousBookmark = QtGui.QShortcut(
-            shortcuts["Editor"]["Previous-Bookmark"][0], self)
+            shortcuts["Ide"]["Previous-Bookmark"], self)
         self.shortPreviousBookmark.activated.connect(self.findPreviousBookmark)
 
         self.shortComment = QtGui.QShortcut(
-            shortcuts["Editor"]["Comment"][0], self)
+            shortcuts["Ide"]["Comment"], self)
         self.shortComment.activated.connect(self.comment)
 
         self.shortUncomment = QtGui.QShortcut(
-            shortcuts["Editor"]["Uncomment"][0], self)
+            shortcuts["Ide"]["Uncomment"], self)
         self.shortUncomment.activated.connect(self.unComment)
 
         self.shortZoomIn = QtGui.QShortcut(

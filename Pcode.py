@@ -2,11 +2,6 @@ import sys
 import os
 import logging
 
-logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s')
-if sys.version_info.major < 3:
-    logging.error("This application requires Python 3")
-    sys.exit(1)
-
 from PyQt4 import QtCore, QtGui
 
 from Extensions.UseData import UseData
@@ -35,16 +30,24 @@ class Pcode(QtGui.QWidget):
             screen.height() - size.height()) / 2)
         self.lastWindowGeometry = self.geometry()
 
-        self.setBaseColor()
-
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.setSpacing(0)
         mainLayout.setMargin(0)
         self.setLayout(mainLayout)
 
         self.useData = UseData()
+
+        logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', 
+                            filename=self.useData.appPathDict["logfile"], level=logging.DEBUG)
+        if sys.version_info.major < 3:
+            logging.error("This application requires Python 3")
+            sys.exit(1)
+        
         self.library = Library(self.useData)
         self.busyWidget = BusyWidget(app, self.useData, self)
+        
+        if self.useData.SETTINGS["UI"] == "Custom":
+            app.setStyleSheet(StyleSheet.globalStyle)
 
         self.projectWindowStack = QtGui.QStackedWidget()
 
@@ -55,7 +58,7 @@ class Pcode(QtGui.QWidget):
         self.projectTitleBox.currentIndexChanged.connect(self.projectChanged)
         self.projectTitleBox.activated.connect(self.projectChanged)
 
-        self.settingsWidget = SettingsWidget(self.useData,
+        self.settingsWidget = SettingsWidget(self.useData, app,
                                              self.projectWindowStack, self.library.codeViewer, self)
         self.settingsWidget.colorScheme.styleEditor(self.library.codeViewer)
 
@@ -107,7 +110,7 @@ class Pcode(QtGui.QWidget):
         self.aboutButton.setDefaultAction(self.aboutAct)
         hbox.addWidget(self.aboutButton)
 
-        self.install_shortcuts()
+        self.setShortcuts()
 
         if self.useData.settings["firstRun"] == 'True':
             self.showMaximized()
@@ -153,7 +156,7 @@ class Pcode(QtGui.QWidget):
             if path in self.useData.OPENED_PROJECTS:
                 for i in range(self.projectWindowStack.count() - 1):
                     window = self.projectWindowStack.widget(i)
-                    p_path = window.pathDict["root"]
+                    p_path = window.projectPathDict["root"]
                     if os.path.samefile(path, p_path):
                         self.projectTitleBox.setCurrentIndex(i)
                         return True
@@ -193,8 +196,8 @@ class Pcode(QtGui.QWidget):
         else:
             window = self.projectTitleBox.itemData(
                 self.projectTitleBox.currentIndex())[0]
-            if title.startswith(window.pathDict["sourcedir"]):
-                src_dir = window.pathDict["sourcedir"]
+            if title.startswith(window.projectPathDict["sourcedir"]):
+                src_dir = window.projectPathDict["sourcedir"]
                 n = title.partition(src_dir)[-1]
                 title = 'Pcode - ' + n
             else:
@@ -257,39 +260,14 @@ class Pcode(QtGui.QWidget):
 
         event.accept()
 
-    def setBaseColor(self):
-        baseColor = "#EFEFF2"
-
-        palette = QtGui.QPalette()
-        brush = QtGui.QBrush(QtGui.QColor(baseColor))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(baseColor))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Active, QtGui.QPalette.Window, brush)
-        brush = QtGui.QBrush(QtGui.QColor(255, 255, 255))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(baseColor))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Inactive, QtGui.QPalette.Window, brush)
-        brush = QtGui.QBrush(QtGui.QColor(baseColor))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Base, brush)
-        brush = QtGui.QBrush(QtGui.QColor(baseColor))
-        brush.setStyle(QtCore.Qt.SolidPattern)
-        palette.setBrush(QtGui.QPalette.Disabled, QtGui.QPalette.Window, brush)
-        self.setPalette(palette)
-
-    def install_shortcuts(self):
-        shortcuts = self.useData.CUSTOM_DEFAULT_SHORTCUTS
+    def setShortcuts(self):
+        shortcuts = self.useData.CUSTOM_SHORTCUTS
 
         self.shortFullscreen = QtGui.QShortcut(
-            shortcuts["Ide"]["Fullscreen"][0], self)
+            shortcuts["Ide"]["Fullscreen"], self)
         self.shortFullscreen.activated.connect(self.showFullScreenMode)
 
 app = QtGui.QApplication(sys.argv)
-app.setStyleSheet(StyleSheet.globalStyle)
 
 splash = QtGui.QSplashScreen(QtGui.QPixmap(os.path.join("Resources", "images", "splash")))
 splash.show()

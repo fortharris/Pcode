@@ -68,7 +68,7 @@ class About(QtGui.QDialog):
         self.view.addWidget(table)
 
         self.licenseEdit = QtGui.QTextEdit()
-        file = open(os.path.join("Resources", "LICENSE.GPL3"), "r")
+        file = open(os.path.join("Resources", "LICENSE"), "r")
         self.licenseEdit.setText(file.read())
         file.close()
 

@@ -55,16 +55,10 @@ def determineEncoding(bb):
 
 
 def determineLineEnding(text):
-    """ Get the line ending style used in the text.
-    \n, \r, \r\n,
-    The EOLmode is determined by counting the occurances of each
-    line ending...
-    """
-    # test line ending by counting the occurances of each
     c_win = text.count("\r\n")
     c_mac = text.count("\r") - c_win
     c_lin = text.count("\n") - c_win
-    # set the appropriate style
+
     if c_win > c_mac and c_win > c_lin:
         mode = QsciScintilla.EolWindows
     elif c_mac > c_win and c_mac > c_lin:
@@ -72,7 +66,6 @@ def determineLineEnding(text):
     else:
         mode = QsciScintilla.EolUnix
 
-    # return
     return mode
 
 
@@ -125,7 +118,7 @@ class PythonExecutables(QtCore.QObject):
         winreg.CloseKey(base)
 
         # Query Python versions from file system
-        for rootname in ['c:/', 'C:/program files/', 'C:/program files (x86)/']:
+        for rootname in ['c:\\', 'C:\\Program Files\\', 'C:\\Program Files (x86)\\']:
             if not os.path.isdir(rootname):
                 continue
             for dname in os.listdir(rootname):
@@ -136,14 +129,14 @@ class PythonExecutables(QtCore.QObject):
         versions = set([os.path.normcase(v).strip('\\') for v in versions])
 
         # Append "python.exe" and check if that file exists
-        versions2 = []
+        versions3 = []
         for dname in sorted(versions, key=lambda x: x[-2:]):
             exename = os.path.join(dname, 'python.exe')
             if os.path.isfile(exename):
-                versions2.append(exename)
+                versions3.append(exename)
 
         # Done
-        return versions2
+        return versions3
 
     def findPythonExecutables_posix(self):
         found = []
@@ -175,147 +168,143 @@ class UseData(QtCore.QObject):
         # default shortcuts
         self.DEFAULT_SHORTCUTS = {
             'Ide': {
-                "Go-to-Line": ["Alt+G", "Go to Line"],
-                "New-File": ["Ctrl+N", "Create a New tab"],
-                "Open-File": ["Ctrl+O", "Open a File"],
-                "Save-File": ["Ctrl+S", "Save the current file"],
-                "Save-All": ["Ctrl+Shift+S", "Save all filee"],
-                "Print": ["Ctrl+P", "Print current file"],
-                "Run-File": ["F4", "Execute current file"],
-                "Run-Project": ["F5", "Execute current project"],
-                "Build": ["Ctrl+Shift+B", "Build Project"],
-                "Stop-Execution": ["F6", "Stop Execution"],
-                "Fullscreen": ["F8", "Full Screen"],
-                "Find": ["Ctrl+F", "Find"],
-                "Replace": ["Ctrl+H", "Replace"],
-                "Find-Next": ["Ctrl+G", "Find Next"],
-                "Find-Previous": ["Shift+F3", "Find Previous"],
-                "Help": ["F2", "Show Application Help"],
-                "Python-Manuals": ["F1", "Python Manuals"],
-                "Split-Horizontal": ["F10", "Split Tabs Horizontally"],
-                "Split-Vertical": ["F9", "Split Tabs Vertically"],
-                "Remove-Split": ["F11", "Remove Split"],
-                "Reload-File": ["F7", "Reload File"],
-                "Change-Tab": ["F12", "Change to the next Tab"],
-                "Change-Tab-Reverse": ["Ctrl+Tab", "Change to the previous Tab"],
-                "Change-Split-Focus": ["Ctrl+M", "Change the keyboard focus between the current splits"],
-            },
-            'Editor': {'Move-To-End-Of-Document': ['Ctrl+End', 'Move To End Of Document'],
-                       'Zoom-Out': ['Ctrl+-', 'Zoom Out'],
-                       'Extend-Rectangular-Selection-Left-One-Character': ['Alt+Shift+Left', 'Extend Rectangular Selection Left One Character'],
-                       'Move-Down-One-Paragraph': ['Ctrl+]', 'Move Down One Paragraph'],
-                       'Move-To-Start-Of-Document': ['Ctrl+Home', 'Move To Start Of Document'],
-                       'Extend-Selection-To-Start-Of-Display-Line': ['', 'Extend Selection To Start Of Display Line'],
-                       'De-indent-One-Level': ['Shift+Tab', 'De-indent One Level'],
-                       'Delete-Right-To-End-Of-Next-Word': ['', 'Delete Right To End Of Next Word'],
-                       'Extend-Selection-Down-One-Line': ['Shift+Down', 'Extend Selection Down One Line'],
-                       'Scroll-Vertically-To-Centre-Current-Line': ['', 'Scroll Vertically To Centre Current Line'],
-                       'Toggle-Insert-or-Overtype': ['Ins', 'Toggle Insert/overtype'],
-                       'Extend-Rectangular-Selection-Up-One-Line': ['Alt+Shift+Up', 'Extend Rectangular Selection Up One Line'],
-                       'Extend-Rectangular-Selection-Down-One-Line': ['Alt+Shift+Down', 'Extend Rectangular Selection Down One Line'],
-                       'Extend-Selection-Left-One-Character': ['Shift+Left', 'Extend Selection Left One Character'],
-                       'Select-All': ['Ctrl+A', 'Select All'],
-                       'Convert-Selection-To-Upper-Case': ['Ctrl+Shift+U', 'Convert Selection To Upper Case'],
-                       'Insert-Newline': ['Return', 'Insert Newline'],
-                       'Move-Right-One-Word-Part': ['Ctrl+\\', 'Move Right One Word Part'],
-                       'Move-To-First-Visible-Character-In-Document-Line': ['Home', 'Move To First Visible Character In Document Line'],
-                       'Extend-Rectangular-Selection-To-First-Visible-Character-In-Document-Line': ['Alt+Shift+Home', 'Extend Rectangular Selection To First Visible Character In Document Line'],
-                       'Extend-Selection-Down-One-Page': ['Shift+PgDown', 'Extend Selection Down One Page'],
-                       'Move-Selected-Lines-Down-One-Line': ['', 'Move Selected Lines Down One Line'],
-                       'Move-Right-One-Word': ['Ctrl+Right', 'Move Right One Word'],
-                       'Move-Up-One-Page': ['PgUp', 'Move Up One Page'],
-                       'Extend-Rectangular-Selection-To-Start-Of-Document-Line': ['', 'Extend Rectangular Selection To Start Of Document Line'],
-                       'Extend-Selection-Left-One-Word': ['Ctrl+Shift+Left', 'Extend Selection Left One Word'],
-                       'Scroll-View-Down-One-Line': ['Ctrl+Down', 'Scroll View Down One Line'],
-                       'Extend-Selection-Left-One-Word-Part': ['Ctrl+Shift+/', 'Extend Selection Left One Word Part'],
-                       'Duplicate-Selection': ['Ctrl+D', 'Duplicate Selection'],
-                       'Cut-Selection': ['Ctrl+X', 'Cut Selection'],
-                       'Extend-Selection-Down-One-Paragraph': ['Ctrl+Shift+]', 'Extend Selection Down One Paragraph'],
-                       'Extend-Selection-To-End-Of-Previous-Word': ['', 'Extend Selection To End Of Previous Word'],
-                       'Extend-Selection-To-Start-Of-Document-Line': ['', 'Extend Selection To Start Of Document Line'],
-                       'Move-Selected-Lines-Up-One-Line': ['', 'Move Selected Lines Up One Line'],
-                       'Stuttered-Move-Up-One-Page': ['', 'Stuttered Move Up One Page'],
-                       'Extend-Selection-Right-One-Character': ['Shift+Right', 'Extend Selection Right One Character'],
-                       'Cancel': ['Esc', 'Cancel'],
-                       'Scroll-View-Up-One-Line': ['Ctrl+Up', 'Scroll View Up One Line'],
-                       'Cut-Current-Line': ['Ctrl+L', 'Cut Current Line'],
-                       'Stuttered-Extend-Selection-Down-One-Page': ['', 'Stuttered Extend Selection Down One Page'],
-                       'Extend-Selection-To-End-Of-Display-Or-Document-Line': ['', 'Extend Selection To End Of Display Or Document Line'],
-                       'Move-Up-One-Paragraph': ['Ctrl+[', 'Move Up One Paragraph'],
-                       'Move-Left-One-Word': ['Ctrl+Left', 'Move Left One Word'],
-                       'Formfeed': ['', 'Formfeed'],
-                       'Undo-Last-Command': ['Ctrl+Z', 'Undo Last Command'],
-                       'Delete-Line-To-Left': ['Ctrl+Shift+Backspace', 'Delete Line To Left'],
-                       'Delete-Word-To-Left': ['Ctrl+Backspace', 'Delete Word To Left'],
-                       'Extend-Rectangular-Selection-To-End-Of-Document-Line': ['Alt+Shift+End', 'Extend Rectangular Selection To End Of Document Line'],
-                       'Move-To-End-Of-Display-Or-Document-Line': ['', 'Move To End Of Display Or Document Line'],
-                       'Delete-Current-Character': ['Del', 'Delete Current Character'],
-                       'Stuttered-Move-Down-One-Page': ['', 'Stuttered Move Down One Page'],
-                       'Move-Right-One-Character': ['Right', 'Move Right One Character'],
-                       'Move-To-End-Of-Previous-Word': ['', 'Move To End Of Previous Word'],
-                       'Extend-Selection-To-First-Visible-Character-In-Document-Line': ['Shift+Home',
-                                                                                        'Extend Selection To First Visible Character In Document Line'],
-                       'Move-Down-One-Line': ['Down', 'Move Down One Line'],
-                       'Scroll-To-Start-Of-Document': ['', 'Scroll To Start Of Document'],
-                       'Extend-Selection-To-Start-Of-Display-Or-Document-Line': ['', 'Extend Selection To Start Of Display Or Document Line'],
-                       'Move-Down-One-Page': ['PgDown', 'Move Down One Page'],
-                       'Move-To-End-Of-Document-Line': ['End', 'Move To End Of Document Line'],
-                       'Delete-Word-To-Right': ['Ctrl+Del', 'Delete Word To Right'],
-                       'Convert-Selection-To-Lower-Case': ['Ctrl+U', 'Convert Selection To Lower Case'],
-                       'Extend-Selection-Up-One-Paragraph': ['Ctrl+Shift+[', 'Extend Selection Up One Paragraph'],
-                       'Move-Up-One-Line': ['Up', 'Move Up One Line'],
-                       'Extend-Selection-To-Start-Of-Document': ['Ctrl+Shift+Home', 'Extend Selection To Start Of Document'],
-                       'Delete-Current-Line': ['Ctrl+Shift+L', 'Delete Current Line'],
-                       'Paste': ['Ctrl+V', 'Paste'],
-                       'Extend-Selection-Right-One-Word-Part': ['Ctrl+Shift+\\', 'Extend Selection Right One Word Part'],
-                       'Extend-Selection-To-First-Visible-Character-In-Display-Or-Document-Line': ['', 'Extend Selection To First Visible Character In Display Or Document Line'],
-                       'Extend-Selection-To-End-Of-Next-Word': ['', 'Extend Selection To End Of Next Word'],
-                       'Move-Left-One-Character': ['Left', 'Move Left One Character'],
-                       'Redo-Last-Command': ['Ctrl+Y', 'Redo Last Command'],
-                       'Move-Left-One-Word-Part': ['Ctrl+/', 'Move Left One Word Part'],
-                       'Stuttered-Extend-Selection-Up-One-Page': ['', 'Stuttered Extend Selection Up One Page'],
-                       'Delete-Line-To-Right': ['Ctrl+Shift+Del', 'Delete Line To Right'],
-                       'Extend-Rectangular-Selection-Right-One-Character': ['Alt+Shift+Right', 'Extend Rectangular Selection Right One Character'],
-                       'Transpose-Current-And-Previous-Lines': ['Ctrl+T', 'Transpose Current And Previous Lines'],
-                       'Indent-One-Level': ['Tab', 'Indent One Level'],
-                       'Extend-Selection-Right-One-Word': ['Ctrl+Shift+Right', 'Extend Selection Right One Word'],
-                       'Copy-Selection': ['Ctrl+C', 'Copy Selection'],
-                       'Extend-Selection-To-End-Of-Display-Line': ['', 'Extend Selection To End Of Display Line'],
-                       'Extend-Selection-To-End-Of-Document-Line': ['Shift+End', 'Extend Selection To End Of Document Line'],
-                       'Extend-Rectangular-Selection-Up-One-Page': ['Alt+Shift+PgUp', 'Extend Rectangular Selection Up One Page'],
-                       'Extend-Rectangular-Selection-Down-One-Page': ['Alt+Shift+PgDown', 'Extend Rectangular Selection Down One Page'],
-                       'Move-To-Start-Of-Document-Line': ['', 'Move To Start Of Document Line'],
-                       'Delete-Previous-Character': ['Backspace', 'Delete Previous Character'],
-                       'Delete-Previous-Character-If-Not-At-Start-Of-Line': ['', 'Delete Previous Character If Not At Start Of Line'],
-                       'Zoom-In': ['Ctrl++', 'Zoom In'],
-                       'Move-To-Start-Of-Display-Or-Document-Line': ['', 'Move To Start Of Display Or Document Line'],
-                       'Move-To-First-Visible-Character-Of-Display-In-Document-Line': ['', 'Move To First Visible Character Of Display In Document Line'],
-                       'Extend-Selection-Up-One-Line': ['Shift+Up', 'Extend Selection Up One Line'],
-                       'Copy-Current-Line': ['Ctrl+Shift+T', 'Copy Current Line'],
-                       'Move-To-Start-Of-Display-Line': ['Alt+Home', 'Move To Start Of Display Line'],
-                       'Move-To-End-Of-Next-Word': ['', 'Move To End Of Next Word'],
-                       'Duplicate-The-Current-Line': ['', 'Duplicate The Current Line'],
-                       'Move-To-End-Of-Display-Line': ['Alt+End', 'Move To End Of Display Line'],
-                       'Extend-Selection-To-End-Of-Document': ['Ctrl+Shift+End', 'Extend Selection To End Of Document'],
-                       'Extend-Selection-Up-One-Page': ['Shift+PgUp', 'Extend Selection Up One Page'],
-                       'Scroll-To-End-Of-Document': ['', 'Scroll To End Of Document']}
-        }
-             # extend editor shortcuts with mine
-        self.DEFAULT_SHORTCUTS["Editor"].update({
-            "Fold-Code": ["", "Fold Code"],
-            "Snippets": ["Ctrl+K", "Show Snippets"],
-            "Toggle-Indentation-Guide": ["Alt+I", "Toggle Indentation Guide"],
-            "Toggle-Breakpoint": ["Alt+B", "Toggle Breakpoint"],
-            "Select-to-Matching-Brace": ["", "Select to Matching Brace"],
-            "Next-Bookmark": ["", "Next Bookmark"],
-            "Previous-Bookmark": ["", "Previous Bookmark"],
-            "Comment": ["Ctrl+E", "Comment line/selection"],
-            "Uncomment": ["Alt+E", "Uncomment line/selection"],
-            "Show-Completion": ["Ctrl+Space", "Show Completions"],
-        })
+                "Go-to-Line": "Alt+G",
+                "New-File": "Ctrl+N",
+                "Open-File": "Ctrl+O",
+                "Save-File": "Ctrl+S",
+                "Save-All": "Ctrl+Shift+S",
+                "Print": "Ctrl+P",
+                "Run-File": "F4",
+                "Run-Project": "F5",
+                "Build": "Ctrl+Shift+B",
+                "Stop-Execution": "F6",
+                "Fullscreen": "F8",
+                "Find": "Ctrl+F",
+                "Replace": "Ctrl+H",
+                "Find-Next": "Ctrl+G",
+                "Find-Previous": "Shift+F3",
+                "Help": "F2",
+                "Python-Manuals": "F1",
+                "Split-Horizontal": "F10",
+                "Split-Vertical": "F9",
+                "Remove-Split": "F11",
+                "Reload-File": "F7",
+                "Change-Tab": "F12",
+                "Change-Tab-Reverse": "Ctrl+Tab",
+                "Change-Split-Focus": "Ctrl+M",
+                "Fold-Code": "",
+                "Snippets": "Ctrl+K",
+                "Toggle-Indentation-Guide": "Alt+I",
+                "Toggle-Breakpoint": "Alt+B",
+                "Select-to-Matching-Brace": "",
+                "Next-Bookmark": "",
+                "Previous-Bookmark": "",
+                "Comment": "Ctrl+E",
+                "Uncomment": "Alt+E",
+                "Show-Completion": "Ctrl+Space",
+                },
+            'Editor': {'Move-To-End-Of-Document': ['Ctrl+End', 2318],
+                       'Zoom-Out': ['Ctrl+-', 2334],
+                       'Extend-Rectangular-Selection-Left-One-Character': ['Alt+Shift+Left', 2428],
+                       'Move-Down-One-Paragraph': ['Ctrl+]', 2413],
+                       'Move-To-Start-Of-Document': ['Ctrl+Home', 2316],
+                       'Extend-Selection-To-Start-Of-Display-Line': ['', 2346],
+                       'De-indent-One-Level': ['Shift+Tab', 2328],
+                       'Delete-Right-To-End-Of-Next-Word': ['', 2518],
+                       'Extend-Selection-Down-One-Line': ['Shift+Down', 2301],
+                       'Scroll-Vertically-To-Centre-Current-Line': ['', 2619],
+                       'Toggle-Insert-or-Overtype': ['Ins', 2324],
+                       'Extend-Rectangular-Selection-Up-One-Line': ['Alt+Shift+Up', 2427],
+                       'Extend-Rectangular-Selection-Down-One-Line': ['Alt+Shift+Down', 2426],
+                       'Extend-Selection-Left-One-Character': ['Shift+Left', 2305],
+                       'Select-All': ['Ctrl+A', 2013],
+                       'Convert-Selection-To-Upper-Case': ['Ctrl+Shift+U', 2341],
+                       'Insert-Newline': ['Return', 2329],
+                       'Move-Right-One-Word-Part': ['Ctrl+\\', 2392],
+                       'Move-To-First-Visible-Character-In-Document-Line': ['Home', 2331],
+                       'Extend-Rectangular-Selection-To-First-Visible-Character-In-Document-Line': ['Alt+Shift+Home', 2431],
+                       'Extend-Selection-Down-One-Page': ['Shift+PgDown', 2323],
+                       'Move-Selected-Lines-Down-One-Line': ['', 2621],
+                       'Move-Right-One-Word': ['Ctrl+Right', 2310],
+                       'Move-Up-One-Page': ['PgUp', 2320],
+                       'Extend-Rectangular-Selection-To-Start-Of-Document-Line': ['', 2430],
+                       'Extend-Selection-Left-One-Word': ['Ctrl+Shift+Left', 2309],
+                       'Scroll-View-Down-One-Line': ['Ctrl+Down', 2342],
+                       'Extend-Selection-Left-One-Word-Part': ['Ctrl+Shift+/', 2391],
+                       'Duplicate-Selection': ['Ctrl+D', 2469],
+                       'Cut-Selection': ['Ctrl+X', 2177],
+                       'Extend-Selection-Down-One-Paragraph': ['Ctrl+Shift+]', 2414],
+                       'Extend-Selection-To-End-Of-Previous-Word': ['', 2440],
+                       'Extend-Selection-To-Start-Of-Document-Line': ['', 2313],
+                       'Move-Selected-Lines-Up-One-Line': ['', 2620],
+                       'Stuttered-Move-Up-One-Page': ['', 2435],
+                       'Extend-Selection-Right-One-Character': ['Shift+Right', 2307],
+                       'Cancel': ['Esc', 2325],
+                       'Scroll-View-Up-One-Line': ['Ctrl+Up', 2343],
+                       'Cut-Current-Line': ['Ctrl+L', 2337],
+                       'Stuttered-Extend-Selection-Down-One-Page': ['', 2438],
+                       'Extend-Selection-To-End-Of-Display-Or-Document-Line': ['', 2452],
+                       'Move-Up-One-Paragraph': ['Ctrl+[', 2415],
+                       'Move-Left-One-Word': ['Ctrl+Left', 2308],
+                       'Formfeed': ['', 2330],
+                       'Undo-Last-Command': ['Ctrl+Z', 2176],
+                       'Delete-Line-To-Left': ['Ctrl+Shift+Backspace', 2395],
+                       'Delete-Word-To-Left': ['Ctrl+Backspace', 2335],
+                       'Extend-Rectangular-Selection-To-End-Of-Document-Line': ['Alt+Shift+End', 2432],
+                       'Move-To-End-Of-Display-Or-Document-Line': ['', 2451],
+                       'Delete-Current-Character': ['Del', 2180],
+                       'Stuttered-Move-Down-One-Page': ['', 2437],
+                       'Move-Right-One-Character': ['Right', 2306],
+                       'Move-To-End-Of-Previous-Word': ['', 2439],
+                       'Extend-Selection-To-First-Visible-Character-In-Document-Line': ['Shift+Home', 2332],
+                       'Move-Down-One-Line': ['Down', 2300],
+                       'Scroll-To-Start-Of-Document': ['', 2628],
+                       'Extend-Selection-To-Start-Of-Display-Or-Document-Line': ['', 2450],
+                       'Move-Down-One-Page': ['PgDown', 2322],
+                       'Move-To-End-Of-Document-Line': ['End', 2314],
+                       'Delete-Word-To-Right': ['Ctrl+Del', 2336],
+                       'Convert-Selection-To-Lower-Case': ['Ctrl+U', 2340],
+                       'Extend-Selection-Up-One-Paragraph': ['Ctrl+Shift+[', 2416],
+                       'Move-Up-One-Line': ['Up', 2302],
+                       'Extend-Selection-To-Start-Of-Document': ['Ctrl+Shift+Home', 2317],
+                       'Delete-Current-Line': ['Ctrl+Shift+L', 2338],
+                       'Paste': ['Ctrl+V', 2179],
+                       'Extend-Selection-Right-One-Word-Part': ['Ctrl+Shift+\\', 2393],
+                       'Extend-Selection-To-First-Visible-Character-In-Display-Or-Document-Line': ['', 2454],
+                       'Extend-Selection-To-End-Of-Next-Word': ['', 2442],
+                       'Move-Left-One-Character': ['Left', 2304],
+                       'Redo-Last-Command': ['Ctrl+Y', 2011],
+                       'Move-Left-One-Word-Part': ['Ctrl+/', 2390],
+                       'Stuttered-Extend-Selection-Up-One-Page': ['', 2436],
+                       'Delete-Line-To-Right': ['Ctrl+Shift+Del', 2396],
+                       'Extend-Rectangular-Selection-Right-One-Character': ['Alt+Shift+Right', 2429],
+                       'Transpose-Current-And-Previous-Lines': ['Ctrl+T', 2339],
+                       'Indent-One-Level': ['Tab', 2327],
+                       'Extend-Selection-Right-One-Word': ['Ctrl+Shift+Right', 2311],
+                       'Copy-Selection': ['Ctrl+C', 2178],
+                       'Extend-Selection-To-End-Of-Display-Line': ['', 2315],
+                       'Extend-Selection-To-End-Of-Document-Line': ['Shift+End', 2315],
+                       'Extend-Rectangular-Selection-Up-One-Page': ['Alt+Shift+PgUp', 2433],
+                       'Extend-Rectangular-Selection-Down-One-Page': ['Alt+Shift+PgDown', 2434],
+                       'Move-To-Start-Of-Document-Line': ['', 2312],
+                       'Delete-Previous-Character': ['Backspace', 2326],
+                       'Delete-Previous-Character-If-Not-At-Start-Of-Line': ['', 2344],
+                       'Zoom-In': ['Ctrl++', 2333],
+                       'Move-To-Start-Of-Display-Or-Document-Line': ['', 2349],
+                       'Move-To-First-Visible-Character-Of-Display-In-Document-Line': ['', 2453],
+                       'Extend-Selection-Up-One-Line': ['Shift+Up', 2303],
+                       'Copy-Current-Line': ['Ctrl+Shift+T', 2455],
+                       'Move-To-Start-Of-Display-Line': ['Alt+Home', 2345],
+                       'Move-To-End-Of-Next-Word': ['', 2441],
+                       'Duplicate-The-Current-Line': ['', 2404],
+                       'Move-To-End-Of-Display-Line': ['Alt+End', 2347],
+                       'Extend-Selection-To-End-Of-Document': ['Ctrl+Shift+End', 2319],
+                       'Extend-Selection-Up-One-Page': ['Shift+PgUp', 2321],
+                       'Scroll-To-End-Of-Document': ['', 2629]}
+            }
 
-        self.CUSTOM_DEFAULT_SHORTCUTS = {'Ide': {}, 'Editor': {}}
-
+        self.CUSTOM_SHORTCUTS = {'Ide': {}, 'Editor': {}}
+        
         # load configuration from file
         tempList = []
         file = open("settings.ini", "r")
@@ -330,28 +319,7 @@ class UseData(QtCore.QObject):
         self.loadAppData()
         self.loadUseData()
 
-        self.updateInstalledInterpreters()
-
-    def getNameVerFromPath(self, path):
-        s = os.path.split(path)[0]
-        s = os.path.basename(s)
-        s = s[6:]
-        l = len(list(s))
-        left = s[:l - 1]
-        right = s[1:]
-        nameVer = "Python " + left + '.' + right
-        return nameVer
-
-    def updateInstalledInterpreters(self):
-        pyList = self.getPythonExecutables()
-        if len(pyList) > 0:
-            pyDict = {}
-            for i in pyList:
-                nameVer = self.getNameVerFromPath(i)
-                pyDict[nameVer] = i
-            self.SETTINGS["InstalledInterpreters"] = pyDict
-        else:
-            self.SETTINGS["InstalledInterpreters"] = {}
+        self.SETTINGS["InstalledInterpreters"] = self.getPythonExecutables()
 
     def loadAppData(self):
         self.workspaceDir = self.settings["workspace"]
@@ -363,15 +331,16 @@ class UseData(QtCore.QObject):
             else:
                 sys.exit()
         self.appPathDict = {
+            "logfile": os.path.join(self.workspaceDir, "LOG.txt"),
             "snippetsdir": os.path.join(self.workspaceDir, "Snippets"),
             "librarydir": os.path.join(self.workspaceDir, "Library"),
             "projectsdir": os.path.join(self.workspaceDir, "Projects"),
-            "venvdir": os.path.join(self.workspaceDir, "Venv"),
             "settingsdir": os.path.join(self.workspaceDir, "Settings"),
             "stylesdir": os.path.join(self.workspaceDir, "Settings", "ColorSchemes"),
             "usedata": os.path.join(self.workspaceDir, "Settings", "usedata.xml"),
+            "modules": os.path.join(self.workspaceDir, "Settings", "modules.xml"),
             "keymap": os.path.join(self.workspaceDir, "Settings", "keymap.xml")
-        }
+            }
 
     def loadUseData(self):
         dom_document = QtXml.QDomDocument()
@@ -398,7 +367,65 @@ class UseData(QtCore.QObject):
             node = node.nextSibling()
 
         self.SETTINGS.update(dict(settingsList))
+        # for compatibility with older versions of Pcode
+        settingsKeys = self.SETTINGS.keys()
+        if "MarkOperationalLines" not in settingsKeys:
+            self.SETTINGS["MarkOperationalLines"] = "False"
+
+        if "UI" not in settingsKeys:
+            self.SETTINGS["UI"] = "Custom"
+
         self.loadKeymap()
+        self.loadModulesForCompletion()
+        
+    def saveModulesForCompletion(self):
+        dom_document = QtXml.QDomDocument("modules")
+
+        modules = dom_document.createElement("modules")
+        dom_document.appendChild(modules)
+
+        for i, v in self.libraryDict.items():
+            tag = dom_document.createElement(i)
+            modules.appendChild(tag)
+            tag.setAttribute("use", str(v[1]))
+            
+            for subModule in v[0]:
+                item = dom_document.createElement("item")
+                tag.appendChild(item)
+                
+                t = dom_document.createTextNode(subModule)
+                item.appendChild(t)
+                
+        file = open(self.appPathDict["modules"], "w")
+        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+        file.write(dom_document.toString())
+        file.close()
+        
+    def loadModulesForCompletion(self):
+        dom_document = QtXml.QDomDocument()
+        file = open(self.appPathDict["modules"], "r")
+        dom_document.setContent(file.read())
+        file.close()
+
+        element = dom_document.documentElement()
+        node = element.firstChild()
+
+        self.libraryDict = {}
+        while node.isNull() is False:
+            property = node.toElement()
+            sub_node = property.firstChild()
+            
+            moduleName = node.nodeName()
+            use = property.attribute('use')
+            
+            itemList = []
+            while sub_node.isNull() is False:
+                sub_prop = sub_node.toElement()
+                itemList.append(sub_prop.text())
+                
+                sub_node = sub_node.nextSibling()
+            self.libraryDict[moduleName] = [itemList, use]
+            node = node.nextSibling()
 
     def saveUseData(self):
         dom_document = QtXml.QDomDocument("usedata")
@@ -440,10 +467,11 @@ class UseData(QtCore.QObject):
 
         self.settings["running"] = 'False'
         self.saveSettings()
+        self.saveModulesForCompletion()
 
     def loadKeymap(self):
         if self.settings["firstRun"] == "True":
-            self.CUSTOM_DEFAULT_SHORTCUTS = self.DEFAULT_SHORTCUTS
+            self.CUSTOM_SHORTCUTS = self.DEFAULT_SHORTCUTS
             return
         dom_document = QtXml.QDomDocument()
         file = open(self.appPathDict["keymap"], "r")
@@ -461,10 +489,13 @@ class UseData(QtCore.QObject):
                 tag = sub_prop.toElement()
                 name = tag.tagName()
                 shortcut = tag.attribute("shortcut")
-                shortcut = QtGui.QKeySequence(shortcut).toString()
-                function = tag.attribute("function")
-                self.CUSTOM_DEFAULT_SHORTCUTS[
-                    group][name] = [shortcut, function]
+                if group == "Editor":
+                    keyValue = int(tag.attribute("value"))
+                    self.CUSTOM_SHORTCUTS[
+                        group][name] = [shortcut, keyValue]
+                else:
+                    self.CUSTOM_SHORTCUTS[
+                        group][name] = shortcut
 
                 sub_node = sub_node.nextSibling()
 

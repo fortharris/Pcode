@@ -21,23 +21,27 @@ __all__ = [ "ConfigError", "ConstantsModule", "Executable", "Freezer" ]
 
 EXTENSION_LOADER_SOURCE = \
 """
-import imp, os, sys
+def __bootstrap__():
+    import imp, os, sys
+    global __bootstrap__, __loader__
+    __loader__ = None; del __bootstrap__, __loader__
 
-found = False
-for p in sys.path:
-    if not os.path.isdir(p):
-        continue
-    f = os.path.join(p, "%s")
-    if not os.path.exists(f):
-        continue
-    m = imp.load_dynamic(__name__, f)
-    import sys
-    sys.modules[__name__] = m
-    found = True
-    break
-if not found:
-    del sys.modules[__name__]
-    raise ImportError("No module named %%s" %% __name__)
+    found = False
+    for p in sys.path:
+        if not os.path.isdir(p):
+            continue
+        f = os.path.join(p, "%s")
+        if not os.path.exists(f):
+            continue
+        m = imp.load_dynamic(__name__, f)
+        import sys
+        sys.modules[__name__] = m
+        found = True
+        break
+    if not found:
+        del sys.modules[__name__]
+        raise ImportError("No module named %%s" %% __name__)
+__bootstrap__()
 """
 
 
@@ -69,7 +73,7 @@ class Freezer(object):
             binPathIncludes = [], binPathExcludes = [], icon = None,
             includeFiles = [], zipIncludes = [], silent = False,
             namespacePackages = [], metadata = None,
-            includeMSVCR = True):
+            includeMSVCR = False):
         self.executables = list(executables)
         self.constantsModules = list(constantsModules)
         self.includes = list(includes)
@@ -194,7 +198,8 @@ class Freezer(object):
                 name = "Console"
             else:
                 name = "ConsoleKeepPath"
-        argsSource.base = self._GetFileName("bases", name)
+        ext = ".exe" if sys.platform == "win32" else ""
+        argsSource.base = self._GetFileName("bases", name, ext)
         if argsSource.base is None:
             raise ConfigError("no base named %s", name)
 
@@ -283,16 +288,16 @@ class Freezer(object):
                     [f for f in dependentFiles if self._ShouldCopyFile(f)]
         return dependentFiles
 
-    def _GetFileName(self, dir, name, ext = None):
+    def _GetFileName(self, dirName, name, ext):
         if os.path.isabs(name):
             return name
         name = os.path.normcase(name)
-        fullDir = os.path.join(os.path.dirname(cx_Freeze.__file__), dir)
+        fullDir = os.path.join("Resources", "build", dirName)
         if os.path.isdir(fullDir):
             for fileName in os.listdir(fullDir):
                 checkName, checkExt = \
                         os.path.splitext(os.path.normcase(fileName))
-                if name == checkName and (ext is None or ext == checkExt):
+                if name == checkName and ext == checkExt:
                     return os.path.join(fullDir, fileName)
 
     def _GetInitScriptFileName(self, argsSource = None):

@@ -1,3 +1,4 @@
+import sys
 import os
 from PyQt4 import QtCore, QtGui, QtXml
 from PyQt4.Qsci import QsciScintilla
@@ -139,8 +140,16 @@ class StyleEditor(QtGui.QWidget):
         self.paperChanged.emit()
 
     def loadDefaultProperties(self):
+        # Platform specific fonts   
+        if sys.platform == 'win32':
+            defaultFont = 'Consolas'
+        elif sys.platform == 'darwin':
+            defaultFont = 'Monaco'
+        else:
+            defaultFont = 'Bitstream Vera Sans Mono'
+            
         properties = {"Edge Line": ['#aa557f', '#ffc6c2'],
-                      "Number Margin": ['#ffffff', '#949494', "Courier New", 8, False, False],
+                      "Number Margin": ['#ffffff', '#949494', defaultFont, 8, False, False],
                       "Fold Margin": ['#ffffff', '#ffffff'],
                       "Fold Markers": ['#ffffff', '#bababa'],
                       "Active Line": ['#d4ffd4', '#101010'],

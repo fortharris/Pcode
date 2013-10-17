@@ -1,6 +1,7 @@
 import os
 from PyQt4 import QtCore, QtGui
 
+from Extensions import StyleSheet
 
 class Favourites(QtGui.QLabel):
 
@@ -12,6 +13,8 @@ class Favourites(QtGui.QLabel):
         super(Favourites, self).__init__(parent)
 
         self.setMinimumSize(600, 230)
+        self.setObjectName("containerLabel")
+        self.setStyleSheet(StyleSheet.toolWidgetStyle)
 
         self.setBackgroundRole(QtGui.QPalette.Background)
         self.setAutoFillBackground(True)
@@ -25,10 +28,22 @@ class Favourites(QtGui.QLabel):
                           triggered=self.showMe.emit)
 
         mainLayout = QtGui.QVBoxLayout()
+        
+        hbox = QtGui.QHBoxLayout()
+        mainLayout.addLayout(hbox)
 
         label = QtGui.QLabel("Manage Favourites")
-        label.setStyleSheet("font: 14px; color: grey;")
-        mainLayout.addWidget(label)
+        label.setObjectName("toolWidgetNameLabel")
+        hbox.addWidget(label)
+        
+        hbox.addStretch(1)
+        
+        self.hideButton = QtGui.QToolButton()
+        self.hideButton.setAutoRaise(True)
+        self.hideButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "cross_")))
+        self.hideButton.clicked.connect(self.hide)
+        hbox.addWidget(self.hideButton)
 
         self.favouritesListWidget = QtGui.QListWidget()
         mainLayout.addWidget(self.favouritesListWidget)
@@ -40,10 +55,6 @@ class Favourites(QtGui.QLabel):
         hbox.addWidget(self.removeButton)
 
         hbox.addStretch(1)
-
-        self.closeButton = QtGui.QPushButton("Close")
-        self.closeButton.clicked.connect(self.hide)
-        hbox.addWidget(self.closeButton)
 
         mainLayout.addLayout(hbox)
 
@@ -102,4 +113,4 @@ class Favourites(QtGui.QLabel):
             self.openFile.emit(path)
         else:
             message = QtGui.QMessageBox.warning(self, "Open",
-                                                "File is not available.")
+                                                "File is no longer available.")

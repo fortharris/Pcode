@@ -63,7 +63,13 @@ class NewProjectDialog(QtGui.QDialog):
         self.typeBox = QtGui.QComboBox()
         self.typeBox.addItem("Desktop Application")
         self.typeBox.addItem("Python Package")
+        self.typeBox.currentIndexChanged.connect(self.showWindowTypeBox)
         form.addRow("Type: ", self.typeBox)
+        
+        self.windowTypeBox = QtGui.QComboBox()
+        self.windowTypeBox.addItem("GUI")
+        self.windowTypeBox.addItem("Console")
+        form.addRow('', self.windowTypeBox)
 
         self.destinationBox = GetPathLine(
             self.useData, self.useData.appPathDict["projectsdir"])
@@ -94,6 +100,12 @@ class NewProjectDialog(QtGui.QDialog):
         mainLayout.addLayout(hbox)
 
         self.validateFields()
+        
+    def showWindowTypeBox(self):
+        if self.typeBox.currentText() == "Desktop Application":
+            self.windowTypeBox.show()
+        else:
+            self.windowTypeBox.hide()
 
     def validateFields(self):
         self.projectName = self.nameLine.text().strip()
@@ -126,8 +138,9 @@ class NewProjectDialog(QtGui.QDialog):
             "mainscript": mainScript,
             "name": self.projectName,
             "type": self.typeBox.currentText(),
+            "windowtype": self.windowTypeBox.currentText(),
             "location": self.projectLocation,
             "importdir": self.importPath
-        }
+            }
         self.close()
         self.projectDataReady.emit(data)

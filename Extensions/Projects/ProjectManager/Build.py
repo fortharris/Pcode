@@ -1,5 +1,7 @@
 import os
 import sys
+import traceback
+import logging
 import cx_Freeze
 from cx_Freeze import Freezer
 from PyQt4 import QtCore, QtGui
@@ -21,15 +23,16 @@ class BuildThread(QtCore.QThread):
         metadata.author = self.profile["author"]
         metadata.name = self.profile["name"]
 
-        base = os.path.abspath(os.path.join("Build", "bases",
-                                            self.profile["base"]))
+        if self.profile["base"] == "Console":
+            base = "ConsoleKeepPath"
+        else:
+            base = "Win32GUI"
+        initScript = None
 
-        icon = self.profile["icon"]
-        if not os.path.exists(icon):
-            icon = None
-
-        initScript = os.path.abspath(os.path.join(
-            "Build", "initscripts", self.profile["initscript"]))
+        if self.profile["icon"] in os.listdir(self.projectPathDict['iconsdir']):
+            iconPath = os.path.join(self.projectPathDict['iconsdir'], self.profile["icon"])
+        else:
+            iconPath = None
 
         if self.profile["compress"] == 'Compress':
             compress = True
@@ -73,22 +76,21 @@ class BuildThread(QtCore.QThread):
 
         try:
             executables = [cx_Freeze.Executable(
-                           self.pathDict['mainscript'],
-                           icon=icon,
-                           targetDir=self.pathDict['builddir'],
+                           self.projectPathDict['mainscript'],
+                           icon=iconPath,
+                           targetDir=self.projectPathDict['builddir'],
                            initScript=initScript,
                            base=base)]
             if self.projectSettings["UseVirtualEnv"] == "True":
-                venv_path = os.path.join(self.useData.appPathDict["venvdir"],
-                                     self.pathDict["DefaultVenv"])
-                path = [self.pathDict['sourcedir'],
+                venv_path = self.projectPathDict["venvdir"]
+                path = [self.projectPathDict['sourcedir'],
                         os.path.join(venv_path, "Scripts"),
                         os.path.join(venv_path, "Lib"),
                         os.path.join(venv_path, "Lib", "site-packages"),
                         os.path.join(venv_path, "Include")]
             else:
                 py_path = os.path.dirname(self.projectSettings["DefaultInterpreter"])
-                path = [self.pathDict['sourcedir'],
+                path = [self.projectPathDict['sourcedir'],
                         py_path,
                         os.path.join(py_path, "DLLs"),
                         os.path.join(py_path, "libs"),
@@ -101,10 +103,10 @@ class BuildThread(QtCore.QThread):
             path.extend(extraPathList)
             
             freezer = Cx_Freeze(executables,
-                                self.pathDict,
+                                self.projectPathDict,
                                 self.useData,
                                 base=base,
-                                icon=icon,
+                                icon=iconPath,
                                 metadata=metadata,
                                 initScript=initScript,
                                 path=path,
@@ -137,6 +139,9 @@ class BuildThread(QtCore.QThread):
                 self.missing.append("? {0} imported from {1}".format
                                    (name, ", ".join(callers)))
         except Exception as err:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                                      exc_traceback)))
             self.error = str(err)
             
     def pathListFromDir(self, dirPath):
@@ -161,9 +166,9 @@ class BuildThread(QtCore.QThread):
                                 pathList.append(fullPath)
         return pathList
 
-    def build(self, profile, pathDict, projectSettings, useData):
+    def build(self, profile, projectPathDict, projectSettings, useData):
         self.profile = profile
-        self.pathDict = pathDict
+        self.projectPathDict = projectPathDict
         self.useData = useData
         self.projectSettings = projectSettings
 
@@ -172,7 +177,7 @@ class BuildThread(QtCore.QThread):
 
 class Cx_Freeze(Freezer):
     def __init__(self, executables,
-                 pathDict,
+                 projectPathDict,
                  useData,
                  base,
                  icon,
@@ -200,7 +205,7 @@ class Cx_Freeze(Freezer):
                          silent=True,
                          icon=icon,
                          metadata=metadata,
-                         targetDir=pathDict['builddir'],
+                         targetDir=projectPathDict['builddir'],
                          initScript=initScript,
                          path=path,
                          base=base,
@@ -225,12 +230,12 @@ class Cx_Freeze(Freezer):
 
 
 class Build(QtGui.QWidget):
-    def __init__(self, busyWidget, messagesWidget, pathDict, projectSettings, useData,
+    def __init__(self, busyWidget, messagesWidget, projectPathDict, projectSettings, useData,
                  buildConfig, editorTabWidget, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
         self.useData = useData
-        self.pathDict = pathDict
+        self.projectPathDict = projectPathDict
         self.buildConfig = buildConfig
         self.projectSettings = projectSettings
 
@@ -245,9 +250,8 @@ class Build(QtGui.QWidget):
         self.durationTime = QtCore.QTime()
 
     def openDir(self):
-        check = os.path.exists(self.pathDict["builddir"])
-        if check == True:
-            os.startfile(self.pathDict["builddir"], 'explore')
+        if os.path.exists(self.projectPathDict["builddir"]) == True:
+            os.startfile(self.projectPathDict["builddir"], 'explore')
         else:
             message = QtGui.QMessageBox.critical(self, "Open",
                                                  "Build folder is missing!")
@@ -260,7 +264,7 @@ class Build(QtGui.QWidget):
         if saved:
             profile = self.buildConfig.load()
             self.durationTime.start()
-            self.buildThread.build(profile, self.pathDict, self.projectSettings, self.useData)
+            self.buildThread.build(profile, self.projectPathDict, self.projectSettings, self.useData)
             self.busyWidget.showBusy(True)
 
     def buildFinished(self):

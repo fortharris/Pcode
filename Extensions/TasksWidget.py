@@ -11,9 +11,11 @@ class TaskFinderThread(QtCore.QThread):
 
     def run(self):
         # TODO: this is a test for the following function
-        """Find tasks in source code (TODO, FIXME, XXX, ...)"""
+        """
+        Find tasks in source code (TODO, FIXME, XXX, ...)
+        """
         results = []
-        for line, text in enumerate(self.editorTabWidget.getSource().splitlines()):
+        for line, text in enumerate(self.source.splitlines()):
             for todo in re.findall(self.TASKS_PATTERN, text):
                 results.append((todo[1], line + 1, todo[
                                -1].strip().capitalize()))
@@ -22,8 +24,9 @@ class TaskFinderThread(QtCore.QThread):
             self.results.extend(results)
             self.newTasks.emit(results)
 
-    def findTasks(self, editorTabWidget):
-        self.editorTabWidget = editorTabWidget
+    def findTasks(self, source):
+        self.source = source
+        
         self.start()
 
 
@@ -80,4 +83,4 @@ class Tasks(QtGui.QTreeWidget):
         self.editorTabWidget.showLine(lineno)
 
     def findTasks(self):
-        self.taskFinder.findTasks(self.editorTabWidget)
+        self.taskFinder.findTasks(self.editorTabWidget.getSource())

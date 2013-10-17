@@ -8,14 +8,16 @@ from Extensions import StyleSheet
 
 class CodeSnapshot(BaseScintilla):
 
-    def __init__(self, colorScheme, parent=None):
+    def __init__(self, useData, colorScheme, parent=None):
         BaseScintilla.__init__(self, parent)
 
         self.colorScheme = colorScheme
         self.DATA = {"fileType": "python"}
+        
+        self.setObjectName("editor")
+        self.enableMarkOccurrence(useData)
 
         self.createContextMenu()
-        self.setStyleSheet(StyleSheet.editorStyle)
 
         self.colorScheme.styleEditor(self)
         self.setMarginLineNumbers(0, True)

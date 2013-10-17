@@ -2,6 +2,7 @@ import os
 import ctypes
 from PyQt4 import QtCore, QtGui
 
+from Extensions import StyleSheet
 
 class ManageShortcuts(QtGui.QLabel):
 
@@ -14,11 +15,29 @@ class ManageShortcuts(QtGui.QLabel):
 
         self.setBackgroundRole(QtGui.QPalette.Background)
         self.setAutoFillBackground(True)
+        self.setObjectName("containerLabel")
+        self.setStyleSheet(StyleSheet.toolWidgetStyle)
 
         self.useData = useData
         self.FILE_EXPLORER_SHORTCUTS = FILE_EXPLORER_SHORTCUTS
 
         mainLayout = QtGui.QVBoxLayout()
+        
+        hbox = QtGui.QHBoxLayout()
+        mainLayout.addLayout(hbox)
+
+        label = QtGui.QLabel("Manage Shortcuts")
+        label.setObjectName("toolWidgetNameLabel")
+        hbox.addWidget(label)
+        
+        hbox.addStretch(1)
+        
+        self.hideButton = QtGui.QToolButton()
+        self.hideButton.setAutoRaise(True)
+        self.hideButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "cross_")))
+        self.hideButton.clicked.connect(self.hide)
+        hbox.addWidget(self.hideButton)
 
         self.shortcutsWidget = QtGui.QListWidget()
         self.shortcutsWidget.itemSelectionChanged.connect(
@@ -54,10 +73,6 @@ class ManageShortcuts(QtGui.QLabel):
         hbox.addWidget(self.moveUpButton)
 
         hbox.addStretch(1)
-
-        self.closeButton = QtGui.QPushButton("Close")
-        self.closeButton.clicked.connect(self.close)
-        hbox.addWidget(self.closeButton)
 
         mainLayout.addLayout(hbox)
 
@@ -138,6 +153,7 @@ class FileExplorer(QtGui.QTreeView):
         self.setAnimated(True)
         self.setAutoScroll(True)
         self.activated.connect(self.treeItemActivated)
+        self.setObjectName("sidebarItem")
 
         self.fileSystemModel = QtGui.QFileSystemModel()
         self.fileSystemModel.setRootPath(QtCore.QDir.rootPath())
@@ -164,7 +180,7 @@ class FileExplorer(QtGui.QTreeView):
         self.contextMenu = QtGui.QMenu()
 
         self.contextMenu.addAction(self.homeAct)
-        self.contextMenu.addAction(self.enableFilterAct)
+        self.contextMenu.addAction(self.showAllFilesAct)
         self.contextMenu.addAction(self.collapseAllAct)
         indexList = self.selectedIndexes()
         if len(indexList) != 0:
@@ -187,11 +203,12 @@ class FileExplorer(QtGui.QTreeView):
                 "Collapse All", self,
                 statusTip="Collapse Tree", triggered=self.collapseAll)
 
-        self.enableFilterAct = \
+        self.showAllFilesAct = \
             QtGui.QAction(
-                "Enable Filter", self, statusTip="Enable Filter",
-                toggled=self.enableFilter)
-        self.enableFilterAct.setCheckable(True)
+                "Show All Files", self, statusTip="Show All Files",
+                toggled=self.showAllFiles)
+        self.showAllFilesAct.setCheckable(True)
+        self.showAllFilesAct.setChecked(True)
 
         self.locateAct = \
             QtGui.QAction("Locate", self, statusTip="Locate",
@@ -262,16 +279,16 @@ class FileExplorer(QtGui.QTreeView):
             message = QtGui.QMessageBox.warning(self, "Open",
                                                 "Directory is not available.")
 
-    def enableFilter(self):
-        if self.enableFilterAct.isChecked():
-            self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
-        else:
+    def showAllFiles(self):
+        if self.showAllFilesAct.isChecked():
             self.fileSystemModel.setNameFilters([])
+        else:
+            self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
 
     def refreshFileSytemModel(self):
         self.fileSystemModel = QtGui.QFileSystemModel()
         self.fileSystemModel.setRootPath(QtCore.QDir.rootPath())
-        if self.enableFilterAct.isChecked():
+        if self.showAllFilesAct.isChecked():
             self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
         self.fileSystemModel.setNameFilterDisables(False)
         self.setModel(self.fileSystemModel)
@@ -311,7 +328,7 @@ class FileExplorer(QtGui.QTreeView):
             self.FILE_EXPLORER_SHORTCUTS.append(path)
             self.updateShortcutsActionGroup()
             self.messagesWidget.addMessage(0, "Shortcuts",
-                                           ["'{0}' added to Shortcuts".format(path)])
+                                           ["'{0}' added!".format(path)])
 
     def locate(self):
         indexList = self.selectedIndexes()

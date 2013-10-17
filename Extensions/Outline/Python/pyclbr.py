@@ -1,19 +1,19 @@
 """
-
 Class Outline based on the python 3 pyclbr
-
 """
 
-
+import re
 import io
 import tokenize
 from token import NAME, DEDENT, OP
 
-_modules = {}                           # cache of modules we've seen
+_modules = {}
+# cache of modules we've seen
+
+spacesFirstWordRe = re.compile(r"^(\s*)(\w*)")
+getSpacesFirstWord = lambda s, c=spacesFirstWordRe: c.match(s).groups()
 
 # each Python class is represented by an instance of this class
-
-
 class Class:
 
     '''Class to represent a Python class.'''
@@ -41,6 +41,17 @@ class Function:
         self.lineno = lineno
 
         self.objectType = "Function"
+
+
+class GlobalVariable:
+
+    '''Class to represent a top-level Python global variable'''
+
+    def __init__(self, name, lineno):
+        self.name = name
+        self.lineno = lineno
+
+        self.objectType = "GlobalVariable"
 
 
 def readmodule(source):
@@ -140,6 +151,13 @@ def _readmodule(source):
                 if not stack:
                     outlineDict[class_name] = cur_class
                 stack.append((cur_class, thisindent))
+            elif token == '=':
+                # get global variables
+                spaces, firstword = getSpacesFirstWord(_line)
+                if (len(spaces) == 0) and (_line.lstrip(spaces + firstword).lstrip().startswith('=')):
+                    # it's a global variable
+                    lineno, thisindent = start
+                    outlineDict[firstword] = GlobalVariable(firstword, lineno)
     except:
         pass
 

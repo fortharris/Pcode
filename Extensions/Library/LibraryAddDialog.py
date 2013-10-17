@@ -37,8 +37,17 @@ class LibraryAddDialog(QtGui.QDialog):
         if self.editorTabWidget.focusedEditor().selectedText().strip() == '':
             self.selectionButton.setDisabled(True)
         hbox.addWidget(self.selectionButton)
-
+        
         hbox.addStretch(1)
+        
+        self.showDetailsButton = QtGui.QToolButton()
+        self.showDetailsButton.setAutoRaise(True)
+        self.showDetailsButton.setToolButtonStyle(2)
+        self.showDetailsButton.setText("Comments")
+        self.showDetailsButton.setIcon(QtGui.QIcon(
+            os.path.join("Resources", "images", "extender-down")))
+        self.showDetailsButton.clicked.connect(self.showComments)
+        hbox.addWidget(self.showDetailsButton)
 
         self.moreWidget = QtGui.QWidget()
         vbox = QtGui.QVBoxLayout()
@@ -53,15 +62,6 @@ class LibraryAddDialog(QtGui.QDialog):
         self.moreWidget.hide()
 
         hbox = QtGui.QHBoxLayout()
-
-        self.showDetailsButton = QtGui.QToolButton()
-        self.showDetailsButton.setAutoRaise(True)
-        self.showDetailsButton.setToolButtonStyle(2)
-        self.showDetailsButton.setText("Comments")
-        self.showDetailsButton.setIcon(QtGui.QIcon(
-            os.path.join("Resources", "images", "extender-down")))
-        self.showDetailsButton.clicked.connect(self.showComments)
-        hbox.addWidget(self.showDetailsButton)
 
         hbox.addStretch(1)
 

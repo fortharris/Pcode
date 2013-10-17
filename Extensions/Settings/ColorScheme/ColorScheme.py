@@ -160,43 +160,6 @@ class ColorScheme(QtGui.QDialog):
             self.useData.SETTINGS["EditorStylePython"])
         self.schemeNameBox.setCurrentIndex(index)
 
-        self.setStyleSheet("""
-                    QTabWidget::pane { /* The tab widget frame */
-                         border-top: none;
-                         position: absolute;
-                         top: 0em;
-                    }
-
-                    QTabWidget::tab-bar {
-                         left: 0px; /* move to the right by 0px */
-                    }
-
-                    /* Style the tab using the tab sub-control. Note that
-                         it reads QTabBar _not_ QTabWidget */
-                    QTabBar::tab {
-                         background: none;
-                         border: none;
-                         min-width: 24ex;
-                         max-width: 24ex;
-                         min-height: 4ex;
-                         padding: 2px;
-                    }
-
-                    QTabBar::tab:hover {
-                         background: #70A7DC;
-                         color: black;
-                    }
-
-                    QTabBar::tab:selected{
-                         background: #007ACC;
-                         color: white;
-                    }
-
-                    QTabBar::tab:!selected {
-                         margin-top: 0px; /* make non-selected tabs look smaller */
-                    }
-                        """)
-
     def groupChanged(self):
         self.loadSchemeNames()
         self.updateScheme()
@@ -362,7 +325,7 @@ class ColorScheme(QtGui.QDialog):
     def applyScheme(self):
         schemeType = self.schemeTypeBox.currentText()
         schemeName = self.schemeNameBox.currentText()
-        if schemeName is not "Default":
+        if self.schemeNameBox.currentIndex() != 0:
             self.save()
         self.useData.SETTINGS[
             "EditorStyle" + schemeType] = schemeName
@@ -411,4 +374,5 @@ class ColorScheme(QtGui.QDialog):
         paper = self.editorStyler.applyChanges(editor, properties)
         lexer = self.lexerStyler.createLexer(paper, style_name, groupName)
         editor.updateLexer(lexer)
+
         return lexer

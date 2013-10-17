@@ -26,6 +26,9 @@ class Outline(QtGui.QTreeWidget):
         self.pythonOutlineThread = PythonOutlineThread()
         self.useData = useData
         self.editorTabWidget = editorTabWidget
+        
+        self.setObjectName("sidebarItem")
+        self.setStyleSheet("QTreeView {margin-top: 23px;}")
 
         self.navigatorTimer = QtCore.QTimer()
         self.navigatorTimer.setSingleShot(True)
@@ -84,6 +87,14 @@ class Outline(QtGui.QTreeWidget):
                 functionItem.setIcon(0,
                                     QtGui.QIcon(os.path.join("Resources", "images", "function")))
                 self.addTopLevelItem(functionItem)
+            elif obj.objectType == "GlobalVariable":
+               # obj.name, obj.lineno
+                globalItem = QtGui.QTreeWidgetItem()
+                globalItem.setText(0, obj.name)
+                globalItem.setData(0, 3, obj.lineno)
+                globalItem.setIcon(0,
+                                    QtGui.QIcon(os.path.join("Resources", "images", "led")))
+                self.addTopLevelItem(globalItem)
 
         if len(outlineDict) == 0:
             item = QtGui.QTreeWidgetItem()

@@ -2,8 +2,8 @@ import os
 import shutil
 from PyQt4 import QtCore, QtGui
 
-from Extensions.ProjectManager.ProjectView.ProjectView import ProjectView
-from Extensions.ProjectManager.Build import Build
+from Extensions.Projects.ProjectManager.ProjectView.ProjectView import ProjectView
+from Extensions.Projects.ProjectManager.Build import Build
 
 
 class ExportThread(QtCore.QThread):
@@ -25,7 +25,7 @@ class ExportThread(QtCore.QThread):
 class ProjectManager(QtGui.QWidget):
 
     def __init__(
-        self, editorTabWidget, messagesWidget, pathDict, projectSettings, 
+        self, editorTabWidget, messagesWidget, projectPathDict, projectSettings,
             useData, app,
             busyWidget, buildStatusWidget, parent):
         QtGui.QWidget.__init__(self, parent)
@@ -39,21 +39,21 @@ class ProjectManager(QtGui.QWidget):
 
         self.configDialog = editorTabWidget.configDialog
 
-        if pathDict["type"] == "Desktop Application":
+        if projectPathDict["type"] == "Desktop Application":
             self.build = Build(
-                buildStatusWidget, messagesWidget, pathDict, projectSettings, useData,
+                buildStatusWidget, messagesWidget, projectPathDict, projectSettings, useData,
                 self.configDialog.buildConfig, editorTabWidget, self)
 
         self.exportThread = ExportThread()
         self.exportThread.finished.connect(self.finishExport)
 
         self.projectView = ProjectView(
-            self.editorTabWidget, pathDict["sourcedir"], app)
+            self.editorTabWidget, projectPathDict["sourcedir"], app, projectSettings)
 
     def buildProject(self):
         if self.editorTabWidget.errorsInProject():
             reply = QtGui.QMessageBox.warning(self, "Build",
-                                              "Errors exist in your project. Build anyway?",
+                                              "There are errors in your project. Build anyway?",
                                               QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 self.build.build()
@@ -70,8 +70,8 @@ class ProjectManager(QtGui.QWidget):
 
     def exportProject(self):
         curren_window = self.projects.projectWindowStack.currentWidget()
-        name = curren_window.pathDict["name"]
-        path = curren_window.pathDict["root"]
+        name = curren_window.projectPathDict["name"]
+        path = curren_window.projectPathDict["root"]
 
         options = QtGui.QFileDialog.Options()
         savepath = os.path.join(self.useData.getLastOpenedDir(), name)

@@ -16,7 +16,7 @@ from Extensions.EditorSplitter import EditorSplitter
 from Extensions import Global
 from Extensions.Refactor.Refactor import Refactor
 from Extensions.RunWidget import SetRunParameters
-from Extensions.ProjectManager.ConfigureProject import ConfigureProject
+from Extensions.Projects.ProjectManager.ConfigureProject import ConfigureProject
 from Extensions import StyleSheet
 
 
@@ -36,14 +36,14 @@ class EditorTabBar(QtGui.QTabBar):
 
         self.createActions()
 
-    def install_shortcuts(self):
-        shortcuts = self.editorTabWidget.useData.CUSTOM_DEFAULT_SHORTCUTS
+    def setShortcuts(self):
+        shortcuts = self.editorTabWidget.useData.CUSTOM_SHORTCUTS
 
         self.shortSplitFileReload = QtGui.QShortcut(
-            shortcuts["Ide"]["Reload-File"][0], self)
+            shortcuts["Ide"]["Reload-File"], self)
         self.shortSplitFileReload.activated.connect(
             self.reload)
-        self.reloadTabAct.setShortcut(shortcuts["Ide"]["Reload-File"][0])
+        self.reloadTabAct.setShortcut(shortcuts["Ide"]["Reload-File"])
 
     def contextMenuEvent(self, event):
         filePath = self.editorTabWidget.getEditorData('filePath')
@@ -157,19 +157,21 @@ class EditorTabWidget(QtGui.QTabWidget):
     cursorPositionChanged = QtCore.pyqtSignal()
 
     def __init__(
-        self, useData, pathDict, projectSettings, colorScheme, busyWidget, bookmarkToolbar,
-            app, manageFavourites, externalLauncher, parent=None):
+        self, useData, projectPathDict, projectSettings, messagesWidget, colorScheme, busyWidget, bookmarkToolbar,
+            app, manageFavourites, externalLauncher, editorWindow, parent=None):
         QtGui.QTabWidget.__init__(self, parent)
 
         self.setElideMode(1)
 
         self.useData = useData
-        self.pathDict = pathDict
+        self.projectPathDict = projectPathDict
         self.colorScheme = colorScheme
+        self.messagesWidget = messagesWidget
         self.app = app
         self.busyWidget = busyWidget
         self.projectSettings = projectSettings
         self.bookmarkToolbar = bookmarkToolbar
+        self.editorWindow = editorWindow
 
         self.toolWidgetList = []
         # backup keys are generated from the system time, but sometimes
@@ -184,7 +186,8 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.backupTimer.setInterval(60000)
         self.backupTimer.timeout.connect(self.createBackup)
 
-        self.configDialog = ConfigureProject(pathDict, useData, self)
+        self.configDialog = ConfigureProject(
+            projectPathDict, projectSettings, useData, self)
 
         self.manageFavourites = manageFavourites
         self.manageFavourites.showMe.connect(self.showFavouritesManager)
@@ -193,7 +196,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.externalLauncher.showMe.connect(self.showExternalLauncher)
 
         self.setRunParameters = SetRunParameters(
-            self.projectSettings, self.useData)
+            self.projectSettings, self.projectPathDict, self.useData)
 
         self.refactor = Refactor(
             self, self.busyWidget, self)
@@ -201,14 +204,17 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.viewSwitcher = ViewSwitcher(self)
         self.gotoLineWidget = GotoLineWidget(self)
 
-        mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setContentsMargins(0, 22, 14, 12)
-        self.setLayout(mainLayout)
+        self.mainLayout = QtGui.QVBoxLayout()
+        self.setLayout(self.mainLayout)
+        if self.useData.SETTINGS["UI"] == "Custom":
+            self.adjustToStyleSheet(True)
+        else:
+            self.adjustToStyleSheet(False)
 
         self.topVBox = QtGui.QVBoxLayout()
-        mainLayout.addLayout(self.topVBox)
+        self.mainLayout.addLayout(self.topVBox)
 
-        mainLayout.addStretch(1)
+        self.mainLayout.addStretch(1)
 
         self.addToolWidget(self.configDialog)
         self.addToolWidget(self.externalLauncher)
@@ -244,7 +250,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.currentChanged.connect(self.editorTabChanged)
         self.tabCloseRequested.connect(self.closeEditorTab)
 
-        self.install_shortcuts()
+        self.setShortcuts()
         self.backupTimer.start()
 
         self.newFileMenu = QtGui.QMenu("New File")
@@ -252,6 +258,15 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.newFileMenu.addAction(self.newXmlFileAct)
         self.newFileMenu.addAction(self.newHtmlFileAct)
         self.newFileMenu.addAction(self.newCssFileAct)
+
+    def resizeView(self, hview, vview):
+        self.editorWindow.resizeView(hview, vview)
+
+    def adjustToStyleSheet(self, adjust):
+        if adjust:
+            self.mainLayout.setContentsMargins(0, 22, 14, 12)
+        else:
+            self.mainLayout.setContentsMargins(0, 24, 25, 12)
 
     def addToolWidget(self, widget):
         hbox = QtGui.QHBoxLayout()
@@ -505,7 +520,7 @@ class EditorTabWidget(QtGui.QTabWidget):
     def showNotification(self, message, index=None):
         if index is None:
             index = self.currentIndex()
-        self.focusedEditor(index).notify.showMessage(message)
+        self.focusedEditor(index).notification.showMessage(message)
 
     def undoAction(self):
         self.currentEditor.undo()
@@ -530,8 +545,8 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def clearBackups(self):
         # empty backups
-        for i in os.listdir(self.pathDict["backupdir"]):
-            remPath = os.path.join(self.pathDict["backupdir"], i)
+        for i in os.listdir(self.projectPathDict["backupdir"]):
+            remPath = os.path.join(self.projectPathDict["backupdir"], i)
             try:
                 os.remove(remPath)
             except:
@@ -542,7 +557,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             key = self.getEditorData("backupKey", i)
             editor = self.getEditor(i)
 
-            savePath = os.path.join(self.pathDict["backupdir"], key)
+            savePath = os.path.join(self.projectPathDict["backupdir"], key)
 
             file = open(savePath, 'w')
             file.write(editor.text())
@@ -596,35 +611,37 @@ class EditorTabWidget(QtGui.QTabWidget):
             session.appendChild(tag)
 
         if backup:
-            savePath = self.pathDict["backupfile"]
+            savePath = self.projectPathDict["backupfile"]
         else:
-            savePath = self.pathDict["session"]
+            savePath = self.projectPathDict["session"]
         file = open(savePath, "w")
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(dom_document.toString())
         file.close()
 
     def restoreSession(self):
-        backup = False
+        # TODO: When backup is True and it turns out empty because
+        # it previousely loaded from backup, cleared it's backup
+        # cache and was instantly shut down again, the previous
+        # session must be reloaded.
+        backup = self.projectSettings["LastCloseSuccessful"] == "False"
 
-        if self.projectSettings["LastCloseSuccessful"] == "False":
-            backup = True
+        if backup:
+            loadPath = self.projectPathDict["backupfile"]
         else:
             self.clearBackups()
+            loadPath = self.projectPathDict["session"]
 
-        dom_document = QtXml.QDomDocument()
-        if backup:
-            loadPath = self.pathDict["backupfile"]
-        else:
-            loadPath = self.pathDict["session"]
         file = open(loadPath, "r")
+        dom_document = QtXml.QDomDocument()
         dom_document.setContent(file.read())
         file.close()
 
         elements = dom_document.documentElement()
         node = elements.firstChild()
         activeIndex = 0
-        curr_index = 0
+        currentIindex = 0
+        restoredBackups = 0
         while node.isNull() is False:
             try:
                 tag = node.toElement()
@@ -632,24 +649,41 @@ class EditorTabWidget(QtGui.QTabWidget):
                     backupKey = tag.attribute("backupKey")
                     basename = tag.attribute("baseName")
                     backupPath = os.path.join(
-                        self.pathDict["backupdir"], backupKey)
+                        self.projectPathDict["backupdir"], backupKey)
                     realPath = tag.attribute("path")
                     if realPath == '':
-                        realPath = None
-                        loaded = self.loadBackup(
-                            backupPath, realPath, basename)
+                        file = open(backupPath, 'r')
+                        backupText = file.read()
+                        file.close()
+
+                        subStack = self.newEditor(currentIindex)
+                        editor = subStack.widget(0).widget(0)
+                        editor.setText(backupText)
+                        editor.setModified(False)
+                        editor.setFocus()
+
+                        restoredBackups += 1
                     else:
                         real_mod_time = os.stat(realPath).st_mtime
                         backup_mod_time = os.stat(backupPath).st_mtime
                         if real_mod_time > backup_mod_time:
-                            path = tag.attribute("path")
-                            loaded = self.loadfile(path, False)
+                            pass
                         else:
-                            loaded = self.loadBackup(
-                                backupPath, realPath, basename)
+                            file = open(backupPath, 'r')
+                            backupText = file.read()
+                            file.close()
+
+                            file = open(realPath, "w")
+                            file.write(backupText)
+                            file.close()
+
+                            restoredBackups += 1
+
+                        path = tag.attribute("path")
+                        loaded = self.loadfile(path, False, currentIindex)
                 else:
                     path = tag.attribute("path")
-                    loaded = self.loadfile(path, False)
+                    loaded = self.loadfile(path, False, currentIindex)
                 if loaded is False:
                     node = node.nextSibling()
                     continue
@@ -660,7 +694,7 @@ class EditorTabWidget(QtGui.QTabWidget):
                 lines = tag.attribute("lines")
                 active = tag.attribute("active")
                 if active == 'True':
-                    activeIndex = curr_index
+                    activeIndex = currentIindex
                 cp = tag.attribute("cursorPosition").split(',')
                 line = int(cp[0])
                 index = int(cp[1])
@@ -682,7 +716,7 @@ class EditorTabWidget(QtGui.QTabWidget):
                     folds = list(map(int, folds.split('-')))
                     editor.setContractedFolds(folds)
 
-                curr_index += 1
+                currentIindex += 1
                 node = node.nextSibling()
             except Exception:
                 node = node.nextSibling()
@@ -692,6 +726,9 @@ class EditorTabWidget(QtGui.QTabWidget):
             self._newPythonFile()
 
         self.clearBackups()
+        if restoredBackups > 0:
+            self.messagesWidget.addMessage(
+                0, "Restored", [str(restoredBackups) + ' file(s) restored from previous crash.'])
 
     def getSource(self, index=None):
         if index is None:
@@ -854,13 +891,14 @@ class EditorTabWidget(QtGui.QTabWidget):
                         errorLine = self.getEditorData("errorLine", i)
                         if errorLine is not None:
                             errors = True
+                            self.setCurrentIndex(i)
                             break
         return errors
 
     def isProjectFile(self, filePath):
         if filePath is None:
             return False
-        return filePath.startswith(self.pathDict["sourcedir"])
+        return filePath.startswith(self.projectPathDict["sourcedir"])
 
     def getTabName(self, tabIndex=None):
         if tabIndex is None:
@@ -908,7 +946,7 @@ class EditorTabWidget(QtGui.QTabWidget):
     def removeTabBackup(self, tabIndex):
         key = self.getEditorData("backupKey", tabIndex)
         try:
-            os.remove(os.path.join(self.pathDict["backupdir"], key))
+            os.remove(os.path.join(self.projectPathDict["backupdir"], key))
         except:
             pass
 
@@ -1013,7 +1051,7 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def saveProject(self):
         saved = True
-        source_dir = self.pathDict["sourcedir"]
+        source_dir = self.projectPathDict["sourcedir"]
         for i in range(self.count()):
             path = self.getEditorData("filePath", i)
             if path is not None:
@@ -1048,9 +1086,6 @@ class EditorTabWidget(QtGui.QTabWidget):
         if fileName:
             self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
             self.loadfile(os.path.normpath(fileName))
-
-    def advancedFileOpen(self, path):
-        self.loadfile(os.path.normpath(path))
 
     def _newPythonFile(self):
         self.newEditor()
@@ -1089,7 +1124,7 @@ class EditorTabWidget(QtGui.QTabWidget):
                                 DATA, self)
             editor2 = CodeEditor(self.useData, self.refactor, self.colorScheme,
                                  DATA, self)
-            snapShot = CodeSnapshot(self.colorScheme)
+            snapShot = CodeSnapshot(self.useData, self.colorScheme)
         else:
             if extension in [".htm", ".html"]:
                 extension = ".html"
@@ -1098,7 +1133,7 @@ class EditorTabWidget(QtGui.QTabWidget):
                                 encoding)
             editor2 = TextEditor(self.useData, DATA, self.colorScheme, self,
                                  encoding)
-            snapShot = TextSnapshot(self.colorScheme, extension)
+            snapShot = TextSnapshot(self.useData, self.colorScheme, extension)
         mode = QsciScintilla.EolUnix
         editor.setEolMode(mode)
         editor2.setEolMode(mode)
@@ -1122,9 +1157,8 @@ class EditorTabWidget(QtGui.QTabWidget):
         else:
             icon = Global.iconFromPath(filePath)
         if index is None:
-            self.addTab(subStack, icon, fileName)
-        else:
-            self.insertTab(index, subStack, icon, fileName)
+            index = self.currentIndex()
+        self.insertTab(index, subStack, icon, fileName)
 
         if filePath is None:
             pass
@@ -1163,43 +1197,7 @@ class EditorTabWidget(QtGui.QTabWidget):
                 self.getEditor(i).removeBookmarks()
                 self.enableBookmarkButtons(False)
 
-    def loadBackup(self, backupPath, realPath, basename):
-
-        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        try:
-            text, encoding, eolMode = self.useData.readFile(backupPath)
-        except:
-            QtGui.QApplication.restoreOverrideCursor()
-
-            return False
-
-        subStack = self.newEditor(None, basename, realPath, encoding)
-        editor = subStack.widget(0).widget(0)
-        editor.setText(text)
-        editor.convertEols(eolMode)
-        editor.setEolMode(eolMode)
-
-        snapshotWidget = subStack.widget(1)
-        snapshotWidget.setText(text)
-        editor.convertEols(eolMode)
-        editor.setEolMode(eolMode)
-
-        editor.setModified(False)
-        editor.setFocus()
-        QtGui.QApplication.restoreOverrideCursor()
-
-        if realPath is None:
-            pass
-        else:
-            self.setTabToolTip(self.currentIndex(), realPath)
-        self.updateOpenedTabsMenu()
-
-        return True
-
-    def loadfile(self, filePath, showError=True):
-
-        filePath = os.path.normpath(filePath)
-        # prevent same file from being opened more than once
+    def alreadyOpened(self, filePath):
         for i in range(self.count()):
             fpath = self.getEditorData("filePath", i)
             if fpath is None:
@@ -1208,12 +1206,20 @@ class EditorTabWidget(QtGui.QTabWidget):
                 if os.path.samefile(fpath, filePath):
                     self.setCurrentIndex(i)
                     return True
+        return False
+
+    def loadfile(self, filePath, showError=True, index=None):
+
+        filePath = os.path.normpath(filePath)
+        # prevent same file from being opened more than once
+        if self.alreadyOpened(filePath):
+            return True
 
         QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         try:
             text, encoding, eolMode = self.useData.readFile(filePath)
             baseName = os.path.basename(filePath)
-            subStack = self.newEditor(None, baseName, filePath, encoding)
+            subStack = self.newEditor(index, baseName, filePath, encoding)
 
             editor = subStack.widget(0).widget(0)
             editor.setText(text)
@@ -1269,60 +1275,60 @@ class EditorTabWidget(QtGui.QTabWidget):
         else:
             firstEditor.setFocus()
 
-    def install_shortcuts(self):
-        self.tabBar.install_shortcuts()
-        shortcuts = self.useData.CUSTOM_DEFAULT_SHORTCUTS
+    def setShortcuts(self):
+        self.tabBar.setShortcuts()
+        shortcuts = self.useData.CUSTOM_SHORTCUTS
 
         self.shortSplitVertical = QtGui.QShortcut(
-            shortcuts["Ide"]["Split-Vertical"][0], self)
+            shortcuts["Ide"]["Split-Vertical"], self)
         self.shortSplitVertical.activatedAmbiguously.connect(
             self.splitVertical)
-        self.vSplitEditorAct.setShortcut(shortcuts["Ide"]["Split-Vertical"][0])
+        self.vSplitEditorAct.setShortcut(shortcuts["Ide"]["Split-Vertical"])
 
         self.shortSplitHorizontal = QtGui.QShortcut(
-            shortcuts["Ide"]["Split-Horizontal"][0], self)
+            shortcuts["Ide"]["Split-Horizontal"], self)
         self.shortSplitHorizontal.activatedAmbiguously.connect(
             self.splitHorizontal)
         self.hSplitEditorAct.setShortcut(
-            shortcuts["Ide"]["Split-Horizontal"][0])
+            shortcuts["Ide"]["Split-Horizontal"])
 
         self.shortRemoveSplit = QtGui.QShortcut(
-            shortcuts["Ide"]["Remove-Split"][0], self)
+            shortcuts["Ide"]["Remove-Split"], self)
         self.shortRemoveSplit.activatedAmbiguously.connect(self.removeSplit)
-        self.noSplitEditorAct.setShortcut(shortcuts["Ide"]["Remove-Split"][0])
+        self.noSplitEditorAct.setShortcut(shortcuts["Ide"]["Remove-Split"])
 
         self.shortChangeTab = QtGui.QShortcut(
-            shortcuts["Ide"]["Change-Tab"][0], self)
+            shortcuts["Ide"]["Change-Tab"], self)
         self.shortChangeTab.activated.connect(self.changeTab)
 
         self.shortReverseTab = QtGui.QShortcut(
-            shortcuts["Ide"]["Change-Tab-Reverse"][0], self)
+            shortcuts["Ide"]["Change-Tab-Reverse"], self)
         self.shortReverseTab.activated.connect(self.reverseTab)
 
         self.shortChangeSplitFocus = QtGui.QShortcut(
-            shortcuts["Ide"]["Change-Split-Focus"][0], self)
+            shortcuts["Ide"]["Change-Split-Focus"], self)
         self.shortChangeSplitFocus.activated.connect(self.changeSplitFocus)
 
         self.shortNewFile = QtGui.QShortcut(
-            shortcuts["Ide"]["New-File"][0], self)
+            shortcuts["Ide"]["New-File"], self)
         self.shortNewFile.activatedAmbiguously.connect(self._newPythonFile)
-        self.newPythonFileAct.setShortcut(shortcuts["Ide"]["New-File"][0])
+        self.newPythonFileAct.setShortcut(shortcuts["Ide"]["New-File"])
 
         self.shortOpenFile = QtGui.QShortcut(
-            shortcuts["Ide"]["Open-File"][0], self)
+            shortcuts["Ide"]["Open-File"], self)
         self.shortOpenFile.activatedAmbiguously.connect(self.openFile)
-        self.openFileAct.setShortcut(shortcuts["Ide"]["New-File"][0])
+        self.openFileAct.setShortcut(shortcuts["Ide"]["New-File"])
 
         self.shortSaveFile = QtGui.QShortcut(
-            shortcuts["Ide"]["Save-File"][0], self)
+            shortcuts["Ide"]["Save-File"], self)
         self.shortSaveFile.activatedAmbiguously.connect(self._save)
-        self.saveAct.setShortcut(shortcuts["Ide"]["Save-File"][0])
+        self.saveAct.setShortcut(shortcuts["Ide"]["Save-File"])
 
         self.shortSaveAll = QtGui.QShortcut(
-            shortcuts["Ide"]["Save-All"][0], self)
+            shortcuts["Ide"]["Save-All"], self)
         self.shortSaveAll.activatedAmbiguously.connect(self.saveAll)
-        self.saveAllAct.setShortcut(shortcuts["Ide"]["Save-All"][0])
+        self.saveAllAct.setShortcut(shortcuts["Ide"]["Save-All"])
 
-        self.shortPrint = QtGui.QShortcut(shortcuts["Ide"]["Print"][0], self)
+        self.shortPrint = QtGui.QShortcut(shortcuts["Ide"]["Print"], self)
         self.shortPrint.activatedAmbiguously.connect(self.printCode)
-        self.printAct.setShortcut(shortcuts["Ide"]["Print"][0])
+        self.printAct.setShortcut(shortcuts["Ide"]["Print"])

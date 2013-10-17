@@ -14,6 +14,7 @@ class WritePad(QtGui.QMainWindow):
                  (screen.height() - size.height()) / 2)
 
         self.path = path
+        self.setObjectName("writePad")
 
         self.noteSaveTimer = QtCore.QTimer()
         self.noteSaveTimer.setSingleShot(True)
@@ -35,95 +36,6 @@ class WritePad(QtGui.QMainWindow):
             file.close()
 
         self.writePad.textChanged.connect(self.noteSaveTimer.start)
-        
-        self.setStyleSheet("""
-        
-                            QScrollBar:vertical{
-                                padding: 0px;
-                                border-left-width: 1px;
-                                background: #ffffff;
-                                width: 10px;
-                            }
-
-                            QScrollBar:horizontal{
-                                padding: 0px;
-                                border-top-width: 1px;
-                                border-style:solid;
-                                border: none;
-                                background: #ffffff;
-                                height: 10px;
-                            }
-
-                            QScrollBar::handle:vertical{
-                                margin-top: 0px;
-                                margin-bottom: 0px;
-                                background: #B2B8BE;
-                                border-radius: 0px;
-                                border: none;
-                                border-bottom: 2px solid #6FBDFF;
-                                min-height: 30px;
-                            }
-
-                            QScrollBar::handle:horizontal{
-                                margin-left: 0px;
-                                margin-right: 0px;
-                                background: #B2B8BE;
-                                border-radius: 0px;
-                                border: none;
-                                min-width: 30px;
-                            }
-                            
-                            QScrollBar::handle:hover{
-                                background: #6F767D;
-                            }
-
-                            QScrollBar::handle:pressed{
-                                background: #141414;
-                            }
-
-                            QScrollBar::add-line:vertical,
-                            QScrollBar::sub-line:vertical,
-                            QScrollBar::add-page:vertical,
-                            QScrollBar::sub-page:vertical,
-                            QScrollBar::add-line:horizontal,
-                            QScrollBar::sub-line:horizontal,
-                            QScrollBar::add-page:horizontal,
-                            QScrollBar::sub-page:horizontal{
-                                background: none;
-                                border: none;
-                            }
-
-                            QScrollBar::up-arrow:vertical {
-                              border: none;
-                              width: 10px;
-                              height: 10px;
-                              margin-left: 0px;
-                              image: none;
-                            }
-
-                            QScrollBar::down-arrow:vertical {
-                              border: none;
-                              width: 10px;
-                              height: 10px;
-                              margin-left: 0px;
-                              image: none;
-                            }
-
-                            QScrollBar::left-arrow:horizontal {
-                              border: none;
-                              width: 10px;
-                              height: 10px;
-                              image: none;
-                            }
-
-                            QScrollBar::right-arrow:horizontal {
-                              border: none;
-                              width: 10px;
-                              height: 10px;
-                              image: none;
-                            }
-                            
-                            """)
 
     def saveNotes(self):
         file = open(self.path, "w")

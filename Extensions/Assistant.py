@@ -4,7 +4,7 @@ from PyQt4 import QtCore, QtGui
 from pyflakes.checker import Checker as flakeChecker
 from Xtra import pep8
 from Xtra import autopep8
-
+from rope.contrib import finderrors
 
 class ErrorCheckerThread(QtCore.QThread):
 
@@ -13,8 +13,7 @@ class ErrorCheckerThread(QtCore.QThread):
     def run(self):
         messages = []
         try:
-            warnings = flakeChecker(ast.parse(
-                self.editorTabWidget.getSource()))
+            warnings = flakeChecker(ast.parse(self.source))
             warnings.messages.sort(key=lambda a: a.lineno)
             for warning in warnings.messages:
                 fname = warning.filename
@@ -32,8 +31,9 @@ class ErrorCheckerThread(QtCore.QThread):
             messages.append((1, line, msg, None, offset))
             self.newAlerts.emit(messages, True)
 
-    def runCheck(self, editorTabWidget):
-        self.editorTabWidget = editorTabWidget
+    def runCheck(self, source):
+        self.source = source
+        
         self.start()
 
 
@@ -57,12 +57,11 @@ class Pep8CheckerThread(QtCore.QThread):
                     # means the code has been marked to be ignored
                     continue
                 checkList.append((fname, lineno, offset, code, error))
-        except Exception as err:
-            print(err)
+        except:
+            pass
         self.newAlerts.emit(checkList)
 
-    def runCheck(self, editorTabWidget):
-        self.editorTabWidget = editorTabWidget
+    def runCheck(self):
         self.start()
 
 
@@ -109,8 +108,8 @@ class AutoPep8FixerThread(QtCore.QThread):
 
             fixed = autopep8.fix_string(self.editorTabWidget.getSource())
             self.new.emit(fixed)
-        except Exception as err:
-            print(err)
+        except:
+            pass
 
     def runFix(self, editorTabWidget):
         self.editorTabWidget = editorTabWidget
@@ -139,7 +138,7 @@ class Pep8View(QtGui.QTreeWidget):
         self.editorTabWidget.busyWidget.showBusy(False)
         editor = self.editorTabWidget.getEditor()
         editor.setText(fixedCode)
-        self.editorTabWidget.getEditor(i).removeBookmarks()
+        self.editorTabWidget.getEditor().removeBookmarks()
         self.editorTabWidget.enableBookmarkButtons(False)
 
     def contextMenuEvent(self, event):
@@ -204,6 +203,8 @@ class Assistant(QtGui.QStackedWidget):
         QtGui.QStackedWidget.__init__(self, parent)
 
         self.useData = editorTabWidget.useData
+        self.refactor = editorTabWidget.refactor
+        
         self.currentCodeIsPython = False
 
         supportedFixes = autopep8.supported_fixes()
@@ -215,11 +216,12 @@ class Assistant(QtGui.QStackedWidget):
 
         self.errorView = QtGui.QTreeWidget()
         self.errorView.setColumnCount(3)
-        self.errorView.setHeaderLabels(["", "#", "Alert"])
+        self.errorView.setHeaderLabels(["", "#", "Alerts"])
         self.errorView.setAutoScroll(True)
         self.errorView.setColumnWidth(0, 50)
         self.errorView.setColumnWidth(1, 50)
         self.errorView.itemPressed.connect(self.alertPressed)
+        
         self.addWidget(self.errorView)
 
         self.pep8View = Pep8View(editorTabWidget)
@@ -251,6 +253,9 @@ class Assistant(QtGui.QStackedWidget):
                 self.setCurrentIndex(1)
             if self.useData.SETTINGS["enableStyleGuide"] == "True":
                 self.setCurrentIndex(2)
+                
+        self.extendedErrorsCount = 0
+        self.alertsCount = 0
 
     def setAssistance(self, index=None):
         if index is None:
@@ -279,6 +284,27 @@ class Assistant(QtGui.QStackedWidget):
         if self.currentCodeIsPython:
             self.codeCheckerTimer.start()
 
+    def updateRopeErrors(self, errorList):
+        if self.currentCodeIsPython:
+            editor = self.editorTabWidget.getEditor()
+            self.extendedErrorView.clear()
+            for i in errorList:
+                item = QtGui.QTreeWidgetItem(self.extendedErrorView)
+                icon = QtGui.QIcon(
+                        os.path.join("Resources", "images", "security_disabled"))
+                item.setIcon(0, icon)
+                item.setText(1, str(i[0]))
+                item.setText(2, str(i[1]))
+            if len(errorList) == 0:
+                parentItem = QtGui.QTreeWidgetItem(self.extendedErrorView)
+                item = QtGui.QTreeWidgetItem(parentItem)
+                item.setText(2, "<No Extended Alerts>")
+                item.setFlags(QtCore.Qt.NoItemFlags)
+                parentItem.setExpanded(True)
+                
+        self.extendedErrorsCount = len(errorList)
+        self.updateAlertsCount()
+
     def updateAlerts(self, alertsList, critical):
         if self.currentCodeIsPython:
             self.errorView.clear()
@@ -296,11 +322,7 @@ class Assistant(QtGui.QStackedWidget):
 
                 lineText = editor.text(lineno)
                 l = len(lineText)
-                diff = l - len(lineText.lstrip())
-                if diff == offset:
-                    startPos = 0
-                else:
-                    startPos = diff
+                startPos = l - len(lineText.lstrip())
 
                 editor.markerAdd(lineno, 9)
                 self.editorTabWidget.updateEditorData("errorLine", lineno)
@@ -314,8 +336,7 @@ class Assistant(QtGui.QStackedWidget):
                     item = self.createItem(0, i[0], i[1], i[2])
                     self.errorView.addTopLevelItem(item)
                 self.editorTabWidget.updateEditorData("errorLine", None)
-            self.bottomStackSwitcher.setCount(self,
-                                              str(len(alertsList)))
+            self.bottomStackSwitcher.setCount(self, str(len(alertsList)))
             if len(alertsList) == 0:
                 parentItem = QtGui.QTreeWidgetItem()
                 item = QtGui.QTreeWidgetItem()
@@ -393,8 +414,8 @@ class Assistant(QtGui.QStackedWidget):
         if self.useData.SETTINGS["EnableAssistance"] == "False":
             return
         if self.useData.SETTINGS["EnableAlerts"] == "True":
-            self.codeCheckerThread.runCheck(self.editorTabWidget)
+            self.codeCheckerThread.runCheck(self.editorTabWidget.getSource())
         if self.useData.SETTINGS["enableStyleGuide"] == "True":
             saved = self.editorTabWidget.saveToTemp('pep8')
             if saved:
-                self.pep8CheckerThread.runCheck(self.editorTabWidget)
+                self.pep8CheckerThread.runCheck()

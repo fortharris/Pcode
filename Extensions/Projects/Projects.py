@@ -1,10 +1,12 @@
-"""newProjectDialog
+"""
 Manages all opened projects such as the creation and closing of projects
 """
 
 import os
 import sys
 import shutil
+import traceback
+import logging
 from PyQt4 import QtCore, QtGui, QtXml
 
 from Extensions.EditorWindow.EditorWindow import EditorWindow
@@ -22,8 +24,6 @@ class CreateProjectThread(QtCore.QThread):
 
             data = os.path.join(self.projectPath, "Data")
             os.mkdir(data)
-            file = open(os.path.join(data, "log.txt"), "w")
-            file.close()
             file = open(os.path.join(data, "wpad.txt"), "w")
             file.close()
 
@@ -33,6 +33,11 @@ class CreateProjectThread(QtCore.QThread):
                         os.path.join(ropeFolder, "config.py"))
 
             os.mkdir(os.path.join(self.projectPath, "Resources"))
+            os.mkdir(os.path.join(self.projectPath, "Resources", "VirtualEnv"))
+            os.mkdir(os.path.join(self.projectPath, "Resources", "VirtualEnv", "Linux"))
+            os.mkdir(os.path.join(self.projectPath, "Resources", "VirtualEnv", "Mac"))
+            os.mkdir(os.path.join(self.projectPath, "Resources", "VirtualEnv", "Windows"))
+            os.mkdir(os.path.join(self.projectPath, "Resources", "Icons"))
             
             os.mkdir(os.path.join(self.projectPath, "temp"))
             os.mkdir(os.path.join(self.projectPath, "temp", "Backup"))
@@ -62,6 +67,9 @@ class CreateProjectThread(QtCore.QThread):
             self.writeProjectData()
             self.writeRopeProfile()
         except Exception as err:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                                      exc_traceback)))
             self.error = str(err)
 
     def writeProjectData(self):
@@ -112,10 +120,11 @@ class CreateProjectThread(QtCore.QThread):
             'DefaultInterpreter': '',
             'TraceType': '3',
             'RunWithArguments': 'False',
-            'DefaultVenv': 'Default',
             'RunInternal': 'True',
             'UseVirtualEnv': 'False',
             'Closed': 'True',
+            'Icon': '',
+            'ShowAllFiles': 'True',
             'LastCloseSuccessful': 'True'
         }
         for key, value in defaults.items():
@@ -247,7 +256,7 @@ class CreateProjectThread(QtCore.QThread):
         main_data.appendChild(root)
 
         root = dom_document.createElement("base")
-        attrib = dom_document.createTextNode('Win32GUI.exe')
+        attrib = dom_document.createTextNode(self.projDataDict["windowtype"])
         root.appendChild(attrib)
         main_data.appendChild(root)
 
@@ -278,11 +287,6 @@ class CreateProjectThread(QtCore.QThread):
 
         root = dom_document.createElement("appendscripttolibrary")
         attrib = dom_document.createTextNode("Append Script to Library")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("initscript")
-        attrib = dom_document.createTextNode("Console3.py")
         root.appendChild(attrib)
         main_data.appendChild(root)
 
@@ -369,9 +373,8 @@ class Projects(QtGui.QWidget):
     def loadProject(self, path, show, new):
         if not self.pcode.showProject(path):
             QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-            pathDict = {
+            projectPathDict = {
                 "notes": os.path.join(path, "Data", "wpad.txt"),
-                "log": os.path.join(path, "Data", "log.txt"),
                 "session": os.path.join(path, "Data", "session.xml"),
                 "usedata": os.path.join(path, "Data", "usedata.xml"),
                 "windata": os.path.join(path, "Data", "windata.xml"),
@@ -385,17 +388,19 @@ class Projects(QtGui.QWidget):
                 "buildprofile": os.path.join(path, "Build", "profile.xml"),
                 "ropeprofile": os.path.join(path, "Rope", "profile.xml"),
                 "projectmainfile": os.path.join(path, "project.xml"),
+                "iconsdir": os.path.join(path, "Resources", "Icons"),
                 "root": path
             }
+            
             if sys.platform == 'win32':
-                pathDict["python"] = os.path.join(path,
-                                                  "Venv", "Windows", "Scripts", "python.exe")
-            elif sys.platform == 'darwin':  # FIXME needs fixing
-                pathDict["python"] = os.path.join(path,
-                                                  "Venv", "Mac", "Scripts", "python.exe")
-            else:  # FIXME needs fixing
-                pathDict["python"] = os.path.join(path,
-                                                  "Venv", "Linux", "Scripts", "python.exe")
+                projectPathDict["venvdir"] = os.path.join(path,
+                                                  "Resources", "VirtualEnv", "Windows", "Venv")
+            elif sys.platform == 'darwin':
+                projectPathDict["venvdir"] = os.path.join(path,
+                                                  "Resources", "VirtualEnv", "Mac", "Venv")
+            else:
+                projectPathDict["venvdir"] = os.path.join(path,
+                                                  "Resources", "VirtualEnv", "Linux", "Venv")
 
             try:
                 project_data = self.readProject(path)
@@ -404,24 +409,24 @@ class Projects(QtGui.QWidget):
                     message = QtGui.QMessageBox.warning(self, "Open Project",
                                                         "Failed:\n\n" + path)
                     return
-                pathDict["name"] = project_data[1]["Name"]
-                pathDict["type"] = project_data[1]["Type"]
-                pathDict["mainscript"] = os.path.join(path, "src",
+                projectPathDict["name"] = project_data[1]["Name"]
+                projectPathDict["type"] = project_data[1]["Type"]
+                projectPathDict["mainscript"] = os.path.join(path, "src",
                                                       project_data[1]["MainScript"])
                 if sys.platform == 'win32':
-                    pathDict["builddir"] = os.path.join(path, "Build", "Windows")
+                    projectPathDict["builddir"] = os.path.join(path, "Build", "Windows")
                 elif sys.platform == 'darwin':
-                    pathDict["builddir"] = os.path.join(path, "Build", "Mac")
+                    projectPathDict["builddir"] = os.path.join(path, "Build", "Mac")
                 else:
-                    pathDict["builddir"] = os.path.join(path, "Build", "Linux")
+                    projectPathDict["builddir"] = os.path.join(path, "Build", "Linux")
 
                 p_name = os.path.basename(path)
 
-                projectWindow = EditorWindow(pathDict, self.library,
+                projectWindow = EditorWindow(projectPathDict, self.library,
                                              self.busyWidget, self.settingsWidget.colorScheme,
                                              self.useData, self.app, self)
                 if new:
-                    projectWindow.editorTabWidget.loadfile(pathDict["mainscript"])
+                    projectWindow.editorTabWidget.loadfile(projectPathDict["mainscript"])
                 else:
                     projectWindow.restoreSession()
                 projectWindow.editorTabWidget.updateWindowTitle.connect(
@@ -437,6 +442,9 @@ class Projects(QtGui.QWidget):
                 if show:
                     self.pcode.showProject(path)
             except Exception as err:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                                          exc_traceback)))
                 QtGui.QApplication.restoreOverrideCursor()
                 message = QtGui.QMessageBox.warning(self, "Failed Open",
                                                     "Problem opening project: \n\n" + str(err))
@@ -444,7 +452,7 @@ class Projects(QtGui.QWidget):
 
     def closeProject(self):
         window = self.projectWindowStack.currentWidget()
-        path = window.pathDict["root"]
+        path = window.projectPathDict["root"]
         closed = window.closeWindow()
         if closed:
             self.pcode.removeProject(window)

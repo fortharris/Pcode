@@ -20,6 +20,9 @@ class TextEditor(BaseScintilla):
         self.DATA = DATA
         self.colorScheme = colorScheme
         self.editorTabWidget = editorTabWidget
+        
+        self.setObjectName("editor")
+        self.enableMarkOccurrence(useData)
 
         self.setFont(Global.getDefaultFont())
         self.setWrapMode(QsciScintilla.WrapWord)
@@ -47,15 +50,14 @@ class TextEditor(BaseScintilla):
         hbox.setContentsMargins(5, 0, 20, 20)
         mainLayout.addLayout(hbox)
 
-        self.notify = Notification()
-        hbox.addWidget(self.notify)
-        self.notify.hide()
+        self.notification = Notification()
+        hbox.addWidget(self.notification)
+        self.notification.hide()
 
         #
 
         self.createContextMenu()
 
-        self.setStyleSheet(StyleSheet.editorStyle)
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
         # setup
@@ -120,11 +122,6 @@ class TextEditor(BaseScintilla):
 
         self.setEolMode(QsciScintilla.EolUnix)
 
-        self.matchIndicator = self.indicatorDefine(QsciScintilla.INDIC_BOX, 9)
-        self.setIndicatorForegroundColor(
-            QtGui.QColor("#FFCC00"), self.matchIndicator)
-        self.setIndicatorDrawUnder(True, self.matchIndicator)
-
         self.searchIndicator = self.indicatorDefine(
             QsciScintilla.INDIC_ROUNDBOX, 10)
         self.setIndicatorForegroundColor(
@@ -151,8 +148,9 @@ class TextEditor(BaseScintilla):
         self.marginClicked.connect(self.toggleBookmark)
 
         self.lexer = self.colorScheme.styleEditor(self)
+        self.setStyleSheet(StyleSheet.editorStyle)
 
-        self.install_shortcuts()
+        self.setShortcuts()
 
     def updateLexer(self, lexer):
         self.lexer = lexer
@@ -325,24 +323,21 @@ class TextEditor(BaseScintilla):
             self.DATA["bookmarkList"] = []
             self.markerDeleteAll(8)
 
-    def notify(self, mess):
-        self.infoBar.showMessage(mess)
-
-    def install_shortcuts(self):
+    def setShortcuts(self):
         self.updateShortcuts(self.useData)
 
-        shortcuts = self.useData.CUSTOM_DEFAULT_SHORTCUTS
+        shortcuts = self.useData.CUSTOM_SHORTCUTS
 
         self.cutAct.setShortcut(shortcuts["Editor"]["Cut-Selection"][0])
         self.copyAct.setShortcut(shortcuts["Editor"]["Copy-Selection"][0])
         self.pasteAct.setShortcut(shortcuts["Editor"]["Paste"][0])
 
         self.shortNextBookmark = QtGui.QShortcut(
-            shortcuts["Editor"]["Next-Bookmark"][0], self)
+            shortcuts["Ide"]["Next-Bookmark"], self)
         self.shortNextBookmark.activated.connect(self.findNextBookmark)
 
         self.shortPreviousBookmark = QtGui.QShortcut(
-            shortcuts["Editor"]["Previous-Bookmark"][0], self)
+            shortcuts["Ide"]["Previous-Bookmark"], self)
         self.shortPreviousBookmark.activated.connect(self.findPreviousBookmark)
 
         self.shortZoomIn = QtGui.QShortcut(

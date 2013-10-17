@@ -13,7 +13,7 @@ PLIST_TEMPLATE = \
 <plist version="1.0">
 <dict>
 	<key>CFBundleIconFile</key>
-	<string>%(bundle_iconfile)s</string>
+	<string>icon.icns</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -27,10 +27,13 @@ class bdist_dmg(Command):
             "application bundle"
     user_options = [
         ('volume-label=', None, 'Volume label of the DMG disk image'),
+        ('applications-shortcut=', None, 'Boolean for whether to include ' \
+            'shortcut to Applications in the DMG disk image'),
     ]
 
     def initialize_options(self):
         self.volume_label = self.distribution.get_fullname()
+        self.applications_shortcut = False
 
     def finalize_options(self):
         pass
@@ -40,10 +43,27 @@ class bdist_dmg(Command):
         if os.path.exists(self.dmgName):
             os.unlink(self.dmgName)
 
+        createargs = [
+            'hdiutil', 'create', '-fs', 'HFSX', '-format', 'UDZO',
+            self.dmgName, '-imagekey', 'zlib-level=9', '-srcfolder',
+            self.bundleDir, '-volname', self.volume_label
+        ]
+
+        if self.applications_shortcut:
+            scriptargs = [
+                'osascript', '-e', 'tell application "Finder" to make alias \
+                file to POSIX file "/Applications" at POSIX file "%s"' %
+                os.path.realpath(self.buildDir)
+            ]
+
+            if os.spawnvp(os.P_WAIT, 'osascript', scriptargs) != 0:
+                raise OSError('creation of Applications shortcut failed')
+
+            createargs.append('-srcfolder')
+            createargs.append(self.buildDir + '/Applications')
+
         # Create the dmg
-        if os.spawnlp(os.P_WAIT,'hdiutil','hdiutil','create','-fs','HFSX',
-            '-format','UDZO',self.dmgName, '-imagekey', 'zlib-level=9',
-            '-srcfolder',self.bundleDir,'-volname',self.volume_label)!=0:
+        if os.spawnvp(os.P_WAIT, 'hdiutil', createargs) != 0:
             raise OSError('creation of the dmg failed')
 
     def run(self):
@@ -65,15 +85,17 @@ class bdist_mac(Command):
     description = "create a Mac application bundle"
 
     user_options = [
-        ('bundle-iconfile=', None, 'Name of the application bundle icon ' \
-                'file as stored in the Info.plist file'),
+        ('iconfile=', None, 'Path to an icns icon file for the application.'),
         ('qt-menu-nib=', None, 'Location of qt_menu.nib folder for Qt ' \
-                'applications. Will be auto-detected by default.')
+                'applications. Will be auto-detected by default.'),
+        ('bundle-name=', None, 'File name for the bundle application ' \
+                'without the .app extension.')
     ]
 
     def initialize_options(self):
-        self.bundle_iconfile = 'icon.icns'
+        self.iconfile = None
         self.qt_menu_nib = False
+        self.bundle_name = self.distribution.get_fullname()
 
     def finalize_options(self):
         pass
@@ -151,6 +173,12 @@ class bdist_mac(Command):
             if os.path.exists(path):
                 return path
 
+        # Last resort: fixed paths (macports)
+        for path in ['/opt/local/Library/Frameworks/QtGui.framework/Versions/4/Resources/qt_menu.nib']:
+            if os.path.exists(path):
+                return path
+
+        print ("Could not find qt_menu.nib")
         raise IOError("Could not find qt_menu.nib")
 
     def prepare_qt_app(self):
@@ -174,7 +202,7 @@ class bdist_mac(Command):
 
         # Define the paths within the application bundle
         self.bundleDir = os.path.join(build.build_base,
-                self.distribution.get_fullname() + ".app")
+                                      self.bundle_name + ".app")
         self.contentsDir = os.path.join(self.bundleDir, 'Contents')
         self.resourcesDir = os.path.join(self.contentsDir, 'Resources')
         self.binDir = os.path.join(self.contentsDir, 'MacOS')
@@ -189,12 +217,16 @@ class bdist_mac(Command):
 
         self.copy_tree(build.build_exe, self.binDir)
 
+        # Copy the icon
+        if self.iconfile:
+            self.copy_file(self.iconfile, os.path.join(self.resourcesDir, 'icon.icns'))
+
         # Create the Info.plist file
         self.execute(self.create_plist,())
 
         # Make all references to libraries relative
         self.execute(self.setRelativeReferencePaths,())
-        
+
         # For a Qt application, run some tweaks
         self.execute(self.prepare_qt_app, ())
 
