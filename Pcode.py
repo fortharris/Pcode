@@ -1,5 +1,12 @@
 import sys
 import os
+import logging
+
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s')
+if sys.version_info.major < 3:
+    logging.error("This application requires Python 3")
+    sys.exit(1)
+
 from PyQt4 import QtCore, QtGui
 
 from Extensions.UseData import UseData
