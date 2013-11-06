@@ -123,23 +123,27 @@ class ColorScheme(QtGui.QDialog):
         self.newButton = QtGui.QToolButton()
         self.newButton.setAutoRaise(True)
         self.newButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "add")),
-                          "New", self, triggered=self.newScheme))
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "add")),
+                "New", self, triggered=self.newScheme))
         hbox.addWidget(self.newButton)
 
         self.renameButton = QtGui.QToolButton()
         self.renameButton.setAutoRaise(True)
         self.renameButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "ui-text-field")),
-                          "Rename", self, triggered=self.rename))
+            QtGui.QAction(
+                QtGui.QIcon(
+                    os.path.join("Resources", "images", "ui-text-field")),
+                "Rename", self, triggered=self.rename))
         self.renameButton.setDisabled(True)
         hbox.addWidget(self.renameButton)
 
         self.removeButton = QtGui.QToolButton()
         self.removeButton.setAutoRaise(True)
         self.removeButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "minus")),
-                          "Remove", self, triggered=self.remove))
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "minus")),
+                "Remove", self, triggered=self.remove))
         self.removeButton.setDisabled(True)
         hbox.addWidget(self.removeButton)
 
@@ -356,7 +360,7 @@ class ColorScheme(QtGui.QDialog):
     def styleEditor(self, editor):
         fileType = editor.DATA["fileType"]
         if fileType not in self.useData.supportedFileTypes:
-             return None
+            return None
         if fileType == "python":
             style_name = self.useData.SETTINGS["EditorStylePython"]
             groupName = "Python"
@@ -369,7 +373,7 @@ class ColorScheme(QtGui.QDialog):
         elif fileType == ".css":
             style_name = self.useData.SETTINGS["EditorStyleCss"]
             groupName = "Css"
-             
+
         properties = self.editorStyler.loadProperties(style_name, groupName)
         paper = self.editorStyler.applyChanges(editor, properties)
         lexer = self.lexerStyler.createLexer(paper, style_name, groupName)

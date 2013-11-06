@@ -46,8 +46,7 @@ class Start(QtGui.QLabel):
 
                             QListView::item:selected:active {
                                  color: white;
-                                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                               stop:0 #585858, stop:1 #3F3F3F);
+                                 background: #3F3F3F;
                             }""")
         vbox.addWidget(centerLabel)
 

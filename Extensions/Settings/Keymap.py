@@ -1,6 +1,7 @@
 from PyQt4 import QtCore, QtGui, QtXml
 from PyQt4.Qsci import QsciScintilla
 
+
 class GetShortcut(QtGui.QDialog):
 
     def __init__(self, parent=None):
@@ -173,7 +174,7 @@ class Keymap(QtGui.QDialog):
         for key, value in self.useData.CUSTOM_SHORTCUTS.items():
             root = dom_document.createElement(key)
             keymap.appendChild(root)
-            
+
             for short, func in value.items():
                 tag = dom_document.createElement(short)
                 if key == "Editor":
@@ -195,14 +196,14 @@ class Keymap(QtGui.QDialog):
     def bindKeymap(self):
         for i in range(self.projectWindowStack.count() - 1):
             window = self.projectWindowStack.widget(i)
-            window.setShortcuts()
+            window.setKeymap()
             editorTabWidget = window.editorTabWidget
-            editorTabWidget.setShortcuts()
+            editorTabWidget.setKeymap()
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
                 editor2 = editorTabWidget.getCloneEditor(i)
-                editor.setShortcuts()
-                editor2.setShortcuts()
+                editor.setKeymap()
+                editor2.setKeymap()
 
     def updateShortcutsView(self):
         self.shortcutsView.clear()
@@ -212,7 +213,8 @@ class Keymap(QtGui.QDialog):
             mainItem.setText(0, i)
             if i == "Editor":
                 for function, action in self.useData.CUSTOM_SHORTCUTS[i].items():
-                    item = QtGui.QTreeWidgetItem(mainItem, [function, action[0]])
+                    item = QtGui.QTreeWidgetItem(
+                        mainItem, [function, action[0]])
             else:
                 for function, action in self.useData.CUSTOM_SHORTCUTS[i].items():
                     item = QtGui.QTreeWidgetItem(mainItem, [function, action])
@@ -226,7 +228,7 @@ class Keymap(QtGui.QDialog):
             for key, value in self.useData.DEFAULT_SHORTCUTS['Ide'].items():
                 default = self.useData.DEFAULT_SHORTCUTS['Ide'][key]
                 self.useData.CUSTOM_SHORTCUTS['Ide'][key] = default
-                
+
             sc = QsciScintilla()
             standardCommands = sc.standardCommands()
 
@@ -234,7 +236,8 @@ class Keymap(QtGui.QDialog):
                 default = self.useData.DEFAULT_SHORTCUTS['Editor'][key]
                 command = standardCommands.find(default[1])
                 keyValue = command.key()
-                self.useData.CUSTOM_SHORTCUTS['Editor'][key] = [default[0], keyValue]
+                self.useData.CUSTOM_SHORTCUTS[
+                    'Editor'][key] = [default[0], keyValue]
             self.save()
             self.useData.loadKeymap()
             self.updateShortcutsView()

@@ -1,3 +1,4 @@
+
 import sys
 from PyQt4 import QtGui, QtCore
 
@@ -5,8 +6,8 @@ from PyQt4 import QtGui, QtCore
 def getDefaultFont():
     # Platform specific fonts
     if sys.platform == 'win32':
-        font = 'Courier New'
-        font_size = 10
+        font = 'Lucida Console'
+        font_size = 9
     elif sys.platform == 'darwin':
         font = 'Monaco'
         font_size = 10

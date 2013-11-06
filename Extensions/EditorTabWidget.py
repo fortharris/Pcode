@@ -1,6 +1,9 @@
 import os
+import sys
 import ctypes
 import time
+import traceback
+import logging
 
 from PyQt4 import QtCore, QtGui, QtXml
 from PyQt4.Qsci import QsciScintilla
@@ -36,7 +39,7 @@ class EditorTabBar(QtGui.QTabBar):
 
         self.createActions()
 
-    def setShortcuts(self):
+    def setKeymap(self):
         shortcuts = self.editorTabWidget.useData.CUSTOM_SHORTCUTS
 
         self.shortSplitFileReload = QtGui.QShortcut(
@@ -250,7 +253,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.currentChanged.connect(self.editorTabChanged)
         self.tabCloseRequested.connect(self.closeEditorTab)
 
-        self.setShortcuts()
+        self.setKeymap()
         self.backupTimer.start()
 
         self.newFileMenu = QtGui.QMenu("New File")
@@ -718,7 +721,10 @@ class EditorTabWidget(QtGui.QTabWidget):
 
                 currentIindex += 1
                 node = node.nextSibling()
-            except Exception:
+            except:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                             exc_traceback)))
                 node = node.nextSibling()
         if self.count() != 0:
             self.setCurrentIndex(activeIndex)
@@ -983,6 +989,9 @@ class EditorTabWidget(QtGui.QTabWidget):
 
                 return True
             except Exception as err:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                             exc_traceback)))
                 self.saveErrorMess(str(err))
 
                 return False
@@ -997,7 +1006,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             file.write(editor.text())
             file.close()
             return True
-        except Exception as err:
+        except:
             return False
 
     def saveAs(self, index=None, copyOnly=False):
@@ -1023,6 +1032,9 @@ class EditorTabWidget(QtGui.QTabWidget):
                 self.filesWatch.addPath(fileName)
                 return True
             except Exception as err:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                             exc_traceback)))
                 self.saveErrorMess(str(err.args[1]))
                 return False
         else:
@@ -1231,6 +1243,9 @@ class EditorTabWidget(QtGui.QTabWidget):
             snapshotWidget.convertEols(eolMode)
             snapshotWidget.setEolMode(eolMode)
         except Exception as err:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
             QtGui.QApplication.restoreOverrideCursor()
             if showError:
                 message = QtGui.QMessageBox.warning(self, "Open", str(err))
@@ -1275,8 +1290,8 @@ class EditorTabWidget(QtGui.QTabWidget):
         else:
             firstEditor.setFocus()
 
-    def setShortcuts(self):
-        self.tabBar.setShortcuts()
+    def setKeymap(self):
+        self.tabBar.setKeymap()
         shortcuts = self.useData.CUSTOM_SHORTCUTS
 
         self.shortSplitVertical = QtGui.QShortcut(

@@ -102,7 +102,8 @@ class EditorWindow(QtGui.QWidget):
         self.bookmarkToolbar.addSeparator()
 
         self.editorTabWidget = EditorTabWidget(
-            self.useData, self.projectPathDict, self.projectData["settings"], self.messagesWidget,
+            self.useData, self.projectPathDict, self.projectData[
+                "settings"], self.messagesWidget,
             self.colorScheme, self.busyWidget, self.bookmarkToolbar, self.app, self.manageFavourites,
             self.externalLauncher, self)
         vbox.addWidget(self.editorTabWidget)
@@ -282,8 +283,8 @@ class EditorWindow(QtGui.QWidget):
             self.writePad.setGeometry(settings.value('writepad'))
             settings.endGroup()
 
-        self.setShortcuts()
-        
+        self.setKeymap()
+
     def resizeView(self, hview, vview):
         hSizes = self.hSplitter.sizes()
         vSizes = self.vSplitter.sizes()
@@ -291,7 +292,7 @@ class EditorWindow(QtGui.QWidget):
             self.hSplitter.setSizes([hSizes[0] + 2, hSizes[1] - 2])
         elif hview == -1:
             self.hSplitter.setSizes([hSizes[0] - 2, hSizes[1] + 2])
-            
+
         if vview == 1:
             self.vSplitter.setSizes([vSizes[0] + 2, vSizes[1] - 2])
         elif vview == -1:
@@ -605,7 +606,8 @@ class EditorWindow(QtGui.QWidget):
         (Windows: return the PythonXX.chm path if available)
         """
         if os.name == 'nt':
-            path = os.path.dirname(self.projectData['settings']["DefaultInterpreter"])
+            path = os.path.dirname(
+                self.projectData['settings']["DefaultInterpreter"])
             doc_path = os.path.join(path, "Doc")
             if not os.path.isdir(doc_path):
                 return
@@ -631,7 +633,7 @@ class EditorWindow(QtGui.QWidget):
         except Exception as err:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                                      exc_traceback)))
+                         exc_traceback)))
             message = QtGui.QMessageBox.critical(self, "Python Manuals",
                                                  ("Failed to launch the Python Manuals!\n\n"
                                                   "It is either not available for the current python "
@@ -772,7 +774,7 @@ class EditorWindow(QtGui.QWidget):
         self.projectData["recentfiles"] = recentfiles
         self.projectData["settings"] = settingsDict
         self.projectData["launchers"] = launchers
-        
+
         # in order that a crash can be reported
         self.saveProjectData()
 
@@ -833,13 +835,14 @@ class EditorWindow(QtGui.QWidget):
             tag.appendChild(t)
             s += 1
 
-        path = os.path.join(self.projectPathDict["root"], "Data", "projectdata.xml")
+        path = os.path.join(
+            self.projectPathDict["root"], "Data", "projectdata.xml")
         file = open(path, "w")
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(domDocument.toString())
         file.close()
 
-    def setShortcuts(self):
+    def setKeymap(self):
         shortcuts = self.useData.CUSTOM_SHORTCUTS
 
         self.shortGotoLine = QtGui.QShortcut(

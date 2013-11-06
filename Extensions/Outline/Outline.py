@@ -26,18 +26,17 @@ class Outline(QtGui.QTreeWidget):
         self.pythonOutlineThread = PythonOutlineThread()
         self.useData = useData
         self.editorTabWidget = editorTabWidget
-        
+
         self.setObjectName("sidebarItem")
         self.setStyleSheet("QTreeView {margin-top: 23px;}")
 
         self.navigatorTimer = QtCore.QTimer()
         self.navigatorTimer.setSingleShot(True)
-        self.navigatorTimer.setInterval(500)
         self.navigatorTimer.timeout.connect(self.startOutline)
 
-        self.editorTabWidget.currentChanged.connect(self.navigatorTimer.start)
+        self.editorTabWidget.currentChanged.connect(self.startNavigatorTimer)
         self.editorTabWidget.currentEditorTextChanged.connect(
-            self.navigatorTimer.start)
+            self.startNavigatorTimer)
 
         self.pythonOutlineThread.updateNavigator.connect(self.updateOutline)
 
@@ -47,6 +46,9 @@ class Outline(QtGui.QTreeWidget):
         self.setHeaderHidden(True)
         self.activated.connect(self.navigatorItemActivated)
         self.itemPressed.connect(self.navigatorItemActivated)
+        
+    def startNavigatorTimer(self):
+        self.navigatorTimer.start(500)
 
     def startOutline(self):
         self.pythonOutlineThread.startNavigator(

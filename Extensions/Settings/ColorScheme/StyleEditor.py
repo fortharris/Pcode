@@ -48,7 +48,7 @@ class StyleEditor(QtGui.QWidget):
         self.foregroundColorChooser.colorChanged.connect(self.updateForeground)
         vbox.addWidget(self.foregroundColorChooser)
 
-        ### Additional settings for elements that need them -------------------
+        # Additional settings for elements that need them -------------------
 
         self.extra_settings_stack = QtGui.QStackedLayout()
         vbox.addLayout(self.extra_settings_stack)
@@ -58,7 +58,7 @@ class StyleEditor(QtGui.QWidget):
         stackWidget = QtGui.QWidget()
         self.extra_settings_stack.addWidget(stackWidget)
 
-        ### CALLTIP Highlight Color
+        # CALLTIP Highlight Color
 
         stackWidget = QtGui.QWidget()
         stackBox = QtGui.QVBoxLayout()
@@ -78,7 +78,7 @@ class StyleEditor(QtGui.QWidget):
             self.updateCalltipHighlight)
         hbox.addWidget(self.callTipHighlightColorChooser)
 
-        ### MARGIN FONT
+        # MARGIN FONT
 
         stackWidget = QtGui.QWidget()
         stackBox = QtGui.QVBoxLayout()
@@ -94,7 +94,7 @@ class StyleEditor(QtGui.QWidget):
         self.fontButton.clicked.connect(self.fontChanged)
         stackBox.addWidget(self.fontButton)
 
-        ### ----------------------------------------------------------------
+        # ----------------------------------------------------------------
         vbox.addStretch(1)
 
         self.paperBG = QtGui.QButtonGroup()
@@ -140,14 +140,14 @@ class StyleEditor(QtGui.QWidget):
         self.paperChanged.emit()
 
     def loadDefaultProperties(self):
-        # Platform specific fonts   
+        # Platform specific fonts
         if sys.platform == 'win32':
             defaultFont = 'Consolas'
         elif sys.platform == 'darwin':
             defaultFont = 'Monaco'
         else:
             defaultFont = 'Bitstream Vera Sans Mono'
-            
+
         properties = {"Edge Line": ['#aa557f', '#ffc6c2'],
                       "Number Margin": ['#ffffff', '#949494', defaultFont, 8, False, False],
                       "Fold Margin": ['#ffffff', '#ffffff'],
@@ -251,7 +251,7 @@ class StyleEditor(QtGui.QWidget):
         viewWidget.setCallTipsHighlightColor(QtGui.QColor(
             properties["Calltips"][2]))
 
-        ## Margins colors
+        # Margins colors
         # line numbers margin
         viewWidget.setMarginsBackgroundColor(
             QtGui.QColor(properties["Number Margin"][0]))
@@ -269,16 +269,16 @@ class StyleEditor(QtGui.QWidget):
             QtGui.QColor(properties["Fold Margin"][0]),
             QtGui.QColor(properties["Fold Margin"][1]))
 
-        ## Edge Mode shows a vertical bar at specific number of chars
+        # Edge Mode shows a vertical bar at specific number of chars
         viewWidget.setEdgeColor(QtGui.QColor(
             properties["Edge Line"][1]))
 
-        ## Folding visual : we will use boxes
+        # Folding visual : we will use boxes
         viewWidget.setFoldMarkersColors(
             QtGui.QColor(properties["Fold Markers"][0]),
             QtGui.QColor(properties["Fold Markers"][1]))
 
-        ## Braces matching
+        # Braces matching
         viewWidget.setMatchedBraceBackgroundColor(
             QtGui.QColor(properties["Matched Braces"][0]))
         viewWidget.setMatchedBraceForegroundColor(
@@ -288,7 +288,7 @@ class StyleEditor(QtGui.QWidget):
         viewWidget.setUnmatchedBraceForegroundColor(
             QtGui.QColor(properties["Unmatched Braces"][1]))
 
-        ## Editing line color
+        # Editing line color
         viewWidget.setCaretWidth(2)
         viewWidget.setCaretLineBackgroundColor(
             QtGui.QColor(properties["Active Line"][0]))

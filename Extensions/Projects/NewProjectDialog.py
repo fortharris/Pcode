@@ -65,7 +65,7 @@ class NewProjectDialog(QtGui.QDialog):
         self.typeBox.addItem("Python Package")
         self.typeBox.currentIndexChanged.connect(self.showWindowTypeBox)
         form.addRow("Type: ", self.typeBox)
-        
+
         self.windowTypeBox = QtGui.QComboBox()
         self.windowTypeBox.addItem("GUI")
         self.windowTypeBox.addItem("Console")
@@ -100,7 +100,7 @@ class NewProjectDialog(QtGui.QDialog):
         mainLayout.addLayout(hbox)
 
         self.validateFields()
-        
+
     def showWindowTypeBox(self):
         if self.typeBox.currentText() == "Desktop Application":
             self.windowTypeBox.show()

@@ -141,7 +141,7 @@ class ConfirmReplaceDialog(QtGui.QDialog):
         file.close()
 
         QtGui.QApplication.restoreOverrideCursor()
-        
+
         self.replaced = True
         self.close()
 
@@ -359,7 +359,8 @@ class FindInFiles(QtGui.QWidget):
                 path, self.text, self.replaceLine.text(), self.search, self)
             if replaced.replaced:
                 if self.editorTabWidget.alreadyOpened(path):
-                    message = QtGui.QMessageBox.information(self, "Reload", "This file has changed on disk. You may want to reload it.")
+                    message = QtGui.QMessageBox.information(
+                        self, "Reload", "This file has changed on disk. You may want to reload it.")
         else:
             line = int(item.text(0)) - 1
             pos = item.data(0, 3)

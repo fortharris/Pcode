@@ -143,7 +143,7 @@ class CopyThread(QtCore.QThread):
                             pass
         return totalSize
 
-    def doCopy(self, itemList, destDir):
+    def copy(self, itemList, destDir):
         self.itemList = itemList
         self.destDir = destDir
 
@@ -154,7 +154,7 @@ class CopyThread(QtCore.QThread):
 
         self.start()
 
-    def stopCopy(self):
+    def stop(self):
         self.stopThread = True
 
 
@@ -219,7 +219,7 @@ class ProjectTree(QtGui.QTreeView):
         self.copyThread.finished.connect(self.copyFinished)
 
         self.progressWidget.cancelButton.clicked.connect(
-            self.copyThread.stopCopy)
+            self.copyThread.stop)
 
         iconProvider = IconProvider()
 
@@ -384,7 +384,7 @@ class ProjectTree(QtGui.QTreeView):
                     else:
                         continue
                 pathList.append(path)
-            self.copyThread.doCopy(pathList, destDir)
+            self.copyThread.copy(pathList, destDir)
             self.progressWidget.showBusy(True, "Preparing to copy...")
 
     def newFile(self):
@@ -448,7 +448,7 @@ class ProjectTree(QtGui.QTreeView):
                     else:
                         continue
                 pathList.append(file)
-            self.copyThread.doCopy(pathList, destDir)
+            self.copyThread.copy(pathList, destDir)
             self.progressWidget.showBusy(True, "Preparing to copy...")
 
     def addExistingDirectory(self):
@@ -469,7 +469,7 @@ class ProjectTree(QtGui.QTreeView):
                     pass
                 else:
                     return
-            self.copyThread.doCopy([directory], destDir)
+            self.copyThread.copy([directory], destDir)
             self.progressWidget.showBusy(True, "Preparing to copy...")
 
     def updateCopySize(self, value):
@@ -601,6 +601,72 @@ class SearchThread(QtCore.QThread):
         self.start()
 
 
+class LineEdit(QtGui.QLineEdit):
+
+    fileActivated = QtCore.pyqtSignal(str)
+
+    def __init__(self, viewStack, searchResultsTree, parent=None):
+        QtGui.QWidget.__init__(self, parent)
+
+        self.searchResultsTree = searchResultsTree
+        self.viewStack = viewStack
+
+        self.setPlaceholderText("Search")
+
+        hbox = QtGui.QHBoxLayout()
+        hbox.setMargin(1)
+        hbox.addStretch(1)
+        self.setLayout(hbox)
+
+        self.clearButton = QtGui.QToolButton()
+        self.clearButton.setAutoRaise(True)
+        self.clearButton.setIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "disabled")))
+        self.clearButton.clicked.connect(self.clearSearch)
+        hbox.addWidget(self.clearButton)
+
+    def keyPressEvent(self, event):
+        key = event.key()
+
+        ctrl = event.modifiers() & QtCore.Qt.ControlModifier
+        alt = event.modifiers() & QtCore.Qt.AltModifier
+        shift_down = event.modifiers() & QtCore.Qt.ShiftModifier
+
+        if ctrl:
+            pass
+        elif alt:
+            pass
+        elif key == QtCore.Qt.Key_Up:
+            currentItem = self.currentItem()
+            if currentItem is not None:
+                itemAbove = self.searchResultsTree.itemAbove(currentItem)
+                if itemAbove is None:
+                    return
+                self.searchResultsTree.setCurrentItem(itemAbove)
+                self.setFocus(True)
+        elif key == QtCore.Qt.Key_Down:
+            currentItem = self.currentItem()
+            if currentItem is not None:
+                itemBelow = self.searchResultsTree.itemBelow(currentItem)
+                if itemBelow is None:
+                    return
+                self.searchResultsTree.setCurrentItem(itemBelow)
+                self.setFocus(True)
+        else:
+            QtGui.QLineEdit.keyPressEvent(self, event)
+
+    def clearSearch(self):
+        self.clear()
+        self.viewStack.setCurrentIndex(0)
+
+    def currentItem(self):
+        if self.searchResultsTree.topLevelItemCount() > 0:
+            item = self.searchResultsTree.selectedItems()[0]
+            return item
+        else:
+            return None
+
+
 class ProjectView(QtGui.QWidget):
 
     fileActivated = QtCore.pyqtSignal(str)
@@ -613,7 +679,6 @@ class ProjectView(QtGui.QWidget):
 
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 2, 2)
-        mainLayout.setSpacing(0)
         self.setLayout(mainLayout)
 
         self.progressWidget = ProgressWidget()
@@ -623,28 +688,32 @@ class ProjectView(QtGui.QWidget):
         self.viewStack = QtGui.QStackedWidget()
         mainLayout.addWidget(self.viewStack)
 
+        self.projectTree = ProjectTree(
+            editorTabWidget, root, app, projectSettings, self.progressWidget, self)
+        self.viewStack.addWidget(self.projectTree)
+
+        self.searchResultsTree = QtGui.QTreeWidget(self)
+        self.searchResultsTree.setObjectName("sidebarItem")
+        self.searchResultsTree.setHeaderItem(
+            QtGui.QTreeWidgetItem(["Search Results:"]))
+        self.searchResultsTree.activated.connect(self.loadFile)
+        self.viewStack.addWidget(self.searchResultsTree)
+
+        self.searchThread = SearchThread()
+        self.searchThread.foundList.connect(self.updateSearchTree)
+
         self.searchTimer = QtCore.QTimer()
         self.searchTimer.setSingleShot(True)
-        self.searchTimer.setInterval(300)
-        self.searchTimer.timeout.connect(self.performSearch)
+        self.searchTimer.timeout.connect(self.search)
+        
+        vbox = QtGui.QVBoxLayout()
+        vbox.setSpacing(0)
+        mainLayout.addLayout(vbox)
 
-        self.searchLine = QtGui.QLineEdit()
-        self.searchLine.setObjectName('squareCorners')
-        self.searchLine.setPlaceholderText("Search")
-        self.searchLine.textChanged.connect(self.searchTimer.start)
-        mainLayout.addWidget(self.searchLine)
-
-        hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(1)
-        hbox.addStretch(1)
-        self.searchLine.setLayout(hbox)
-
-        self.clearButton = QtGui.QToolButton()
-        self.clearButton.setAutoRaise(True)
-        self.clearButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "disabled")))
-        self.clearButton.clicked.connect(self.clearSearch)
-        hbox.addWidget(self.clearButton)
+        self.searchLine = LineEdit(self.viewStack, self.searchResultsTree)
+        self.searchLine.textChanged.connect(self.startSearchTimer)
+        self.searchLine.returnPressed.connect(self.loadFile)
+        vbox.addWidget(self.searchLine)
 
         self.progressBar = QtGui.QProgressBar()
         self.progressBar.setMaximumHeight(2)
@@ -668,37 +737,23 @@ class ProjectView(QtGui.QWidget):
                                 """
             )
         self.progressBar.setRange(0, 0)
-        mainLayout.addWidget(self.progressBar)
+        vbox.addWidget(self.progressBar)
         self.progressBar.hide()
-
-        self.projectTree = ProjectTree(
-            editorTabWidget, root, app, projectSettings, self.progressWidget, self)
-        self.viewStack.addWidget(self.projectTree)
-
-        self.searchResultsTree = QtGui.QTreeWidget(self)
-        self.searchResultsTree.setObjectName("sidebarItem")
-        self.searchResultsTree.setHeaderItem(
-            QtGui.QTreeWidgetItem(["Search Results:"]))
-        self.searchResultsTree.activated.connect(self.loadFile)
-        self.viewStack.addWidget(self.searchResultsTree)
-
-        self.searchThread = SearchThread()
-        self.searchThread.foundList.connect(self.updateSearch)
+        
+    def startSearchTimer(self):
+        self.searchTimer.start(300)
 
     def loadFile(self):
-        item = self.searchResultsTree.selectedItems()[0]
-        if item.parent() is None:
-            pass
-        else:
-            parentDir = item.parent().text(0)
-            path = os.path.join(self.root, parentDir, item.text(0))
-            self.fileActivated.emit(path)
+        if len(self.searchResultsTree.selectedItems()) > 0:
+            item = self.searchResultsTree.selectedItems()[0]
+            if item.parent() is None:
+                pass
+            else:
+                parentDir = item.parent().text(0)
+                path = os.path.join(self.root, parentDir, item.text(0))
+                self.fileActivated.emit(path)
 
-    def clearSearch(self):
-        self.searchLine.clear()
-        self.viewStack.setCurrentIndex(0)
-
-    def performSearch(self):
+    def search(self):
         text = self.searchLine.text().strip()
         if text == '':
             self.viewStack.setCurrentIndex(0)
@@ -707,7 +762,7 @@ class ProjectView(QtGui.QWidget):
                                 self.projectTree.showAllFilesAct.isChecked())
         self.progressBar.show()
 
-    def updateSearch(self, resultsDict):
+    def updateSearchTree(self, resultsDict):
         self.progressBar.hide()
         self.searchResultsTree.clear()
         self.viewStack.setCurrentIndex(1)
@@ -725,6 +780,9 @@ class ProjectView(QtGui.QWidget):
                     fileItem.setText(0, i)
                     fileItem.setIcon(0, QtGui.QIcon(icon))
                 folderItem.setExpanded(True)
+
+            item = self.searchResultsTree.topLevelItem(0)
+            self.searchResultsTree.setCurrentItem(item.child(0))
         else:
             folderItem = QtGui.QTreeWidgetItem()
             item = QtGui.QTreeWidgetItem()

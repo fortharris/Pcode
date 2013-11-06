@@ -19,15 +19,14 @@ class BookmarkWidget(QtGui.QTreeWidget):
 
         self.loadTimer = QtCore.QTimer()
         self.loadTimer.setSingleShot(True)
-        self.loadTimer.setInterval(1000)
         self.loadTimer.timeout.connect(self.load)
 
         self.editorTabWidget.currentEditorTextChanged.connect(
-            self.loadTimer.start)
+            self.startLoadTimer)
         self.editorTabWidget.bookmarksChanged.connect(self.loadTimer.start)
 
-    def startTimer(self):
-        self.loadTimer.start(0)
+    def startLoadTimer(self):
+        self.loadTimer.start(1000)
 
     def load(self):
         markerLines = []

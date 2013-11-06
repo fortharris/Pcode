@@ -5,7 +5,7 @@ from PyQt4 import QtCore, QtGui
 
 class TaskFinderThread(QtCore.QThread):
 
-    TASKS_PATTERN = r"(^|#)[ ]*(TODO|FIXME|XXX|HINT|TIP)( |:)([^#]*)" 
+    TASKS_PATTERN = r"(^|#)[ ]*(TODO|FIXME|XXX|HINT|TIP)( |:)([^#]*)"
     newTasks = QtCore.pyqtSignal(list)
     results = []
 
@@ -26,7 +26,7 @@ class TaskFinderThread(QtCore.QThread):
 
     def findTasks(self, source):
         self.source = source
-        
+
         self.start()
 
 

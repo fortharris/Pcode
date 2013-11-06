@@ -210,7 +210,7 @@ class Refactor(QtGui.QWidget):
         self.root = editorTabWidget.projectPathDict["sourcedir"]
         self.useData = editorTabWidget.useData
         ropeFolder = editorTabWidget.projectPathDict["ropeFolder"]
-        
+
         libraryList = []
         for i, v in self.useData.libraryDict.items():
             libraryList.extend(v[0])
@@ -233,7 +233,7 @@ class Refactor(QtGui.QWidget):
             'import_dynload_stdmods': True,
             'ignore_syntax_errors': True,
             'ignore_bad_imports': True
-        }
+            }
 
         self.ropeProject = Project(
             projectroot=self.root, ropefolder=ropeFolder, **prefs)
@@ -318,7 +318,7 @@ class Refactor(QtGui.QWidget):
         objectName = self.editorTabWidget.get_current_word()
         if objectName == '':
             self.editorTabWidget.showNotification(
-                        "No word under cursor.")
+                "No word under cursor.")
             return
         newName = GetName("Rename", objectName, self)
         if newName.accepted:
@@ -406,7 +406,8 @@ class Refactor(QtGui.QWidget):
                     offset = result.offset
                     line = result.lineno
                     result_path = result.resource.path
-                    sourcePath = self.editorTabWidget.projectPathDict["sourcedir"]
+                    sourcePath = self.editorTabWidget.projectPathDict[
+                        "sourcedir"]
                     if not os.path.isabs(result_path):
                         result_path = os.path.join(sourcePath, result_path)
                     if os.path.samefile(result_path, path):
@@ -439,7 +440,7 @@ class Refactor(QtGui.QWidget):
         self.objectName = self.editorTabWidget.get_current_word()
         if self.objectName == '':
             self.editorTabWidget.showNotification(
-                        "No word under cursor.")
+                "No word under cursor.")
             return
         offset = self.getOffset()
         project = self.getProject()

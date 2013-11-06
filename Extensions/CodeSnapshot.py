@@ -13,7 +13,7 @@ class CodeSnapshot(BaseScintilla):
 
         self.colorScheme = colorScheme
         self.DATA = {"fileType": "python"}
-        
+
         self.setObjectName("editor")
         self.enableMarkOccurrence(useData)
 
@@ -41,9 +41,10 @@ class CodeSnapshot(BaseScintilla):
                                           triggered=self.selectAllText)
 
         self.selectToMatchingBraceAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "compose")),
-                          "Select to Matching Brace", self,
-                          statusTip="Select to Matching Brace",
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "compose")),
+                "Select to Matching Brace", self,
+                statusTip="Select to Matching Brace",
                           triggered=self.selectToMatchingBrace)
 
         self.contextMenu = QtGui.QMenu()

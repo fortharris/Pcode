@@ -34,11 +34,14 @@ class CreateProjectThread(QtCore.QThread):
 
             os.mkdir(os.path.join(self.projectPath, "Resources"))
             os.mkdir(os.path.join(self.projectPath, "Resources", "VirtualEnv"))
-            os.mkdir(os.path.join(self.projectPath, "Resources", "VirtualEnv", "Linux"))
-            os.mkdir(os.path.join(self.projectPath, "Resources", "VirtualEnv", "Mac"))
-            os.mkdir(os.path.join(self.projectPath, "Resources", "VirtualEnv", "Windows"))
+            os.mkdir(
+                os.path.join(self.projectPath, "Resources", "VirtualEnv", "Linux"))
+            os.mkdir(
+                os.path.join(self.projectPath, "Resources", "VirtualEnv", "Mac"))
+            os.mkdir(
+                os.path.join(self.projectPath, "Resources", "VirtualEnv", "Windows"))
             os.mkdir(os.path.join(self.projectPath, "Resources", "Icons"))
-            
+
             os.mkdir(os.path.join(self.projectPath, "temp"))
             os.mkdir(os.path.join(self.projectPath, "temp", "Backup"))
             os.mkdir(os.path.join(self.projectPath, "temp", "Backup", "Files"))
@@ -69,7 +72,7 @@ class CreateProjectThread(QtCore.QThread):
         except Exception as err:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                                      exc_traceback)))
+                         exc_traceback)))
             self.error = str(err)
 
     def writeProjectData(self):
@@ -126,7 +129,7 @@ class CreateProjectThread(QtCore.QThread):
             'Icon': '',
             'ShowAllFiles': 'True',
             'LastCloseSuccessful': 'True'
-        }
+            }
         for key, value in defaults.items():
             tag = domDocument.createElement("key")
             root.appendChild(tag)
@@ -307,7 +310,8 @@ class CreateProjectThread(QtCore.QThread):
             root = dom_document.createElement(i.replace(' ', '-'))
             main_data.appendChild(root)
 
-        file = open(os.path.join(self.projectPath, "Build", "profile.xml"), "w")
+        file = open(
+            os.path.join(self.projectPath, "Build", "profile.xml"), "w")
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(dom_document.toString())
         file.close()
@@ -390,17 +394,17 @@ class Projects(QtGui.QWidget):
                 "projectmainfile": os.path.join(path, "project.xml"),
                 "iconsdir": os.path.join(path, "Resources", "Icons"),
                 "root": path
-            }
-            
+                }
+
             if sys.platform == 'win32':
                 projectPathDict["venvdir"] = os.path.join(path,
-                                                  "Resources", "VirtualEnv", "Windows", "Venv")
+                               "Resources", "VirtualEnv", "Windows", "Venv")
             elif sys.platform == 'darwin':
                 projectPathDict["venvdir"] = os.path.join(path,
-                                                  "Resources", "VirtualEnv", "Mac", "Venv")
+                               "Resources", "VirtualEnv", "Mac", "Venv")
             else:
                 projectPathDict["venvdir"] = os.path.join(path,
-                                                  "Resources", "VirtualEnv", "Linux", "Venv")
+                               "Resources", "VirtualEnv", "Linux", "Venv")
 
             try:
                 project_data = self.readProject(path)
@@ -412,13 +416,16 @@ class Projects(QtGui.QWidget):
                 projectPathDict["name"] = project_data[1]["Name"]
                 projectPathDict["type"] = project_data[1]["Type"]
                 projectPathDict["mainscript"] = os.path.join(path, "src",
-                                                      project_data[1]["MainScript"])
+                               project_data[1]["MainScript"])
                 if sys.platform == 'win32':
-                    projectPathDict["builddir"] = os.path.join(path, "Build", "Windows")
+                    projectPathDict["builddir"] = os.path.join(
+                        path, "Build", "Windows")
                 elif sys.platform == 'darwin':
-                    projectPathDict["builddir"] = os.path.join(path, "Build", "Mac")
+                    projectPathDict["builddir"] = os.path.join(
+                        path, "Build", "Mac")
                 else:
-                    projectPathDict["builddir"] = os.path.join(path, "Build", "Linux")
+                    projectPathDict["builddir"] = os.path.join(
+                        path, "Build", "Linux")
 
                 p_name = os.path.basename(path)
 
@@ -426,7 +433,8 @@ class Projects(QtGui.QWidget):
                                              self.busyWidget, self.settingsWidget.colorScheme,
                                              self.useData, self.app, self)
                 if new:
-                    projectWindow.editorTabWidget.loadfile(projectPathDict["mainscript"])
+                    projectWindow.editorTabWidget.loadfile(
+                        projectPathDict["mainscript"])
                 else:
                     projectWindow.restoreSession()
                 projectWindow.editorTabWidget.updateWindowTitle.connect(
@@ -443,8 +451,9 @@ class Projects(QtGui.QWidget):
                     self.pcode.showProject(path)
             except Exception as err:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                                          exc_traceback)))
+                logging.error(
+                    repr(traceback.format_exception(exc_type, exc_value,
+                             exc_traceback)))
                 QtGui.QApplication.restoreOverrideCursor()
                 message = QtGui.QMessageBox.warning(self, "Failed Open",
                                                     "Problem opening project: \n\n" + str(err))

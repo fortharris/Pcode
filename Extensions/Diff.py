@@ -19,7 +19,7 @@ class FormatLexer(QsciLexerCustom):
             2: 'DeletedText',
             3: 'ReplacedText',
             4: 'LineNumber'
-        }
+            }
         for key in self._styles:
             setattr(self, self._styles[key], key)
 
@@ -28,18 +28,18 @@ class FormatLexer(QsciLexerCustom):
 
     def defaultColor(self, style):
         return QtGui.QColor('#000000')
-        
+
     def defaultPaper(self, style):
         if style == self.Default:
             return QtGui.QColor('#ffffff')
         elif style == self.NewText:
-            return QtGui.QColor('#BEEDBE')
+            return QtGui.QColor('#DDFFDD')
         elif style == self.DeletedText:
-            return QtGui.QColor('#EDBEBE')
+            return QtGui.QColor('#FFDDDD')
         elif style == self.ReplacedText:
-            return QtGui.QColor('#BEBEED')
+            return QtGui.QColor('#BED6ED')
         elif style == self.LineNumber:
-            return QtGui.QColor('#FFDCA8')
+            return QtGui.QColor('#EAF2F5')
         return QtGui.QColor('#ffffff')
 
     def defaultFont(self, style):
@@ -80,7 +80,6 @@ class FormatLexer(QsciLexerCustom):
         if not source:
             return
 
-        set_style = self.setStyling
         self.startStyling(start, 0x1f)
 
 
@@ -97,12 +96,12 @@ class DiffWindow(BaseScintilla):
 
         self.editor = editor
         self.snapShot = snapShot
-        
+
         self.setStyleSheet("QsciScintilla {border: none;}")
 
     def generateUnifiedDiff(self, a=None, b=None):
         self.clear()
-        
+
         if a is None:
             a = self.snapShot.text().splitlines()
         if b is None:
@@ -131,20 +130,20 @@ class DiffWindow(BaseScintilla):
 
     def generateContextDiff(self):
         self.clear()
-        
+
         a = self.snapShot.text().splitlines()
         b = self.editor.text().splitlines()
 
         QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
         lines = 0
-        for line in difflib.context_diff(a, b, "Deleted", "Added"):
-            if line.startswith('+ '):
+        for line in difflib.context_diff(a, b, "Original", "Current"):
+            if line.startswith('+'):
                 styleType = 1
-            elif line.startswith('- '):
+            elif line.startswith('-'):
                 styleType = 2
-            elif line.startswith('! '):
+            elif line.startswith('!'):
                 styleType = 3
-            elif (line.startswith('*** ') or line.startswith('--- ')) and lines > 1:
+            elif line.startswith('*** '):
                 styleType = 4
             else:
                 styleType = 0

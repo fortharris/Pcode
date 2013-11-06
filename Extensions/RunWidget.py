@@ -31,16 +31,16 @@ class SetRunParameters(QtGui.QLabel):
         self.projectPathDict = projectPathDict
 
         mainLayout = QtGui.QVBoxLayout()
-        
+
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
 
         label = QtGui.QLabel("Run Parameters")
         label.setObjectName("toolWidgetNameLabel")
         hbox.addWidget(label)
-        
+
         hbox.addStretch(1)
-        
+
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
@@ -299,13 +299,12 @@ class RunWidget(BaseScintilla):
 
         self.setMarginWidth(1, 0)
         self.toggleInsertOrOvertype()
-        
+
         self.linkIndicator = self.indicatorDefine(
             QsciScintilla.INDIC_PLAIN, 8)
         self.setIndicatorForegroundColor(QtGui.QColor(
             "#474747"), self.linkIndicator)
         self.setIndicatorDrawUnder(True, self.linkIndicator)
-
 
         self.lexer = OutputLexer(self)
         self.setLexer(self.lexer)
@@ -336,27 +335,28 @@ class RunWidget(BaseScintilla):
         self.blocking_cursor_pos = (0, 0)
 
         self.setStyleSheet("QsciScintilla {border: none;}")
-        
+
     def leaveEvent(self, event):
         self.clearAllIndicators(self.linkIndicator)
-        
+
         super(RunWidget, self).leaveEvent(event)
-        
+
     def mouseMoveEvent(self, event):
         x = event.x()
         y = event.y()
-        
+
         line = self.getHoveredLine(x, y)
         lineText = self.text(line)
-        
+
         l = len(lineText)
         offset = l - len(lineText.lstrip())
-        
+
         self.clearAllIndicators(self.linkIndicator)
 
         if self.tracebackRe.match(lineText):
-            self.fillIndicatorRange(line, offset, line, (l - 1), self.linkIndicator)
-            
+            self.fillIndicatorRange(
+                line, offset, line, (l - 1), self.linkIndicator)
+
         super(RunWidget, self).mouseMoveEvent(event)
 
     def copyText(self):
@@ -722,18 +722,18 @@ class RunWidget(BaseScintilla):
             self.contextMenu.exec_(event.globalPos())
         else:
             event.ignore()
-        
+
     def getHoveredLine(self, x, y):
         position = self.SendScintilla(
             QsciScintilla.SCI_POSITIONFROMPOINT, x, y)
         line = self.SendScintilla(QsciScintilla.SCI_LINEFROMPOSITION, position)
-        
+
         return line
-        
+
     def mouseDoubleClickEvent(self, event):
         x = event.x()
         y = event.y()
-        
+
         line = self.getHoveredLine(x, y)
         lineText = self.text(line)
 

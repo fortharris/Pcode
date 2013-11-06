@@ -4,6 +4,7 @@ from PyQt4 import QtCore, QtGui
 from PyQt4.Qsci import QsciScintilla
 from Extensions import StyleSheet
 
+
 class GeneralSettings(QtGui.QDialog):
 
     def __init__(self, useData, mainApp, projectWindowStack, parent=None):
@@ -142,13 +143,14 @@ class GeneralSettings(QtGui.QDialog):
             self.docOnHoverBox.setChecked(True)
         self.docOnHoverBox.toggled.connect(self.setDocOnHover)
         vbox.addWidget(self.docOnHoverBox)
-        
+
         # MARK OPERATIONAL LINES
-        
+
         self.markOperationalLinesBox = QtGui.QCheckBox("Mark Operation Lines")
         if self.useData.SETTINGS["MarkOperationalLines"] == "True":
             self.markOperationalLinesBox.setChecked(True)
-        self.markOperationalLinesBox.toggled.connect(self.setMarkOperationalLines)
+        self.markOperationalLinesBox.toggled.connect(
+            self.setMarkOperationalLines)
         vbox.addWidget(self.markOperationalLinesBox)
 
         vbox.addStretch(1)
@@ -230,9 +232,9 @@ class GeneralSettings(QtGui.QDialog):
         vbox.addStretch(1)
 
         # MANAGEMENT
-        
+
         mainVbox.addWidget(QtGui.QLabel("UI"))
-        
+
         self.uiBox = QtGui.QComboBox()
         self.uiBox.addItem("Custom")
         self.uiBox.addItem("Native")
@@ -250,7 +252,7 @@ class GeneralSettings(QtGui.QDialog):
         self.exportButton = QtGui.QPushButton("Export Settings")
         self.exportButton.clicked.connect(self.exportSettings)
         mainVbox.addWidget(self.exportButton)
-        
+
     def setUI(self, index):
         self.useData.SETTINGS["UI"] = self.uiBox.currentText()
         if index == 0:
@@ -299,7 +301,8 @@ class GeneralSettings(QtGui.QDialog):
             alertsWidget = self.projectWindowStack.widget(i).assistantWidget
             alertsWidget.setAssistance(1)
             if state is False:
-                editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
+                editorTabWidget = self.projectWindowStack.widget(
+                    i).editorTabWidget
                 for i in range(editorTabWidget.count()):
                     editor = editorTabWidget.getEditor(i)
                     if editor.DATA["fileType"] == "python":
@@ -439,7 +442,7 @@ class GeneralSettings(QtGui.QDialog):
             for i in range(editorTabWidget.count()):
                 editor = editorTabWidget.getEditor(i)
                 snapshot = editorTabWidget.getSnapshot(i)
-                
+
                 editor.clearMatchIndicators()
                 snapshot.clearMatchIndicators()
 
@@ -462,7 +465,7 @@ class GeneralSettings(QtGui.QDialog):
 
     def setDocOnHover(self, state):
         self.useData.SETTINGS["DocOnHover"] = str(state)
-        
+
     def setMarkOperationalLines(self, state):
         self.useData.SETTINGS["MarkOperationalLines"] = str(state)
         for i in range(self.projectWindowStack.count() - 1):

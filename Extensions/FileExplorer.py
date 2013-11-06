@@ -4,6 +4,7 @@ from PyQt4 import QtCore, QtGui
 
 from Extensions import StyleSheet
 
+
 class ManageShortcuts(QtGui.QLabel):
 
     updateShortcuts = QtCore.pyqtSignal()
@@ -22,16 +23,16 @@ class ManageShortcuts(QtGui.QLabel):
         self.FILE_EXPLORER_SHORTCUTS = FILE_EXPLORER_SHORTCUTS
 
         mainLayout = QtGui.QVBoxLayout()
-        
+
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
 
         label = QtGui.QLabel("Manage Shortcuts")
         label.setObjectName("toolWidgetNameLabel")
         hbox.addWidget(label)
-        
+
         hbox.addStretch(1)
-        
+
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
@@ -88,7 +89,6 @@ class ManageShortcuts(QtGui.QLabel):
             item.setToolTip(s)
             self.shortcutsWidget.addItem(item)
         self.updateShortcuts.emit()
-#        self.useData.fileExplorerShortcutsChanged.emit()
 
     def removeShorcut(self):
         text = self.shortcutsWidget.currentItem().text()

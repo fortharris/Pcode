@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 from zipimport import zipimporter
 import tokenize
@@ -35,6 +34,7 @@ class TokenizeThread(QtCore.QThread):
 
         self.start()
 
+
 class DocThread(QtCore.QThread):
 
     docAvailable = QtCore.pyqtSignal(str, int)
@@ -44,7 +44,7 @@ class DocThread(QtCore.QThread):
             doc = codeassist.get_doc(self.ropeProject,
                                      self.source, self.hoverOffset)
             self.docAvailable.emit(doc, self.hoverOffset)
-        except Exception as err:
+        except:
             pass
 
     def getDoc(self, ropeProject, source, hoverOffset):
@@ -101,7 +101,7 @@ class AutoCompletionThread(QtCore.QThread):
                 return cmpl
             else:
                 return []
-        except Exception as err:
+        except:
             pass
 
     def moduleCompletion(self):
@@ -268,7 +268,6 @@ class CodeEditor(BaseScintilla):
 
         self.docThreadTimer = QtCore.QTimer()
         self.docThreadTimer.setSingleShot(True)
-        self.docThreadTimer.setInterval(500)
         self.docThreadTimer.timeout.connect(self.getDoc)
 
         self.tokenizeThread = TokenizeThread()
@@ -277,12 +276,10 @@ class CodeEditor(BaseScintilla):
 
         self.tokenizeTimer = QtCore.QTimer()
         self.tokenizeTimer.setSingleShot(True)
-        self.tokenizeTimer.setInterval(1000)
         self.tokenizeTimer.timeout.connect(self.getOperationTokens)
 
         self.completionThreadTimer = QtCore.QTimer()
         self.completionThreadTimer.setSingleShot(True)
-        self.completionThreadTimer.setInterval(1000)
         self.completionThreadTimer.timeout.connect(self.startCompletion)
 
         mainLayout = QtGui.QVBoxLayout()
@@ -347,8 +344,8 @@ class CodeEditor(BaseScintilla):
         self.textChangedTimer.timeout.connect(self.redoActModifier)
 
         self.textChanged.connect(self.textChangedTimer.start)
-        self.textChanged.connect(self.tokenizeTimer.start)
-        self.textChanged.connect(self.completionThreadTimer.start)
+        self.textChanged.connect(self.startTokenizeTimer)
+        self.textChanged.connect(self.startCompletionTimer)
 
         self.linesChanged.connect(self.updateLineCount)
         self.marginClicked.connect(self.toggleBookmark)
@@ -361,8 +358,8 @@ class CodeEditor(BaseScintilla):
         # building the margin width later
         self.fontMetrics = QtGui.QFontMetrics(font)
 
-        if self.DATA["codingFormat"] is None:
-            self.setUtf8(True)
+#        if self.DATA["codingFormat"] is None:
+        self.setUtf8(True)
         self.setAutoIndent(True)
         self.setIndentationsUseTabs(False)
         self.setBackspaceUnindents(True)
@@ -449,7 +446,16 @@ class CodeEditor(BaseScintilla):
         self.lexer = self.colorScheme.styleEditor(self)
         self.setStyleSheet(StyleSheet.editorStyle)
 
-        self.setShortcuts()
+        self.setKeymap()
+        
+    def startTokenizeTimer(self):
+        self.tokenizeTimer.start(1000)
+        
+    def startDocTimer(self):
+        self.docThreadTimer.start(500)
+        
+    def startCompletionTimer(self):
+        self.completionThreadTimer.start(500)
 
     def getOperationTokens(self):
         if self.useData.SETTINGS['MarkOperationalLines'] == 'True':
@@ -490,7 +496,7 @@ class CodeEditor(BaseScintilla):
             self.hoverOffset = self.positionFromPoint(event.pos())
 
             QtGui.QToolTip.hideText()
-            self.docThreadTimer.start()
+            self.startDocTimer()
 
         # resize view if middle mouse button is held down
         if self.middleMousePressed:
@@ -657,9 +663,19 @@ class CodeEditor(BaseScintilla):
         if id == 1:
             file = open(os.path.join(self.useData.appPathDict[
                         "snippetsdir"], text), 'r')
-            cmpl = file.read()
+            cmpl = file.readlines()
             file.close()
-            self.insert(cmpl)
+            line, col = self.getCursorPosition()
+#            if self.text(line).strip() == '':
+#                self.moveToEndOfDisplayLine()
+#                self.insertNewline()
+            padding = ' ' * col
+            paddedText = ''
+            for i in range(len(cmpl)):
+                textLine = padding + cmpl[i]
+                paddedText += textLine
+            self.setCursorPosition(line, 0)
+            self.insert(paddedText)
         elif id == 2:
             # TODO: Insert must check for brackets after inserting functions.
             x = text.split()
@@ -870,8 +886,8 @@ class CodeEditor(BaseScintilla):
                 self.removeSelectedText()
         self.endUndoAction()
 
-    def setShortcuts(self):
-        self.updateShortcuts(self.useData)
+    def setKeymap(self):
+        self.updateKeymap(self.useData)
 
         shortcuts = self.useData.CUSTOM_SHORTCUTS
 

@@ -1,4 +1,3 @@
-
 import re
 from PyQt4 import QtGui, QtCore
 from PyQt4.Qsci import QsciScintilla
@@ -32,37 +31,39 @@ class FindOccurenceThread(QtCore.QThread):
 
         self.start()
 
+
 class BaseScintilla(QsciScintilla):
 
     def __init__(self, parent=None):
         QsciScintilla.__init__(self, parent)
-        
-        
+
     def enableMarkOccurrence(self, useData):
         self.useData = useData
-        
+
         self.matchIndicator = self.indicatorDefine(QsciScintilla.INDIC_BOX, 9)
         self.setIndicatorForegroundColor(
             QtGui.QColor("#FFCC00"), self.matchIndicator)
         self.setIndicatorDrawUnder(True, self.matchIndicator)
-        
+
         self.findOccurenceThread = FindOccurenceThread()
         self.findOccurenceThread.markOccurrence.connect(self.markOccurence)
-        
+
         self.occurrencesTimer = QtCore.QTimer()
         self.occurrencesTimer.setSingleShot(True)
-        self.occurrencesTimer.setInterval(1000)
         self.occurrencesTimer.timeout.connect(self.findOccurrences)
-        
-        self.cursorPositionChanged.connect(self.occurrencesTimer.start)
 
-    def updateShortcuts(self, useData):
+        self.cursorPositionChanged.connect(self.startOccurrencesTimer)
+        
+    def startOccurrencesTimer(self):
+        self.occurrencesTimer.start(500)
+
+    def updateKeymap(self, useData):
         standardCommands = self.standardCommands()
 
         for i, v in useData.DEFAULT_SHORTCUTS["Editor"].items():
             command = standardCommands.find(v[1])
             command.setKey(useData.CUSTOM_SHORTCUTS["Editor"][i][1])
-            
+
     def findOccurrences(self):
         self.clearAllIndicators(self.matchIndicator)
         if self.useData.SETTINGS['MarkSearchOccurrence'] == 'True':
@@ -691,11 +692,11 @@ class BaseScintilla(QsciScintilla):
             return self.text()
         self.selectText(positionFrom, positionTo)
         text = self.selectedText()
-        
+
         # Clear current selection
         line, index = self.getCursorPosition()
         self.setSelection(line, index, line, index)
-        
+
         return text
 
     def selectText(self, position_from, position_to):

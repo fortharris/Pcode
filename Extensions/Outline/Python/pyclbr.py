@@ -14,6 +14,8 @@ spacesFirstWordRe = re.compile(r"^(\s*)(\w*)")
 getSpacesFirstWord = lambda s, c=spacesFirstWordRe: c.match(s).groups()
 
 # each Python class is represented by an instance of this class
+
+
 class Class:
 
     '''Class to represent a Python class.'''

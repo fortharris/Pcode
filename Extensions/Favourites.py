@@ -3,6 +3,7 @@ from PyQt4 import QtCore, QtGui
 
 from Extensions import StyleSheet
 
+
 class Favourites(QtGui.QLabel):
 
     showMe = QtCore.pyqtSignal()
@@ -23,21 +24,22 @@ class Favourites(QtGui.QLabel):
         self.favouritesList = favouritesList
 
         self.manageFavAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "settings")),
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "settings")),
                           "Manage Favourites", self, statusTip="Manage Favourites",
                           triggered=self.showMe.emit)
 
         mainLayout = QtGui.QVBoxLayout()
-        
+
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
 
         label = QtGui.QLabel("Manage Favourites")
         label.setObjectName("toolWidgetNameLabel")
         hbox.addWidget(label)
-        
+
         hbox.addStretch(1)
-        
+
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(

@@ -5,6 +5,7 @@ from Extensions import Global
 from Extensions.PathLineEdit import PathLineEdit
 from Extensions import StyleSheet
 
+
 class ExternalLauncher(QtGui.QLabel):
 
     showMe = QtCore.pyqtSignal()
@@ -23,23 +24,23 @@ class ExternalLauncher(QtGui.QLabel):
         self.setObjectName("containerLabel")
 
         mainLayout = QtGui.QVBoxLayout()
-        
+
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
 
         label = QtGui.QLabel("Manage Launchers")
         label.setObjectName("toolWidgetNameLabel")
         hbox.addWidget(label)
-        
+
         hbox.addStretch(1)
-        
+
         self.hideButton = QtGui.QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
             QtGui.QIcon(os.path.join("Resources", "images", "cross_")))
         self.hideButton.clicked.connect(self.hide)
         hbox.addWidget(self.hideButton)
-        
+
         self.listWidget = QtGui.QListWidget()
         mainLayout.addWidget(self.listWidget)
 
@@ -68,9 +69,10 @@ class ExternalLauncher(QtGui.QLabel):
         self.setLayout(mainLayout)
 
         self.manageLauncherAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "settings")),
-                          "Manage Launchers", self, statusTip="Manage Launchers",
-                          triggered=self.showMe.emit)
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "settings")),
+                "Manage Launchers", self, statusTip="Manage Launchers",
+                triggered=self.showMe.emit)
 
         self.launcherMenu = QtGui.QMenu("Launch External...")
         self.loadExternalLaunchers()

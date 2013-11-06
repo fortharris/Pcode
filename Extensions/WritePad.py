@@ -18,7 +18,6 @@ class WritePad(QtGui.QMainWindow):
 
         self.noteSaveTimer = QtCore.QTimer()
         self.noteSaveTimer.setSingleShot(True)
-        self.noteSaveTimer.setInterval(1000)
         self.noteSaveTimer.timeout.connect(self.saveNotes)
 
         self.writePad = QtGui.QPlainTextEdit()
@@ -35,7 +34,10 @@ class WritePad(QtGui.QMainWindow):
             file = open(path, "w")
             file.close()
 
-        self.writePad.textChanged.connect(self.noteSaveTimer.start)
+        self.writePad.textChanged.connect(self.startSaveTimer)
+        
+    def startSaveTimer(self):
+        self.noteSaveTimer.start(1000)
 
     def saveNotes(self):
         file = open(self.path, "w")

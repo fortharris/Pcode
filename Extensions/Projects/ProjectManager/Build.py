@@ -205,6 +205,7 @@ class Cx_Freeze(Freezer):
                          silent=True,
                          icon=icon,
                          metadata=metadata,
+                         includeMSVCR=True,
                          targetDir=projectPathDict['builddir'],
                          initScript=initScript,
                          path=path,

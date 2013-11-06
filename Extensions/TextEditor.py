@@ -20,7 +20,7 @@ class TextEditor(BaseScintilla):
         self.DATA = DATA
         self.colorScheme = colorScheme
         self.editorTabWidget = editorTabWidget
-        
+
         self.setObjectName("editor")
         self.enableMarkOccurrence(useData)
 
@@ -150,7 +150,7 @@ class TextEditor(BaseScintilla):
         self.lexer = self.colorScheme.styleEditor(self)
         self.setStyleSheet(StyleSheet.editorStyle)
 
-        self.setShortcuts()
+        self.setKeymap()
 
     def updateLexer(self, lexer):
         self.lexer = lexer
@@ -323,8 +323,8 @@ class TextEditor(BaseScintilla):
             self.DATA["bookmarkList"] = []
             self.markerDeleteAll(8)
 
-    def setShortcuts(self):
-        self.updateShortcuts(self.useData)
+    def setKeymap(self):
+        self.updateKeymap(self.useData)
 
         shortcuts = self.useData.CUSTOM_SHORTCUTS
 

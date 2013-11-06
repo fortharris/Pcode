@@ -41,17 +41,19 @@ class SearchWidget(QtGui.QLabel):
         self.findDownButton.setAutoRaise(True)
         self.findDownButton.setIconSize(QtCore.QSize(20, 20))
         self.findDownButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "findDown")),
-                          "Find Next", self, triggered=self.findNext))
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "findDown")),
+                "Find Next", self, triggered=self.findNext))
         hbox.addWidget(self.findDownButton)
 
         self.findUpButton = QtGui.QToolButton()
         self.findUpButton.setAutoRaise(True)
         self.findUpButton.setIconSize(QtCore.QSize(20, 20))
         self.findUpButton.setDefaultAction(
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "findUp")),
-                          "Find Previous", self,
-                          triggered=self.findPrevious))
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "findUp")),
+                "Find Previous", self,
+                triggered=self.findPrevious))
         hbox.addWidget(self.findUpButton)
 
         self.matchCaseBox = QtGui.QCheckBox("MC")

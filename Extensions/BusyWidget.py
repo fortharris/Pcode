@@ -22,7 +22,7 @@ class BusyWidget(QtGui.QDialog):
 
         mainLabel = QtGui.QLabel()
         mainLabel.setStyleSheet(
-                            """background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+            """background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                                  stop: 0 #343434,
                                                  stop: 0.7 #343434);
 
@@ -37,14 +37,14 @@ class BusyWidget(QtGui.QDialog):
         self.captionLabel = QtGui.QLabel()
         self.captionLabel.setAlignment(QtCore.Qt.AlignHCenter)
         self.captionLabel.setStyleSheet(
-                            "color: white; background: none; border: none;")
+            "color: white; background: none; border: none;")
         vbox.addWidget(self.captionLabel)
         vbox.addStretch(1)
 
         self.progressBar = QtGui.QProgressBar()
         self.progressBar.setMaximumHeight(15)
         self.progressBar.setStyleSheet(
-                    """
+            """
                           QProgressBar {
                              border: 1px solid #707070;
                              text-align: center;
@@ -63,7 +63,7 @@ class BusyWidget(QtGui.QDialog):
                          }
 
                     """
-                )
+            )
         self.progressBar.setRange(0, 0)
         vbox.addWidget(self.progressBar)
 
