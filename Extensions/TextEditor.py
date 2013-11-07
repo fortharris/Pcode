@@ -58,8 +58,6 @@ class TextEditor(BaseScintilla):
 
         self.createContextMenu()
 
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-
         # setup
         # define the font to use
         self.font = Global.getDefaultFont()
@@ -73,8 +71,7 @@ class TextEditor(BaseScintilla):
         # conventionnaly, margin 0 is for line numbers
         self.setMarginWidth(0, self.fontMetrics.width("0000") + 5)
 
-        if self.encoding is None:
-            self.setUtf8(True)
+        self.setUtf8(True)
         self.setAutoIndent(True)
         self.setIndentationsUseTabs(False)
         self.setBackspaceUnindents(True)

@@ -119,7 +119,7 @@ class AutoCompletionThread(QtCore.QThread):
 
         if wordList[0] == 'import':
             if len(wordList) == 2 and wordList[1] == '':
-                return self.getRootModules()
+                return self.rootModules()
 
             if ',' == wordList[-1][-1]:
                 return [' ']
@@ -130,7 +130,7 @@ class AutoCompletionThread(QtCore.QThread):
 
         if len(wordList) < 3 and (wordList[0] == 'from'):
             if len(wordList) == 1:
-                return self.getRootModules()
+                return self.rootModules()
 
             module = wordList[1].split('.')
             return self.dotCompletion(module)
@@ -153,7 +153,7 @@ class AutoCompletionThread(QtCore.QThread):
                 self.completionType = 2
                 return completions
 
-    def moduleList(self, path):
+    def dirModuleList(self, path):
         """
         Return the list containing the names of the modules available in the given
         folder.
@@ -180,13 +180,13 @@ class AutoCompletionThread(QtCore.QThread):
 
         return folderList_
 
-    def getRootModules(self):
+    def rootModules(self):
         """
         Returns a list containing the names of all the modules available in the
         folders of the pythonpath.
         """
         modules = []
-        modules += self.moduleList(self.sourcedir)
+        modules += self.dirModuleList(self.sourcedir)
 
         modules += sys.builtin_module_names
 
@@ -220,7 +220,7 @@ class AutoCompletionThread(QtCore.QThread):
     def dotCompletion(self, mod):
         if len(mod) < 2:
             return sorted(list(set(filter(lambda x: x.startswith(mod[0]),
-                         self.getRootModules()))))
+                         self.rootModules()))))
 
         completionList = self.tryImport('.'.join(mod[:-1]), True)
         completionList = list(set(filter(lambda x: x.startswith(mod[-1]),
@@ -358,7 +358,6 @@ class CodeEditor(BaseScintilla):
         # building the margin width later
         self.fontMetrics = QtGui.QFontMetrics(font)
 
-#        if self.DATA["codingFormat"] is None:
         self.setUtf8(True)
         self.setAutoIndent(True)
         self.setIndentationsUseTabs(False)
