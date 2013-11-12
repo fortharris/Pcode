@@ -2,7 +2,10 @@ import os
 import sys
 import re
 import codecs
-from PyQt4 import QtCore, QtGui, QtXml
+import traceback
+import logging
+
+from PyQt4 import QtCore, QtXml
 
 from PyQt4.Qsci import QsciScintilla
 
@@ -75,13 +78,19 @@ class PythonExecutables(QtCore.QObject):
         super().__init__(parent)
 
     # Find all python executables
-    # todo: use new version that will probably be part of pyzolib
 
     def findPythonExecutables(self):
-        if sys.platform.startswith('win'):
-            return self.findPythonExecutables_win()
-        else:
-            return self.findPythonExecutables_posix()
+        try:
+            if sys.platform.startswith('win'):
+                return self.findPythonExecutables_win()
+            else:
+                return self.findPythonExecutables_posix()
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+                         
+            return []
 
     def findPythonExecutables_win(self):
         import winreg
@@ -91,14 +100,18 @@ class PythonExecutables(QtCore.QObject):
         try:
             key = winreg.OpenKey(
                 base, 'SOFTWARE\\Python\\PythonCore', 0, winreg.KEY_READ)
-        except Exception:
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+                         
             return []
 
         # Get info about subkeys
         nsub, nval, modified = winreg.QueryInfoKey(key)
 
         # Query Python versions from registry
-        versions = set()
+        versionList = []
         for i in range(nsub):
             try:
                 # Get name and subkey
@@ -107,35 +120,36 @@ class PythonExecutables(QtCore.QObject):
                     key, name + '\\InstallPath', 0, winreg.KEY_READ)
                 # Get install location and store
                 location = winreg.QueryValue(subkey, '')
-                versions.add(location)
+                versionList.append(os.path.normpath(location))
                 # Close
                 winreg.CloseKey(subkey)
-            except Exception:
-                pass
+            except:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                             exc_traceback)))
 
         # Close keys
         winreg.CloseKey(key)
         winreg.CloseKey(base)
 
         # Query Python versions from file system
-        for rootname in ['c:\\', 'C:\\Program Files\\', 'C:\\Program Files (x86)\\']:
+        for rootname in ['C:/', 'C:/Program Files', 'C:/Program Files (x86)']:
             if not os.path.isdir(rootname):
                 continue
-            for dname in os.listdir(rootname):
-                if dname.lower().startswith('python'):
-                    versions.add(os.path.join(rootname, dname))
-
-        # Normalize all paths, and remove trailing backslashes
-        versions = set([os.path.normcase(v).strip('\\') for v in versions])
+            for dir_item in os.listdir(rootname):
+                if dir_item.lower().startswith('python'):
+                    path = os.path.normpath(os.path.join(rootname, dir_item))
+                    if path not in versionList:
+                        versionList.append(path)
 
         # Append "python.exe" and check if that file exists
         versions3 = []
-        for dname in sorted(versions, key=lambda x: x[-2:]):
-            exename = os.path.join(dname, 'python.exe')
-            if os.path.isfile(exename):
-                versions3.append(exename)
+    
+        for path in versionList:
+            exe_name = os.path.join(path, 'python.exe')
+            if os.path.isfile(exe_name):
+                versions3.append(exe_name)
 
-        # Done
         return versions3
 
     def findPythonExecutables_posix(self):
@@ -144,7 +158,7 @@ class PythonExecutables(QtCore.QObject):
             # Get files
             try:
                 files = os.listdir(searchpath)
-            except Exception:
+            except:
                 continue
 
             # Search for python executables

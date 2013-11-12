@@ -1,4 +1,5 @@
 import os
+import io
 import sys
 from zipimport import zipimporter
 import tokenize
@@ -56,39 +57,19 @@ class DocThread(QtCore.QThread):
 
 
 class AutoCompletionThread(QtCore.QThread):
-    # Most portions of this code taken from spyder ide
 
-    #*****************************************************************************
-    #
-    #  The functions in this class were taken from the file ipy_completers,
-    #  which belongs to the IPython project. They were added here because a)
-    #  IPython is not a runtime dependency of Spyder, and b) we want to perfom
-    #  module completion not only on an ipython shell, but also on a regular
-    #  python interpreter and a source code editor.
-    #  Besides, we needed to modify moduleCompletion to make it work as a regular
-    #  python function, and not as a mix of python and readline completion, which
-    #  is how we think it works on IPython.
-    #
-    #  Distributed under the terms of the BSD License.
-    #
-    #*************************************************************************
-
-    """
-    Returns a list containing the completion possibilities for an import line.
-    The line looks like this :
-    'import xml.d'
-    'from xml.dom import'
-    """
-
-    completions = QtCore.pyqtSignal(list)
+    completionsAvailable = QtCore.pyqtSignal(list)
 
     def run(self):
-        result = self.moduleCompletion()
+        result = self.load_completions()
         if result is None:
             return
-        self.completions.emit(result)
+        self.completionsAvailable.emit(result)
 
-    def ropeCompletions(self):
+    def rope_completions(self):
+        """
+        Returns list of completions based on the current project contents
+        """
         try:
             proposals = codeassist.code_assist(self.ropeProject,
                                                self.source, self.offset)
@@ -104,40 +85,30 @@ class AutoCompletionThread(QtCore.QThread):
         except:
             pass
 
-    def moduleCompletion(self):
+    def load_completions(self):
         self.completionType = 3
         wordList = self.lineText.split(' ')
+        
+        if len(wordList) == 1 and wordList[0] == 'from':
+            return []
 
         if len(wordList) == 3 and wordList[0] == 'from':
+            # from x i, or from x ''
             if wordList[2].startswith('i') or wordList[2] == '':
                 return ['import ']
             else:
                 return []
 
-        if len(wordList) == 1 and wordList[0] == 'from':
-            return []
-
-        if wordList[0] == 'import':
-            if len(wordList) == 2 and wordList[1] == '':
-                return self.rootModules()
-
-            if ',' == wordList[-1][-1]:
-                return [' ']
-
-            module = wordList[-1].split('.')
-
-            return self.dotCompletion(module)
-
         if len(wordList) < 3 and (wordList[0] == 'from'):
             if len(wordList) == 1:
-                return self.rootModules()
+                return self.dirModules()
 
-            module = wordList[1].split('.')
-            return self.dotCompletion(module)
+            moduleList = wordList[1].split('.')
+            return self.dotCompletion(moduleList)
 
         if len(wordList) >= 3 and wordList[0] == 'from':
             module = wordList[1]
-            completionList = self.tryImport(module)
+            completionList = self.doImport(module)
             if wordList[2] == 'import' and wordList[3] != '':
                 if '(' in wordList[-1]:
                     wordList = wordList[:-2] + wordList[-1].split('(')
@@ -146,84 +117,113 @@ class AutoCompletionThread(QtCore.QThread):
                 return list(set(filter(lambda x: x.startswith(wordList[-1]), completionList)))
             else:
                 return completionList
+                
+        if wordList[0] == 'import':
+            if len(wordList) == 2 and wordList[1] == '':
+                return self.dirModules()
+
+            if ',' == wordList[-1][-1]:
+                return [' ']
+
+            moduleList = wordList[-1].split('.')
+
+            return self.dotCompletion(moduleList)
 
         if self.column != 0:
             if len(self.lineText.strip()) >= 2:  # Autocompetion threshold
-                completions = self.ropeCompletions()
+                completions = self.rope_completions()
                 self.completionType = 2
                 return completions
 
-    def dirModuleList(self, path):
+    def dirModules(self, path=None):
         """
-        Return the list containing the names of the modules available in the given
-        folder.
+        Return list of modules in a directory
         """
+        if path is None:
+            # return list of modules in the main project directory
+            
+            modules = []
+            modules += self.dirModules(self.sourcedir)
 
-        if os.path.isdir(path):
-            folderList = os.listdir(path)
-        elif path.endswith('.egg'):
-            try:
-                folderList = [f for f in zipimporter(path)._files]
-            except:
-                folderList = []
+            modules += sys.builtin_module_names
+
+            modules = list(set(modules))
+            if '__init__' in modules:
+                modules.remove('__init__')
+            modules = list(set(modules))
+
+            return sorted(modules)
         else:
-            folderList = []
-        folderList_ = []
-        for p in folderList:
-            if os.path.exists(os.path.join(path, p, '__init__.py')) \
-                or p[-3:] in ('.py', '.so') \
-                    or p[-4:] in ('.pyc', '.pyo', '.pyd'):
-                if os.path.isdir(os.path.join(path, p)):
-                    folderList_.append(p + os.path.sep)
-                else:
-                    folderList_.append(os.path.splitext(p)[0])
+            if os.path.isdir(path):
+                folderList = os.listdir(path)
+            elif path.endswith('.egg'):
+                try:
+                    folderList = [f for f in zipimporter(path)._files]
+                except:
+                    folderList = []
+            else:
+                folderList = []
+            moduleList = []
+            for p in folderList:
+                if os.path.exists(os.path.join(path, p, '__init__.py')) \
+                    or p[-3:] in ('.py', '.so') \
+                        or p[-4:] in ('.pyc', '.pyo', '.pyd'):
+                    if os.path.isdir(os.path.join(path, p)):
+                        moduleList.append(p + os.path.sep)
+                    else:
+                        moduleList.append(os.path.splitext(p)[0])
 
-        return folderList_
+            return moduleList
 
-    def rootModules(self):
+    def doImport(self, relativePath):
         """
-        Returns a list containing the names of all the modules available in the
-        folders of the pythonpath.
+        Return list of modules if itemRelativePath is a package
+        and list of classes if itemRelativePath is a module
+        
+        Named so because 'import' is a keyword
         """
-        modules = []
-        modules += self.dirModuleList(self.sourcedir)
-
-        modules += sys.builtin_module_names
-
-        modules = list(set(modules))
-        if '__init__' in modules:
-            modules.remove('__init__')
-        modules = list(set(modules))
-
-        return sorted(modules)
-
-    def tryImport(self, module, only_modules=False):
         try:
-            modulesDir = os.path.join(
-                self.sourcedir, module.replace('.', '//'))
-            m = os.listdir(modulesDir)
+            absolutePath = os.path.join(
+                self.sourcedir, relativePath.replace('.', '//'))
+            absolutePath = os.path.normpath(absolutePath)
+        
             completionList = []
-            for item in m:
-                path = os.path.join(modulesDir, item)
-                if os.path.isfile(path):
-                    completionList.append(os.path.splitext(item)[0])
-                else:
-                    if '__init__.py' in os.listdir(path):
-                        completionList.append(item + os.path.sep)
-            if '__init__' in completionList:
+            if os.path.isdir(absolutePath):
+                contents = os.listdir(absolutePath)
+                for item in contents:
+                    path = os.path.join(absolutePath, item)
+                    if os.path.isfile(path):
+                        completionList.append(os.path.splitext(item)[0])
+                    else:
+                        if '__init__.py' in os.listdir(path):
+                            completionList.append(item + os.path.sep)
                 completionList.remove('__init__')
+            else:
+                # get classes from module
+                absolutePath = absolutePath + '.py'
+
+                file = open(absolutePath, "r")
+                f = io.StringIO(file.read())
+                file.close()
+
+                g = tokenize.generate_tokens(f.readline)
+                for tokentype, token, start, _end, _line in g:
+                    if token == 'class':
+                        tokentype, class_name, start = next(g)[0:3]
+                        completionList.append(class_name)
         except:
             return []
 
         return completionList
 
-    def dotCompletion(self, mod):
-        if len(mod) < 2:
-            return sorted(list(set(filter(lambda x: x.startswith(mod[0]),
-                         self.rootModules()))))
+    def dotCompletion(self, moduleList):
+        # return completions from sub packages
+        if len(moduleList) < 2:
+            return sorted(list(set(filter(lambda x: x.startswith(moduleList[0]),
+                         self.dirModules()))))
 
-        completionList = self.tryImport('.'.join(mod[:-1]), True)
-        completionList = list(set(filter(lambda x: x.startswith(mod[-1]),
+        completionList = self.doImport('.'.join(moduleList[:-1]))
+        completionList = list(set(filter(lambda x: x.startswith(moduleList[-1]),
                              completionList)))
 
         return sorted(completionList)
@@ -260,7 +260,7 @@ class CodeEditor(BaseScintilla):
         self.mousePosition = QtCore.QPointF()
 
         self.autoCompletionThread = AutoCompletionThread()
-        self.autoCompletionThread.completions.connect(self.showCompletions)
+        self.autoCompletionThread.completionsAvailable.connect(self.showCompletions)
 
         self.docThread = DocThread()
         self.docThread.docAvailable.connect(
@@ -328,7 +328,7 @@ class CodeEditor(BaseScintilla):
             QtGui.QColor("#FFDB4A"), self.searchIndicator)
         self.setIndicatorDrawUnder(True, self.searchIndicator)
 
-        self.userListActivated.connect(self.insertTextFromList)
+        self.userListActivated.connect(self.insertText)
 
         self.copyAvailableTimer = QtCore.QTimer()
         self.copyAvailableTimer.setSingleShot(True)
@@ -379,7 +379,7 @@ class CodeEditor(BaseScintilla):
 
         # Braces matching
         # TODO: Causes flicker when selecting text. I suspect it has
-        # do with my graphics card since it wasnt always this way
+        # the layout and widgets placed on top of it
         if self.useData.SETTINGS["MatchBraces"] == "True":
             self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
 
@@ -652,7 +652,7 @@ class CodeEditor(BaseScintilla):
         else:
             self.cancelList()
 
-    def insertTextFromList(self, id, text):
+    def insertText(self, id, text):
         word = self.get_current_word()
         if not word:
             pass
@@ -665,16 +665,16 @@ class CodeEditor(BaseScintilla):
             cmpl = file.readlines()
             file.close()
             line, col = self.getCursorPosition()
-#            if self.text(line).strip() == '':
-#                self.moveToEndOfDisplayLine()
-#                self.insertNewline()
-            padding = ' ' * col
-            paddedText = ''
-            for i in range(len(cmpl)):
-                textLine = padding + cmpl[i]
-                paddedText += textLine
-            self.setCursorPosition(line, 0)
-            self.insert(paddedText)
+            if self.text(line).strip() == '':
+                padding = ' ' * col
+                paddedText = ''
+                for i in range(len(cmpl)):
+                    textLine = padding + cmpl[i]
+                    paddedText += textLine
+                self.setCursorPosition(line, 0)
+                self.insert(paddedText)
+            else:
+                self.insert(cmpl[0])
         elif id == 2:
             # TODO: Insert must check for brackets after inserting functions.
             x = text.split()

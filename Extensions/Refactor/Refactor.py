@@ -1,4 +1,8 @@
+import sys
 import os
+import traceback
+import logging
+
 from PyQt4 import QtGui, QtCore
 
 # rope
@@ -94,6 +98,10 @@ class FindUsageThread(QtCore.QThread):
                     else:
                         self.itemsDict[path] = [line]
         except Exception as err:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+
             self.error = str(err)
 
     def find(self, path, ropeProject, offset):
@@ -120,6 +128,10 @@ class RenameThread(QtCore.QThread):
             for i in changed:
                 self.changedFiles.append(i.real_path)
         except Exception as err:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+                             
             self.error = str(err)
 
     def rename(self, new_name, path, ropeProject, offset):
@@ -146,6 +158,10 @@ class InlineThread(QtCore.QThread):
             for i in changed:
                 self.changedFiles.append(i.real_path)
         except Exception as err:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+            
             self.error = str(err)
 
     def inline(self, project, resource, offset):
@@ -171,6 +187,10 @@ class LocalToFieldThread(QtCore.QThread):
             for i in changed:
                 self.changedFiles.append(i.real_path)
         except Exception as err:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+
             self.error = str(err)
 
     def convert(self, project, resource, offset):
@@ -191,6 +211,10 @@ class ModuleToPackageThread(QtCore.QThread):
             changes = convert.get_changes()
             self.ropeProject.do(changes)
         except Exception as err:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+
             self.error = str(err)
 
     def convert(self, path, ropeProject):
