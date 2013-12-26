@@ -164,6 +164,7 @@ class BuildThread(QtCore.QThread):
                             fullPath = os.path.join(dirPath, lineText)
                             if os.path.exists(fullPath):
                                 pathList.append(fullPath)
+                                
         return pathList
 
     def build(self, profile, projectPathDict, projectSettings, useData):

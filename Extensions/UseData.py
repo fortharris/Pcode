@@ -6,13 +6,12 @@ import traceback
 import logging
 
 from PyQt4 import QtCore, QtXml
-
 from PyQt4.Qsci import QsciScintilla
 
 from Extensions.Workspace import WorkSpace
 
 
-def determineEncoding(bb):
+def textEncoding(bb):
     """ Get the encoding used to encode a file.
     Accepts the bytes of the file. Returns the codec name. If the
     codec could not be determined, uses UTF-8.
@@ -57,7 +56,7 @@ def determineEncoding(bb):
     return encoding
 
 
-def determineLineEnding(text):
+def lineEnding(text):
     c_win = text.count("\r\n")
     c_mac = text.count("\r") - c_win
     c_lin = text.count("\n") - c_win
@@ -72,27 +71,28 @@ def determineLineEnding(text):
     return mode
 
 
-class PythonExecutables(QtCore.QObject):
+class FindInstalledPython(QtCore.QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
     # Find all python executables
 
-    def findPythonExecutables(self):
+    def python_executables(self):
         try:
             if sys.platform.startswith('win'):
-                return self.findPythonExecutables_win()
+                return self.windows()
             else:
-                return self.findPythonExecutables_posix()
+                return self.posix()
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
-                         
+
             return []
 
-    def findPythonExecutables_win(self):
+    def windows(self):
+
         import winreg
 
         # Open base key
@@ -104,7 +104,7 @@ class PythonExecutables(QtCore.QObject):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
-                         
+
             return []
 
         # Get info about subkeys
@@ -125,7 +125,8 @@ class PythonExecutables(QtCore.QObject):
                 winreg.CloseKey(subkey)
             except:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                logging.error(
+                    repr(traceback.format_exception(exc_type, exc_value,
                              exc_traceback)))
 
         # Close keys
@@ -144,7 +145,7 @@ class PythonExecutables(QtCore.QObject):
 
         # Append "python.exe" and check if that file exists
         versions3 = []
-    
+
         for path in versionList:
             exe_name = os.path.join(path, 'python.exe')
             if os.path.isfile(exe_name):
@@ -152,7 +153,7 @@ class PythonExecutables(QtCore.QObject):
 
         return versions3
 
-    def findPythonExecutables_posix(self):
+    def posix(self):
         found = []
         for searchpath in ['/usr/bin', '/usr/local/bin', '/opt/local/bin']:
             # Get files
@@ -318,7 +319,7 @@ class UseData(QtCore.QObject):
             }
 
         self.CUSTOM_SHORTCUTS = {'Ide': {}, 'Editor': {}}
-        
+
         # load configuration from file
         tempList = []
         file = open("settings.ini", "r")
@@ -391,7 +392,7 @@ class UseData(QtCore.QObject):
 
         self.loadKeymap()
         self.loadModulesForCompletion()
-        
+
     def saveModulesForCompletion(self):
         dom_document = QtXml.QDomDocument("modules")
 
@@ -402,19 +403,19 @@ class UseData(QtCore.QObject):
             tag = dom_document.createElement(i)
             modules.appendChild(tag)
             tag.setAttribute("use", str(v[1]))
-            
+
             for subModule in v[0]:
                 item = dom_document.createElement("item")
                 tag.appendChild(item)
-                
+
                 t = dom_document.createTextNode(subModule)
                 item.appendChild(t)
-                
+
         file = open(self.appPathDict["modules"], "w")
         file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
         file.write(dom_document.toString())
         file.close()
-        
+
     def loadModulesForCompletion(self):
         dom_document = QtXml.QDomDocument()
         file = open(self.appPathDict["modules"], "r")
@@ -428,15 +429,15 @@ class UseData(QtCore.QObject):
         while node.isNull() is False:
             property = node.toElement()
             sub_node = property.firstChild()
-            
+
             moduleName = node.nodeName()
             use = property.attribute('use')
-            
+
             itemList = []
             while sub_node.isNull() is False:
                 sub_prop = sub_node.toElement()
                 itemList.append(sub_prop.text())
-                
+
                 sub_node = sub_node.nextSibling()
             self.libraryDict[moduleName] = [itemList, use]
             node = node.nextSibling()
@@ -538,17 +539,18 @@ class UseData(QtCore.QObject):
         file = open(fileName, 'rb')
         bb = file.read()
         file.close()
-        encoding = determineEncoding(bb)
+        encoding = textEncoding(bb)
 
         file = open(fileName, 'r')
         text = file.read()
         file.close()
 
-        lineEnding = determineLineEnding(text)
+        ending = lineEnding(text)
 
-        return text, encoding, lineEnding
+        return text, encoding, ending
 
     def getPythonExecutables(self):
-        pythonExecutables = PythonExecutables()
-        interpreters = pythonExecutables.findPythonExecutables()
+        pythonExecutables = FindInstalledPython()
+        interpreters = pythonExecutables.python_executables()
+
         return interpreters

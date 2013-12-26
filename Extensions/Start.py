@@ -34,6 +34,10 @@ class Start(QtGui.QLabel):
                                  border: none;
                             }
 
+                            QListView::item {
+                                 min-height: 20px;
+                            }
+
                             QListView::item:hover {
                                  border: none;
                                  background: #E3E3E3;

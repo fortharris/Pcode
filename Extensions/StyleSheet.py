@@ -380,7 +380,7 @@ globalStyle = """
         QTreeView#sidebarItem {
              border: none;
              show-decoration-selected: 1; /* make the selection span the entire width of the view */
-             background: rgba(0, 0, 0, 10);
+             background: #E6E6E6;
         }
 
         QTreeView::item:selected:!active {
@@ -422,7 +422,7 @@ globalStyle = """
             padding-right: 1px;
             border-left-width: 1px;
             background: #f1f1f1;
-            width: 11px;
+            width: 12px;
         }
 
         QScrollBar:horizontal{
@@ -440,8 +440,7 @@ globalStyle = """
             margin-bottom: 15px;
             background: #B2B8BE;
             border-radius: 0px;
-            border: none;
-            border-bottom: 2px solid #6FBDFF;
+            border: 1px solid #FFFFFF;
             min-height: 30px;
         }
 

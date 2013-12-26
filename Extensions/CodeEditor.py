@@ -48,7 +48,7 @@ class DocThread(QtCore.QThread):
         except:
             pass
 
-    def getDoc(self, ropeProject, source, hoverOffset):
+    def doc(self, ropeProject, source, hoverOffset):
         self.ropeProject = ropeProject
         self.source = source
         self.hoverOffset = hoverOffset
@@ -61,10 +61,10 @@ class AutoCompletionThread(QtCore.QThread):
     completionsAvailable = QtCore.pyqtSignal(list)
 
     def run(self):
-        result = self.load_completions()
-        if result is None:
+        completions = self.completions()
+        if completions is None:
             return
-        self.completionsAvailable.emit(result)
+        self.completionsAvailable.emit(completions)
 
     def rope_completions(self):
         """
@@ -75,17 +75,17 @@ class AutoCompletionThread(QtCore.QThread):
                                                self.source, self.offset)
             proposals = codeassist.sorted_proposals(proposals)
             if len(proposals) > 0:
-                cmpl = []
+                completions = []
                 for i in proposals:
-                    cmpl.append(str(i))
+                    completions.append(str(i))
 
-                return cmpl
+                return completions
             else:
                 return []
         except:
             pass
 
-    def load_completions(self):
+    def completions(self):
         self.completionType = 3
         wordList = self.lineText.split(' ')
         
@@ -100,37 +100,41 @@ class AutoCompletionThread(QtCore.QThread):
                 return []
 
         if len(wordList) < 3 and (wordList[0] == 'from'):
+            # from x 
             if len(wordList) == 1:
+                # from 
                 return self.dirModules()
 
-            moduleList = wordList[1].split('.')
-            return self.dotCompletion(moduleList)
+            return self.pkg_completions(wordList[1])
 
         if len(wordList) >= 3 and wordList[0] == 'from':
-            module = wordList[1]
-            completionList = self.doImport(module)
-            if wordList[2] == 'import' and wordList[3] != '':
-                if '(' in wordList[-1]:
-                    wordList = wordList[:-2] + wordList[-1].split('(')
-                if ',' in wordList[-1]:
-                    wordList = wordList[:-2] + wordList[-1].split(',')
-                return list(set(filter(lambda x: x.startswith(wordList[-1]), completionList)))
-            else:
-                return completionList
+            absolutePath = os.path.join(
+                self.sourcedir, wordList[1].replace('.', '//'))
+            absolutePath = os.path.normpath(absolutePath)
+            
+            if wordList[2] == 'import':
+                if os.path.isdir(absolutePath):
+                    return self.dirModules(absolutePath)
+                else:
+                    # from x import y
+                    completionList = self.module_classes(absolutePath)
+                    if '(' in wordList[-1]:
+                        wordList = wordList[:-2] + wordList[-1].split('(')
+                    if ',' in wordList[-1]:
+                        wordList = wordList[:-2] + wordList[-1].split(',')
+                    return list(set(filter(lambda x: x.startswith(wordList[-1]), completionList)))
                 
         if wordList[0] == 'import':
             if len(wordList) == 2 and wordList[1] == '':
                 return self.dirModules()
 
-            if ',' == wordList[-1][-1]:
+            if ',' == wordList[-1]:
                 return [' ']
 
-            moduleList = wordList[-1].split('.')
-
-            return self.dotCompletion(moduleList)
+            return self.pkg_completions(wordList[-1])
 
         if self.column != 0:
-            if len(self.lineText.strip()) >= 2:  # Autocompetion threshold
+            if len(self.lineText.strip()) >= 2:  # Autocompletion threshold
                 completions = self.rope_completions()
                 self.completionType = 2
                 return completions
@@ -175,55 +179,55 @@ class AutoCompletionThread(QtCore.QThread):
 
             return moduleList
 
-    def doImport(self, relativePath):
+    def module_classes(self, absolutePath):
         """
-        Return list of modules if itemRelativePath is a package
-        and list of classes if itemRelativePath is a module
-        
-        Named so because 'import' is a keyword
+        Return list of classes in a module. 
         """
+        completionList = []
         try:
-            absolutePath = os.path.join(
-                self.sourcedir, relativePath.replace('.', '//'))
-            absolutePath = os.path.normpath(absolutePath)
-        
-            completionList = []
-            if os.path.isdir(absolutePath):
-                contents = os.listdir(absolutePath)
-                for item in contents:
-                    path = os.path.join(absolutePath, item)
-                    if os.path.isfile(path):
-                        completionList.append(os.path.splitext(item)[0])
-                    else:
-                        if '__init__.py' in os.listdir(path):
-                            completionList.append(item + os.path.sep)
-                completionList.remove('__init__')
-            else:
-                # get classes from module
-                absolutePath = absolutePath + '.py'
+            absolutePath = absolutePath + '.py'
 
-                file = open(absolutePath, "r")
-                f = io.StringIO(file.read())
-                file.close()
+            file = open(absolutePath, "r")
+            f = io.StringIO(file.read())
+            file.close()
 
-                g = tokenize.generate_tokens(f.readline)
-                for tokentype, token, start, _end, _line in g:
-                    if token == 'class':
-                        tokentype, class_name, start = next(g)[0:3]
-                        completionList.append(class_name)
+            g = tokenize.generate_tokens(f.readline)
+            for tokentype, token, start, _end, _line in g:
+                if token == 'class':
+                    tokentype, class_name, start = next(g)[0:3]
+                    completionList.append(class_name)
         except:
             return []
-
         return completionList
 
-    def dotCompletion(self, moduleList):
-        # return completions from sub packages
-        if len(moduleList) < 2:
-            return sorted(list(set(filter(lambda x: x.startswith(moduleList[0]),
+    def pkg_completions(self, dottedPath):
+        # return completions from packages
+        pathElements = dottedPath.split('.')
+        if len(pathElements) < 2:
+            return sorted(list(set(filter(lambda x: x.startswith(pathElements[0]),
                          self.dirModules()))))
 
-        completionList = self.doImport('.'.join(moduleList[:-1]))
-        completionList = list(set(filter(lambda x: x.startswith(moduleList[-1]),
+        relativePath = '.'.join(pathElements[:-1])
+        absolutePath = os.path.join(
+            self.sourcedir, relativePath.replace('.', '//'))
+        absolutePath = os.path.normpath(absolutePath)
+        
+        try:
+            completionList = []
+            
+            contents = os.listdir(absolutePath)
+            for item in contents:
+                path = os.path.join(absolutePath, item)
+                if os.path.isfile(path):
+                    completionList.append(os.path.splitext(item)[0])
+                else:
+                    if '__init__.py' in os.listdir(path):
+                        completionList.append(item + os.path.sep)
+            completionList.remove('__init__')
+        except:
+            pass
+
+        completionList = list(set(filter(lambda x: x.startswith(pathElements[-1]),
                              completionList)))
 
         return sorted(completionList)
@@ -473,7 +477,7 @@ class CodeEditor(BaseScintilla):
             QtGui.QToolTip.showText(self.lastHoverPos, doc, self)
 
     def getDoc(self):
-        self.docThread.getDoc(
+        self.docThread.doc(
             self.refactor.getProject(), self.text(), self.hoverOffset)
 
     def mouseReleaseEvent(self, event):
