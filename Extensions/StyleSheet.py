@@ -72,10 +72,11 @@ globalStyle = """
 
              /* QComboBox gets the "on" state when the popup is open */
              QComboBox:!editable:on, QComboBox::drop-down:editable:on {
-                 background: lightgrey;
+                 background: darkgray;
              }
 
              QComboBox:on { /* shift the text when the popup opens */
+             
              }
 
              QComboBox::drop-down {
@@ -125,7 +126,7 @@ globalStyle = """
         }
 
         QTabWidget#sideBottomTab::tab-bar {
-             left: 5px; /* move to the right by 0px */
+             left: 0px; /* move to the right by 0px */
         }
 
         QTabWidget#settingsTab::tab-bar {
@@ -544,6 +545,7 @@ globalStyle = """
 
          QSplitter::handle:horizontal {
              width: 5px;
+             background: #E6E6E6;
          }
 
          QSplitter::handle:vertical {
