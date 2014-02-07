@@ -359,9 +359,15 @@ class UseData(QtCore.QObject):
 
     def loadUseData(self):
         dom_document = QtXml.QDomDocument()
-        file = open(self.appPathDict["usedata"], "r")
-        dom_document.setContent(file.read())
-        file.close()
+        try:
+            file = open(self.appPathDict["usedata"], "r")
+            dom_document.setContent(file.read())
+            file.close()
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+            return
 
         elements = dom_document.documentElement()
         node = elements.firstChild()
@@ -411,16 +417,27 @@ class UseData(QtCore.QObject):
                 t = dom_document.createTextNode(subModule)
                 item.appendChild(t)
 
-        file = open(self.appPathDict["modules"], "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        try:
+            file = open(self.appPathDict["modules"], "w")
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(dom_document.toString())
+            file.close()
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
 
     def loadModulesForCompletion(self):
         dom_document = QtXml.QDomDocument()
-        file = open(self.appPathDict["modules"], "r")
-        dom_document.setContent(file.read())
-        file.close()
+        try:
+            file = open(self.appPathDict["modules"], "r")
+            dom_document.setContent(file.read())
+            file.close()
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+            return
 
         element = dom_document.documentElement()
         node = element.firstChild()
@@ -475,10 +492,16 @@ class UseData(QtCore.QObject):
         usedata = dom_document.createElement("usedata")
         dom_document.appendChild(usedata)
 
-        file = open(self.appPathDict["usedata"], "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        try:    
+            file = open(self.appPathDict["usedata"], "w")
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(dom_document.toString())
+            file.close()
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+            return
 
         self.settings["running"] = 'False'
         self.saveSettings()
@@ -489,9 +512,15 @@ class UseData(QtCore.QObject):
             self.CUSTOM_SHORTCUTS = self.DEFAULT_SHORTCUTS
             return
         dom_document = QtXml.QDomDocument()
-        file = open(self.appPathDict["keymap"], "r")
-        x = dom_document.setContent(file.read())
-        file.close()
+        try:
+            file = open(self.appPathDict["keymap"], "r")
+            x = dom_document.setContent(file.read())
+            file.close()
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+            return
 
         elements = dom_document.documentElement()
         node = elements.firstChild()

@@ -214,15 +214,11 @@ globalStyle = """
         }
 
         QToolBar QToolButton:hover:enabled { /* when selected using mouse or keyboard */
-             border: 1px solid #d8d8d8;
-             padding: 1px;
-             background-color: transparent;
+             background-color: white;
         }
 
         QToolBar QToolButton:pressed:enabled {
-             padding-top: 2px;
-             padding-left: 2px;
-             background-color: transparent;
+             background-color: #007ACC;
         }
 
         QToolBar QToolButton:disabled {
@@ -230,13 +226,8 @@ globalStyle = """
         }
 
         QToolBar QToolButton:checked {
-             padding-top: 2px;
-             padding-left: 2px;
-             border: 1px solid #d8d8d8;
-             border-radius: 3px;
-             background-color: transparent;
+             background-color: #007ACC;
         }
-
 
         QStatusBar {
              background: transparent;

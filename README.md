@@ -48,3 +48,4 @@ Mailing List: [pcode-ide@googlegroups.com](https://groups.google.com/forum/#!for
 ### Screenshots
 ![Alt text](/docs/screens/1.png "1")
 ![Alt text](/docs/screens/2.png "2")
+![Alt text](/docs/screens/3.png "3")
