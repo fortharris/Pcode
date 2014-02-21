@@ -39,7 +39,10 @@ Then perhaps:
 
 ### Latest version: 0.1 Beta 8
         
-###Download: [Windows Installer](https://github.com/fortharris/Pcode/releases)
+###Download: 
+* Windows: [Installer](https://github.com/fortharris/Pcode/releases)
+* Linux:   Download Source
+* Mac OSX: Download Source
 
 Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
 
