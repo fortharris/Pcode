@@ -38,11 +38,6 @@ Then perhaps:
 * GPL v3
 
 ### Latest version: 0.1 Beta 8
-        
-###Download: 
-* Windows: [Installer](https://github.com/fortharris/Pcode/releases)
-* Linux:   <i>Download ZIP</i>
-* Mac OSX: <i>Download ZIP</i>
 
 Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
 
