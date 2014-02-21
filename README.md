@@ -41,8 +41,8 @@ Then perhaps:
         
 ###Download: 
 * Windows: [Installer](https://github.com/fortharris/Pcode/releases)
-* Linux:   Download Source
-* Mac OSX: Download Source
+* Linux:   <i>Download ZIP</i>
+* Mac OSX: <i>Download ZIP</i>
 
 Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
 
