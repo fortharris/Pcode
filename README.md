@@ -27,6 +27,9 @@ Pcode seeks to simplify the process of python development by means of:
 1. Split Editor ( Horizontal and Vertical )
 1. Etc.
 
+### Download
+   Click on [Release](https://github.com/fortharris/Pcode/releases) to view available downloads.
+
 ### Dependencies:
 1. Python 3 ( for running programs )
 1. PyQt4 ( if you are running from source )
