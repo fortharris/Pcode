@@ -35,7 +35,7 @@ Pcode seeks to simplify the process of python development by means of:
 1. PyQt4 ( if you are running from source )
 
 Then perhaps:
-* Pywin32 for windows ( for stamping executable )
+* Pywin32 for windows ( for stamping executables if you are running from source )
 
 ### License:
 * GPL v3
