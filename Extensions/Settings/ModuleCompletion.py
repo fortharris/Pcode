@@ -23,11 +23,11 @@ class ModuleCompletion(QtGui.QTreeWidget):
 
     def createActions(self):
         self.addItemAct = QtGui.QAction(
-            "Add Item", self, statusTip="Add Item", triggered=self.addItem)
+            "Add Library", self, statusTip="Add Library", triggered=self.addLibrary)
 
         self.removeItemAct = \
             QtGui.QAction(
-                "Remove Item", self, statusTip="Remove Item", triggered=self.removeItem)
+                "Remove Library", self, statusTip="Remove Library", triggered=self.removeLibrary)
 
         self.addModuleAct = \
             QtGui.QAction(
@@ -51,7 +51,7 @@ class ModuleCompletion(QtGui.QTreeWidget):
 
         self.contextMenu.exec_(event.globalPos())
 
-    def addItem(self):
+    def addLibrary(self):
         return
         if self.selectedParent is None:
             parent = self.selectedItem
@@ -63,7 +63,7 @@ class ModuleCompletion(QtGui.QTreeWidget):
         parent.insertChild(self.cu, newItem)
         self.editItem(newItem)
 
-    def removeItem(self):
+    def removeLibrary(self):
         if self.selectedParent != None:
             itemText = self.selectedItem.text(0)
             parentText = self.selectedParent.text(0)
@@ -71,7 +71,20 @@ class ModuleCompletion(QtGui.QTreeWidget):
             self.setItemHidden(self.selectedItem, True)
 
     def addModule(self):
-        pass
+        return
+        if self.selectedParent is None:
+            parent = self.selectedItem
+        else:
+            parent = self.selectedParent
+        newItem = QtGui.QTreeWidgetItem()
+        newItem.setFlags(QtCore.Qt.ItemIsEditable |
+                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        parent.insertChild(self.cu, newItem)
+        self.editItem(newItem)
 
     def removeModule(self):
-        pass
+        if self.selectedParent != None:
+            itemText = self.selectedItem.text(0)
+            parentText = self.selectedParent.text(0)
+            self.useData.libraryDict[parentText][0].remove(itemText)
+            self.setItemHidden(self.selectedItem, True)

@@ -7,7 +7,7 @@ import logging
 from PyQt4 import QtCore, QtGui, QtXml
 
 from Extensions.FileExplorer import FileExplorer
-from Extensions.FindInFiles import FindInFiles
+from Extensions.BottomWidgets.FindInFiles import FindInFiles
 from Extensions.Projects.ProjectManager.ProjectManager import ProjectManager
 from Extensions.SearchWidget import SearchWidget
 from Extensions.Outline.Outline import Outline
@@ -15,16 +15,16 @@ from Extensions.EditorTabWidget import EditorTabWidget
 from Extensions.WritePad import WritePad
 from Extensions.Favourites import Favourites
 from Extensions.ExternalLauncher import ExternalLauncher
-from Extensions.Assistant import Assistant
-from Extensions.TasksWidget import Tasks
-from Extensions.BookmarkWidget import BookmarkWidget
-from Extensions.RunWidget import RunWidget
-from Extensions.Messages import MessagesWidget
+from Extensions.BottomWidgets.Assistant import Assistant
+from Extensions.BottomWidgets.TasksWidget import Tasks
+from Extensions.BottomWidgets.BookmarkWidget import BookmarkWidget
+from Extensions.BottomWidgets.RunWidget import RunWidget
+from Extensions.BottomWidgets.Messages import MessagesWidget
 from Extensions.StackSwitcher import StackSwitcher
 from Extensions import StyleSheet
 from Extensions.EditorWindow.BuildStatusWidget import BuildStatusWidget
 from Extensions.EditorWindow.VerticalSplitter import VerticalSplitter
-from Extensions.Profiler import Profiler
+from Extensions.BottomWidgets.Profiler import Profiler
 
 
 class EditorWindow(QtGui.QWidget):

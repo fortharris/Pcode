@@ -464,6 +464,18 @@ globalStyle = """
             background: none;
             border: none;
         }
+        
+        QScrollBar::add-line:vertical:pressed,
+        QScrollBar::sub-line:vertical:pressed,
+        QScrollBar::add-page:vertical:pressed,
+        QScrollBar::sub-page:vertical:pressed,
+        QScrollBar::add-line:horizontal:pressed,
+        QScrollBar::sub-line:horizontal:pressed,
+        QScrollBar::add-page:horizontal:pressed,
+        QScrollBar::sub-page:horizontal:pressed{
+            background: lightgrey;
+            border: none;
+        }
 
         QScrollBar::up-arrow:vertical {
           border: none;

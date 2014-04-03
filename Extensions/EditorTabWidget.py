@@ -18,7 +18,7 @@ from Extensions.GotoLineWidget import GotoLineWidget
 from Extensions.EditorSplitter import EditorSplitter
 from Extensions import Global
 from Extensions.Refactor.Refactor import Refactor
-from Extensions.RunWidget import SetRunParameters
+from Extensions.BottomWidgets.RunWidget import SetRunParameters
 from Extensions.Projects.ProjectManager.ConfigureProject import ConfigureProject
 from Extensions import StyleSheet
 

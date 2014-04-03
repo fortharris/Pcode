@@ -15,6 +15,9 @@ import sys
 import time
 import zipfile
 
+# Pcode Additions
+import platform
+
 import cx_Freeze
 
 __all__ = [ "ConfigError", "ConstantsModule", "Executable", "Freezer" ]
@@ -292,7 +295,10 @@ class Freezer(object):
         if os.path.isabs(name):
             return name
         name = os.path.normcase(name)
-        fullDir = os.path.join("Resources", "build", dirName)
+        if platform.architecture()[0] == "64bit":
+            fullDir = os.path.join("Resources", "build", "64bit", dirName)
+        else:
+            fullDir = os.path.join("Resources", "build", "32bit", dirName)
         if os.path.isdir(fullDir):
             for fileName in os.listdir(fullDir):
                 checkName, checkExt = \
