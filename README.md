@@ -40,7 +40,7 @@ Then perhaps:
 ### License:
 * GPL v3
 
-### Latest version: 0.1 Beta 8
+### Latest version: 0.1 Beta 10
 
 Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
 
