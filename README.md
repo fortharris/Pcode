@@ -3,7 +3,7 @@ Pcode
 
 ##  Python 3 IDE
 
-Pcode seeks to simplify the process of python development by means of:
+Pcode seeks to simplify the process of development in python by means of:
 
 1. A simple and intuitive UI ( Zero clutter )
 1. Utilization of very powerful open source libraries
