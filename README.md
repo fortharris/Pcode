@@ -42,8 +42,6 @@ Then perhaps:
 
 ### Latest version: 0.1 Beta 10
 
-Twitter: [@PcodeIDE](https://twitter.com/PcodeIDE)
-
 Mailing List: [pcode-ide@googlegroups.com](https://groups.google.com/forum/#!forum/pcode-ide)
 
 ### Screenshots
