@@ -13,15 +13,16 @@ class Test(TestCase):
     def test_duplicateArgs(self):
         self.flakes('def fu(bar, bar): pass', m.DuplicateArgument)
 
-    @skip("todo: this requires finding all assignments in the function body first")
     def test_localReferencedBeforeAssignment(self):
         self.flakes('''
         a = 1
         def f():
             a; a=1
         f()
-        ''', m.UndefinedName)
+        ''', m.UndefinedLocal, m.UnusedVariable)
 
+    @skipIf(version_info >= (3,),
+            'in Python 3 list comprehensions execute in a separate scope')
     def test_redefinedInListComp(self):
         """
         Test that shadowing a variable in a list comprehension raises
@@ -221,6 +222,8 @@ class Test(TestCase):
             [a for a in '12']
         ''')
 
+    @skipIf(version_info >= (3,),
+            'in Python 3 list comprehensions execute in a separate scope')
     def test_redefinedElseInListComp(self):
         """
         Test that shadowing a variable in a list comprehension in
@@ -340,6 +343,15 @@ class Test(TestCase):
         def Foo():
             pass
         ''', m.RedefinedWhileUnused)
+
+    def test_classWithReturn(self):
+        """
+        If a return is used inside a class, a warning is emitted.
+        """
+        self.flakes('''
+        class Foo(object):
+            return
+        ''', m.ReturnOutsideFunction)
 
     @skip("todo: Too hard to make this warn but other cases stay silent")
     def test_doubleAssignment(self):
@@ -462,6 +474,15 @@ class Test(TestCase):
         self.flakes('''
         foo = None
         foo.bar += foo.baz
+        ''')
+
+    def test_globalDeclaredInDifferentScope(self):
+        """
+        A 'global' can be declared in one scope and reused in another.
+        """
+        self.flakes('''
+        def f(): global foo
+        def g(): foo = 'anything'; foo.is_used()
         ''')
 
 
@@ -592,18 +613,40 @@ class TestUnusedAssignment(TestCase):
         in good Python code, so warning will only create false positives.
         """
         self.flakes('''
+        def f(tup):
+            (x, y) = tup
+        ''')
+        self.flakes('''
         def f():
             (x, y) = 1, 2
+        ''', m.UnusedVariable, m.UnusedVariable)
+        self.flakes('''
+        def f():
+            (x, y) = coords = 1, 2
+            if x > 1:
+                print(coords)
         ''')
+        self.flakes('''
+        def f():
+            (x, y) = coords = 1, 2
+        ''', m.UnusedVariable)
+        self.flakes('''
+        def f():
+            coords = (x, y) = 1, 2
+        ''', m.UnusedVariable)
 
     def test_listUnpacking(self):
         """
         Don't warn when a variable included in list unpacking is unused.
         """
         self.flakes('''
+        def f(tup):
+            [x, y] = tup
+        ''')
+        self.flakes('''
         def f():
             [x, y] = [1, 2]
-        ''')
+        ''', m.UnusedVariable, m.UnusedVariable)
 
     def test_closedOver(self):
         """
@@ -917,3 +960,7 @@ class TestUnusedAssignment(TestCase):
         def bar():
             yield from foo()
         ''', m.UndefinedName)
+
+    def test_returnOnly(self):
+        """Do not crash on lone "return"."""
+        self.flakes('return 2')

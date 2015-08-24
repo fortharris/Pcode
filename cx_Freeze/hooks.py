@@ -18,8 +18,6 @@ def initialize(finder):
         finder.ExcludeModule("msvcrt")
         finder.ExcludeModule("multiprocessing._multiprocessing")
         finder.ExcludeModule("nt")
-        if os.name not in ("os2", "ce"):
-            finder.ExcludeModule("ntpath")
         finder.ExcludeModule("nturl2path")
         finder.ExcludeModule("pyHook")
         finder.ExcludeModule("pythoncom")
@@ -529,6 +527,19 @@ def load_PySide_QtGui(finder, module):
 
 def load_PyQt5_QtWidgets(finder, module):
     finder.IncludeModule('PyQt5.QtGui')
+
+def load_PyQt4_QtWebKit(finder, module):
+    name, QtCore = _qt_implementation(module)
+    finder.IncludeModule("%s.QtNetwork" % name)
+    finder.IncludeModule("%s.QtGui" % name)
+
+load_PyQt5_QtWebKit = load_PySide_QtWebKit = load_PyQt4_QtWebKit
+
+def load_reportlab(finder, module):
+    """the reportlab module loads a submodule rl_settings via exec so force
+       its inclusion here"""
+    finder.IncludeModule("reportlab.rl_settings")
+
 
 def load_scipy(finder, module):
     """the scipy module loads items within itself in a way that causes

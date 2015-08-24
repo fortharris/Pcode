@@ -1,5 +1,5 @@
 #------------------------------------------------------------------------------
-# Console3.py
+# Console.py
 #   Initialization script for cx_Freeze which manipulates the path so that the
 # directory in which the executable is found is searched for extensions but
 # no other directory is searched. It also sets the attribute sys.frozen so that
@@ -25,4 +25,10 @@ else:
     moduleName = "%s__main__" % name
 code = importer.get_code(moduleName)
 exec(code, m.__dict__)
+
+versionInfo = sys.version_info[:3]
+if versionInfo >= (2, 5, 0) and versionInfo <= (2, 6, 4):
+    module = sys.modules.get("threading")
+    if module is not None:
+        module._shutdown()
 

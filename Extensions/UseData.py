@@ -80,7 +80,10 @@ class FindInstalledPython(QtCore.QObject):
 
     def python_executables(self):
         try:
-            return self.posix()
+            if sys.platform.startswith('win'):
+                return self.windows()
+            else:
+                return self.posix()
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
@@ -92,46 +95,44 @@ class FindInstalledPython(QtCore.QObject):
 
         import winreg
 
-        versionList = []
         # Open base key
-        regkeys = (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE)
-        for regkey in regkeys:
-            base = winreg.ConnectRegistry(None, regkey)
+        base = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+        try:
+            key = winreg.OpenKey(
+                base, 'SOFTWARE\\Python\\PythonCore', 0, winreg.KEY_READ)
+        except:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                         exc_traceback)))
+
+            return []
+
+        # Get info about subkeys
+        nsub, nval, modified = winreg.QueryInfoKey(key)
+
+        # Query Python versions from registry
+        versionList = []
+        for i in range(nsub):
             try:
-                key = winreg.OpenKey(
-                    base, 'SOFTWARE\\Python\\PythonCore', 0, winreg.KEY_READ)
-                break
+                # Get name and subkey
+                name = winreg.EnumKey(key, i)
+                subkey = winreg.OpenKey(
+                    key, name + '\\InstallPath', 0, winreg.KEY_READ)
+                # Get install location and store
+                location = winreg.QueryValue(subkey, '')
+                versionList.append(os.path.normpath(location))
+                # Close
+                winreg.CloseKey(subkey)
             except:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                logging.error(repr(traceback.format_exception(exc_type, exc_value,
+                logging.error(
+                    repr(traceback.format_exception(exc_type, exc_value,
                              exc_traceback)))
 
-        if key is not None:
-            # Get info about subkeys
-            nsub, nval, modified = winreg.QueryInfoKey(key)
+        # Close keys
+        winreg.CloseKey(key)
+        winreg.CloseKey(base)
 
-            # Query Python versions from registry
-            
-            for i in range(nsub):
-                try:
-                    # Get name and subkey
-                    name = winreg.EnumKey(key, i)
-                    subkey = winreg.OpenKey(
-                        key, name + '\\InstallPath', 0, winreg.KEY_READ)
-                    # Get install location and store
-                    location = winreg.QueryValue(subkey, '')
-                    versionList.append(os.path.normpath(location))
-                    # Close
-                    winreg.CloseKey(subkey)
-                except:
-                    exc_type, exc_value, exc_traceback = sys.exc_info()
-                    logging.error(
-                        repr(traceback.format_exception(exc_type, exc_value,
-                                 exc_traceback)))
-
-                # Close keys
-                winreg.CloseKey(key)
-                winreg.CloseKey(base)
         # Query Python versions from file system
         for rootname in ['C:/', 'C:/Program Files', 'C:/Program Files (x86)']:
             if not os.path.isdir(rootname):
@@ -141,33 +142,30 @@ class FindInstalledPython(QtCore.QObject):
                     path = os.path.normpath(os.path.join(rootname, dir_item))
                     if path not in versionList:
                         versionList.append(path)
-        
-        for path in versionList:
-            yield path
 
+        # Append "python.exe" and check if that file exists
+        versions3 = []
+
+        for path in versionList:
+            exe_name = os.path.join(path, 'python.exe')
+            if os.path.isfile(exe_name):
+                versions3.append(exe_name)
+
+        return versions3
 
     def posix(self):
         found = []
-        ext = ''
-        searchpath = os.environ.get("PATH", "").split(os.pathsep)
-        if sys.platform.startswith("win"):
-            ext = '.exe'
-            for path in self.windows():
-                searchpath.insert(0, path)
-            
-            searchpath.insert(0, os.curdir)  # implied by Windows shell
-        
-        for i in range(len(searchpath)):
-            dirName = searchpath[i]
-            # On windows the dirName *could* be quoted, drop the quotes
-            if sys.platform.startswith("win") and len(dirName) >= 2\
-               and dirName[0] == '"' and dirName[-1] == '"':
-                dirName = dirName[1:-1]
-            absName = os.path.abspath(
-                os.path.normpath(os.path.join(dirName, 'python'+ext)))
-            if os.path.isfile(absName) and not absName in found:
-                found.append(absName)
-        
+        for searchpath in ['/usr/bin', '/usr/local/bin', '/opt/local/bin']:
+            # Get files
+            try:
+                files = os.listdir(searchpath)
+            except:
+                continue
+
+            # Search for python executables
+            for fname in files:
+                if fname.startswith('python') and not fname.count('config'):
+                    found.append(os.path.join(searchpath, fname))
         # Done
         return found
 

@@ -4,6 +4,7 @@ from PyQt4 import QtCore, QtGui
 from pyflakes.checker import Checker as flakeChecker
 from Xtra import pep8
 from Xtra import autopep8
+from Xtra.autopep8 import FixPEP8
 
 
 class ErrorCheckerThread(QtCore.QThread):
@@ -77,42 +78,40 @@ class Pep8Report (pep8.BaseReport):
 
         err = (self.filename, line_number, offset, code, text)
         self.all_errors.append(err)
-#
-# class AutoPep8FixerOtions(object):
-#    def __init__(self):
-# self.verbose = 0 #
-# self.diff # print the diff for the fixed source
-# self.in_place # make changes to files in place
-# self.recursive # run recursively; must be used with --in-place or diff
-# self.list_fixes # list codes for fixes; used by --ignore and --select
-# self.exclude # exclude files/directories that match these comma-separated globs
-# self.max_line_length = infinite # maximum number of additional pep8 passes (default: infinite)
-# self.select # fix only these errors/warnings (e.g. E4,W)
-# self.ignore # do not fix these errors/warnings '
-# self.aggressive # enable non-whitespace changes; multiple -a result in more aggressive changes
-# self.jobs # number of parallel jobs; match CPU count if value is less than 1
-#
-
 
 class AutoPep8FixerThread(QtCore.QThread):
 
-    new = QtCore.pyqtSignal(str)
+    new = QtCore.pyqtSignal()
 
     def run(self):
         try:
-            options = {
-                'in_place': None, 'pep8_passes': 100, 'list_fixes': None,
-                'jobs': 1, 'ignore': ['E226', 'E24'], 'verbose': 0,
-                'diff': None, 'select': '', 'exclude': [], 'aggressive': 0,
-                'recursive': None, 'max_line_length': 79}
+            class Options(object):
+                def __init__(self):
+                    self.in_place = True
+                    self.pep8_passes = -1
+                    self.list_fixes = None
+                    self.jobs = 0
+                    self.ignore = []
+                    self.verbose = 0
+                    self.diff = None
+                    self.select = []
+                    self.exclude = []
+                    self.aggressive = 2
+                    self.line_range = []
+                    self.recursive = None
+                    self.max_line_length= 79
+                    self.indent_size = 4
+                    self.experimental = False
 
-            fixed = autopep8.fix_string(self.editorTabWidget.getSource())
-            self.new.emit(fixed)
+            options = Options()
+            file = os.path.join("temp", "temp8.py")
+            
+            autopep8.fix_file(file, options)
+            self.new.emit()
         except:
             pass
 
-    def runFix(self, editorTabWidget):
-        self.editorTabWidget = editorTabWidget
+    def runFix(self):
         self.start()
 
 
@@ -134,11 +133,13 @@ class Pep8View(QtGui.QTreeWidget):
 
         self.createActions()
 
-    def autoPep8Done(self, fixedCode):
+    def autoPep8Done(self):
         self.editorTabWidget.busyWidget.showBusy(False)
         
         editor = self.editorTabWidget.getEditor()
-        editor.setText(fixedCode)
+        file = open(os.path.join("temp", "temp8.py"), "r")
+        editor.setText(file.read())
+        file.close()
         self.editorTabWidget.getEditor().removeBookmarks()
         self.editorTabWidget.enableBookmarkButtons(False)
 
@@ -152,7 +153,11 @@ class Pep8View(QtGui.QTreeWidget):
             self.contextMenu.exec_(event.globalPos())
 
     def fixErrors(self):
-        self.fixerThread.runFix(self.editorTabWidget)
+        # just in case autopep8 check has not been done already
+        saved = self.editorTabWidget.saveToTemp('pep8')
+        #if saved:
+            #self.pep8CheckerThread.runCheck()
+        self.fixerThread.runFix()
         self.editorTabWidget.busyWidget.showBusy(True,
                                                  "Applying Style Guide... please wait!")
 

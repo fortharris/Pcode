@@ -144,7 +144,6 @@ class Project(_Project):
         if ropefolder is not None:
             self.prefs['ignored_resources'] = [ropefolder]
         self._init_prefs(prefs)
-        #print(self.prefs.prefs)
 
     def get_files(self):
         return self.file_list.get_files()

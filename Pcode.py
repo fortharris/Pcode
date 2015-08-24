@@ -20,7 +20,8 @@ class Pcode(QtGui.QWidget):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
-        self.setWindowIcon(QtGui.QIcon(os.path.join("Resources", "images", "Icon")))
+        self.setWindowIcon(
+            QtGui.QIcon(os.path.join("Resources", "images", "Icon")))
         self.setWindowTitle("Pcode - Loading...")
 
         screen = QtGui.QDesktopWidget().screenGeometry()
@@ -37,15 +38,15 @@ class Pcode(QtGui.QWidget):
 
         self.useData = UseData()
 
-        logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', 
+        logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
                             filename=self.useData.appPathDict["logfile"], level=logging.DEBUG)
         if sys.version_info.major < 3:
             logging.error("This application requires Python 3")
             sys.exit(1)
-        
+
         self.library = Library(self.useData)
         self.busyWidget = BusyWidget(app, self.useData, self)
-        
+
         if self.useData.SETTINGS["UI"] == "Custom":
             app.setStyleSheet(StyleSheet.globalStyle)
 
@@ -110,7 +111,7 @@ class Pcode(QtGui.QWidget):
         self.aboutButton.setDefaultAction(self.aboutAct)
         hbox.addWidget(self.aboutButton)
 
-        self.setShortcuts()
+        self.setKeymap()
 
         if self.useData.settings["firstRun"] == 'True':
             self.showMaximized()
@@ -128,9 +129,10 @@ class Pcode(QtGui.QWidget):
             triggered=self.showAbout)
 
         self.showFullScreenAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "fullscreen")),
-                          "Fullscreen", self,
-                          statusTip="Fullscreen",
+            QtGui.QAction(
+                QtGui.QIcon(os.path.join("Resources", "images", "fullscreen")),
+                "Fullscreen", self,
+                statusTip="Fullscreen",
                           triggered=self.showFullScreenMode)
 
         self.settingsAct = QtGui.QAction(
@@ -260,7 +262,7 @@ class Pcode(QtGui.QWidget):
 
         event.accept()
 
-    def setShortcuts(self):
+    def setKeymap(self):
         shortcuts = self.useData.CUSTOM_SHORTCUTS
 
         self.shortFullscreen = QtGui.QShortcut(
@@ -269,7 +271,8 @@ class Pcode(QtGui.QWidget):
 
 app = QtGui.QApplication(sys.argv)
 
-splash = QtGui.QSplashScreen(QtGui.QPixmap(os.path.join("Resources", "images", "splash")))
+splash = QtGui.QSplashScreen(
+    QtGui.QPixmap(os.path.join("Resources", "images", "splash")))
 splash.show()
 
 main = Pcode()
