@@ -40,7 +40,7 @@ Then perhaps:
 ### License:
 * GPL v3
 
-### Latest version: 0.1 Beta 10
+### Latest version: 0.1.5
 
 Mailing List: [pcode-ide@googlegroups.com](https://groups.google.com/forum/#!forum/pcode-ide)
 
