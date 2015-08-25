@@ -184,7 +184,6 @@ class EditorWindow(QtGui.QWidget):
         helpMenu.addAction(self.userGuideAct)
         helpMenu.addAction(self.pythonManualsAct)
         helpMenu.addSeparator()
-        helpMenu.addAction(self.feedbackAct)
         helpMenu.addAction(self.checkUpdatesAct)
         self.mainMenu.addSeparator()
         self.mainMenu.addMenu(self.manageFavourites.favouritesMenu)
@@ -327,9 +326,6 @@ class EditorWindow(QtGui.QWidget):
                                              statusTip="Check For Updates",
                                              triggered=self.visitHomepage)
 
-        self.feedbackAct = QtGui.QAction("Send Feedback", self,
-                                         statusTip="Send Feedback",
-                                        triggered=self.openFeedbackLink)
         #----------------------------------------------------------------------
         self.runFileAct = QtGui.QAction(
             QtGui.QIcon(os.path.join("Resources", "images", "rerun")),
@@ -568,10 +564,6 @@ class EditorWindow(QtGui.QWidget):
     def addToLibrary(self):
         self.library.addToLibrary(self.editorTabWidget)
 
-    def openFeedbackLink(self):
-        QtGui.QDesktopServices().openUrl(QtCore.QUrl(
-            """https://twitter.com/PcodeIDE"""))
-
     def updateUptime(self):
         self.uptime += 1
         if self.uptime == 60:
@@ -624,7 +616,7 @@ class EditorWindow(QtGui.QWidget):
 
     def launchHelp(self):
         message = QtGui.QMessageBox.warning(
-            self, "User Guide", "Will be available when i am out of beta.")
+            self, "User Guide", "Not available at the moment")
 
     def launchPythonHelp(self):
         try:
