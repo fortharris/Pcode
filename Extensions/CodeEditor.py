@@ -392,6 +392,14 @@ class CodeEditor(BaseScintilla):
                 self.setEdgeMode(QsciScintilla.EdgeLine)
             elif self.useData.SETTINGS["EdgeMode"] == 'Background':
                 self.setEdgeMode(QsciScintilla.EdgeBackground)
+                
+        if self.useData.SETTINGS["LineWrap"] == 'True':
+            if self.useData.SETTINGS["WrapMode"] == 'Word':
+                self.setWrapMode(QsciScintilla.WrapWord)
+            elif self.useData.SETTINGS["WrapMode"] == 'Character':
+                self.setWrapMode(QsciScintilla.WrapCharacter)
+            elif self.useData.SETTINGS["WrapMode"] == 'Whitespace':
+                self.setWrapMode(QsciScintilla.WrapWhitespace)
 
         if self.useData.SETTINGS["ShowCaretLine"] == 'True':
             self.setCaretLineVisible(True)

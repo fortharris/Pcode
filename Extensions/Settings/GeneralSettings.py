@@ -190,6 +190,34 @@ class GeneralSettings(QtGui.QDialog):
         self.edgeModeBox.activated.connect(self.setEdgeMode)
         self.edgeModeBox.currentIndexChanged.connect(self.setEdgeMode)
         vbox.addWidget(self.edgeModeBox)
+        
+        # LINE WRAP ATTRIBUTES
+
+        gbox = QtGui.QGroupBox("Line Wrap")
+        gbox.setFlat(True)
+        gbox.setCheckable(True)
+        mainVbox.addWidget(gbox)
+
+        if self.useData.SETTINGS["LineWrap"] == "True":
+            gbox.setChecked(True)
+        else:
+            gbox.setChecked(False)
+        gbox.toggled.connect(self.setWrapEnabled)
+
+        vbox = QtGui.QVBoxLayout()
+        gbox.setLayout(vbox)
+
+        vbox.addWidget(QtGui.QLabel("Line Wrap Mode"))
+
+        self.wrapModeBox = QtGui.QComboBox()
+        self.wrapModeBox.addItem("Word")
+        self.wrapModeBox.addItem("Character")
+        self.wrapModeBox.addItem("Whitespace")
+        self.wrapModeBox.setCurrentIndex(
+            self.wrapModeBox.findText(self.useData.SETTINGS['WrapMode']))
+        self.wrapModeBox.activated.connect(self.setWrapMode)
+        self.wrapModeBox.currentIndexChanged.connect(self.setWrapMode)
+        vbox.addWidget(self.wrapModeBox)
 
         mainVbox.addStretch(1)
 
@@ -342,6 +370,39 @@ class GeneralSettings(QtGui.QDialog):
                     editor2 = editorTabWidget.getCloneEditor(i)
                     editor.setEdgeColumn(value)
                     editor2.setEdgeColumn(value)
+                    
+    def setWrapEnabled(self, state):
+        self.useData.SETTINGS["LineWrap"] = str(state)
+        if state:
+            self.setWrapMode()
+        else:
+            for i in range(self.projectWindowStack.count() - 1):
+                editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
+                for i in range(editorTabWidget.count()):
+                    editor = editorTabWidget.getEditor(i)
+                    if editor.DATA["fileType"] == "python":
+                        editor2 = editorTabWidget.getCloneEditor(i)
+                        
+                        editor.setWrapMode(QsciScintilla.WrapNone)
+                        editor2.setWrapMode(QsciScintilla.WrapNone)
+                            
+    def setWrapMode(self):
+        self.useData.SETTINGS['WrapMode'] = self.wrapModeBox.currentText()
+        for i in range(self.projectWindowStack.count() - 1):
+            editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
+            for i in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(i)
+                if editor.DATA["fileType"] == "python":
+                    editor2 = editorTabWidget.getCloneEditor(i)
+                    if self.wrapModeBox.currentText() == "Word":
+                        editor.setWrapMode(QsciScintilla.WrapWord)
+                        editor2.setWrapMode(QsciScintilla.WrapWord)
+                    elif self.wrapModeBox.currentText() == "Character":
+                        editor.setWrapMode(QsciScintilla.WrapCharacter)
+                        editor2.setWrapMode(QsciScintilla.WrapCharacter)
+                    elif self.wrapModeBox.currentText() == "Whitespace":
+                        editor.setWrapMode(QsciScintilla.WrapWhitespace)
+                        editor2.setWrapMode(QsciScintilla.WrapWhitespace)
 
     def setSoundsEnabled(self, state):
         self.useData.SETTINGS["SoundsEnabled"] = str(state)

@@ -395,6 +395,10 @@ class UseData(QtCore.QObject):
 
         if "UI" not in settingsKeys:
             self.SETTINGS["UI"] = "Custom"
+            
+        if "LineWrap" not in settingsKeys:
+            self.SETTINGS["LineWrap"] = "False"
+            self.SETTINGS["WrapMode"] = "Word"
 
         self.loadKeymap()
         self.loadModulesForCompletion()
