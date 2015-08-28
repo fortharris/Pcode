@@ -63,14 +63,6 @@ class BaseScintilla(QsciScintilla):
         for i, v in useData.DEFAULT_SHORTCUTS["Editor"].items():
             command = standardCommands.find(v[1])
             command.setKey(useData.CUSTOM_SHORTCUTS["Editor"][i][1])
-            
-    def linesOnScreen(self):
-        """
-        Public method to get the amount of visible lines.
-        
-        @return amount of visible lines (integer)
-        """
-        return self.SendScintilla(QsciScintilla.SCI_LINESONSCREEN)
 
     def findOccurrences(self):
         self.clearAllIndicators(self.matchIndicator)

@@ -1,13 +1,10 @@
-from PyQt4 import QtGui, QtCore
+from PyQt4 import QtGui
 
-from Extensions.MiniMap import MiniMap
 
-        
-
-class EditorSplitter(QtGui.QWidget):
+class EditorSplitter(QtGui.QSplitter):
 
     def __init__(self, editor, editor2, DATA, editorTabWidget, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QtGui.QSplitter.__init__(self, parent)
 
         self.editorTabWidget = editorTabWidget
         self.DATA = DATA
@@ -15,35 +12,24 @@ class EditorSplitter(QtGui.QWidget):
 
         self.editor = editor
         self.editor2 = editor2
-        
-        mainLayout = QtGui.QHBoxLayout()
-        mainLayout.setMargin(0)
-        mainLayout.setSpacing(0)
-        self.setLayout(mainLayout)
-        
-        self.splitter = QtGui.QSplitter()
-        mainLayout.addWidget(self.splitter)
 
-        self.splitter.addWidget(self.editor)
-        self.splitter.addWidget(self.editor2)
+        self.addWidget(self.editor)
+        self.addWidget(self.editor2)
         editor2.hide()
 
-        self.splitter.setCollapsible(0, False)
-        self.splitter.setCollapsible(1, False)
+        self.setCollapsible(0, False)
+        self.setCollapsible(1, False)
 
         self.editor.modificationChanged.connect(self.textModified)
         self.editor2.modificationChanged.connect(self.textModified)
 
-        #self.minimap = MiniMap(self.editor, self)
-        #mainLayout.addWidget(self.minimap)
-
     def getEditor(self, index=None):
         if index is None:
             index = 0
-        return self.splitter.widget(index)
+        return self.widget(index)
 
     def getFocusedEditor(self):
-        f = self.splitter.focusWidget()
+        f = self.focusWidget()
         if f is None:
             return self.getEditor()
         return f

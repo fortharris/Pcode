@@ -172,40 +172,6 @@ class Test(TestCase):
                     pass
         ''', m.RedefinedWhileUnused, m.UnusedImport)
 
-    def test_redefinedInNestedFunctionTwice(self):
-        """
-        Test that shadowing a global name with a nested function definition
-        generates a warning.
-        """
-        self.flakes('''
-        import fu
-        def bar():
-            import fu
-            def baz():
-                def fu():
-                    pass
-        ''',
-                    m.RedefinedWhileUnused, m.RedefinedWhileUnused,
-                    m.UnusedImport, m.UnusedImport)
-
-    def test_redefinedButUsedLater(self):
-        """
-        Test that a global import which is redefined locally,
-        but used later in another scope does not generate a warning.
-        """
-        self.flakes('''
-        import unittest, transport
-
-        class GetTransportTestCase(unittest.TestCase):
-            def test_get_transport(self):
-                transport = 'transport'
-                self.assertIsNotNone(transport)
-
-        class TestTransportMethodArgs(unittest.TestCase):
-            def test_send_defaults(self):
-                transport.Transport()
-        ''')
-
     def test_redefinedByClass(self):
         self.flakes('''
         import fu
@@ -248,7 +214,7 @@ class Test(TestCase):
         import fu
         def fun(fu):
             print(fu)
-        ''', m.UnusedImport, m.RedefinedWhileUnused)
+        ''', m.UnusedImport)
 
         self.flakes('''
         import fu
@@ -339,7 +305,7 @@ class Test(TestCase):
         import fu
         for fu in range(2):
             pass
-        ''', m.ImportShadowedByLoopVar)
+        ''', m.RedefinedWhileUnused)
 
     def test_shadowedByFor(self):
         """
@@ -362,13 +328,6 @@ class Test(TestCase):
         import fu
         fu.bar()
         for (x, y, z, (a, b, c, (fu,))) in ():
-            pass
-        ''', m.ImportShadowedByLoopVar)
-        # Same with a list instead of a tuple
-        self.flakes('''
-        import fu
-        fu.bar()
-        for [x, y, z, (a, b, c, (fu,))] in ():
             pass
         ''', m.ImportShadowedByLoopVar)
 
@@ -473,11 +432,8 @@ class Test(TestCase):
         self.flakes('import fu; [fu for _ in range(1)]')
         self.flakes('import fu; [1 for _ in range(1) if fu]')
 
-    @skipIf(version_info >= (3,),
-            'in Python 3 list comprehensions execute in a separate scope')
     def test_redefinedByListComp(self):
-        self.flakes('import fu; [1 for fu in range(1)]',
-                    m.RedefinedInListComp)
+        self.flakes('import fu; [1 for fu in range(1)]', m.RedefinedWhileUnused)
 
     def test_usedInTryFinally(self):
         self.flakes('''
@@ -505,25 +461,10 @@ class Test(TestCase):
         ''')
 
     def test_usedInGlobal(self):
-        """
-        A 'global' statement shadowing an unused import should not prevent it
-        from being reported.
-        """
         self.flakes('''
         import fu
         def f(): global fu
         ''', m.UnusedImport)
-
-    def test_usedAndGlobal(self):
-        """
-        A 'global' statement shadowing a used import should not cause it to be
-        reported as unused.
-        """
-        self.flakes('''
-            import foo
-            def f(): global foo
-            def g(): foo.is_used()
-        ''')
 
     @skipIf(version_info >= (3,), 'deprecated syntax')
     def test_usedInBackquote(self):
@@ -540,9 +481,7 @@ class Test(TestCase):
         self.flakes('import fu; lambda: fu')
 
     def test_shadowedByLambda(self):
-        self.flakes('import fu; lambda fu: fu',
-                    m.UnusedImport, m.RedefinedWhileUnused)
-        self.flakes('import fu; lambda fu: fu\nfu()')
+        self.flakes('import fu; lambda fu: fu', m.UnusedImport)
 
     def test_usedInSliceObj(self):
         self.flakes('import fu; "meow"[::fu]')
@@ -689,18 +628,6 @@ class Test(TestCase):
                 self.i
         ''')
 
-    def test_importUsedInMethodDefinition(self):
-        """
-        Method named 'foo' with default args referring to module named 'foo'.
-        """
-        self.flakes('''
-        import foo
-
-        class Thing(object):
-            def foo(self, parser=foo.parse_foo):
-                pass
-        ''')
-
     def test_futureImport(self):
         """__future__ is special."""
         self.flakes('from __future__ import division')
@@ -722,15 +649,6 @@ class Test(TestCase):
         from __future__ import division
         bar
         ''', m.LateFutureImport)
-
-    def test_futureImportUsed(self):
-        """__future__ is special, but names are injected in the namespace."""
-        self.flakes('''
-        from __future__ import division
-        from __future__ import print_function
-
-        assert print_function is not division
-        ''')
 
 
 class TestSpecialAll(TestCase):
@@ -768,23 +686,6 @@ class TestSpecialAll(TestCase):
         import foo
         __all__ = ["foo"]
         ''')
-        self.flakes('''
-        import foo
-        __all__ = ("foo",)
-        ''')
-
-    def test_augmentedAssignment(self):
-        """
-        The C{__all__} variable is defined incrementally.
-        """
-        self.flakes('''
-        import a
-        import c
-        __all__ = ['a']
-        __all__ += ['b']
-        if 1 < 3:
-            __all__ += ['c', 'd']
-        ''', m.UndefinedExport, m.UndefinedExport)
 
     def test_unrecognizable(self):
         """

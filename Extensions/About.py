@@ -25,7 +25,7 @@ class About(QtGui.QDialog):
 
         form = QtGui.QFormLayout()
         form.setMargin(10)
-        form.addRow("<b>Version</b>", QtGui.QLabel("0.1.5"))
+        form.addRow("<b>Version</b>", QtGui.QLabel("0.1"))
         form.addRow("<b>Author</b>", QtGui.QLabel("Amoatey Harrison"))
         form.addRow("<b>Email</b>", QtGui.QLabel("fortharris@gmail.com"))
 

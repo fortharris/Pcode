@@ -29,110 +29,12 @@ STORE_OPS = (STORE_NAME, STORE_GLOBAL)
 __all__ = [ "Module", "ModuleFinder" ]
 
 try:
-    bytes   # Python >= 2.6
-except NameError:
-    bytes = str
-
-try:
     isidentifier = str.isidentifier  # Built in method in Python 3
 except AttributeError:
     # Check with regex for Python 2
     _identifier_re = re.compile(r'^[a-z_]\w*$', re.I)
     def isidentifier(s):
         return bool(_identifier_re.match(s))
-
-try:
-    source_from_cache = imp.source_from_cache  # Python 3.2 and above
-except AttributeError:
-    def source_from_cache(path):  # Pre PEP 3147 - cache is just .pyc/.pyo
-        assert path.endswith(('.pyc', '.pyo'))
-        return path[:-1]
-
-class ZipModulesCache(object):
-    """A cache of module and package locations within zip files."""
-    def __init__(self):
-        # filename -> None (used like a set)
-        self.files_seen = {}
-        # (path, modulename) -> module_details
-        self.loadable_modules = {}
-    
-    def find(self, path, modulename):
-        """Find a module in the given path.
-        
-        path should be a string referring to a zipfile or a directory in a
-        zip file. If it is outside a zip file, it will be ignored.
-        
-        modulename should be a string, with only the last part of the module
-        name, i.e. not containing any dots.
-        
-        If the module is found, this returns information in the same format
-        as :func:`imp.find_module`. Otherwise, it returns None.
-        """
-        try:
-            return self.retrieve_loadable_module(path, modulename)
-        except KeyError:
-            pass
-
-        if path in self.files_seen:
-            return None
-
-        # This is a marker that we've seen it, whether or not it's a zip file.
-        self.files_seen[path] = None
-
-        if os.path.isfile(path) and zipfile.is_zipfile(path):
-            self.cache_zip_file(path)
-            try:
-                return self.retrieve_loadable_module(path, modulename)
-            except KeyError:
-                return None
-    
-    def retrieve_loadable_module(self, directory, modulename):
-        """Retrieve a module from the cache and translate its info into the
-        format returned by :func:`imp.find_module`.
-        
-        Raises KeyError if the module is not present.
-        """
-        zip, ideal_path, actual_path, ispkg = self.loadable_modules[directory, modulename]
-        # zip: zipfile.ZipFile object
-        # ideal_path: the path to the pkg directory or module .py file
-        # actual path: path to the .pyc file (None for pkg directories)
-        # ispkg: bool, True if this entry refers to a package.
-        full_path = os.path.join(zip.filename, ideal_path)
-        if ispkg:
-            return None, full_path, ('', '', imp.PKG_DIRECTORY)
-        else:                
-            fp = zip.read(actual_path)
-            info = (".pyc", "rb", imp.PY_COMPILED)
-            return fp, full_path, info
-    
-    def cache_zip_file(self, zip_path):
-        """Read a zip file and cache the modules and packages found inside it.
-        """
-        zip = zipfile.ZipFile(zip_path)
-        for archiveName in zip.namelist():
-            baseName, ext = os.path.splitext(archiveName)
-            if ext not in ('.pyc', '.pyo'):
-                continue
-            if '__pycache__' in baseName:
-                if sys.version_info[:2] < (3, 2) \
-                        or not baseName.endswith(imp.get_tag()):
-                    continue
-                baseName = os.path.splitext(source_from_cache(archiveName))[0]
-            nameparts = baseName.split("/")
-            
-            if len(nameparts) > 1 and nameparts[-1] == '__init__':
-                # dir/__init__.pyc  -> dir is a package
-                self.record_loadable_module(nameparts[:-1], None, zip, True)
-
-            self.record_loadable_module(nameparts, archiveName, zip, False)
-
-    def record_loadable_module(self, nameparts, actual_path, zip, ispkg=False):
-        """Cache one module found in the zip file."""
-        parent_dir = os.path.normpath(os.path.join(zip.filename, "/".join(nameparts[:-1])))
-        modulename = nameparts[-1]
-        ideal_path = "/".join(nameparts) + ("" if ispkg else ".py")
-        if (parent_dir, modulename) not in self.loadable_modules:
-            self.loadable_modules[parent_dir, modulename] = (zip, ideal_path, actual_path, ispkg)
 
 class ModuleFinder(object):
 
@@ -154,7 +56,8 @@ class ModuleFinder(object):
         self._modules = dict.fromkeys(excludes)
         self._builtinModules = dict.fromkeys(sys.builtin_module_names)
         self._badModules = {}
-        self._zip_modules_cache = ZipModulesCache()
+        self._zipFileEntries = {}
+        self._zipFiles = {}
         cx_Freeze.hooks.initialize(self)
         initialExcludedModules = self.excludes.copy()
         self._AddBaseModules()
@@ -165,16 +68,7 @@ class ModuleFinder(object):
         """Add the base modules to the finder. These are the modules that
            Python imports itself during initialization and, if not found,
            can result in behavior that differs from running from source;
-           also include modules used within the bootstrap code.
-           
-           When cx_Freeze is built, these modules (and modules they load) are
-           embedded into the base executables (see the WriteSourceFile method).
-           
-           When freezing applications, these modules are added, but their
-           Module objects are then cleared by _ClearBaseModules, so they are not
-           copied into a zip file. They will be accessible to the application as
-           frozen modules.
-           """
+           also include modules used within the bootstrap code"""
         self.ExcludeModule("cStringIO")
         self.ExcludeModule("doctest")
         self.ExcludeModule("getopt")
@@ -192,17 +86,11 @@ class ModuleFinder(object):
         if sys.version_info[:2] >= (3, 3):
             self.AddAlias("_frozen_importlib", "importlib._bootstrap")
             self.IncludeModule("_frozen_importlib")
-            # importlib itself must not be frozen
-            del self._modules["importlib"]
-            del self._modules["importlib._bootstrap"]
         if self.copyDependentFiles:
+            self.IncludeModule("imp")
             self.IncludeModule("os")
             self.IncludeModule("sys")
             self.IncludeModule("zlib")
-        if sys.version_info[:2] >= (3, 4):
-            # We need this, because collections gets loaded (via traceback),
-            # and a partially frozen package causes problems.
-            self.IncludeModule("collections.abc")
 
     def _AddModule(self, name):
         """Add a module to the list of modules but if one is already found,
@@ -256,24 +144,38 @@ class ModuleFinder(object):
 
     def _FindModule(self, name, path, namespace):
         try:
-            # imp loads normal modules from the filesystem
             return imp.find_module(name, path)
         except ImportError:
             if namespace and name in sys.modules:
-                # Namespace package (?)
                 module = sys.modules[name]
                 info = ("", "", imp.PKG_DIRECTORY)
                 return None, module.__path__[0], info
-
-            # Check for modules in zip files.
-            # If a path is a subdirectory within a zip file, we must have
-            # already cached the contents of the zip file to find modules in it.
             if path is None:
                 path = []
             for location in path:
-                res = self._zip_modules_cache.find(location, name)
-                if res is not None:
-                    return res
+                if name in self._zipFileEntries:
+                    break
+                if location in self._zipFiles:
+                    continue
+                if os.path.isdir(location) or not zipfile.is_zipfile(location):
+                    self._zipFiles[location] = None
+                    continue
+                zip = zipfile.ZipFile(location)
+                for archiveName in zip.namelist():
+                    baseName, ext = os.path.splitext(archiveName)
+                    if ext not in ('.pyc', '.pyo'):
+                        continue
+                    moduleName = ".".join(baseName.split("/"))
+                    if moduleName in self._zipFileEntries:
+                        continue
+                    self._zipFileEntries[moduleName] = (zip, archiveName)
+                self._zipFiles[location] = None
+            info = self._zipFileEntries.get(name)
+            if info is not None:
+                zip, archiveName = info
+                fp = zip.read(archiveName)
+                info = (".pyc", "rb", imp.PY_COMPILED)
+                return fp, os.path.join(zip.filename, archiveName), info
             raise
 
     def _GetParentByName(self, name):
@@ -345,19 +247,19 @@ class ModuleFinder(object):
             module = self._InternalImportModule(name,
                     deferredImports, namespace = namespace)
 
-        # old style relative import (regular 'import foo' in Python 2)
-        # the name given is tried in the current package, and if
-        # no match is found, sys.path is searched for a top-level module/pockage
+        # old style relative import (only possibility in Python 2.4 and prior)
+        # the name given is tried in all parents until a match is found and if
+        # no match is found, the global namespace is searched
         elif relativeImportIndex < 0:
             parent = self._DetermineParent(caller)
-            if parent is not None:
+            while parent is not None:
                 fullName = "%s.%s" % (parent.name, name)
                 module = self._InternalImportModule(fullName,
                         deferredImports, namespace = namespace)
                 if module is not None:
                     parent.globalNames[name] = None
                     return module
-
+                parent = self._GetParentByName(parent.name)
             module = self._InternalImportModule(name,
                     deferredImports, namespace = namespace)
 
@@ -461,31 +363,22 @@ class ModuleFinder(object):
             codeString = fp.read()
             if codeString and codeString[-1] != "\n":
                 codeString = codeString + "\n"
-            try:
-                module.code = compile(codeString, path, "exec")
-            except SyntaxError:
-                raise ImportError("Invalid syntax in %s" % path)
+            module.code = compile(codeString, path, "exec")
         
         elif type == imp.PY_COMPILED:
             # Load Python bytecode
-            if isinstance(fp, bytes):
+            if isinstance(fp, str):
                 magic = fp[:4]
             else:
                 magic = fp.read(4)
             if magic != imp.get_magic():
                 raise ImportError("Bad magic number in %s" % path)
-            skip_bytes = 8 if (sys.version_info[:2] >= (3,3)) else 4
-            if isinstance(fp, bytes):
-                module.code = marshal.loads(fp[skip_bytes+4:])
+            if isinstance(fp, str):
+                module.code = marshal.loads(fp[8:])
                 module.inZipFile = True
             else:
-                fp.read(skip_bytes)
+                fp.read(4)
                 module.code = marshal.load(fp)
-        
-        elif type == imp.C_EXTENSION and parent is not None:
-            # Our extension loader (see the freezer module) uses imp to load
-            # compiled extensions.
-            self.IncludeModule("imp")
         
         # If there's a custom hook for this module, run it.
         self._RunHook("load", module.name, module)
@@ -509,7 +402,7 @@ class ModuleFinder(object):
         module = self._AddModule(name)
         module.path = [path]
         try:
-            fp, path, info = self._FindModule("__init__", module.path, False)
+            fp, path, info = imp.find_module("__init__", module.path)
             self._LoadModule(name, fp, path, info, deferredImports, parent)
         except ImportError:
             if not namespace:
@@ -529,8 +422,8 @@ class ModuleFinder(object):
                 if topLevelModule.path:
                     searchValue = os.path.dirname(searchValue)
                 if searchValue:
-                    searchValue = searchValue + os.path.sep
-            if not origFileName.startswith(searchValue):
+                    searchValue = searchValue + os.pathsep
+            elif not origFileName.startswith(searchValue):
                 continue
             newFileName = replaceValue + origFileName[len(searchValue):]
             break
@@ -691,6 +584,19 @@ class ModuleFinder(object):
 
     def ReportMissingModules(self):
         return
+        """Display a list of modules that weren't found."""
+        if self._badModules:
+            sys.stdout.write("Missing modules:\n")
+            names = list(self._badModules.keys())
+            names.sort()
+            for name in names:
+                callers = list(self._badModules[name].keys())
+                callers.sort()
+                sys.stdout.write("? %s imported from %s\n" % \
+                        (name, ", ".join(callers)))
+            sys.stdout.write("This is not necessarily a problem - the modules "
+                             "may not be needed on this platform.\n")
+            sys.stdout.write("\n")
 
     def WriteSourceFile(self, fileName):
         dirName = os.path.dirname(fileName)

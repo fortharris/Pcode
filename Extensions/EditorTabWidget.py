@@ -148,6 +148,7 @@ class EditorTabBar(QtGui.QTabBar):
         editor = subStack.widget(0).widget(0)
         editor.setText(self.editorTabWidget.getEditor(index).text())
 
+
 class EditorTabWidget(QtGui.QTabWidget):
 
     currentEditorTextChanged = QtCore.pyqtSignal()
@@ -1232,7 +1233,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             baseName = os.path.basename(filePath)
             subStack = self.newEditor(index, baseName, filePath, encoding)
 
-            editor = subStack.widget(0).getEditor(0)
+            editor = subStack.widget(0).widget(0)
             editor.setText(text)
             editor.convertEols(eolMode)
             editor.setEolMode(eolMode)
