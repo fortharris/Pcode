@@ -89,7 +89,7 @@ class SetRunParameters(QtGui.QLabel):
 
         hbox = QtGui.QHBoxLayout()
 
-        self.clearOutputBox = QtGui.QCheckBox("Clear output window")
+        self.clearOutputBox = QtGui.QCheckBox("Clear Output Window")
         if self.projectSettings["ClearOutputWindowOnRun"] == 'True':
             self.clearOutputBox.setChecked(True)
         self.clearOutputBox.toggled.connect(self.saveArguments)
@@ -125,17 +125,17 @@ class SetRunParameters(QtGui.QLabel):
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
 
+        label = QtGui.QLabel("Python Interpreter")
+        hbox.addWidget(label)
+        
+        hbox.addStretch(1)
+
         self.installedPythonVersionBox = QtGui.QComboBox()
         self.installedPythonVersionBox.setMinimumWidth(200)
         self.updateInstalledInterpreters()
         self.installedPythonVersionBox.currentIndexChanged.connect(
             self.setDefaultInterpreter)
         hbox.addWidget(self.installedPythonVersionBox)
-
-        hbox.addStretch(1)
-
-        label = QtGui.QLabel("Installed Python")
-        hbox.addWidget(label)
 
         self.setLayout(mainLayout)
 

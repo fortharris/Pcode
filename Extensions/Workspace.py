@@ -68,7 +68,7 @@ class GetPathLine(QtGui.QWidget):
         return self.destinationLine.text()
 
 
-class WorkSpace(QtGui.QDialog):
+class Workspace(QtGui.QDialog):
 
     def __init__(self, parent=None):
         QtGui.QDialog.__init__(self, parent,

@@ -8,7 +8,7 @@ import logging
 from PyQt4 import QtCore, QtXml
 from PyQt4.Qsci import QsciScintilla
 
-from Extensions.Workspace import WorkSpace
+from Extensions.Workspace import Workspace
 
 
 def textEncoding(bb):
@@ -80,7 +80,29 @@ class FindInstalledPython(QtCore.QObject):
 
     def python_executables(self):
         try:
-            return self.posix()
+            found = []
+            ext = ''
+            searchpath = os.environ.get("PATH", "").split(os.pathsep)
+            if sys.platform.startswith("win"):
+                ext = '.exe'
+                for path in self.windows():
+                    searchpath.insert(0, path)
+                
+                searchpath.insert(0, os.curdir)  # implied by Windows shell
+            
+            for i in range(len(searchpath)):
+                dirName = searchpath[i]
+                # On windows the dirName *could* be quoted, drop the quotes
+                if sys.platform.startswith("win") and len(dirName) >= 2\
+                   and dirName[0] == '"' and dirName[-1] == '"':
+                    dirName = dirName[1:-1]
+                absName = os.path.abspath(
+                    os.path.normpath(os.path.join(dirName, 'python'+ext)))
+                if os.path.isfile(absName) and not absName in found:
+                    found.append(absName)
+            
+            # Done
+            return found
         except:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
@@ -144,33 +166,6 @@ class FindInstalledPython(QtCore.QObject):
         
         for path in versionList:
             yield path
-
-
-    def posix(self):
-        found = []
-        ext = ''
-        searchpath = os.environ.get("PATH", "").split(os.pathsep)
-        if sys.platform.startswith("win"):
-            ext = '.exe'
-            for path in self.windows():
-                searchpath.insert(0, path)
-            
-            searchpath.insert(0, os.curdir)  # implied by Windows shell
-        
-        for i in range(len(searchpath)):
-            dirName = searchpath[i]
-            # On windows the dirName *could* be quoted, drop the quotes
-            if sys.platform.startswith("win") and len(dirName) >= 2\
-               and dirName[0] == '"' and dirName[-1] == '"':
-                dirName = dirName[1:-1]
-            absName = os.path.abspath(
-                os.path.normpath(os.path.join(dirName, 'python'+ext)))
-            if os.path.isfile(absName) and not absName in found:
-                found.append(absName)
-        
-        # Done
-        return found
-
 
 class UseData(QtCore.QObject):
 
@@ -341,7 +336,7 @@ class UseData(QtCore.QObject):
     def loadAppData(self):
         self.workspaceDir = self.settings["workspace"]
         if not os.path.exists(self.workspaceDir):
-            newWorkspace = WorkSpace()
+            newWorkspace = Workspace()
             if newWorkspace.created:
                 self.workspaceDir = newWorkspace.path
                 self.settings["workspace"] = self.workspaceDir

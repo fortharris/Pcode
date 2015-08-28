@@ -25,7 +25,7 @@ class About(QtGui.QDialog):
 
         form = QtGui.QFormLayout()
         form.setMargin(10)
-        form.addRow("<b>Version</b>", QtGui.QLabel("0.1"))
+        form.addRow("<b>Version</b>", QtGui.QLabel("0.1.5"))
         form.addRow("<b>Author</b>", QtGui.QLabel("Amoatey Harrison"))
         form.addRow("<b>Email</b>", QtGui.QLabel("fortharris@gmail.com"))
 
@@ -60,7 +60,7 @@ class About(QtGui.QDialog):
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["Pep8", pep8.__version__, "Florent Xicluna"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
-            ["PyQt4", "4.10", "Riverbank Computing Limited"]))
+            ["PyQt4", "4.11.4", "Riverbank Computing Limited"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["AutoPep8", autopep8.__version__, "Hideo Hattori"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(

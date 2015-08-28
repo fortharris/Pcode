@@ -3,7 +3,7 @@ from _ast import PyCF_ONLY_AST
 from sys import version_info
 
 from pyflakes import messages as m, checker
-from pyflakes.test.harness import TestCase, skip, skipIf
+from pyflakes.test.harness import TestCase, skipIf
 
 
 class Test(TestCase):
@@ -12,6 +12,15 @@ class Test(TestCase):
 
     def test_definedInListComp(self):
         self.flakes('[a for a in range(10) if a]')
+
+    @skipIf(version_info < (3,),
+            'in Python 2 list comprehensions execute in the same scope')
+    def test_undefinedInListComp(self):
+        self.flakes('''
+        [a for a in range(10)]
+        a
+        ''',
+                    m.UndefinedName)
 
     def test_functionsNeedGlobalScope(self):
         self.flakes('''
@@ -83,7 +92,6 @@ class Test(TestCase):
             bar; baz
         ''')
 
-    @skip("todo")
     def test_definedByGlobal(self):
         """
         "global" can make an otherwise undefined name in another function
@@ -92,6 +100,19 @@ class Test(TestCase):
         self.flakes('''
         def a(): global fu; fu = 1
         def b(): fu
+        ''')
+        self.flakes('''
+        def c(): bar
+        def b(): global bar; bar = 1
+        ''')
+
+    def test_definedByGlobalMultipleNames(self):
+        """
+        "global" can accept multiple names.
+        """
+        self.flakes('''
+        def a(): global fu, bar; fu = 1; bar = 2
+        def b(): fu; bar
         ''')
 
     def test_globalInGlobalScope(self):
@@ -121,6 +142,74 @@ class Test(TestCase):
     def test_delUndefined(self):
         """Del an undefined name."""
         self.flakes('del a', m.UndefinedName)
+
+    def test_delConditional(self):
+        """
+        Ignores conditional bindings deletion.
+        """
+        self.flakes('''
+        context = None
+        test = True
+        if False:
+            del(test)
+        assert(test)
+        ''')
+
+    def test_delConditionalNested(self):
+        """
+        Ignored conditional bindings deletion even if they are nested in other
+        blocks.
+        """
+        self.flakes('''
+        context = None
+        test = True
+        if False:
+            with context():
+                del(test)
+        assert(test)
+        ''')
+
+    def test_delWhile(self):
+        """
+        Ignore bindings deletion if called inside the body of a while
+        statement.
+        """
+        self.flakes('''
+        def test():
+            foo = 'bar'
+            while False:
+                del foo
+            assert(foo)
+        ''')
+
+    def test_delWhileTestUsage(self):
+        """
+        Ignore bindings deletion if called inside the body of a while
+        statement and name is used inside while's test part.
+        """
+        self.flakes('''
+        def _worker():
+            o = True
+            while o is not True:
+                del o
+                o = False
+        ''')
+
+    def test_delWhileNested(self):
+        """
+        Ignore bindings deletions if node is part of while's test, even when
+        del is in a nested block.
+        """
+        self.flakes('''
+        context = None
+        def _worker():
+            o = True
+            while o is not True:
+                while True:
+                    with context():
+                        del o
+                o = False
+        ''')
 
     def test_globalFromNestedScope(self):
         """Global names are available from nested scopes."""
@@ -280,6 +369,42 @@ class Test(TestCase):
         ''')
 
     @skipIf(version_info < (3,), 'new in Python 3')
+    def test_usedAsStarUnpack(self):
+        """
+        Star names in unpack are used if RHS is not a tuple/list literal.
+        """
+        self.flakes('''
+        def f():
+            a, *b = range(10)
+        ''')
+        self.flakes('''
+        def f():
+            (*a, b) = range(10)
+        ''')
+        self.flakes('''
+        def f():
+            [a, *b, c] = range(10)
+        ''')
+
+    @skipIf(version_info < (3,), 'new in Python 3')
+    def test_unusedAsStarUnpack(self):
+        """
+        Star names in unpack are unused if RHS is a tuple/list literal.
+        """
+        self.flakes('''
+        def f():
+            a, *b = any, all, 4, 2, 'un'
+        ''', m.UnusedVariable, m.UnusedVariable)
+        self.flakes('''
+        def f():
+            (*a, b) = [bool, int, float, complex]
+        ''', m.UnusedVariable, m.UnusedVariable)
+        self.flakes('''
+        def f():
+            [a, *b, c] = 9, 8, 7, 6, 5, 4
+        ''', m.UnusedVariable, m.UnusedVariable, m.UnusedVariable)
+
+    @skipIf(version_info < (3,), 'new in Python 3')
     def test_keywordOnlyArgs(self):
         """Keyword-only arg names are defined."""
         self.flakes('''
@@ -383,6 +508,59 @@ class Test(TestCase):
                 X = {x for x in T}
                 Y = {x:x for x in T}
             ''')
+
+    def test_undefinedInLoop(self):
+        """
+        The loop variable is defined after the expression is computed.
+        """
+        self.flakes('''
+        for i in range(i):
+            print(i)
+        ''', m.UndefinedName)
+        self.flakes('''
+        [42 for i in range(i)]
+        ''', m.UndefinedName)
+        self.flakes('''
+        (42 for i in range(i))
+        ''', m.UndefinedName)
+
+    @skipIf(version_info < (2, 7), 'Dictionary comprehensions do not exist')
+    def test_definedFromLambdaInDictionaryComprehension(self):
+        """
+        Defined name referenced from a lambda function within a dict/set
+        comprehension.
+        """
+        self.flakes('''
+        {lambda: id(x) for x in range(10)}
+        ''')
+
+    def test_definedFromLambdaInGenerator(self):
+        """
+        Defined name referenced from a lambda function within a generator
+        expression.
+        """
+        self.flakes('''
+        any(lambda: id(x) for x in range(10))
+        ''')
+
+    @skipIf(version_info < (2, 7), 'Dictionary comprehensions do not exist')
+    def test_undefinedFromLambdaInDictionaryComprehension(self):
+        """
+        Undefined name referenced from a lambda function within a dict/set
+        comprehension.
+        """
+        self.flakes('''
+        {lambda: id(y) for x in range(10)}
+        ''', m.UndefinedName)
+
+    def test_undefinedFromLambdaInComprehension(self):
+        """
+        Undefined name referenced from a lambda function within a generator
+        expression.
+        """
+        self.flakes('''
+        any(lambda: id(y) for x in range(10))
+        ''', m.UndefinedName)
 
 
 class NameTests(TestCase):

@@ -15,9 +15,6 @@ import sys
 import time
 import zipfile
 
-# Pcode Additions
-import platform
-
 import cx_Freeze
 
 __all__ = [ "ConfigError", "ConstantsModule", "Executable", "Freezer" ]
@@ -64,6 +61,35 @@ MSVCR_MANIFEST_TEMPLATE = """
 </assembly>
 """
 
+def process_path_specs(specs):
+    """Prepare paths specified as config.
+    
+    The input is a list of either strings, or 2-tuples (source, target).
+    Where single strings are supplied, the basenames are used as targets.
+    Where targets are given explicitly, they must not be absolute paths.
+    
+    Returns a list of 2-tuples, or throws ConfigError if something is wrong
+    in the input.
+    """
+    processedSpecs = []
+    for spec in specs:
+        if not isinstance(spec, (list, tuple)):
+            source = spec
+            target = None
+        elif len(spec) != 2:
+            raise ConfigError("path spec must be a list or tuple of "
+                    "length two")
+        else:
+            source, target = spec
+        source = os.path.normpath(source)
+        if not target:
+            target = os.path.basename(source)
+        elif os.path.isabs(target):
+            raise ConfigError("target path for include file may not be "
+                    "an absolute path")
+        processedSpecs.append((source, target))
+    return processedSpecs
+
 
 class Freezer(object):
 
@@ -103,9 +129,8 @@ class Freezer(object):
         self.binPathExcludes = [os.path.normcase(n) \
                 for n in self._GetDefaultBinPathExcludes() + binPathExcludes]
         self.icon = icon
-        self.includeFiles = list(includeFiles)
-        self.includeFiles = self._ProcessPathSpecs(includeFiles)
-        self.zipIncludes = self._ProcessPathSpecs(zipIncludes)
+        self.includeFiles = process_path_specs(includeFiles)
+        self.zipIncludes = process_path_specs(zipIncludes)
         self.silent = silent
         self.metadata = metadata
         self._VerifyConfiguration()
@@ -162,10 +187,13 @@ class Freezer(object):
             scriptModule = None
         else:
             scriptModule = finder.IncludeFile(exe.script, exe.moduleName)
+
         self._CopyFile(exe.base, exe.targetName, exe.copyDependentFiles,
                 includeMode = True)
         if self.includeMSVCR:
             self._IncludeMSVCR(exe)
+
+        # Copy icon
         if exe.icon is not None:
             if sys.platform == "win32":
                 import cx_Freeze.util
@@ -175,11 +203,15 @@ class Freezer(object):
                         os.path.basename(exe.icon))
                 self._CopyFile(exe.icon, targetName,
                         copyDependentFiles = False)
+
         if not os.access(exe.targetName, os.W_OK):
             mode = os.stat(exe.targetName).st_mode
             os.chmod(exe.targetName, mode | stat.S_IWUSR)
         if self.metadata is not None and sys.platform == "win32":
             self._AddVersionResource(exe.targetName)
+
+        # Write the zip file of Python modules. If we're using a shared
+        # library.zip this is done by the Freeze method instead.
         if not exe.appendScriptToLibrary:
             if exe.appendScriptToExe:
                 fileName = exe.targetName
@@ -256,7 +288,12 @@ class Freezer(object):
                 os.environ["PATH"] = origPath + os.pathsep + \
                         os.pathsep.join(sys.path)
                 import cx_Freeze.util
-                dependentFiles = cx_Freeze.util.GetDependentFiles(path)
+                try:
+                    dependentFiles = cx_Freeze.util.GetDependentFiles(path)
+                except cx_Freeze.util.BindError:
+                    # Sometimes this gets called when path is not actually a library
+                    # See issue 88
+                    dependentFiles = []
                 os.environ["PATH"] = origPath
             else:
                 dependentFiles = []
@@ -287,6 +324,16 @@ class Freezer(object):
                         dependentFile = dependentFile[:pos].strip()
                     if dependentFile:
                         dependentFiles.append(dependentFile)
+                if sys.platform == "darwin":
+                    # Make library paths absolute. This is needed to use
+                    # cx_Freeze on OSX in e.g. a conda-based distribution.
+                    # Note that with @rpath we just assume Python's lib dir,
+                    # which should work in most cases.
+                    dirname = os.path.dirname(path)
+                    dependentFiles = [p.replace('@loader_path', dirname)
+                                      for p in dependentFiles]
+                    dependentFiles = [p.replace('@rpath', sys.prefix + '/lib')
+                                      for p in dependentFiles]
             dependentFiles = self.dependentFiles[path] = \
                     [f for f in dependentFiles if self._ShouldCopyFile(f)]
         return dependentFiles
@@ -295,10 +342,7 @@ class Freezer(object):
         if os.path.isabs(name):
             return name
         name = os.path.normcase(name)
-        if platform.architecture()[0] == "64bit":
-            fullDir = os.path.join("Resources", "build", "64bit", dirName)
-        else:
-            fullDir = os.path.join("Resources", "build", "32bit", dirName)
+        fullDir = os.path.join("Resources", "build", "32bit", dirName)
         if os.path.isdir(fullDir):
             for fileName in os.listdir(fullDir):
                 checkName, checkExt = \
@@ -315,8 +359,6 @@ class Freezer(object):
                 name = "Console"
             else:
                 name = "ConsoleKeepPath"
-            if sys.version_info[0] >= 3:
-                name += "3"
         argsSource.initScript = self._GetFileName("initscripts", name, ".py")
         if argsSource.initScript is None:
             raise ConfigError("no initscript named %s", name)
@@ -350,6 +392,7 @@ class Freezer(object):
                     targetName = os.path.join(targetDir, otherName)
                     self._CopyFile(sourceName, targetName)
                 break
+
         if msvcRuntimeDll is not None and msvcRuntimeDll == "msvcr90.dll":
             if struct.calcsize("P") == 4:
                 arch = "x86"
@@ -373,24 +416,7 @@ class Freezer(object):
             sys.stdout.write(" %-25s %s\n" % (module.name, module.file or ""))
         sys.stdout.write("\n")
 
-    def _ProcessPathSpecs(self, specs):
-        processedSpecs = []
-        for spec in specs:
-            if not isinstance(spec, (list, tuple)):
-                source = target = spec
-            elif len(spec) != 2:
-                raise ConfigError("path spec must be a list or tuple of "
-                        "length two")
-            else:
-                source, target = spec
-            source = os.path.normpath(source)
-            if not target:
-                dirName, target = os.path.split(source)
-            elif os.path.isabs(target):
-                raise ConfigError("target path for include file may not be "
-                        "an absolute path")
-            processedSpecs.append((source, target))
-        return processedSpecs
+    
 
     def _RemoveFile(self, path):
         if os.path.exists(path):
@@ -480,6 +506,7 @@ class Freezer(object):
             self.path = sys.path
         if self.appendScriptToLibrary:
             self._VerifyCanAppendToLibrary()
+
         for sourceFileName, targetFileName in \
                 self.includeFiles + self.zipIncludes:
             if not os.path.exists(sourceFileName):
@@ -487,6 +514,7 @@ class Freezer(object):
                         sourceFileName)
             if os.path.isabs(targetFileName):
                 raise ConfigError("target file/directory cannot be absolute")
+
         for executable in self.executables:
             executable._VerifyConfiguration(self)
 
@@ -502,23 +530,29 @@ class Freezer(object):
             modules = [initModule, scriptModule]
             self.excludeModules[initModule.name] = None
             self.excludeModules[scriptModule.name] = None
-        itemsToSort = [(m.name, m) for m in modules]
-        itemsToSort.sort()
-        modules = [m for n, m in itemsToSort]
+        modules.sort(key = lambda m: m.name)
         if not self.silent:
             self._PrintReport(fileName, modules)
         if scriptModule is None:
             finder.ReportMissingModules()
+
         targetDir = os.path.dirname(fileName)
         self._CreateDirectory(targetDir)
-        filesToCopy = []
+
+        # Prepare zip file. This can be library.zip, or named after the
+        # executable, or even appended to the executable.
         if os.path.exists(fileName):
             mode = "a"
         else:
             mode = "w"
         outFile = zipfile.PyZipFile(fileName, mode, zipfile.ZIP_DEFLATED)
+
+        filesToCopy = []
         for module in modules:
             if module.code is None and module.file is not None:
+                # Extension module: save a Python loader in the zip file, and
+                # copy the actual file to the build directory, because pyd/so
+                # libraries can't be loaded from a zip file.
                 fileName = os.path.basename(module.file)
                 baseFileName, ext = os.path.splitext(fileName)
                 if baseFileName != module.name and module.name != "zlib":
@@ -530,8 +564,10 @@ class Freezer(object):
                             generatedFileName, "exec")
                 target = os.path.join(targetDir, fileName)
                 filesToCopy.append((module, target))
+
             if module.code is None:
                 continue
+
             fileName = "/".join(module.name.split("."))
             if module.path:
                 fileName += "/__init__"
@@ -558,6 +594,7 @@ class Freezer(object):
 
         outFile.close()
 
+        # Copy Python extension modules from the list built above.
         origPath = os.environ["PATH"]
         for module, target in filesToCopy:
             try:
@@ -577,6 +614,7 @@ class Freezer(object):
         self.msvcRuntimeDir = None
         import cx_Freeze.util
         cx_Freeze.util.SetOptimizeFlag(self.optimizeFlag)
+
         if self.createLibraryZip:
             self.finder = self._GetModuleFinder()
         for executable in self.executables:
@@ -586,8 +624,11 @@ class Freezer(object):
             self._RemoveFile(fileName)
             self._WriteModules(fileName, self.initScript, self.finder,
                     self.compress, self.copyDependentFiles)
+
         for sourceFileName, targetFileName in self.includeFiles:
             if os.path.isdir(sourceFileName):
+                # Copy directories by recursing into them.
+                # TODO: Can we use shutil.copytree here?
                 for path, dirNames, fileNames in os.walk(sourceFileName):
                     shortPath = path[len(sourceFileName) + 1:]
                     if ".svn" in dirNames:
@@ -603,6 +644,7 @@ class Freezer(object):
                         self._CopyFile(fullSourceName, fullTargetName,
                                 copyDependentFiles = False)
             else:
+                # Copy regular files.
                 fullName = os.path.join(self.targetDir, targetFileName)
                 self._CopyFile(sourceFileName, fullName,
                         copyDependentFiles = False)
@@ -758,4 +800,3 @@ class VersionInfo(object):
         self.dll = dll
         self.debug = debug
         self.verbose = verbose
-
