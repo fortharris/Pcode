@@ -59,3 +59,12 @@ class StackSwitcher(QtGui.QWidget):
         button = self.buttonGroup.button(0)
         button.setChecked(True)
         self.changed.emit(button.text())
+
+    def setButton(self, name):
+        """Activate the switcher button whose label matches ``name``."""
+        for button in self.buttonGroup.buttons():
+            if button.text() == name:
+                self.setIndex(button)
+                button.setChecked(True)
+                return True
+        return False

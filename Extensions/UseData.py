@@ -340,6 +340,7 @@ class UseData(QtCore.QObject):
             "enableStyleGuide": "True",
             "EnableAssistance": "True",
             "UI": "Custom",
+            "Theme": "Light",
             "SoundsEnabled": "False",
             "EditorStylePython": "Default",
             "EditorStyleXml": "Default",

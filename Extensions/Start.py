@@ -1,5 +1,17 @@
 import os
 from Extensions.qt_bindings import QtGui, QtCore
+from Extensions import StyleSheet
+
+
+def _fixed_font(size):
+    """A monospace font that exists on every platform (no hard-coded family)."""
+    try:
+        font = QtGui.QFontDatabase.systemFont(
+            QtGui.QFontDatabase.SystemFont.FixedFont)
+    except Exception:
+        font = QtGui.QFont("monospace")
+    font.setPointSize(size)
+    return font
 
 
 class Start(QtGui.QLabel):
@@ -9,6 +21,8 @@ class Start(QtGui.QLabel):
 
         self.pcode = parent
         self.useData = useData
+        self.palette_ = StyleSheet.resolve_palette(
+            useData.SETTINGS.get("Theme", "Light"))
 
         mainLayout = QtGui.QHBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -29,29 +43,33 @@ class Start(QtGui.QLabel):
         centerLabel.setMinimumHeight(300)
         centerLabel.setScaledContents(True)
         centerLabel.setStyleSheet("""
-                            QListView {
-                                 show-decoration-selected: 1; /* make the selection span the entire width of the view */
+                            QListView {{
+                                 show-decoration-selected: 1;
+                                 border: 1px solid {border};
+                                 background: {card};
+                                 color: {text};
+                            }}
+
+                            QListView::item {{ min-height: 20px; }}
+
+                            QListView::item:hover {{
                                  border: none;
-                            }
+                                 background: {hover};
+                            }}
 
-                            QListView::item {
-                                 min-height: 20px;
-                            }
-
-                            QListView::item:hover {
+                            QListView::item:selected:!active {{
                                  border: none;
-                                 background: #E3E3E3;
-                            }
+                                 background: {hover};
+                            }}
 
-                            QListView::item:selected:!active {
-                                 border: 1px solid white;
-                                 background: #E3E3E3;
-                            }
-
-                            QListView::item:selected:active {
-                                 color: white;
-                                 background: #3F3F3F;
-                            }""")
+                            QListView::item:selected:active {{
+                                 color: {accentText};
+                                 background: {accent};
+                            }}""".format(
+            border=self.palette_["border"], card=self.palette_["panelAlt"],
+            text=self.palette_["text"], hover=self.palette_["hover"],
+            accent=self.palette_["accent"],
+            accentText=self.palette_["accentText"]))
         vbox.addWidget(centerLabel)
 
         vbox.addStretch(2)
@@ -70,7 +88,7 @@ class Start(QtGui.QLabel):
         centralLayout.addLayout(hbox)
 
         label = QtGui.QLabel("Getting started...")
-        label.setFont(QtGui.QFont("Consolas", 20))
+        label.setFont(_fixed_font(20))
         hbox.addWidget(label)
 
         hbox.addStretch(1)
@@ -95,18 +113,28 @@ class Start(QtGui.QLabel):
             "context of a project. Start editing your files by first "
             "creating a project or opening an existing one.")
         label.setWordWrap(True)
-        label.setFont(QtGui.QFont("Consolas", 10))
+        label.setFont(_fixed_font(10))
         centralLayout.addWidget(label)
 
         centralLayout.addStretch(1)
 
         label = QtGui.QLabel("Recent Projects:")
-        label.setStyleSheet("color: #0063A6; font: 12px;")
+        label.setStyleSheet(
+            "color: %s; font: bold 12px;" % self.palette_["accent"])
         centralLayout.addWidget(label)
 
         self.recentProjectsListWidget = QtGui.QListWidget()
-        for i in useData.OPENED_PROJECTS:
-            self.recentProjectsListWidget.addItem(QtGui.QListWidgetItem(i))
+        if useData.OPENED_PROJECTS:
+            for path in useData.OPENED_PROJECTS:
+                item = QtGui.QListWidgetItem(os.path.basename(path))
+                item.setToolTip(path)
+                item.setData(QtCore.Qt.ItemDataRole.UserRole, path)
+                self.recentProjectsListWidget.addItem(item)
+        else:
+            placeholder = QtGui.QListWidgetItem(
+                "No recent projects \u2014 create or open one to get started.")
+            placeholder.setFlags(QtCore.Qt.ItemFlag.NoItemFlags)
+            self.recentProjectsListWidget.addItem(placeholder)
         self.recentProjectsListWidget.itemDoubleClicked.connect(
             self.openProjectFromList)
         centralLayout.addWidget(self.recentProjectsListWidget)
@@ -139,16 +167,20 @@ class Start(QtGui.QLabel):
 
         mainLayout.addStretch(1)
 
+        p = self.palette_
         style = """
-            QLabel#mainlabel {background: #565656;
-                    }
+            QLabel#mainlabel {{ background: {bg}; }}
 
-            QLabel#centerlabel {border-radius: 2px;
-                background: #FFFFFF;
-                     }
+            QLabel#centerlabel {{
+                border-radius: 4px;
+                background: {card};
+                color: {text};
+            }}
 
-            QPushButton {min-width: 105;}
-            """
+            QLabel#centerlabel QLabel {{ color: {text}; }}
+
+            QPushButton {{ min-width: 105px; }}
+            """.format(bg=p["bg"], card=p["panelAlt"], text=p["text"])
 
         self.setStyleSheet(style)
 
@@ -169,4 +201,7 @@ class Start(QtGui.QLabel):
             self.pcode.loadProject(directory, True)
 
     def openProjectFromList(self, item):
-        self.pcode.loadProject(item.text(), True)
+        path = item.data(QtCore.Qt.ItemDataRole.UserRole)
+        if not path:
+            return
+        self.pcode.loadProject(path, True)

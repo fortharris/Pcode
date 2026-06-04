@@ -13,6 +13,7 @@ from Extensions.BusyWidget import BusyWidget
 from Extensions import StyleSheet
 from Extensions.Start import Start
 from Extensions.StackSwitcher import StackSwitcher
+from Extensions.CommandPalette import CommandPalette
 
 
 class Pcode(QtGui.QWidget):
@@ -53,7 +54,7 @@ class Pcode(QtGui.QWidget):
         self.busyWidget = BusyWidget(app, self.useData, self)
 
         if self.useData.SETTINGS["UI"] == "Custom":
-            app.setStyleSheet(StyleSheet.globalStyle)
+            StyleSheet.apply_theme(app, self.useData.SETTINGS.get("Theme", "Light"))
 
         self.projectWindowStack = QtGui.QStackedWidget()
 
@@ -82,6 +83,22 @@ class Pcode(QtGui.QWidget):
         hbox.setContentsMargins(5, 3, 5, 3)
         mainLayout.addLayout(hbox)
 
+        self.logoLabel = QtGui.QLabel()
+        logoPix = QtGui.QPixmap(os.path.join("Resources", "images", "Icon"))
+        if not logoPix.isNull():
+            self.logoLabel.setPixmap(logoPix.scaled(
+                22, 22,
+                QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                QtCore.Qt.TransformationMode.SmoothTransformation))
+        hbox.addWidget(self.logoLabel)
+
+        self.titleLabel = QtGui.QLabel("Pcode")
+        titleFont = self.titleLabel.font()
+        titleFont.setBold(True)
+        self.titleLabel.setFont(titleFont)
+        self.titleLabel.setContentsMargins(4, 0, 8, 0)
+        hbox.addWidget(self.titleLabel)
+
         hbox.addStretch(1)
 
         self.pagesStack = QtGui.QStackedWidget()
@@ -104,17 +121,22 @@ class Pcode(QtGui.QWidget):
         self.settingsButton = QtGui.QToolButton()
         self.settingsButton.setAutoRaise(True)
         self.settingsButton.setDefaultAction(self.settingsAct)
+        self.settingsButton.setToolTip("Settings")
         hbox.addWidget(self.settingsButton)
 
         self.fullScreenButton = QtGui.QToolButton()
         self.fullScreenButton.setAutoRaise(True)
         self.fullScreenButton.setDefaultAction(self.showFullScreenAct)
+        self.fullScreenButton.setToolTip("Toggle fullscreen")
         hbox.addWidget(self.fullScreenButton)
 
         self.aboutButton = QtGui.QToolButton()
         self.aboutButton.setAutoRaise(True)
         self.aboutButton.setDefaultAction(self.aboutAct)
+        self.aboutButton.setToolTip("About Pcode")
         hbox.addWidget(self.aboutButton)
+
+        self.commandPalette = CommandPalette(self)
 
         self.setKeymap()
 
@@ -273,6 +295,44 @@ class Pcode(QtGui.QWidget):
         self.shortFullscreen = QtGui.QShortcut(
             shortcuts["Ide"]["Fullscreen"], self)
         self.shortFullscreen.activated.connect(self.showFullScreenMode)
+
+        self.shortCommandPalette = QtGui.QShortcut(
+            QtGui.QKeySequence("Ctrl+Shift+P"), self)
+        self.shortCommandPalette.activated.connect(self.showCommandPalette)
+
+    def showCommandPalette(self):
+        self.commandPalette.setCommands(self.buildCommands())
+        self.commandPalette.launch()
+
+    def buildCommands(self):
+        commands = [
+            ("New Project", self.newProject),
+            ("Open Project\u2026", self.openProjectDialog),
+            ("Settings", self.showSettings),
+            ("Toggle Fullscreen", self.showFullScreenMode),
+            ("Go to Editor", lambda: self.projectSwitcher.setButton("EDITOR")),
+            ("Go to Library", lambda: self.projectSwitcher.setButton("LIBRARY")),
+            ("Theme: Light", lambda: self.applyTheme("Light")),
+            ("Theme: Dark", lambda: self.applyTheme("Dark")),
+            ("Theme: System", lambda: self.applyTheme("System")),
+            ("About Pcode", self.showAbout),
+        ]
+        return commands
+
+    def applyTheme(self, name):
+        self.useData.SETTINGS["Theme"] = name
+        if self.useData.SETTINGS["UI"] == "Custom":
+            StyleSheet.apply_theme(self.app, name)
+
+    def openProjectDialog(self):
+        directory = QtGui.QFileDialog.getExistingDirectory(
+            self, "Project Folder", self.useData.getLastOpenedDir(),
+            QtGui.QFileDialog.ShowDirsOnly
+            | QtGui.QFileDialog.DontResolveSymlinks)
+        if directory:
+            directory = os.path.normpath(directory)
+            self.useData.saveLastOpenedDir(directory)
+            self.loadProject(directory, True)
 
 if __name__ == '__main__':
     app = QtGui.QApplication(sys.argv)

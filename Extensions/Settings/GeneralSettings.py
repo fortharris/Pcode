@@ -271,6 +271,17 @@ class GeneralSettings(QtGui.QDialog):
         self.uiBox.currentIndexChanged.connect(self.setUI)
         mainVbox.addWidget(self.uiBox)
 
+        mainVbox.addWidget(QtGui.QLabel("Theme"))
+
+        self.themeBox = QtGui.QComboBox()
+        self.themeBox.addItems(["Light", "Dark", "System"])
+        currentTheme = self.useData.SETTINGS.get("Theme", "Light")
+        themeIndex = self.themeBox.findText(currentTheme)
+        if themeIndex != -1:
+            self.themeBox.setCurrentIndex(themeIndex)
+        self.themeBox.currentIndexChanged.connect(self.setTheme)
+        mainVbox.addWidget(self.themeBox)
+
         self.enableSoundsBox = QtGui.QCheckBox("Enable Sounds")
         if self.useData.SETTINGS["SoundsEnabled"] == 'True':
             self.enableSoundsBox.setChecked(True)
@@ -284,7 +295,8 @@ class GeneralSettings(QtGui.QDialog):
     def setUI(self, index):
         self.useData.SETTINGS["UI"] = self.uiBox.currentText()
         if index == 0:
-            self.mainApp.setStyleSheet(StyleSheet.globalStyle)
+            StyleSheet.apply_theme(
+                self.mainApp, self.useData.SETTINGS.get("Theme", "Light"))
         else:
             self.mainApp.setStyleSheet(None)
         isCustom = (index == 0)
@@ -294,6 +306,13 @@ class GeneralSettings(QtGui.QDialog):
                 editorTabWidget.adjustToStyleSheet(True)
             else:
                 editorTabWidget.adjustToStyleSheet(False)
+
+    def setTheme(self, index):
+        self.useData.SETTINGS["Theme"] = self.themeBox.currentText()
+        # Theme only affects the custom UI; native uses the OS style.
+        if self.useData.SETTINGS["UI"] == "Custom":
+            StyleSheet.apply_theme(
+                self.mainApp, self.useData.SETTINGS["Theme"])
 
     def exportSettings(self):
         options = QtGui.QFileDialog.Options()

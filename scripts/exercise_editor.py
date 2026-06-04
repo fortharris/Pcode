@@ -102,6 +102,9 @@ def main():
     exercise_snippets(win)
     exercise_export(proj_path, projects_dir)
     exercise_filedialog_enums()
+    exercise_mouse_events(editor, editor_window)
+    exercise_command_palette(win)
+    exercise_themes(win)
 
     print("ALL OK")
 
@@ -315,6 +318,81 @@ def exercise_filedialog_enums():
     assert fd.AcceptOpen is not None
     assert options is not None
     print("STEP filedialog-enums OK")
+
+
+def exercise_mouse_events(editor, editor_window):
+    """Dispatch a synthetic mouse move/double-click through the editor and run
+    widget handlers.
+
+    Catches Qt6 event-API regressions (QMouseEvent.globalPos/x/y/posF removed,
+    Qt.MidButton alias) that an offscreen window never triggers by clicking.
+    Only re-raise AttributeError (a removed-API signal); swallow unrelated
+    runtime errors that depend on real layout/painting.
+    """
+    from PyQt6.QtGui import QMouseEvent
+    from PyQt6.QtCore import QPointF, QEvent
+
+    Qt = QtCore.Qt
+    pt = QPointF(8.0, 8.0)
+
+    def make(kind):
+        return QMouseEvent(kind, pt, pt,
+                           Qt.MouseButton.NoButton,
+                           Qt.MouseButton.NoButton,
+                           Qt.KeyboardModifier.NoModifier)
+
+    targets = []
+    if editor is not None:
+        # Force the hover path so globalPosition()/pos() are exercised.
+        try:
+            editor.useData.SETTINGS["DocOnHover"] = "True"
+        except Exception:
+            pass
+        targets.append((editor, "mouseMoveEvent"))
+    rw = getattr(editor_window, "runWidget", None)
+    if rw is not None:
+        targets.append((rw, "mouseMoveEvent"))
+        targets.append((rw, "mouseDoubleClickEvent"))
+
+    for widget, handler in targets:
+        fn = getattr(widget, handler, None)
+        if fn is None:
+            continue
+        kind = (QEvent.Type.MouseButtonDblClick
+                if "Double" in handler else QEvent.Type.MouseMove)
+        try:
+            fn(make(kind))
+        except AttributeError:
+            raise
+        except Exception:
+            pass
+    print("STEP mouse-events OK")
+
+
+def exercise_command_palette(win):
+    """Build the palette commands, filter them, and run a safe one."""
+    palette = win.commandPalette
+    commands = win.buildCommands()
+    palette.setCommands(commands)
+    palette._refilter("")
+    assert palette.listWidget.count() == len(commands)
+    palette._refilter("thm")  # fuzzy: matches "Theme: ..." entries
+    filtered = palette.listWidget.count()
+    assert filtered >= 1
+    # Run the "Go to Library" command then back to Editor (no dialogs).
+    win.projectSwitcher.setButton("LIBRARY")
+    win.projectSwitcher.setButton("EDITOR")
+    print("STEP command-palette OK, commands:", len(commands),
+          "| filtered:", filtered)
+
+
+def exercise_themes(win):
+    """Apply each theme through the app to flush stylesheet build errors."""
+    from Extensions import StyleSheet
+    for name in ("Dark", "System", "Light"):
+        win.applyTheme(name)
+        assert len(StyleSheet.globalStyle) > 0
+    print("STEP themes OK")
 
 
 if __name__ == "__main__":
