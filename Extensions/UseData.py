@@ -564,6 +564,10 @@ class UseData(QtCore.QObject):
         self.CUSTOM_SHORTCUTS = copy.deepcopy(self.DEFAULT_SHORTCUTS)
         if self.settings["firstRun"] == "True":
             return
+        # No custom keymap saved yet is an expected state (fresh workspace),
+        # not an error: fall back to defaults quietly.
+        if not os.path.exists(self.appPathDict["keymap"]):
+            return
         dom_document = QtXml.QDomDocument()
         try:
             file = open(self.appPathDict["keymap"], "r")
