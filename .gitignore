@@ -20,6 +20,7 @@ __pycache__
 .pcode-venv/
 workspace/
 temp/
+scripts/_*.log
 
 # Installer logs
 pip-log.txt
