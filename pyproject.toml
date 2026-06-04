@@ -12,6 +12,10 @@ license = { text = "GPL-3.0-or-later" }
 dependencies = [
     "PyQt6>=6.5.0",
     "PyQt6-QScintilla>=2.14.0",
+    "rope>=1.11",
+    "pyflakes>=3.1",
+    "autopep8>=2.0",
+    "pycodestyle>=2.11",
 ]
 
 [project.optional-dependencies]

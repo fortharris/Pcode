@@ -1,10 +1,11 @@
 import os
 import ast
+import logging
+import traceback
 from Extensions.qt_bindings import QtCore, QtGui
 from pyflakes.checker import Checker as flakeChecker
-from Xtra import pep8
-from Xtra import autopep8
-from Xtra.autopep8 import FixPEP8
+import pycodestyle as pep8
+import autopep8
 
 
 class ErrorCheckerThread(QtCore.QThread):
@@ -85,31 +86,17 @@ class AutoPep8FixerThread(QtCore.QThread):
 
     def run(self):
         try:
-            class Options(object):
-                def __init__(self):
-                    self.in_place = True
-                    self.pep8_passes = -1
-                    self.list_fixes = None
-                    self.jobs = 0
-                    self.ignore = []
-                    self.verbose = 0
-                    self.diff = None
-                    self.select = []
-                    self.exclude = []
-                    self.aggressive = 2
-                    self.line_range = []
-                    self.recursive = None
-                    self.max_line_length= 79
-                    self.indent_size = 4
-                    self.experimental = False
-
-            options = Options()
             file = os.path.join("temp", "temp8.py")
-            
+            # Build a complete options namespace via autopep8 itself so every
+            # attribute modern autopep8 expects is present (a hand-rolled
+            # object would miss newer fields like hang_closing/global_config).
+            options = autopep8.parse_args(
+                [file, "--in-place", "--aggressive", "--aggressive"],
+                apply_config=False)
             autopep8.fix_file(file, options)
             self.new.emit()
-        except:
-            pass
+        except Exception:
+            logging.error(traceback.format_exc())
 
     def runFix(self):
         self.start()

@@ -2,8 +2,8 @@ import os
 
 from Extensions.qt_bindings import QtGui, QtCore
 
-from Xtra import autopep8
-from Xtra import pep8
+import autopep8
+import pycodestyle as pep8
 import pyflakes
 import rope
 

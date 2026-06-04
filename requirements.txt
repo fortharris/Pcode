@@ -1,3 +1,9 @@
 # PyQt6 is required: Riverbank QScintilla ships only for PyQt5/PyQt6, not PySide6.
 PyQt6>=6.5.0
 PyQt6-QScintilla>=2.14.0
+
+# De-vendored libraries (previously bundled, now from PyPI).
+rope>=1.11
+pyflakes>=3.1
+autopep8>=2.0
+pycodestyle>=2.11
