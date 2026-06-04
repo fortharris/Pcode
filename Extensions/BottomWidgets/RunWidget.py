@@ -342,8 +342,8 @@ class RunWidget(BaseScintilla):
         super(RunWidget, self).leaveEvent(event)
 
     def mouseMoveEvent(self, event):
-        x = event.x()
-        y = event.y()
+        x = int(event.position().x())
+        y = int(event.position().y())
 
         line = self.getHoveredLine(x, y)
         lineText = self.text(line)
@@ -731,8 +731,8 @@ class RunWidget(BaseScintilla):
         return line
 
     def mouseDoubleClickEvent(self, event):
-        x = event.x()
-        y = event.y()
+        x = int(event.position().x())
+        y = int(event.position().y())
 
         line = self.getHoveredLine(x, y)
         lineText = self.text(line)

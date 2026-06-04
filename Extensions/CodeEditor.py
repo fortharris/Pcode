@@ -504,7 +504,7 @@ class CodeEditor(BaseScintilla):
 
     def mouseMoveEvent(self, event):
         if self.useData.SETTINGS["DocOnHover"] == "True":
-            self.lastHoverPos = event.globalPos()
+            self.lastHoverPos = event.globalPosition().toPoint()
             self.hoverOffset = self.positionFromPoint(event.pos())
 
             QtGui.QToolTip.hideText()
@@ -512,7 +512,7 @@ class CodeEditor(BaseScintilla):
 
         # resize view if middle mouse button is held down
         if self.middleMousePressed:
-            pos = event.pos()
+            pos = event.position()
             delta = pos - self.mousePosition
 
             x = delta.x()
@@ -528,7 +528,7 @@ class CodeEditor(BaseScintilla):
 
             self.editorTabWidget.resizeView(x, y)
 
-        self.mousePosition = event.posF()
+        self.mousePosition = event.position()
         super(CodeEditor, self).mouseMoveEvent(event)
 
     def createActions(self):

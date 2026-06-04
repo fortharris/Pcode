@@ -198,6 +198,16 @@ def _patch_qt6_compat():
         TBS = Qt.ToolButtonStyle
         Qt.ToolButtonTextBesideIcon = TBS.ToolButtonTextBesideIcon
 
+    if not hasattr(Qt, "LeftButton"):
+        MOUSE = Qt.MouseButton
+        for name in ("NoButton", "LeftButton", "RightButton",
+                     "MiddleButton", "XButton1", "XButton2"):
+            if hasattr(MOUSE, name):
+                setattr(Qt, name, getattr(MOUSE, name))
+        # MidButton was the Qt4/5 alias for MiddleButton, removed in Qt6.
+        if hasattr(MOUSE, "MiddleButton"):
+            Qt.MidButton = MOUSE.MiddleButton
+
     KM = Qt.KeyboardModifier
     for old, new in (
         ("ShiftModifier", "ShiftModifier"),
