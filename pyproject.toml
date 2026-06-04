@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pcode"
+version = "0.1.0"
+description = "Pcode - a Python IDE, ported to PyQt6."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "GPL-3.0-or-later" }
+dependencies = [
+    "PyQt6>=6.5.0",
+    "PyQt6-QScintilla>=2.14.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "ruff>=0.4",
+    "black>=24.0",
+]
+
+[project.scripts]
+pcode = "Pcode:main"
+
+[tool.setuptools]
+# This is a legacy layout (top-level modules + vendored dirs), not a clean
+# package. Expose the entry-point module explicitly and let the app resolve
+# its own resources at runtime (Pcode.main chdir's to the repo root).
+py-modules = ["Pcode"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.black]
+line-length = 88
+# Don't touch the vendored third-party trees.
+extend-exclude = '''
+/(
+    rope
+  | cx_Freeze
+  | Xtra
+  | \.pcode-venv
+  | workspace
+)/
+'''
+
+[tool.ruff]
+line-length = 88
+# Vendored / generated trees are out of scope for linting.
+extend-exclude = [
+    "rope", "cx_Freeze", "Xtra", "pyflakes", "pep8.py", "Resources",
+    ".pcode-venv", "workspace",
+]
+
+[tool.ruff.lint]
+# Start conservative on a large legacy codebase: real bugs, not style noise.
+# E9 syntax, F63 bad assert/comparison, F7 syntax, F82 undefined name.
+select = ["E9", "F63", "F7", "F82"]

@@ -334,15 +334,26 @@ class Pcode(QtGui.QWidget):
             self.useData.saveLastOpenedDir(directory)
             self.loadProject(directory, True)
 
-if __name__ == '__main__':
+def main():
+    # Resources are resolved relative to the working directory, so anchor it to
+    # this file's location regardless of where the entry point is launched from.
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     app = QtGui.QApplication(sys.argv)
+
+    from Extensions import ErrorHandler
+    ErrorHandler.install()
 
     splash = QtGui.QSplashScreen(
         QtGui.QPixmap(os.path.join("Resources", "images", "splash")))
     splash.show()
 
-    main = Pcode()
+    window = Pcode()
 
-    splash.finish(main)
+    splash.finish(window)
 
-    sys.exit(app.exec())
+    return app.exec()
+
+
+if __name__ == '__main__':
+    sys.exit(main())
