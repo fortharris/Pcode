@@ -381,6 +381,10 @@ class UseData(QtCore.QObject):
         self.workspaceDir = self.settings.get("workspace")
         if self.workspaceDir in (None, "None", ""):
             self.workspaceDir = self._default_workspace_dir()
+        # Always work with an absolute path: a relative workspace (e.g. one
+        # persisted in settings.ini) otherwise propagates into every derived
+        # path and makes rope build duplicated, non-existent project paths.
+        self.workspaceDir = os.path.abspath(self.workspaceDir)
         if not os.path.exists(self.workspaceDir):
             zip_path = os.path.join("Resources", "PcodeProjects.zip")
             if os.path.isfile(zip_path):
