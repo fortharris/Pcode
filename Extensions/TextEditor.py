@@ -1,6 +1,6 @@
 import os
-from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintilla
+from PySide6.Qsci import QsciScintilla
+from Extensions.qt_bindings import font_metrics_width,  QtCore, QtGui
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions.ZoomWidget import ZoomWidget
@@ -28,7 +28,7 @@ class TextEditor(BaseScintilla):
         self.setWrapMode(QsciScintilla.WrapWord)
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         mainLayout.addStretch(1)
@@ -69,7 +69,7 @@ class TextEditor(BaseScintilla):
 
         # Line numbers
         # conventionnaly, margin 0 is for line numbers
-        self.setMarginWidth(0, self.fontMetrics.width("0000") + 5)
+        self.setMarginWidth(0, font_metrics_width(self.fontMetrics(), "0000") + 5)
 
         self.setUtf8(True)
         self.setAutoIndent(True)
@@ -218,7 +218,7 @@ class TextEditor(BaseScintilla):
         self.cutAct.setEnabled(state)
         self.deleteAct.setEnabled(state)
 
-        self.contextMenu.exec_(event.globalPos())
+        self.contextMenu.exec(event.globalPos())
 
     def undoActModifier(self):
         state = self.isUndoAvailable()

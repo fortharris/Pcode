@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtGui, QtCore
+from Extensions.qt_bindings import QtGui, QtCore
 
 
 class Start(QtGui.QLabel):
@@ -11,7 +11,7 @@ class Start(QtGui.QLabel):
         self.useData = useData
 
         mainLayout = QtGui.QHBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setScaledContents(True)
         self.setObjectName("mainlabel")
         self.setLayout(mainLayout)

@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class LibraryAddDialog(QtGui.QDialog):
@@ -51,7 +51,7 @@ class LibraryAddDialog(QtGui.QDialog):
 
         self.moreWidget = QtGui.QWidget()
         vbox = QtGui.QVBoxLayout()
-        vbox.setMargin(0)
+        vbox.setContentsMargins(0, 0, 0, 0)
 
         self.commentEntry = QtGui.QPlainTextEdit()
         vbox.addWidget(self.commentEntry)
@@ -78,7 +78,7 @@ class LibraryAddDialog(QtGui.QDialog):
 
         self.accepted = False
 
-        self.exec_()
+        self.exec()
 
     def showComments(self):
         if self.moreWidget.isVisible():

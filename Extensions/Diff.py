@@ -1,8 +1,8 @@
 import sys
 import difflib
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintillaBase, QsciLexerCustom
+from PySide6.Qsci import QsciScintillaBase, QsciLexerCustom
+from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions import Global

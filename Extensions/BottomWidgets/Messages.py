@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtGui, QtCore
+from Extensions.qt_bindings import QtGui, QtCore
 
 
 class MessagesWidget(QtGui.QTreeWidget):

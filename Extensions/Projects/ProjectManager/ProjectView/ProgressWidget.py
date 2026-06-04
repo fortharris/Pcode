@@ -1,11 +1,11 @@
 import os
 
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class ProgressWidget(QtGui.QLabel):
 
-    updateProgress = QtCore.pyqtSignal(int)
+    updateProgress = QtCore.Signal(int)
 
     def __init__(self, parent=None):
         QtGui.QLabel.__init__(self, parent)
@@ -15,7 +15,7 @@ class ProgressWidget(QtGui.QLabel):
 
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.setSpacing(0)
-        mainLayout.setMargin(2)
+        mainLayout.setContentsMargins(2, 2, 2, 2)
         self.setLayout(mainLayout)
         
         self.progressBar = QtGui.QProgressBar()
@@ -26,7 +26,7 @@ class ProgressWidget(QtGui.QLabel):
         
 
         hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(2)
+        hbox.setContentsMargins(2, 2, 2, 2)
         hbox.setSpacing(0)
         self.progressBar.setLayout(hbox)
 

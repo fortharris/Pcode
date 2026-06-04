@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class UsageDialog(QtGui.QDialog):
@@ -14,7 +14,7 @@ class UsageDialog(QtGui.QDialog):
         self.editorTabWidget = editorTabWidget
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         self.view = QtGui.QTreeWidget()
@@ -28,7 +28,7 @@ class UsageDialog(QtGui.QDialog):
         for item in itemsList:
             self.view.addTopLevelItem(item)
 
-        self.exec_()
+        self.exec()
 
     def showLine(self, item):
         if item.parent() is None:

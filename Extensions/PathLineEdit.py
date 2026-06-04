@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class PathLineEdit(QtGui.QLineEdit):
@@ -11,7 +11,7 @@ class PathLineEdit(QtGui.QLineEdit):
 
         hbox = QtGui.QHBoxLayout()
         self.setLayout(hbox)
-        hbox.setMargin(0)
+        hbox.setContentsMargins(0, 0, 0, 0)
         hbox.setSpacing(0)
         hbox.addStretch(1)
 

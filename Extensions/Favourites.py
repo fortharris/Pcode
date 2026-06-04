@@ -1,14 +1,14 @@
 import os
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions import StyleSheet
 
 
 class Favourites(QtGui.QLabel):
 
-    showMe = QtCore.pyqtSignal()
+    showMe = QtCore.Signal()
 
-    openFile = QtCore.pyqtSignal(str)
+    openFile = QtCore.Signal(str)
 
     def __init__(self, favouritesList, messagesWidget, parent=None):
         super(Favourites, self).__init__(parent)

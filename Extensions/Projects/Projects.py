@@ -7,7 +7,7 @@ import sys
 import shutil
 import traceback
 import logging
-from PyQt4 import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.EditorWindow.EditorWindow import EditorWindow
 from Extensions.Projects.NewProjectDialog import NewProjectDialog

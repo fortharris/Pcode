@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class ZoomWidget(QtGui.QLabel):
@@ -17,7 +17,7 @@ class ZoomWidget(QtGui.QLabel):
         self.setMaximumWidth(38)
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(1)
+        mainLayout.setContentsMargins(1, 1, 1, 1)
         mainLayout.setSpacing(0)
         self.setLayout(mainLayout)
 

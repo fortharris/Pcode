@@ -1,7 +1,7 @@
 import os
 import ctypes
 import shutil
-from PyQt4 import QtGui, QtCore, QtXml
+from Extensions.qt_bindings import QtGui, QtCore, QtXml
 
 from Extensions import Global
 from Extensions.Projects.ProjectManager.ProjectView.ProgressWidget import ProgressWidget
@@ -46,7 +46,7 @@ class GetName(QtGui.QDialog):
         self.resize(300, 20)
         self.enableAcceptButton()
 
-        self.exec_()
+        self.exec()
 
     def enableAcceptButton(self):
         text = self.nameLine.text().strip()
@@ -73,8 +73,8 @@ class GetName(QtGui.QDialog):
 
 class CopyThread(QtCore.QThread):
 
-    currentJobChanged = QtCore.pyqtSignal(str)
-    copyingSizeChanged = QtCore.pyqtSignal(int)
+    currentJobChanged = QtCore.Signal(str)
+    copyingSizeChanged = QtCore.Signal(int)
 
     def run(self):
         try:
@@ -192,7 +192,7 @@ class IconProvider(QtGui.QFileIconProvider):
 
 class ProjectTree(QtGui.QTreeView):
 
-    fileActivated = QtCore.pyqtSignal(str)
+    fileActivated = QtCore.Signal(str)
 
     def __init__(self, editorTabWidget, root, app, projectSettings, progressWidget, parent):
         QtGui.QTreeView.__init__(self, parent)
@@ -272,7 +272,7 @@ class ProjectTree(QtGui.QTreeView):
                     self.contextMenu.addSeparator()
                     self.contextMenu.addAction(self.mainScriptsAct)
 
-        self.contextMenu.exec_(event.globalPos())
+        self.contextMenu.exec(event.globalPos())
 
     def createActions(self):
         self.addFileAct = QtGui.QAction(
@@ -575,7 +575,7 @@ class ProjectTree(QtGui.QTreeView):
 
 class SearchThread(QtCore.QThread):
 
-    foundList = QtCore.pyqtSignal(dict)
+    foundList = QtCore.Signal(dict)
 
     def run(self):
         resultsDict = {}
@@ -603,7 +603,7 @@ class SearchThread(QtCore.QThread):
 
 class LineEdit(QtGui.QLineEdit):
 
-    fileActivated = QtCore.pyqtSignal(str)
+    fileActivated = QtCore.Signal(str)
 
     def __init__(self, viewStack, searchResultsTree, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -614,7 +614,7 @@ class LineEdit(QtGui.QLineEdit):
         self.setPlaceholderText("Search")
 
         hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(1)
+        hbox.setContentsMargins(1, 1, 1, 1)
         hbox.addStretch(1)
         self.setLayout(hbox)
 
@@ -669,7 +669,7 @@ class LineEdit(QtGui.QLineEdit):
 
 class ProjectView(QtGui.QWidget):
 
-    fileActivated = QtCore.pyqtSignal(str)
+    fileActivated = QtCore.Signal(str)
 
     def __init__(self, editorTabWidget, root, app, projectSettings, parent=None):
         QtGui.QWidget.__init__(self, parent)

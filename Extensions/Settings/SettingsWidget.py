@@ -1,4 +1,4 @@
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions.Settings.ColorScheme.ColorScheme import ColorScheme
 from Extensions.Settings.Keymap import Keymap
@@ -20,7 +20,7 @@ class SettingsWidget(QtGui.QDialog):
         self.projectWindowStack = projectWindowStack
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         self.settingsTab = QtGui.QTabWidget()

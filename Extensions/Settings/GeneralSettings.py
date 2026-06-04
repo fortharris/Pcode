@@ -1,7 +1,7 @@
 import os
 import shutil
-from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintilla
+from PySide6.Qsci import QsciScintilla
+from Extensions.qt_bindings import QtCore, QtGui
 from Extensions import StyleSheet
 
 

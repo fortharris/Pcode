@@ -5,8 +5,8 @@ from zipimport import zipimporter
 import tokenize
 from io import StringIO
 
-from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintilla
+from PySide6.Qsci import QsciScintilla
+from Extensions.qt_bindings import font_metrics_width,  QtCore, QtGui
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions.ZoomWidget import ZoomWidget
@@ -38,7 +38,7 @@ class TokenizeThread(QtCore.QThread):
 
 class DocThread(QtCore.QThread):
 
-    docAvailable = QtCore.pyqtSignal(str, int)
+    docAvailable = QtCore.Signal(str, int)
 
     def run(self):
         try:
@@ -58,7 +58,7 @@ class DocThread(QtCore.QThread):
 
 class AutoCompletionThread(QtCore.QThread):
 
-    completionsAvailable = QtCore.pyqtSignal(list)
+    completionsAvailable = QtCore.Signal(list)
 
     def run(self):
         completions = self.completions()
@@ -287,7 +287,7 @@ class CodeEditor(BaseScintilla):
         self.completionThreadTimer.timeout.connect(self.startCompletion)
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         mainLayout.addStretch(1)
@@ -372,7 +372,7 @@ class CodeEditor(BaseScintilla):
 
         # Line numbers
         # conventionnaly, margin 0 is for line numbers
-        self.setMarginWidth(0, self.fontMetrics.width("0000") + 5)
+        self.setMarginWidth(0, font_metrics_width(self.fontMetrics(), "0000") + 5)
 
         self.setAutoCompletionReplaceWord(True)
         # minimum number of letters to be typed before list is displayed
@@ -440,7 +440,7 @@ class CodeEditor(BaseScintilla):
         self.markerDefine(QsciScintilla.VerticalLine, 11)
         self.setMarkerBackgroundColor(QtGui.QColor("#EEEE11"), 11)
         self.setMarkerForegroundColor(QtGui.QColor("#EEEE11"), 11)
-        self.setMarginWidth(3, self.fontMetrics.width("0"))
+        self.setMarginWidth(3, font_metrics_width(self.fontMetrics(), "0"))
 
         mask = (1 << 8) | (1 << 9)
         self.setMarginMarkerMask(1, mask)
@@ -623,7 +623,7 @@ class CodeEditor(BaseScintilla):
         self.copyAct.setEnabled(hasSelection)
         self.cutAct.setEnabled(hasSelection)
 
-        self.contextMenu.exec_(event.globalPos())
+        self.contextMenu.exec(event.globalPos())
 
     def undoActModifier(self):
         state = self.isUndoAvailable()
@@ -781,7 +781,7 @@ class CodeEditor(BaseScintilla):
 
     def setMarkOperationalLines(self):
         if self.useData.SETTINGS["MarkOperationalLines"] == 'True':
-            self.setMarginWidth(3, self.fontMetrics.width("0"))
+            self.setMarginWidth(3, font_metrics_width(self.fontMetrics(), "0"))
             self.getOperationTokens()
         else:
             self.markerDeleteAll(11)

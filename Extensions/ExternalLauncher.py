@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions import Global
 from Extensions.PathLineEdit import PathLineEdit
@@ -8,7 +8,7 @@ from Extensions import StyleSheet
 
 class ExternalLauncher(QtGui.QLabel):
 
-    showMe = QtCore.pyqtSignal()
+    showMe = QtCore.Signal()
 
     def __init__(self, externalLaunchList, parent=None):
         super(ExternalLauncher, self).__init__(parent)

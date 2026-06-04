@@ -1,6 +1,6 @@
 import os
 
-from PyQt4 import QtGui
+from Extensions.qt_bindings import QtGui
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions import StyleSheet
@@ -29,7 +29,7 @@ class CodeSnapshot(BaseScintilla):
         state = self.hasSelectedText()
         self.copyAct.setEnabled(state)
 
-        self.contextMenu.exec_(event.globalPos())
+        self.contextMenu.exec(event.globalPos())
 
     def createContextMenu(self):
         self.copyAct = QtGui.QAction(

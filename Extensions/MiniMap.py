@@ -1,6 +1,6 @@
 import sys
-from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintilla
+from PySide6.Qsci import QsciScintilla
+from Extensions.qt_bindings import QtCore, QtGui
 
 class Handle(QtGui.QFrame):
     def __init__(self, parent):
@@ -140,4 +140,4 @@ if __name__ == '__main__':
     main = MiniMap()
     main.show()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())

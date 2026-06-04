@@ -5,8 +5,8 @@ import codecs
 import traceback
 import logging
 
-from PyQt4 import QtCore, QtXml
-from PyQt4.Qsci import QsciScintilla
+from PySide6.Qsci import QsciScintilla
+from Extensions.qt_bindings import QtCore, QtXml
 
 from Extensions.Workspace import Workspace
 

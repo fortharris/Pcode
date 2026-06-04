@@ -1,15 +1,15 @@
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class ColorChooser(QtGui.QWidget):
 
-    colorChanged = QtCore.pyqtSignal(str)
+    colorChanged = QtCore.Signal(str)
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
         hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(0)
+        hbox.setContentsMargins(0, 0, 0, 0)
         self.setLayout(hbox)
 
         self.colorHexLine = QtGui.QLineEdit()

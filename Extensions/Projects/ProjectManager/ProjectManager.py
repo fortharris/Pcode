@@ -1,6 +1,6 @@
 import os
 import shutil
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions.Projects.ProjectManager.ProjectView.ProjectView import ProjectView
 from Extensions.Projects.ProjectManager.Build import Build
@@ -63,7 +63,7 @@ class ProjectManager(QtGui.QWidget):
             self.build.build()
 
     def configureProject(self):
-        self.configDialog.exec_()
+        self.configDialog.exec()
 
     def openBuild(self):
         self.build.openDir()

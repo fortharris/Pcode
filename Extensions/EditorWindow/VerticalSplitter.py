@@ -1,4 +1,4 @@
-from PyQt4 import QtGui
+from Extensions.qt_bindings import QtGui
 
 
 class VerticalSplitter(QtGui.QSplitter):

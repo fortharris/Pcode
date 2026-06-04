@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from Extensions.qt_bindings import QtGui, QtCore
 
 from Extensions.MiniMap import MiniMap
 
@@ -17,7 +17,7 @@ class EditorSplitter(QtGui.QWidget):
         self.editor2 = editor2
         
         mainLayout = QtGui.QHBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         mainLayout.setSpacing(0)
         self.setLayout(mainLayout)
         

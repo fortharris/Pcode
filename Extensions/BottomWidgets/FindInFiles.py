@@ -1,7 +1,7 @@
 import os
 import ctypes
 import re
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions import Global
 from Extensions.Diff import DiffWindow
@@ -9,8 +9,8 @@ from Extensions.Diff import DiffWindow
 
 class FinderThread(QtCore.QThread):
 
-    listItemAvailable = QtCore.pyqtSignal()
-    currentDir = QtCore.pyqtSignal(str)
+    listItemAvailable = QtCore.Signal()
+    currentDir = QtCore.Signal(str)
 
     def run(self):
         for dirname, _, files in os.walk(self.directory):
@@ -127,7 +127,7 @@ class ConfirmReplaceDialog(QtGui.QDialog):
         hbox.addStretch(1)
 
         self.replaced = False
-        self.exec_()
+        self.exec()
 
     def replace(self):
         QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
@@ -173,7 +173,7 @@ class FoundFilesView(QtGui.QTreeWidget):
             item = selected[0]
             if item.parent() is None:
                 self.viewAct.setEnabled(False)
-        self.contextMenu.exec_(event.globalPos())
+        self.contextMenu.exec(event.globalPos())
 
     def createActions(self):
         self.viewAct = QtGui.QAction(
@@ -200,7 +200,7 @@ class FindInFiles(QtGui.QWidget):
         self.bottomStackSwitcher = bottomStackSwitcher
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         self.statusWidget = QtGui.QWidget()

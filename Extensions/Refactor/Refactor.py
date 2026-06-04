@@ -3,7 +3,7 @@ import os
 import traceback
 import logging
 
-from PyQt4 import QtGui, QtCore
+from Extensions.qt_bindings import QtGui, QtCore
 
 # rope
 from rope.refactor.rename import Rename
@@ -59,7 +59,7 @@ class GetName(QtGui.QDialog):
         self.resize(300, 20)
         self.enableAcceptButton()
 
-        self.exec_()
+        self.exec()
 
     def enableAcceptButton(self):
         text = self.nameLine.text().strip()

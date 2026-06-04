@@ -1,11 +1,11 @@
 import os
 import re
-from PyQt4 import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 
 class FinderThread(QtCore.QThread):
 
-    searchSoFar = QtCore.pyqtSignal(int)
+    searchSoFar = QtCore.Signal(int)
 
     def find(self, text, matchCase, matchWholeWord, regExp, searchLoc, libraryDir):
         self.text = text
@@ -85,7 +85,7 @@ class AdvancedSearch(QtGui.QWidget):
         self.finderThread = FinderThread()
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
 
         self.searchResultsListWidget = QtGui.QListWidget()
         self.searchResultsListWidget.itemPressed.connect(

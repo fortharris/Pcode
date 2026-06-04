@@ -1,4 +1,4 @@
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class ModuleCompletion(QtGui.QTreeWidget):
@@ -49,7 +49,7 @@ class ModuleCompletion(QtGui.QTreeWidget):
         self.selectedItem = selected[0]
         self.selectedParent = self.selectedItem.parent()
 
-        self.contextMenu.exec_(event.globalPos())
+        self.contextMenu.exec(event.globalPos())
 
     def addLibrary(self):
         return

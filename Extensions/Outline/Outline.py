@@ -1,13 +1,13 @@
 import os
 from operator import itemgetter
 
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 from Extensions.Outline.Python import pyclbr
 
 
 class PythonOutlineThread(QtCore.QThread):
 
-    updateNavigator = QtCore.pyqtSignal(dict)
+    updateNavigator = QtCore.Signal(dict)
 
     def run(self):
         outlineDict = pyclbr._readmodule(self.source)

@@ -5,8 +5,8 @@ import time
 import traceback
 import logging
 
-from PyQt4 import QtCore, QtGui, QtXml
-from PyQt4.Qsci import QsciScintilla
+from PySide6.Qsci import QsciScintilla
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.Diff import DiffWindow
 from Extensions.CodeEditor import CodeEditor
@@ -67,7 +67,7 @@ class EditorTabBar(QtGui.QTabBar):
         self.favouritesAct.setEnabled(state)
         self.reloadTabAct.setEnabled(state)
 
-        self.menu.exec_(event.globalPos())
+        self.menu.exec(event.globalPos())
 
     def createActions(self):
         self.closeTabAct = QtGui.QAction(
@@ -150,13 +150,13 @@ class EditorTabBar(QtGui.QTabBar):
 
 class EditorTabWidget(QtGui.QTabWidget):
 
-    currentEditorTextChanged = QtCore.pyqtSignal()
-    bookmarksChanged = QtCore.pyqtSignal()
-    updateLinesCount = QtCore.pyqtSignal(int)
-    updateRecentFilesList = QtCore.pyqtSignal(str)
-    updateWindowTitle = QtCore.pyqtSignal(str)
-    updateEncodingLabel = QtCore.pyqtSignal(str)
-    cursorPositionChanged = QtCore.pyqtSignal()
+    currentEditorTextChanged = QtCore.Signal()
+    bookmarksChanged = QtCore.Signal()
+    updateLinesCount = QtCore.Signal(int)
+    updateRecentFilesList = QtCore.Signal(str)
+    updateWindowTitle = QtCore.Signal(str)
+    updateEncodingLabel = QtCore.Signal(str)
+    cursorPositionChanged = QtCore.Signal()
 
     def __init__(
         self, useData, projectPathDict, projectSettings, messagesWidget, colorScheme, busyWidget, bookmarkToolbar,
@@ -1085,7 +1085,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         printer = QtGui.QPrinter()
 
         dlg = QtGui.QPrintDialog(printer, self)
-        if dlg.exec_() != QtGui.QDialog.Accepted:
+        if dlg.exec() != QtGui.QDialog.Accepted:
             return
         document.print_(printer)
 

@@ -1,6 +1,6 @@
 import os
 import ast
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 from pyflakes.checker import Checker as flakeChecker
 from Xtra import pep8
 from Xtra import autopep8
@@ -9,7 +9,7 @@ from Xtra.autopep8 import FixPEP8
 
 class ErrorCheckerThread(QtCore.QThread):
 
-    newAlerts = QtCore.pyqtSignal(list, bool)
+    newAlerts = QtCore.Signal(list, bool)
 
     def run(self):
         messages = []
@@ -40,7 +40,7 @@ class ErrorCheckerThread(QtCore.QThread):
 
 class Pep8CheckerThread(QtCore.QThread):
 
-    newAlerts = QtCore.pyqtSignal(list)
+    newAlerts = QtCore.Signal(list)
 
     def run(self):
         checkList = []
@@ -81,7 +81,7 @@ class Pep8Report (pep8.BaseReport):
 
 class AutoPep8FixerThread(QtCore.QThread):
 
-    new = QtCore.pyqtSignal()
+    new = QtCore.Signal()
 
     def run(self):
         try:
@@ -150,7 +150,7 @@ class Pep8View(QtGui.QTreeWidget):
             fixable = item.data(9, 2)
             # self.fixAct.setEnabled(fixable)
             # self.fixAllAct.setEnabled(fixable)
-            self.contextMenu.exec_(event.globalPos())
+            self.contextMenu.exec(event.globalPos())
 
     def fixErrors(self):
         # just in case autopep8 check has not been done already

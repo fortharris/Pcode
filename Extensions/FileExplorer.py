@@ -1,13 +1,13 @@
 import os
 import ctypes
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions import StyleSheet
 
 
 class ManageShortcuts(QtGui.QLabel):
 
-    updateShortcuts = QtCore.pyqtSignal()
+    updateShortcuts = QtCore.Signal()
 
     def __init__(self, useData, FILE_EXPLORER_SHORTCUTS, parent=None):
         super(ManageShortcuts, self).__init__(parent)
@@ -143,7 +143,7 @@ class ManageShortcuts(QtGui.QLabel):
 
 class FileExplorer(QtGui.QTreeView):
 
-    fileActivated = QtCore.pyqtSignal(str)
+    fileActivated = QtCore.Signal(str)
 
     def __init__(self, useData, FILE_EXPLORER_SHORTCUTS, messagesWidget, editorTabWidget, parent=None):
         QtGui.QTreeView.__init__(self, parent)
@@ -190,7 +190,7 @@ class FileExplorer(QtGui.QTreeView):
         self.contextMenu.addMenu(self.shortcutsMenu)
         self.contextMenu.addAction(self.manageShortcutsAct)
 
-        self.contextMenu.exec_(event.globalPos())
+        self.contextMenu.exec(event.globalPos())
 
     def createActions(self):
         self.homeAct = QtGui.QAction(

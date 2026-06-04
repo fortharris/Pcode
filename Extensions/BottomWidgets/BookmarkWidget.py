@@ -1,4 +1,4 @@
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class BookmarkWidget(QtGui.QTreeWidget):

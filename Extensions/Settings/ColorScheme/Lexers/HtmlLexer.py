@@ -1,8 +1,8 @@
 import sys
 
 
-from PyQt4 import QtGui
-from PyQt4.Qsci import QsciLexerHTML
+from PySide6.Qsci import QsciLexerHTML
+from Extensions.qt_bindings import QtGui
 
 # Platform specific fonts
 if sys.platform == 'win32':

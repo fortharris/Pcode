@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.Settings.ColorScheme.Lexers import PythonLexer
 from Extensions.Settings.ColorScheme.Lexers import CssLexer
@@ -10,7 +10,7 @@ from Extensions.Settings.ColorScheme.ColorChooser import ColorChooser
 
 class StyleLexer(QtGui.QWidget):
 
-    reloadStyles = QtCore.pyqtSignal()
+    reloadStyles = QtCore.Signal()
 
     def __init__(self, styleProperties, useData, parent=None):
         super(StyleLexer, self).__init__(parent)
@@ -21,7 +21,7 @@ class StyleLexer(QtGui.QWidget):
         self.setCurrentStyle("Default", "Python")
 
         mainLayout = QtGui.QHBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
 
         # style properties
         self.propertyListWidget = QtGui.QListWidget()

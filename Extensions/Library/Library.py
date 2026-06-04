@@ -1,6 +1,6 @@
 import os
 import shutil
-from PyQt4 import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.Library.LibraryAddDialog import LibraryAddDialog
 from Extensions.Library.AdvancedSearch import AdvancedSearch
@@ -104,7 +104,7 @@ class GetName(QtGui.QDialog):
 
         self.accepted = False
 
-        self.exec_()
+        self.exec()
 
     def enableAcceptButton(self):
         text = self.nameLine.text().strip()
@@ -183,7 +183,7 @@ class Library(QtGui.QMainWindow):
 
         snippetsWidget = QtGui.QWidget()
         snippetsVbox = QtGui.QVBoxLayout()
-        snippetsVbox.setMargin(0)
+        snippetsVbox.setContentsMargins(0, 0, 0, 0)
 
         self.snippetsListWidget = QtGui.QTreeWidget()
         self.snippetsListWidget.setAutoScroll(False)
@@ -393,7 +393,7 @@ class Library(QtGui.QMainWindow):
 
     def editComment(self):
         edit = EditComment(self.commentViewer.toPlainText(), self)
-        edit.exec_()
+        edit.exec()
 
         if edit.accepted:
             comment = edit.commentEdit.toPlainText()
@@ -561,7 +561,7 @@ class Library(QtGui.QMainWindow):
         printer = QtGui.QPrinter()
 
         dlg = QtGui.QPrintDialog(printer, self)
-        if dlg.exec_() != QtGui.QDialog.Accepted:
+        if dlg.exec() != QtGui.QDialog.Accepted:
             return
         document.print_(printer)
 

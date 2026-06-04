@@ -1,14 +1,14 @@
 import sys
 import os
-from PyQt4 import QtCore, QtGui, QtXml
-from PyQt4.Qsci import QsciScintilla
+from PySide6.Qsci import QsciScintilla
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.Settings.ColorScheme.ColorChooser import ColorChooser
 
 
 class StyleEditor(QtGui.QWidget):
 
-    paperChanged = QtCore.pyqtSignal()
+    paperChanged = QtCore.Signal()
 
     def __init__(self, useData, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -17,7 +17,7 @@ class StyleEditor(QtGui.QWidget):
 
         mainLayout = QtGui.QHBoxLayout()
         self.setLayout(mainLayout)
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
 
         properties = self.loadDefaultProperties()
         self.propertyListWidget = QtGui.QListWidget()
@@ -62,7 +62,7 @@ class StyleEditor(QtGui.QWidget):
 
         stackWidget = QtGui.QWidget()
         stackBox = QtGui.QVBoxLayout()
-        stackBox.setMargin(0)
+        stackBox.setContentsMargins(0, 0, 0, 0)
         stackWidget.setLayout(stackBox)
         self.extra_settings_stack.addWidget(stackWidget)
 
@@ -82,7 +82,7 @@ class StyleEditor(QtGui.QWidget):
 
         stackWidget = QtGui.QWidget()
         stackBox = QtGui.QVBoxLayout()
-        stackBox.setMargin(0)
+        stackBox.setContentsMargins(0, 0, 0, 0)
         stackWidget.setLayout(stackBox)
         self.extra_settings_stack.addWidget(stackWidget)
 

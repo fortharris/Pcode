@@ -1,10 +1,10 @@
 import os
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class GetPathLine(QtGui.QWidget):
 
-    textChanged = QtCore.pyqtSignal(str)
+    textChanged = QtCore.Signal(str)
 
     def __init__(self, useData, defaultText=None, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -12,7 +12,7 @@ class GetPathLine(QtGui.QWidget):
         self.useData = useData
 
         mainLayout = QtGui.QHBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         self.locationLine = QtGui.QLineEdit()
@@ -39,7 +39,7 @@ class GetPathLine(QtGui.QWidget):
 
 class NewProjectDialog(QtGui.QDialog):
 
-    projectDataReady = QtCore.pyqtSignal(dict)
+    projectDataReady = QtCore.Signal(dict)
 
     def __init__(self, useData, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |

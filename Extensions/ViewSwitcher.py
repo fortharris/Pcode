@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtGui
+from Extensions.qt_bindings import QtGui
 
 from Extensions import StyleSheet
 
@@ -17,7 +17,7 @@ class ViewSwitcher(QtGui.QLabel):
         self.lastIndex = 0
 
         self.mainLayout = QtGui.QHBoxLayout()
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.setLayout(self.mainLayout)
 

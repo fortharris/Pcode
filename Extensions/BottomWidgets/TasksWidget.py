@@ -1,12 +1,12 @@
 import re
 import os
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class TaskFinderThread(QtCore.QThread):
 
     TASKS_PATTERN = r"(^|#)[ ]*(TODO|FIXME|XXX|HINT|TIP)( |:)([^#]*)"
-    newTasks = QtCore.pyqtSignal(list)
+    newTasks = QtCore.Signal(list)
     results = []
 
     def run(self):

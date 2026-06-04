@@ -1,4 +1,4 @@
-from PyQt4 import QtGui, QtCore
+from Extensions.qt_bindings import QtGui, QtCore
 
 
 class Notification(QtGui.QLabel):
@@ -7,7 +7,7 @@ class Notification(QtGui.QLabel):
         QtGui.QLabel.__init__(self, parent)
 
         self.setMinimumHeight(25)
-        self.setMargin(5)
+        self.setContentsMargins(5, 5, 5, 5)
         
         self.easingCurve = QtCore.QEasingCurve.OutCubic
 

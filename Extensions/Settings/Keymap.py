@@ -1,5 +1,5 @@
-from PyQt4 import QtCore, QtGui, QtXml
-from PyQt4.Qsci import QsciScintilla
+from PySide6.Qsci import QsciScintilla
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 
 class GetShortcut(QtGui.QDialog):
@@ -95,7 +95,7 @@ class Keymap(QtGui.QDialog):
         mainLayout.addWidget(self.shortcutsView)
 
         hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(0)
+        hbox.setContentsMargins(0, 0, 0, 0)
         mainLayout.addLayout(hbox)
 
         hbox.addStretch(1)
@@ -144,7 +144,7 @@ class Keymap(QtGui.QDialog):
             return
         shortcut = GetShortcut(self)
         shortcut.setShortcut(QtGui.QKeySequence(item.text(1)).toString())
-        shortcut.exec_()
+        shortcut.exec()
         if shortcut.accepted:
             if self.validateShortcut(shortcut.keysequence):
                 item = self.shortcutsView.currentItem()

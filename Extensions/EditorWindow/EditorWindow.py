@@ -4,7 +4,7 @@ import sys
 import traceback
 import logging
 
-from PyQt4 import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.FileExplorer import FileExplorer
 from Extensions.BottomWidgets.FindInFiles import FindInFiles
@@ -46,7 +46,7 @@ class EditorWindow(QtGui.QWidget):
         self.buildStatusWidget = BuildStatusWidget(self.app, self.useData)
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         mainLayout.setSpacing(0)
         self.setLayout(mainLayout)
 
@@ -59,7 +59,7 @@ class EditorWindow(QtGui.QWidget):
 
         widget = QtGui.QWidget()
         vbox = QtGui.QVBoxLayout()
-        vbox.setMargin(0)
+        vbox.setContentsMargins(0, 0, 0, 0)
         vbox.setSpacing(0)
         widget.setLayout(vbox)
 
@@ -257,7 +257,7 @@ class EditorWindow(QtGui.QWidget):
         self.bottomStackSwitcher.setDefault()
 
         hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(0)
+        hbox.setContentsMargins(0, 0, 0, 0)
         hbox.setSpacing(0)
         hbox.addWidget(self.bottomStackSwitcher)
         hbox.addStretch(1)

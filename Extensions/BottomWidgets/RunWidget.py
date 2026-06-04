@@ -2,8 +2,8 @@ import os
 import re
 import sys
 import locale
-from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
+from PySide6.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 from Extensions.BaseScintilla import BaseScintilla
@@ -277,7 +277,7 @@ class OutputLexer(QsciLexerCustom):
 
 class RunWidget(BaseScintilla):
 
-    loadProfile = QtCore.pyqtSignal()
+    loadProfile = QtCore.Signal()
 
     def __init__(
         self, bottomStackSwitcher, projectData, useData, editorTabWidget, vSplitter, runProjectAct, stopRunAct,
@@ -719,7 +719,7 @@ class RunWidget(BaseScintilla):
 
     def contextMenuEvent(self, event):
         if self.isReadOnly():
-            self.contextMenu.exec_(event.globalPos())
+            self.contextMenu.exec(event.globalPos())
         else:
             event.ignore()
 

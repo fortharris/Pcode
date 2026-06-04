@@ -1,9 +1,9 @@
-from PyQt4 import QtGui, QtCore
+from Extensions.qt_bindings import QtGui, QtCore
 
 
 class StackSwitcher(QtGui.QWidget):
 
-    changed = QtCore.pyqtSignal(str)
+    changed = QtCore.Signal(str)
 
     def __init__(self, stack, parent=None):
         QtGui.QDialog.__init__(self, parent)
@@ -12,7 +12,7 @@ class StackSwitcher(QtGui.QWidget):
         self.lastIndex = 0
 
         self.mainLayout = QtGui.QHBoxLayout()
-        self.mainLayout.setMargin(0)
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.setLayout(self.mainLayout)
 

@@ -1,6 +1,6 @@
 import os
 
-from PyQt4 import QtGui
+from Extensions.qt_bindings import QtGui
 
 
 class GotoLineWidget(QtGui.QLabel):
@@ -22,7 +22,7 @@ class GotoLineWidget(QtGui.QLabel):
                 triggered=self.gotoLine)
 
         mainLayout = QtGui.QHBoxLayout()
-        mainLayout.setMargin(3)
+        mainLayout.setContentsMargins(3, 3, 3, 3)
         mainLayout.setSpacing(2)
         self.setLayout(mainLayout)
 

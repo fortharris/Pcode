@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class SearchWidget(QtGui.QLabel):
@@ -29,7 +29,7 @@ class SearchWidget(QtGui.QLabel):
         self.textFinderWidget = QtGui.QWidget()
 
         hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(0)
+        hbox.setContentsMargins(0, 0, 0, 0)
         hbox.addWidget(QtGui.QLabel("Find:"))
 
         self.findLine = QtGui.QLineEdit()
@@ -94,7 +94,7 @@ class SearchWidget(QtGui.QLabel):
         self.replacerWidget = QtGui.QWidget()
 
         hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(0)
+        hbox.setContentsMargins(0, 0, 0, 0)
         hbox.addStretch(1)
 
         label = QtGui.QLabel("Replace with:")

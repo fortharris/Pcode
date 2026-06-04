@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 
-from PyQt4 import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.Projects.ProjectManager.ProjectView.ProjectView import IconProvider
 from venv import EnvBuilder
@@ -46,7 +46,7 @@ class SelectBox(QtGui.QDialog):
         self.resize(400, 20)
         self.enableAcceptButton()
 
-        self.exec_()
+        self.exec()
 
     def enableAcceptButton(self):
         if self.itemBox.currentIndex() == 0:
@@ -104,7 +104,7 @@ class GetText(QtGui.QDialog):
         self.resize(400, 20)
         self.enableAcceptButton()
 
-        self.exec_()
+        self.exec()
 
     def enableAcceptButton(self):
         text = self.nameLine.text().strip()
@@ -452,7 +452,7 @@ class BuildConfig(QtGui.QWidget):
         self.useData = useData
         
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         self.lists = {"Includes": [],

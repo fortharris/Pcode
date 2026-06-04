@@ -4,7 +4,7 @@ import traceback
 import logging
 import cx_Freeze
 from cx_Freeze import Freezer
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class Metadata(object):

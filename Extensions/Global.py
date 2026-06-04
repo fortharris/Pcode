@@ -1,6 +1,6 @@
 
 import sys
-from PyQt4 import QtGui, QtCore
+from Extensions.qt_bindings import QtGui, QtCore
 
 
 def getDefaultFont():

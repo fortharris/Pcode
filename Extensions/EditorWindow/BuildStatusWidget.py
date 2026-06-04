@@ -1,9 +1,9 @@
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class BuildStatusWidget(QtGui.QWidget):
 
-    cancel = QtCore.pyqtSignal()
+    cancel = QtCore.Signal()
 
     def __init__(self, app, useData, parent=None):
         QtGui.QDialog.__init__(self, parent)
@@ -12,7 +12,7 @@ class BuildStatusWidget(QtGui.QWidget):
         self.app = app
 
         mainLayout = QtGui.QHBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         mainLayout.addWidget(QtGui.QLabel("Build Started..."))

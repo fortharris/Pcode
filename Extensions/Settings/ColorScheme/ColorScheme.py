@@ -1,5 +1,5 @@
 import os
-from PyQt4 import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.Settings.ColorScheme.StyleEditor import StyleEditor
 from Extensions.Settings.ColorScheme.StyleLexer import StyleLexer
@@ -50,7 +50,7 @@ class GetName(QtGui.QDialog):
 
         self.accepted = False
 
-        self.exec_()
+        self.exec()
 
     def enableAcceptButton(self):
         text = self.nameLine.text().strip()
@@ -87,7 +87,7 @@ class ColorScheme(QtGui.QDialog):
         self.libraryViewer = libraryViewer
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(5)
+        mainLayout.setContentsMargins(5, 5, 5, 5)
         self.setLayout(mainLayout)
 
         optionsTab = QtGui.QTabWidget()

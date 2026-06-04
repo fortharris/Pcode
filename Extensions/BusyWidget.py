@@ -1,9 +1,9 @@
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class BusyWidget(QtGui.QDialog):
 
-    cancel = QtCore.pyqtSignal()
+    cancel = QtCore.Signal()
 
     def __init__(self, app, useData, parent=None):
         QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
@@ -16,7 +16,7 @@ class BusyWidget(QtGui.QDialog):
         self.useData = useData
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         mainLayout.setSpacing(0)
         self.setLayout(mainLayout)
 
@@ -110,7 +110,7 @@ class BusyWidget(QtGui.QDialog):
             else:
                 self.cancelButton.hide()
                 self.setFixedSize(250, 60)
-            self.exec_()
+            self.exec()
         else:
             self.progressBar.setRange(1, 1)
             self.hide()
