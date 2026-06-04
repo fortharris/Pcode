@@ -2,7 +2,7 @@ import os
 import re
 import sys
 import locale
-from PySide6.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
+from PyQt6.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
 from Extensions.qt_bindings import QtCore, QtGui
 
 
@@ -301,7 +301,7 @@ class RunWidget(BaseScintilla):
         self.toggleInsertOrOvertype()
 
         self.linkIndicator = self.indicatorDefine(
-            QsciScintilla.INDIC_PLAIN, 8)
+            QsciScintilla.IndicatorStyle.PlainIndicator, 8)
         self.setIndicatorForegroundColor(QtGui.QColor(
             "#474747"), self.linkIndicator)
         self.setIndicatorDrawUnder(True, self.linkIndicator)
@@ -318,7 +318,7 @@ class RunWidget(BaseScintilla):
         self.setSelectionForegroundColor(QtGui.QColor("#FFFFFF"))
 
         self.runProcess = QtCore.QProcess(self)
-        self.runProcess.error.connect(self.writeProcessError)
+        self.runProcess.errorOccurred.connect(self.writeProcessError)
         self.runProcess.stateChanged.connect(self.stateChanged)
         self.runProcess.readyReadStandardOutput.connect(self.writeOutput)
         self.runProcess.readyReadStandardError.connect(self.writeError)
@@ -414,7 +414,7 @@ class RunWidget(BaseScintilla):
     def writeExitStatus(self, exitCode, exitStatus):
         self.writeOutput()
         self.writeError()
-        if exitStatus == QtCore.QProcess.NormalExit:
+        if exitStatus == QtCore.QProcess.ExitStatus.NormalExit:
             self.printout(">>> Exit: {0}\n".format(str(exitCode)), 3)
         else:
             # error will be displayed instead by writeProcessError

@@ -28,7 +28,7 @@ class FinderThread(QtCore.QThread):
             txt = re.escape(self.text)
         if self.wo:
             txt = "\\b{0}\\b".format(txt)
-        flags = re.UNICODE | re.LOCALE
+        flags = re.UNICODE
         if not self.cs:
             flags |= re.IGNORECASE
         try:
@@ -156,10 +156,8 @@ class AdvancedSearch(QtGui.QWidget):
         self.setLayout(mainLayout)
 
         self.finderThread.searchSoFar.connect(self.updateProgress)
-        self.connect(self.finderThread, QtCore.SIGNAL('started()'),
-                     self.searchStarted)
-        self.connect(self.finderThread, QtCore.SIGNAL('finished()'),
-                     self.searchStopped)
+        self.finderThread.started.connect(self.searchStarted)
+        self.finderThread.finished.connect(self.searchStopped)
 
     def startSearch(self):
         searchText = self.searchLine.text()

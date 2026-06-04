@@ -1,6 +1,6 @@
 import sys
 import os
-from PySide6.Qsci import QsciScintilla
+from PyQt6.Qsci import QsciScintilla
 from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.Settings.ColorScheme.ColorChooser import ColorChooser

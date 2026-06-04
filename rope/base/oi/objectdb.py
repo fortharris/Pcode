@@ -1,4 +1,5 @@
-from collections import UserDict, MutableMapping
+from collections import UserDict
+from collections.abc import MutableMapping
 
 class ObjectDB(object):
 

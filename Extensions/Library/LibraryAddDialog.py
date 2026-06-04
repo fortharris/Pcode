@@ -42,7 +42,8 @@ class LibraryAddDialog(QtGui.QDialog):
         
         self.showDetailsButton = QtGui.QToolButton()
         self.showDetailsButton.setAutoRaise(True)
-        self.showDetailsButton.setToolButtonStyle(2)
+        self.showDetailsButton.setToolButtonStyle(
+            QtCore.Qt.ToolButtonTextBesideIcon)
         self.showDetailsButton.setText("Comments")
         self.showDetailsButton.setIcon(QtGui.QIcon(
             os.path.join("Resources", "images", "extender-down")))

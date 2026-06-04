@@ -12,7 +12,7 @@ IMPORT_RE = re.compile(
     re.MULTILINE,
 )
 
-QSCI_IMPORT = "from Extensions.qt_bindings import QtCore, QtGui\nfrom PySide6.Qsci import {names}"
+QSCI_IMPORT = "from Extensions.qt_bindings import QtCore, QtGui\nfrom PyQt6.Qsci import {names}"
 
 BINDINGS_IMPORT = "from Extensions.qt_bindings import {names}"
 
@@ -48,7 +48,7 @@ def process_file(path: Path) -> bool:
         for part in qsci_imports:
             all_names.extend(p.strip() for p in part.split(","))
         names = ", ".join(dict.fromkeys(all_names))
-        insert = f"from PySide6.Qsci import {names}\n"
+        insert = f"from PyQt6.Qsci import {names}\n"
         # insert after first bindings import
         out = "".join(new_lines)
         if "from Extensions.qt_bindings" in out and insert.strip() not in out:

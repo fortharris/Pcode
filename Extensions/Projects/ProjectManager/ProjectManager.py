@@ -1,9 +1,10 @@
 import os
 import shutil
+import logging
+import traceback
 from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions.Projects.ProjectManager.ProjectView.ProjectView import ProjectView
-from Extensions.Projects.ProjectManager.Build import Build
 
 
 class ExportThread(QtCore.QThread):
@@ -39,10 +40,16 @@ class ProjectManager(QtGui.QWidget):
 
         self.configDialog = editorTabWidget.configDialog
 
+        self.build = None
         if projectPathDict["type"] == "Desktop Application":
-            self.build = Build(
-                buildStatusWidget, messagesWidget, projectPathDict, projectSettings, useData,
-                self.configDialog.buildConfig, editorTabWidget, self)
+            try:
+                from Extensions.Projects.ProjectManager.Build import Build
+                self.build = Build(
+                    buildStatusWidget, messagesWidget, projectPathDict, projectSettings, useData,
+                    self.configDialog.buildConfig, editorTabWidget, self)
+            except Exception:
+                logging.error(traceback.format_exc())
+                self.build = None
 
         self.exportThread = ExportThread()
         self.exportThread.finished.connect(self.finishExport)

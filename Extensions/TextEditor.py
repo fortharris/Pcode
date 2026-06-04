@@ -1,5 +1,5 @@
 import os
-from PySide6.Qsci import QsciScintilla
+from PyQt6.Qsci import QsciScintilla
 from Extensions.qt_bindings import font_metrics_width,  QtCore, QtGui
 
 from Extensions.BaseScintilla import BaseScintilla
@@ -69,7 +69,7 @@ class TextEditor(BaseScintilla):
 
         # Line numbers
         # conventionnaly, margin 0 is for line numbers
-        self.setMarginWidth(0, font_metrics_width(self.fontMetrics(), "0000") + 5)
+        self.setMarginWidth(0, font_metrics_width(self.fontMetrics, "0000") + 5)
 
         self.setUtf8(True)
         self.setAutoIndent(True)
@@ -120,7 +120,7 @@ class TextEditor(BaseScintilla):
         self.setEolMode(QsciScintilla.EolUnix)
 
         self.searchIndicator = self.indicatorDefine(
-            QsciScintilla.INDIC_ROUNDBOX, 10)
+            QsciScintilla.IndicatorStyle.RoundBoxIndicator, 10)
         self.setIndicatorForegroundColor(
             QtGui.QColor("#FFDB4A"), self.searchIndicator)
         self.setIndicatorDrawUnder(True, self.searchIndicator)

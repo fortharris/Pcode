@@ -5,7 +5,7 @@ import time
 import traceback
 import logging
 
-from PySide6.Qsci import QsciScintilla
+from PyQt6.Qsci import QsciScintilla
 from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.Diff import DiffWindow
@@ -163,7 +163,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             app, manageFavourites, externalLauncher, editorWindow, parent=None):
         QtGui.QTabWidget.__init__(self, parent)
 
-        self.setElideMode(1)
+        self.setElideMode(QtCore.Qt.TextElideMode.ElideRight)
 
         self.useData = useData
         self.projectPathDict = projectPathDict
@@ -240,7 +240,8 @@ class EditorTabWidget(QtGui.QTabWidget):
 
         self.tabSelectButton = QtGui.QToolButton()
         self.tabSelectButton.setAutoRaise(True)
-        self.tabSelectButton.setPopupMode(2)
+        self.tabSelectButton.setPopupMode(
+            QtGui.QToolButton.ToolButtonPopupMode.InstantPopup)
         self.tabSelectButton.setIcon(
             QtGui.QIcon(os.path.join("Resources", "images", "tile")))
         self.tabSelectButton.setMenu(self.openedTabsMenu)
@@ -484,12 +485,12 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def splitVertical(self):
         splitter = self.currentWidget().widget(0)
-        splitter.setOrientation(2)
+        splitter.setOrientation(QtCore.Qt.Vertical)
         splitter.widget(1).show()
 
     def splitHorizontal(self):
         splitter = self.currentWidget().widget(0)
-        splitter.setOrientation(1)
+        splitter.setOrientation(QtCore.Qt.Horizontal)
         splitter.widget(1).show()
 
     def removeSplit(self):
@@ -819,7 +820,7 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def showGotoLineWidget(self):
         self.showMe(self.gotoLineWidget)
-        self.gotoLineWidget.lineNumberLine.setFocus(True)
+        self.gotoLineWidget.lineNumberLine.setFocus()
 
     def showSnapShotSwitcher(self):
         self.showMe(self.viewSwitcher)

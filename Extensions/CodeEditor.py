@@ -5,7 +5,7 @@ from zipimport import zipimporter
 import tokenize
 from io import StringIO
 
-from PySide6.Qsci import QsciScintilla
+from PyQt6.Qsci import QsciScintilla
 from Extensions.qt_bindings import font_metrics_width,  QtCore, QtGui
 
 from Extensions.BaseScintilla import BaseScintilla
@@ -321,13 +321,13 @@ class CodeEditor(BaseScintilla):
 
         " Initialises indicators "
         self.syntaxErrorIndicator = self.indicatorDefine(
-            QsciScintilla.INDIC_SQUIGGLE, 8)
+            QsciScintilla.IndicatorStyle.SquiggleIndicator, 8)
         self.setIndicatorForegroundColor(QtGui.QColor(
             "#FF0000"), self.syntaxErrorIndicator)
         self.setIndicatorDrawUnder(True, self.syntaxErrorIndicator)
 
         self.searchIndicator = self.indicatorDefine(
-            QsciScintilla.INDIC_ROUNDBOX, 10)
+            QsciScintilla.IndicatorStyle.RoundBoxIndicator, 10)
         self.setIndicatorForegroundColor(
             QtGui.QColor("#FFDB4A"), self.searchIndicator)
         self.setIndicatorDrawUnder(True, self.searchIndicator)
@@ -372,7 +372,7 @@ class CodeEditor(BaseScintilla):
 
         # Line numbers
         # conventionnaly, margin 0 is for line numbers
-        self.setMarginWidth(0, font_metrics_width(self.fontMetrics(), "0000") + 5)
+        self.setMarginWidth(0, font_metrics_width(self.fontMetrics, "0000") + 5)
 
         self.setAutoCompletionReplaceWord(True)
         # minimum number of letters to be typed before list is displayed
@@ -419,7 +419,8 @@ class CodeEditor(BaseScintilla):
 
         # define markers
         # the background markers will not show until the editor has focus
-        self.breakpointMarker = self.markerDefine(QsciScintilla.Background)
+        self.breakpointMarker = self.markerDefine(
+            QsciScintilla.MarkerSymbol.Background)
         self.setMarkerForegroundColor(QtGui.QColor("#000000"),
                                       self.breakpointMarker)
         self.setMarkerBackgroundColor(QtGui.QColor("#ffe1e1"),
@@ -437,10 +438,10 @@ class CodeEditor(BaseScintilla):
             QtGui.QPixmap(os.path.join("Resources", "images", "brk_point")), 10)
         self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 10)
 
-        self.markerDefine(QsciScintilla.VerticalLine, 11)
+        self.markerDefine(QsciScintilla.MarkerSymbol.VerticalLine, 11)
         self.setMarkerBackgroundColor(QtGui.QColor("#EEEE11"), 11)
         self.setMarkerForegroundColor(QtGui.QColor("#EEEE11"), 11)
-        self.setMarginWidth(3, font_metrics_width(self.fontMetrics(), "0"))
+        self.setMarginWidth(3, font_metrics_width(self.fontMetrics, "0"))
 
         mask = (1 << 8) | (1 << 9)
         self.setMarginMarkerMask(1, mask)
@@ -781,7 +782,7 @@ class CodeEditor(BaseScintilla):
 
     def setMarkOperationalLines(self):
         if self.useData.SETTINGS["MarkOperationalLines"] == 'True':
-            self.setMarginWidth(3, font_metrics_width(self.fontMetrics(), "0"))
+            self.setMarginWidth(3, font_metrics_width(self.fontMetrics, "0"))
             self.getOperationTokens()
         else:
             self.markerDeleteAll(11)

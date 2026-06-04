@@ -20,6 +20,11 @@ class Pcode(QtGui.QWidget):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
+        app = QtGui.QApplication.instance()
+        if app is None:
+            app = QtGui.QApplication(sys.argv)
+        self.app = app
+
         self.setWindowIcon(
             QtGui.QIcon(os.path.join("Resources", "images", "Icon")))
         self.setWindowTitle("Pcode - Loading...")
@@ -27,8 +32,8 @@ class Pcode(QtGui.QWidget):
         screen = primary_screen_geometry()
         self.resize(screen.width() - 200, screen.height() - 200)
         size = self.geometry()
-        self.move((screen.width() - size.width()) / 2, (
-            screen.height() - size.height()) / 2)
+        self.move(int((screen.width() - size.width()) / 2),
+                  int((screen.height() - size.height()) / 2))
         self.lastWindowGeometry = self.geometry()
 
         mainLayout = QtGui.QVBoxLayout()
@@ -258,7 +263,7 @@ class Pcode(QtGui.QWidget):
                 pass
         self.saveUiState()
         self.useData.saveUseData()
-        app.closeAllWindows()
+        self.app.closeAllWindows()
 
         event.accept()
 
@@ -269,14 +274,15 @@ class Pcode(QtGui.QWidget):
             shortcuts["Ide"]["Fullscreen"], self)
         self.shortFullscreen.activated.connect(self.showFullScreenMode)
 
-app = QtGui.QApplication(sys.argv)
+if __name__ == '__main__':
+    app = QtGui.QApplication(sys.argv)
 
-splash = QtGui.QSplashScreen(
-    QtGui.QPixmap(os.path.join("Resources", "images", "splash")))
-splash.show()
+    splash = QtGui.QSplashScreen(
+        QtGui.QPixmap(os.path.join("Resources", "images", "splash")))
+    splash.show()
 
-main = Pcode()
+    main = Pcode()
 
-splash.finish(main)
+    splash.finish(main)
 
-sys.exit(app.exec())
+    sys.exit(app.exec())

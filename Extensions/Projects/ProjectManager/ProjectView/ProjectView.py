@@ -643,7 +643,7 @@ class LineEdit(QtGui.QLineEdit):
                 if itemAbove is None:
                     return
                 self.searchResultsTree.setCurrentItem(itemAbove)
-                self.setFocus(True)
+                self.setFocus()
         elif key == QtCore.Qt.Key_Down:
             currentItem = self.currentItem()
             if currentItem is not None:
@@ -651,7 +651,7 @@ class LineEdit(QtGui.QLineEdit):
                 if itemBelow is None:
                     return
                 self.searchResultsTree.setCurrentItem(itemBelow)
-                self.setFocus(True)
+                self.setFocus()
         else:
             QtGui.QLineEdit.keyPressEvent(self, event)
 

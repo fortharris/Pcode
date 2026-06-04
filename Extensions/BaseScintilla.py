@@ -1,5 +1,5 @@
 import re
-from PySide6.Qsci import QsciScintilla
+from PyQt6.Qsci import QsciScintilla, QsciCommand
 from Extensions.qt_bindings import font_metrics_width,  QtGui, QtCore
 
 
@@ -11,7 +11,7 @@ class FindOccurenceThread(QtCore.QThread):
         word = re.escape(self.word)
         if self.wholeWord:
             word = "\\b{0}\\b".format(word)
-        flags = re.UNICODE | re.LOCALE
+        flags = re.UNICODE
         search = re.compile(word, flags)
 
         lineno = 0
@@ -40,7 +40,8 @@ class BaseScintilla(QsciScintilla):
     def enableMarkOccurrence(self, useData):
         self.useData = useData
 
-        self.matchIndicator = self.indicatorDefine(QsciScintilla.INDIC_BOX, 9)
+        self.matchIndicator = self.indicatorDefine(
+            QsciScintilla.IndicatorStyle.BoxIndicator, 9)
         self.setIndicatorForegroundColor(
             QtGui.QColor("#FFCC00"), self.matchIndicator)
         self.setIndicatorDrawUnder(True, self.matchIndicator)
@@ -61,7 +62,10 @@ class BaseScintilla(QsciScintilla):
         standardCommands = self.standardCommands()
 
         for i, v in useData.DEFAULT_SHORTCUTS["Editor"].items():
-            command = standardCommands.find(v[1])
+            command_id = v[1]
+            if isinstance(command_id, int):
+                command_id = QsciCommand.Command(command_id)
+            command = standardCommands.find(command_id)
             command.setKey(useData.CUSTOM_SHORTCUTS["Editor"][i][1])
             
     def linesOnScreen(self):
@@ -651,7 +655,10 @@ class BaseScintilla(QsciScintilla):
             # Line numbers
             # conventionnaly, margin 0 is for line numbers
             self.setMarginLineNumbers(0, True)
-            self.setMarginWidth(0, font_metrics_width(self.fontMetrics(), "0000") + 5)
+            fm = self.fontMetrics
+            if callable(fm):
+                fm = fm()
+            self.setMarginWidth(0, font_metrics_width(fm, "0000") + 5)
         else:
             self.setMarginLineNumbers(0, False)
             self.setMarginWidth(0, 0)

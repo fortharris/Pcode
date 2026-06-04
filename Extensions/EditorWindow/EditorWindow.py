@@ -469,9 +469,11 @@ class EditorWindow(QtGui.QWidget):
 
         self.editorMenuButton = QtGui.QToolButton()
         self.editorMenuButton.setText("Menu")
-        self.editorMenuButton.setToolButtonStyle(2)
+        self.editorMenuButton.setToolButtonStyle(
+            QtCore.Qt.ToolButtonTextBesideIcon)
         self.editorMenuButton.setAutoRaise(True)
-        self.editorMenuButton.setPopupMode(2)
+        self.editorMenuButton.setPopupMode(
+            QtGui.QToolButton.ToolButtonPopupMode.InstantPopup)
         self.editorMenuButton.setIcon(QtGui.QIcon(
             os.path.join("Resources", "images", "Dashboard")))
         self.editorMenuButton.setMenu(self.mainMenu)

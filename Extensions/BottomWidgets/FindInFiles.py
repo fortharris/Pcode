@@ -331,7 +331,7 @@ class FindInFiles(QtGui.QWidget):
 
         self.searchOptionsChanged()
 
-        self.findtextLine.setFocus(True)
+        self.findtextLine.setFocus()
 
         self.findThread.listItemAvailable.connect(self.updateFilesTable)
         self.findThread.currentDir.connect(self.displayCurrentSearchDir)
@@ -413,7 +413,7 @@ class FindInFiles(QtGui.QWidget):
             text = re.escape(self.text)
         if self.matchWholeWord:
             text = "\\b{0}\\b".format(text)
-        flags = re.UNICODE | re.LOCALE
+        flags = re.UNICODE
         if not self.matchCase:
             flags |= re.IGNORECASE
         try:

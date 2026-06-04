@@ -5,7 +5,7 @@ import codecs
 import traceback
 import logging
 
-from PySide6.Qsci import QsciScintilla
+from PyQt6.Qsci import QsciScintilla
 from Extensions.qt_bindings import QtCore, QtXml
 
 from Extensions.Workspace import Workspace
@@ -174,6 +174,7 @@ class UseData(QtCore.QObject):
 
         # usedata lists
         self.SETTINGS = {}
+        self.libraryDict = {}
         self.OPENED_PROJECTS = []
         self.supportedFileTypes = ["python", ".xml", ".css", ".html"]
 
@@ -317,6 +318,37 @@ class UseData(QtCore.QObject):
 
         self.CUSTOM_SHORTCUTS = {'Ide': {}, 'Editor': {}}
 
+        self.DEFAULT_SETTINGS = {
+            "AutoCompletion": "Api",
+            "EnableAutoCompletion": "True",
+            "DynamicSearch": "True",
+            "MarkSearchOccurrence": "True",
+            "CallTips": "True",
+            "ShowWhiteSpaces": "False",
+            "ShowCaretLine": "True",
+            "ShowLineNumbers": "True",
+            "MatchBraces": "True",
+            "EnableFolding": "True",
+            "DocOnHover": "True",
+            "MarkOperationalLines": "False",
+            "ShowEdgeLine": "True",
+            "EdgeColumn": "80",
+            "EdgeMode": "Line",
+            "LineWrap": "False",
+            "WrapMode": "Word",
+            "EnableAlerts": "True",
+            "enableStyleGuide": "True",
+            "EnableAssistance": "True",
+            "UI": "Custom",
+            "SoundsEnabled": "False",
+            "EditorStylePython": "Default",
+            "EditorStyleXml": "Default",
+            "EditorStyleHtml": "Default",
+            "EditorStyleCss": "Default",
+            "LastOpenedPath": QtCore.QDir().homePath(),
+            "DefaultInterpreter": sys.executable,
+        }
+
         # load configuration from file
         tempList = []
         file = open("settings.ini", "r")
@@ -333,15 +365,35 @@ class UseData(QtCore.QObject):
 
         self.SETTINGS["InstalledInterpreters"] = self.getPythonExecutables()
 
+    def _default_workspace_dir(self):
+        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+        return os.path.join(repo_root, 'workspace', 'PcodeProjects')
+
+    def _ensure_workspace_dirs(self, path):
+        for sub in ('Snippets', 'Library', 'Projects',
+                    os.path.join('Settings', 'ColorSchemes')):
+            os.makedirs(os.path.join(path, sub), exist_ok=True)
+        for lang in ('Python', 'Xml', 'Html', 'Css'):
+            os.makedirs(os.path.join(path, 'Settings', 'ColorSchemes', lang),
+                        exist_ok=True)
+
     def loadAppData(self):
-        self.workspaceDir = self.settings["workspace"]
+        self.workspaceDir = self.settings.get("workspace")
+        if self.workspaceDir in (None, "None", ""):
+            self.workspaceDir = self._default_workspace_dir()
         if not os.path.exists(self.workspaceDir):
-            newWorkspace = Workspace()
-            if newWorkspace.created:
-                self.workspaceDir = newWorkspace.path
-                self.settings["workspace"] = self.workspaceDir
+            zip_path = os.path.join("Resources", "PcodeProjects.zip")
+            if os.path.isfile(zip_path):
+                newWorkspace = Workspace()
+                if newWorkspace.created:
+                    self.workspaceDir = newWorkspace.path
+                    self.settings["workspace"] = self.workspaceDir
+                else:
+                    sys.exit()
             else:
-                sys.exit()
+                self._ensure_workspace_dirs(self.workspaceDir)
+                self.settings["workspace"] = self.workspaceDir
+                self.saveSettings()
         self.appPathDict = {
             "logfile": os.path.join(self.workspaceDir, "LOG.txt"),
             "snippetsdir": os.path.join(self.workspaceDir, "Snippets"),
@@ -354,6 +406,12 @@ class UseData(QtCore.QObject):
             "keymap": os.path.join(self.workspaceDir, "Settings", "keymap.xml")
             }
 
+    def _apply_default_settings(self):
+        for key, value in self.DEFAULT_SETTINGS.items():
+            self.SETTINGS.setdefault(key, value)
+        self.loadKeymap()
+        self.loadModulesForCompletion()
+
     def loadUseData(self):
         dom_document = QtXml.QDomDocument()
         try:
@@ -364,6 +422,7 @@ class UseData(QtCore.QObject):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
+            self._apply_default_settings()
             return
 
         elements = dom_document.documentElement()
@@ -385,20 +444,7 @@ class UseData(QtCore.QObject):
             node = node.nextSibling()
 
         self.SETTINGS.update(dict(settingsList))
-        # for compatibility with older versions of Pcode
-        settingsKeys = self.SETTINGS.keys()
-        if "MarkOperationalLines" not in settingsKeys:
-            self.SETTINGS["MarkOperationalLines"] = "False"
-
-        if "UI" not in settingsKeys:
-            self.SETTINGS["UI"] = "Custom"
-            
-        if "LineWrap" not in settingsKeys:
-            self.SETTINGS["LineWrap"] = "False"
-            self.SETTINGS["WrapMode"] = "Word"
-
-        self.loadKeymap()
-        self.loadModulesForCompletion()
+        self._apply_default_settings()
 
     def saveModulesForCompletion(self):
         dom_document = QtXml.QDomDocument("modules")
@@ -438,6 +484,7 @@ class UseData(QtCore.QObject):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
+            self.libraryDict = {}
             return
 
         element = dom_document.documentElement()
@@ -509,8 +556,9 @@ class UseData(QtCore.QObject):
         self.saveModulesForCompletion()
 
     def loadKeymap(self):
+        import copy
+        self.CUSTOM_SHORTCUTS = copy.deepcopy(self.DEFAULT_SHORTCUTS)
         if self.settings["firstRun"] == "True":
-            self.CUSTOM_SHORTCUTS = self.DEFAULT_SHORTCUTS
             return
         dom_document = QtXml.QDomDocument()
         try:

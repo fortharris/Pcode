@@ -6,7 +6,14 @@ from Xtra import autopep8
 from Xtra import pep8
 import pyflakes
 import rope
-import cx_Freeze
+
+
+def _cx_freeze_version():
+    try:
+        import cx_Freeze
+        return cx_Freeze.version
+    except Exception:
+        return "n/a"
 
 
 class About(QtGui.QDialog):
@@ -59,13 +66,13 @@ class About(QtGui.QDialog):
             ["PyFlakes", pyflakes.__version__, "Florent Xicluna"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["Pep8", pep8.__version__, "Florent Xicluna"]))
-        import PySide6
+        import PyQt6
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
-            ["PySide6", PySide6.__version__, "The Qt Company"]))
+            ["PyQt6", PyQt6.__version__, "The Qt Company"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["AutoPep8", autopep8.__version__, "Hideo Hattori"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
-            ["CxFreeze", cx_Freeze.version, "Anthony Tuininga"]))
+            ["CxFreeze", _cx_freeze_version(), "Anthony Tuininga"]))
         self.view.addWidget(table)
 
         self.licenseEdit = QtGui.QTextEdit()

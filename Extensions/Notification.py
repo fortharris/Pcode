@@ -11,7 +11,7 @@ class Notification(QtGui.QLabel):
         
         self.easingCurve = QtCore.QEasingCurve.OutCubic
 
-        self.showAnimation = QtCore.QPropertyAnimation(self, 'maximumWidth')
+        self.showAnimation = QtCore.QPropertyAnimation(self, b'maximumWidth')
         self.showAnimation.setDuration(200)
         self.showAnimation.setEasingCurve(self.easingCurve)
 

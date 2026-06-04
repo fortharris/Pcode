@@ -15,15 +15,18 @@ import zipfile
 
 import cx_Freeze.hooks
 
-BUILD_LIST = opcode.opmap["BUILD_LIST"]
-INPLACE_ADD = opcode.opmap["INPLACE_ADD"]
-LOAD_CONST = opcode.opmap["LOAD_CONST"]
-IMPORT_NAME = opcode.opmap["IMPORT_NAME"]
-IMPORT_FROM = opcode.opmap["IMPORT_FROM"]
-IMPORT_STAR = opcode.opmap["IMPORT_STAR"]
-STORE_FAST = opcode.opmap["STORE_FAST"]
-STORE_NAME = opcode.opmap["STORE_NAME"]
-STORE_GLOBAL = opcode.opmap["STORE_GLOBAL"]
+# Some of these opcodes were removed in newer Python versions (e.g.
+# INPLACE_ADD in 3.11). Fall back to -1 so importing this legacy module does
+# not crash; the bytecode scanner simply won't match the missing opcodes.
+BUILD_LIST = opcode.opmap.get("BUILD_LIST", -1)
+INPLACE_ADD = opcode.opmap.get("INPLACE_ADD", -1)
+LOAD_CONST = opcode.opmap.get("LOAD_CONST", -1)
+IMPORT_NAME = opcode.opmap.get("IMPORT_NAME", -1)
+IMPORT_FROM = opcode.opmap.get("IMPORT_FROM", -1)
+IMPORT_STAR = opcode.opmap.get("IMPORT_STAR", -1)
+STORE_FAST = opcode.opmap.get("STORE_FAST", -1)
+STORE_NAME = opcode.opmap.get("STORE_NAME", -1)
+STORE_GLOBAL = opcode.opmap.get("STORE_GLOBAL", -1)
 STORE_OPS = (STORE_NAME, STORE_GLOBAL)
 
 __all__ = [ "Module", "ModuleFinder" ]

@@ -1,6 +1,6 @@
 import os
 import shutil
-from PySide6.Qsci import QsciScintilla
+from PyQt6.Qsci import QsciScintilla
 from Extensions.qt_bindings import QtCore, QtGui
 from Extensions import StyleSheet
 

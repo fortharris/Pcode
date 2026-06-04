@@ -471,7 +471,7 @@ class FixPEP8(object):
                 line_index = result['line'] - 1
                 original_line = self.source[line_index]
 
-                is_logical_fix = len(inspect.getargspec(fix).args) > 2
+                is_logical_fix = len(inspect.getfullargspec(fix).args) > 2
                 if is_logical_fix:
                     logical = None
                     if logical_support:
@@ -2986,7 +2986,7 @@ def global_fixes():
     """Yield multiple (code, function) tuples."""
     for function in globals().values():
         if inspect.isfunction(function):
-            arguments = inspect.getargspec(function)[0]
+            arguments = inspect.getfullargspec(function)[0]
             if arguments[:1] != ['source']:
                 continue
 

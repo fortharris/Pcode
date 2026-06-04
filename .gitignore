@@ -17,6 +17,8 @@ develop-eggs
 lib
 lib64
 __pycache__
+.pcode-venv/
+workspace/
 
 # Installer logs
 pip-log.txt

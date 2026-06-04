@@ -219,7 +219,8 @@ class Library(QtGui.QMainWindow):
 
         self.showDetailsButton = QtGui.QToolButton()
         self.showDetailsButton.setAutoRaise(True)
-        self.showDetailsButton.setToolButtonStyle(2)
+        self.showDetailsButton.setToolButtonStyle(
+            QtCore.Qt.ToolButtonTextBesideIcon)
         self.showDetailsButton.setText("More")
         self.showDetailsButton.setIcon(QtGui.QIcon(
             os.path.join("Resources", "images", "extender-up")))

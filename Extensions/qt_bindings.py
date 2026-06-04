@@ -1,51 +1,24 @@
 """
-PySide6 bindings with PyQt4-compatible QtGui namespace for incremental migration.
+PyQt6 bindings with PyQt4-compatible QtGui namespace for incremental migration.
 
 Import Qt widgets via QtGui as in the original PyQt4 code (e.g. QtGui.QWidget).
+QScintilla is imported from PyQt6.Qsci (see requirements.txt).
 """
 
-from PySide6 import QtCore, QtGui, QtWidgets, QtXml
+from PyQt6 import QtCore, QtGui, QtWidgets, QtXml
 
-# PyQt4 used pyqtSignal; PySide6 uses Signal
-if not hasattr(QtCore, "pyqtSignal"):
-    QtCore.pyqtSignal = QtCore.Signal
+# Migration used PySide6's Signal; PyQt6 uses pyqtSignal
+QtCore.Signal = QtCore.pyqtSignal
 
 # Re-export QWidget and other QtWidgets classes on QtGui (PyQt4 layout)
-_WIDGET_NAMES = []
 for _name in dir(QtWidgets):
     if _name.startswith("Q"):
         _obj = getattr(QtWidgets, _name)
-        if isinstance(_obj, type):
-            if not hasattr(QtGui, _name):
-                setattr(QtGui, _name, _obj)
-            _WIDGET_NAMES.append(_name)
+        if isinstance(_obj, type) and not hasattr(QtGui, _name):
+            setattr(QtGui, _name, _obj)
 
-# QApplication lives in QtWidgets in Qt6 but was in QtGui in PyQt4
 if not hasattr(QtGui, "QApplication"):
     QtGui.QApplication = QtWidgets.QApplication
-
-
-def patch_layout_margins(layout):
-    """PyQt4 QLayout.setMargin -> Qt6 setContentsMargins."""
-    if layout is None:
-        return layout
-    if not hasattr(layout, "setMargin"):
-        _margin = [0]
-
-        def setMargin(m):
-            _margin[0] = m
-            layout.setContentsMargins(m, m, m, m)
-
-        layout.setMargin = setMargin
-    return layout
-
-
-def patch_widget(widget):
-    """Patch top-level widget layouts after setLayout."""
-    layout = widget.layout()
-    if layout is not None:
-        patch_layout_margins(layout)
-    return widget
 
 
 def primary_screen_geometry(app=None):
@@ -67,31 +40,6 @@ def font_metrics_width(font_metrics, text):
     return font_metrics.width(text)
 
 
-def patch_font_metrics(widget):
-    fm = widget.fontMetrics()
-    if not hasattr(fm, "width") or fm.width.__func__ != font_metrics_width:
-        _orig = fm
-
-        class _FMProxy:
-            def __getattr__(self, name):
-                return getattr(_orig, name)
-
-            def width(self, text):
-                return font_metrics_width(_orig, text)
-
-        widget.fontMetrics = lambda: _FMProxy()
-    return widget
-
-
-def exec_dialog(dialog):
-    """QDialog.exec_ -> exec."""
-    return dialog.exec()
-
-
-def exec_menu(menu, pos):
-    return menu.exec(pos)
-
-
 def file_dialog_path(result):
     """Normalize QFileDialog return value (str in PyQt4, tuple in Qt6)."""
     if result is None:
@@ -110,21 +58,47 @@ def file_dialog_paths(result):
     if result is None:
         return []
     if isinstance(result, (tuple, list)):
-        if len(result) >= 1 and isinstance(result[0], (tuple, list)):
-            paths = result[0]
-        elif len(result) >= 1 and isinstance(result[0], str):
-            paths = [result[0]] if len(result) == 1 or not result[1] else list(result[0])
-        else:
-            paths = [p for p in result if isinstance(p, str) and p]
-            return paths
-        return [p for p in paths if p]
+        if len(result) >= 1 and isinstance(result[0], (list, tuple)):
+            return [p for p in result[0] if p]
+        if len(result) >= 1 and isinstance(result[0], str):
+            return [result[0]] if result[0] else []
+        return [p for p in result if isinstance(p, str) and p]
     return [result] if result else []
+
+
+# PyQt4 allowed QFileDialog.Options() and passing it positionally after the
+# name filter. PyQt6 removed Options and reorders args. Provide a stand-in and
+# strip any Option-typed argument out of the call (defaults are always empty).
+_FileDialogOption = QtWidgets.QFileDialog.Option
+
+
+def _qfiledialog_options(*args, **kwargs):
+    return _FileDialogOption(0)
+
+
+QtWidgets.QFileDialog.Options = staticmethod(_qfiledialog_options)
+if hasattr(QtGui, "QFileDialog"):
+    QtGui.QFileDialog.Options = staticmethod(_qfiledialog_options)
+
+
+def _strip_option_args(args):
+    cleaned = []
+    options = None
+    for a in args:
+        if isinstance(a, _FileDialogOption):
+            options = a
+        else:
+            cleaned.append(a)
+    return cleaned, options
 
 
 def _wrap_file_dialog_method(method_name, normalizer):
     original = getattr(QtWidgets.QFileDialog, method_name)
 
     def wrapper(*args, **kwargs):
+        args, options = _strip_option_args(args)
+        if options is not None and "options" not in kwargs:
+            kwargs["options"] = options
         return normalizer(original(*args, **kwargs))
 
     setattr(QtWidgets.QFileDialog, method_name, staticmethod(wrapper))
@@ -136,3 +110,225 @@ _wrap_file_dialog_method("getOpenFileName", file_dialog_path)
 _wrap_file_dialog_method("getSaveFileName", file_dialog_path)
 _wrap_file_dialog_method("getExistingDirectory", file_dialog_path)
 _wrap_file_dialog_method("getOpenFileNames", file_dialog_paths)
+
+
+# PyQt4 accepted int orientations (1=Horizontal, 2=Vertical). PyQt6 requires
+# Qt.Orientation. Coerce ints on QSplitter.setOrientation.
+def _patch_splitter_orientation():
+    QSplitter = QtWidgets.QSplitter
+    _orig = QSplitter.setOrientation
+
+    def setOrientation(self, orientation):
+        if isinstance(orientation, int):
+            orientation = (QtCore.Qt.Vertical if orientation == 2
+                           else QtCore.Qt.Horizontal)
+        return _orig(self, orientation)
+
+    try:
+        QSplitter.setOrientation = setOrientation
+    except (TypeError, AttributeError):
+        pass
+
+
+_patch_splitter_orientation()
+
+
+def _enum_member_names(enum_cls):
+    """Return the member names of a (possibly flag) PyQt6 scoped enum.
+
+    ``dir()`` does not reliably list members of flag enums, so prefer
+    ``__members__`` when available.
+    """
+    members = getattr(enum_cls, "__members__", None)
+    if members:
+        return list(members.keys())
+    return [n for n in dir(enum_cls) if not n.startswith("_")]
+
+
+def _copy_enum_members(target_cls, enum_cls):
+    """Re-expose a scoped enum's members as flat attributes on target_cls."""
+    for name in _enum_member_names(enum_cls):
+        if not hasattr(target_cls, name):
+            try:
+                setattr(target_cls, name, getattr(enum_cls, name))
+            except (TypeError, AttributeError):
+                pass
+
+
+def _patch_qt6_compat():
+    """Map PyQt4-style flat Qt enums to PyQt6 scoped enums."""
+    Qt = QtCore.Qt
+
+    if not hasattr(Qt, "Window"):
+        W = Qt.WindowType
+        for name in (
+            "Window", "WindowCloseButtonHint", "FramelessWindowHint",
+            "Dialog", "CustomizeWindowHint",
+        ):
+            if hasattr(W, name):
+                setattr(Qt, name, getattr(W, name))
+
+    if not hasattr(Qt, "WA_TranslucentBackground"):
+        WA = Qt.WidgetAttribute
+        for name in dir(WA):
+            if name.startswith("WA_"):
+                setattr(Qt, name, getattr(WA, name))
+
+    if not hasattr(Qt, "NoItemFlags"):
+        Qt.NoItemFlags = Qt.ItemFlag.NoItemFlags
+
+    if not hasattr(Qt, "AscendingOrder"):
+        Qt.AscendingOrder = Qt.SortOrder.AscendingOrder
+
+    if not hasattr(Qt, "AlignHCenter"):
+        Qt.AlignHCenter = Qt.AlignmentFlag.AlignHCenter
+
+    if not hasattr(Qt, "WaitCursor"):
+        Qt.WaitCursor = Qt.CursorShape.WaitCursor
+
+    if not hasattr(Qt, "PreventContextMenu"):
+        Qt.PreventContextMenu = Qt.ContextMenuPolicy.PreventContextMenu
+
+    if not hasattr(Qt, "Vertical"):
+        O = Qt.Orientation
+        Qt.Vertical = O.Vertical
+        Qt.Horizontal = O.Horizontal
+
+    if not hasattr(Qt, "ToolButtonTextBesideIcon"):
+        TBS = Qt.ToolButtonStyle
+        Qt.ToolButtonTextBesideIcon = TBS.ToolButtonTextBesideIcon
+
+    KM = Qt.KeyboardModifier
+    for old, new in (
+        ("ShiftModifier", "ShiftModifier"),
+        ("ControlModifier", "ControlModifier"),
+        ("AltModifier", "AltModifier"),
+        ("MetaModifier", "MetaModifier"),
+        ("SHIFT", "ShiftModifier"),
+        ("CTRL", "ControlModifier"),
+        ("ALT", "AltModifier"),
+        ("META", "MetaModifier"),
+    ):
+        if not hasattr(Qt, old) and hasattr(KM, new):
+            setattr(Qt, old, getattr(KM, new))
+
+    K = Qt.Key
+    for name in (
+        "Key_Backtab", "Key_Tab", "Key_Control", "Key_Meta",
+        "Key_Shift", "Key_Alt", "Key_Menu", "Key_Backspace",
+    ):
+        if not hasattr(Qt, name) and hasattr(K, name):
+            setattr(Qt, name, getattr(K, name))
+
+    MB = QtWidgets.QMessageBox
+    SB = MB.StandardButton
+    for name in ("Yes", "No", "Ok", "Cancel"):
+        if not hasattr(MB, name):
+            setattr(MB, name, getattr(SB, name))
+    if hasattr(QtGui, "QMessageBox"):
+        for name in ("Yes", "No", "Ok", "Cancel"):
+            if not hasattr(QtGui.QMessageBox, name):
+                setattr(QtGui.QMessageBox, name, getattr(SB, name))
+
+    def _flatten_enum_members(cls, enum_attr_names):
+        """Re-expose nested enum members as flat class attributes (Qt5 style)."""
+        for enum_name in enum_attr_names:
+            enum = getattr(cls, enum_name, None)
+            if enum is None:
+                continue
+            for member in dir(enum):
+                if member.startswith("_"):
+                    continue
+                if not hasattr(cls, member):
+                    try:
+                        setattr(cls, member, getattr(enum, member))
+                    except (TypeError, AttributeError):
+                        pass
+
+    _flatten_enum_members(QtWidgets.QPlainTextEdit, ["LineWrapMode"])
+    _flatten_enum_members(QtWidgets.QTextEdit, ["LineWrapMode"])
+    _flatten_enum_members(
+        QtWidgets.QAbstractItemView,
+        ["SelectionMode", "SelectionBehavior", "ScrollMode",
+         "EditTrigger", "DragDropMode"])
+    _flatten_enum_members(QtWidgets.QListView, ["ViewMode", "Flow", "Movement"])
+    _flatten_enum_members(QtWidgets.QSizePolicy, ["Policy"])
+    if hasattr(QtGui, "QPlainTextEdit"):
+        _flatten_enum_members(QtGui.QPlainTextEdit, ["LineWrapMode"])
+    if hasattr(QtGui, "QTextEdit"):
+        _flatten_enum_members(QtGui.QTextEdit, ["LineWrapMode"])
+
+    QDir = QtCore.QDir
+    if not hasattr(QDir, "Files") and hasattr(QDir, "Filter"):
+        _copy_enum_members(QDir, QDir.Filter)
+    if hasattr(QDir, "SortFlag"):
+        _copy_enum_members(QDir, QDir.SortFlag)
+
+    QIOD = QtCore.QIODevice
+    if not hasattr(QIOD, "ReadWrite") and hasattr(QIOD, "OpenModeFlag"):
+        _copy_enum_members(QIOD, QIOD.OpenModeFlag)
+
+    QEC = QtCore.QEasingCurve
+    if not hasattr(QEC, "OutCubic") and hasattr(QEC, "Type"):
+        _copy_enum_members(QEC, QEC.Type)
+
+    QKS = QtGui.QKeySequence
+    if not hasattr(QKS, "Copy") and hasattr(QKS, "StandardKey"):
+        _copy_enum_members(QKS, QKS.StandardKey)
+
+    QP = QtGui.QPalette
+    if not hasattr(QP, "Background"):
+        CR = QP.ColorRole
+        for old, new in (("Background", "Window"),
+                         ("Foreground", "WindowText")):
+            if hasattr(CR, new):
+                setattr(QP, old, getattr(CR, new))
+        for name in dir(CR):
+            if not name.startswith("_") and not hasattr(QP, name):
+                setattr(QP, name, getattr(CR, name))
+
+    QF = QtWidgets.QFrame
+    if not hasattr(QF, "HLine"):
+        S = QF.Shape
+        for name in ("HLine", "VLine", "StyledPanel", "Box", "Panel", "NoFrame"):
+            if hasattr(S, name):
+                setattr(QF, name, getattr(S, name))
+    if not hasattr(QF, "Sunken"):
+        SH = QF.Shadow
+        for name in ("Sunken", "Plain", "Raised"):
+            if hasattr(SH, name):
+                setattr(QF, name, getattr(SH, name))
+    if hasattr(QtGui, "QFrame"):
+        for name in ("HLine", "VLine", "StyledPanel", "Box", "Panel", "NoFrame",
+                     "Sunken", "Plain", "Raised"):
+            if hasattr(QF, name) and not hasattr(QtGui.QFrame, name):
+                setattr(QtGui.QFrame, name, getattr(QF, name))
+
+
+_patch_qt6_compat()
+
+
+def _patch_qscintilla():
+    """Flatten QScintilla scoped enums back to flat attributes.
+
+    Newer QScintilla moved constants such as ``WrapWord`` into scoped enums
+    (``QsciScintilla.WrapMode.WrapWord``). The legacy code base accesses the
+    flat names directly, so re-expose every enum member as a class attribute.
+    The stored value is the enum member itself, so enum-typed setters accept
+    it directly.
+    """
+    import enum
+    try:
+        from PyQt6.Qsci import QsciScintilla, QsciScintillaBase
+    except ImportError:
+        return
+    for cls in (QsciScintillaBase, QsciScintilla):
+        for attr in dir(cls):
+            if attr.startswith("_"):
+                continue
+            obj = getattr(cls, attr)
+            if isinstance(obj, type) and issubclass(obj, enum.Enum):
+                _copy_enum_members(cls, obj)
+
+
+_patch_qscintilla()

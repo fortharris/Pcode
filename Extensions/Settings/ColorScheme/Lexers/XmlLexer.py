@@ -1,6 +1,6 @@
 import sys
 
-from PySide6.Qsci import QsciLexerXML
+from PyQt6.Qsci import QsciLexerXML
 from Extensions.qt_bindings import QtGui
 
 # Platform specific fonts

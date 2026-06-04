@@ -175,6 +175,8 @@ class ColorScheme(QtGui.QDialog):
             "Default")
         groupName = self.schemeTypeBox.currentText()
         path = os.path.join(self.useData.appPathDict["stylesdir"], groupName)
+        if not os.path.isdir(path):
+            os.makedirs(path, exist_ok=True)
         for i in os.listdir(path):
             self.schemeNameBox.addItem(QtGui.QIcon(
                 os.path.join("Resources", "images", "foaf")), os.path.splitext(i)[0])

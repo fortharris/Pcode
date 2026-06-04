@@ -32,7 +32,8 @@ class ZoomWidget(QtGui.QLabel):
         self.zoomBox.setMinimum(0)
         self.zoomBox.setReadOnly(True)
         self.zoomBox.setAlignment(QtCore.Qt.AlignHCenter)
-        self.zoomBox.setButtonSymbols(2)
+        self.zoomBox.setButtonSymbols(
+            QtGui.QAbstractSpinBox.ButtonSymbols.NoButtons)
         self.zoomBox.setMaximum(100)
         self.zoomBox.setSingleStep(10)
         self.zoomBox.setSuffix("%")
