@@ -19,6 +19,7 @@ lib64
 __pycache__
 .pcode-venv/
 workspace/
+temp/
 
 # Installer logs
 pip-log.txt
