@@ -1,0 +1,2 @@
+PySide6>=6.5.0
+PySide6-Addons>=6.5.0

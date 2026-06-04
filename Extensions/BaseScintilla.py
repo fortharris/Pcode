@@ -1,11 +1,11 @@
 import re
-from PyQt4 import QtGui, QtCore
-from PyQt4.Qsci import QsciScintilla
+from PySide6.Qsci import QsciScintilla
+from Extensions.qt_bindings import font_metrics_width,  QtGui, QtCore
 
 
 class FindOccurenceThread(QtCore.QThread):
 
-    markOccurrence = QtCore.pyqtSignal(list)
+    markOccurrence = QtCore.Signal(list)
 
     def run(self):
         word = re.escape(self.word)
@@ -651,7 +651,7 @@ class BaseScintilla(QsciScintilla):
             # Line numbers
             # conventionnaly, margin 0 is for line numbers
             self.setMarginLineNumbers(0, True)
-            self.setMarginWidth(0, self.fontMetrics.width("0000") + 5)
+            self.setMarginWidth(0, font_metrics_width(self.fontMetrics(), "0000") + 5)
         else:
             self.setMarginLineNumbers(0, False)
             self.setMarginWidth(0, 0)
@@ -726,23 +726,19 @@ class BaseScintilla(QsciScintilla):
         text = self.text(line)
         wc = self.wordCharacters()
         if wc is None:
-            regexp = QtCore.QRegExp('[^\w_]')
+            word_re = re.compile(r'\w+', re.UNICODE)
         else:
-            regexp = QtCore.QRegExp('[^{0}]'.format(re.escape(wc)))
-        start = regexp.lastIndexIn(text, index) + 1
-        end = regexp.indexIn(text, index)
-        if start == end + 1 and index > 0:
-            # we are on a word boundary, try again
-            start = regexp.lastIndexIn(text, index - 1) + 1
-        if start == -1:
-            start = 0
-        if end == -1:
-            end = len(text)
-        if end > start:
-            word = text[start:end]
-        else:
-            word = ''
-        return word
+            word_re = re.compile(r'[{0}]+'.format(re.escape(wc)), re.UNICODE)
+
+        last_before = ''
+        for match in word_re.finditer(text):
+            if match.start() <= index <= match.end():
+                return match.group()
+            if match.end() <= index:
+                last_before = match.group()
+            if match.start() > index:
+                break
+        return last_before
 
     def clearAllIndicators(self, indicator):
         self.clearIndicatorRange(0, 0, self.lines(), 0, indicator)

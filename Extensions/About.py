@@ -1,6 +1,6 @@
 import os
 
-from PyQt4 import QtGui, QtCore
+from Extensions.qt_bindings import QtGui, QtCore
 
 from Xtra import autopep8
 from Xtra import pep8
@@ -18,13 +18,13 @@ class About(QtGui.QDialog):
         self.setWindowTitle("About")
 
         mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         self.setFixedSize(500, 270)
 
         form = QtGui.QFormLayout()
-        form.setMargin(10)
+        form.setContentsMargins(10, 10, 10, 10)
         form.addRow("<b>Version</b>", QtGui.QLabel("0.1.5"))
         form.addRow("<b>Author</b>", QtGui.QLabel("Amoatey Harrison"))
         form.addRow("<b>Email</b>", QtGui.QLabel("fortharris@gmail.com"))
@@ -59,8 +59,9 @@ class About(QtGui.QDialog):
             ["PyFlakes", pyflakes.__version__, "Florent Xicluna"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["Pep8", pep8.__version__, "Florent Xicluna"]))
+        import PySide6
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
-            ["PyQt4", "4.11.4", "Riverbank Computing Limited"]))
+            ["PySide6", PySide6.__version__, "The Qt Company"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["AutoPep8", autopep8.__version__, "Hideo Hattori"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(

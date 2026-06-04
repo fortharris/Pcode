@@ -2,7 +2,7 @@ import sys
 import os
 import logging
 
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui, primary_screen_geometry
 
 from Extensions.UseData import UseData
 from Extensions.Library.Library import Library
@@ -24,7 +24,7 @@ class Pcode(QtGui.QWidget):
             QtGui.QIcon(os.path.join("Resources", "images", "Icon")))
         self.setWindowTitle("Pcode - Loading...")
 
-        screen = QtGui.QDesktopWidget().screenGeometry()
+        screen = primary_screen_geometry()
         self.resize(screen.width() - 200, screen.height() - 200)
         size = self.geometry()
         self.move((screen.width() - size.width()) / 2, (
@@ -33,7 +33,7 @@ class Pcode(QtGui.QWidget):
 
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.setSpacing(0)
-        mainLayout.setMargin(0)
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         self.useData = UseData()
@@ -148,7 +148,7 @@ class Pcode(QtGui.QWidget):
         self.projects.loadProject(path, show, new)
 
     def newProject(self):
-        self.projects.newProjectDialog.exec_()
+        self.projects.newProjectDialog.exec()
 
     def showProject(self, path):
         if not os.path.exists(path):
@@ -208,7 +208,7 @@ class Pcode(QtGui.QWidget):
 
     def showAbout(self):
         aboutPane = About(self)
-        aboutPane.exec_()
+        aboutPane.exec()
 
     def showSettings(self):
         self.settingsWidget.show()
@@ -279,4 +279,4 @@ main = Pcode()
 
 splash.finish(main)
 
-sys.exit(app.exec_())
+sys.exit(app.exec())

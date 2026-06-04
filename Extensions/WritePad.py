@@ -1,4 +1,4 @@
-from PyQt4 import QtCore, QtGui
+from Extensions.qt_bindings import QtCore, QtGui, primary_screen_geometry
 
 
 class WritePad(QtGui.QMainWindow):
@@ -8,7 +8,7 @@ class WritePad(QtGui.QMainWindow):
 
         self.setWindowTitle(name + " - Notes")
         self.resize(600, 300)
-        screen = QtGui.QDesktopWidget().screenGeometry()
+        screen = primary_screen_geometry()
         size = self.geometry()
         self.move((screen.width() - size.width()) / 2,
                  (screen.height() - size.height()) / 2)
