@@ -24,6 +24,10 @@ dev = [
     "ruff>=0.4",
     "black>=24.0",
 ]
+# Needed only for the in-app "build/freeze project to executable" feature.
+build = [
+    "cx_Freeze>=6.15",
+]
 
 [project.scripts]
 pcode = "Pcode:main"

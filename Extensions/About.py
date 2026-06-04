@@ -11,7 +11,7 @@ import rope
 def _cx_freeze_version():
     try:
         import cx_Freeze
-        return cx_Freeze.version
+        return getattr(cx_Freeze, "__version__", None) or cx_Freeze.version
     except Exception:
         return "n/a"
 

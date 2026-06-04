@@ -7,3 +7,5 @@ rope>=1.11
 pyflakes>=3.1
 autopep8>=2.0
 pycodestyle>=2.11
+# Used by the project build/freeze feature.
+cx_Freeze>=6.15

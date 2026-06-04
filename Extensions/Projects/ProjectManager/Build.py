@@ -7,24 +7,12 @@ from cx_Freeze import Freezer
 from Extensions.qt_bindings import QtCore, QtGui
 
 
-class Metadata(object):
-    def __init__(self):
-        object.__init__(self)
-
-
 class BuildThread(QtCore.QThread):
     def run(self):
         self.error = None
 
-        metadata = Metadata()
-        metadata.version = self.profile["version"]
-        metadata.long_description = self.profile["comments"]
-        metadata.description = self.profile["description"]
-        metadata.author = self.profile["author"]
-        metadata.name = self.profile["name"]
-
         if self.profile["base"] == "Console":
-            base = "ConsoleKeepPath"
+            base = "console"
         else:
             base = "Win32GUI"
         initScript = None
@@ -46,21 +34,6 @@ class BuildThread(QtCore.QThread):
         elif self.profile["optimize"] == "Optimize (Remove Doc Strings)":
             optimizeFlag = 2
 
-        if self.profile["copydeps"] == 'Copy Dependencies':
-            copyDependentFiles = True
-        else:
-            copyDependentFiles = False
-
-        if self.profile["appendscripttoexe"] == 'Append Script to Exe':
-            appendScriptToExe = True
-        else:
-            appendScriptToExe = False
-
-        if self.profile["appendscripttolibrary"] == 'Append Script to Library':
-            appendScriptToLibrary = True
-        else:
-            appendScriptToLibrary = False
-
         includes = self.profile["Includes"]
         excludes = self.profile["Excludes"]
         replacePaths = self.profile["Replace Paths"]
@@ -74,13 +47,16 @@ class BuildThread(QtCore.QThread):
         constantsModules = self.profile["Constants Modules"]
         packages = self.profile["Packages"]
 
+        # Options accepted by cx_Freeze 4.x but removed in modern releases
+        # (appendScriptToExe/appendScriptToLibrary/copyDependentFiles/
+        # namespacePackages/initScript-at-Freezer-level) are intentionally
+        # dropped here; modern cx_Freeze handles dependency copying itself.
         try:
             executables = [cx_Freeze.Executable(
                            self.projectPathDict['mainscript'],
-                           icon=iconPath,
-                           targetDir=self.projectPathDict['builddir'],
-                           initScript=initScript,
-                           base=base)]
+                           init_script=initScript,
+                           base=base,
+                           icon=iconPath)]
             if self.projectSettings["UseVirtualEnv"] == "True":
                 venv_path = self.projectPathDict["venvdir"]
                 path = [self.projectPathDict['sourcedir'],
@@ -101,35 +77,34 @@ class BuildThread(QtCore.QThread):
             for i in path:
                 extraPathList.extend(self.pathListFromDir(i))
             path.extend(extraPathList)
-            
-            freezer = Cx_Freeze(executables,
-                                self.projectPathDict,
-                                self.useData,
-                                base=base,
-                                icon=iconPath,
-                                metadata=metadata,
-                                initScript=initScript,
-                                path=path,
-                                compress=compress,
-                                optimizeFlag=optimizeFlag,
-                                copyDependentFiles=copyDependentFiles,
-                                appendScriptToExe=appendScriptToExe,
-                                appendScriptToLibrary=appendScriptToLibrary,
-                                includes=includes,
-                                excludes=excludes,
-                                replacePaths=replacePaths,
-                                binIncludes=binIncludes,
-                                binExcludes=binExcludes,
-                                binPathIncludes=binPathIncludes,
-                                binPathExcludes=binPathExcludes,
-                                includeFiles=includeFiles,
-                                zipIncludes=zipIncludes,
-                                namespacePackages=namespacePackages,
-                                constantsModules=constantsModules,
-                                packages=packages)
-            freezer.Freeze()
 
-            badModules = freezer.finder._badModules
+            freezer_kwargs = dict(
+                target_dir=self.projectPathDict['builddir'],
+                path=path,
+                compress=compress,
+                optimize=optimizeFlag,
+                includes=includes,
+                excludes=excludes,
+                packages=packages,
+                replace_paths=replacePaths,
+                bin_includes=binIncludes,
+                bin_excludes=binExcludes,
+                bin_path_includes=binPathIncludes,
+                bin_path_excludes=binPathExcludes,
+                include_files=includeFiles,
+                zip_includes=zipIncludes,
+                silent=True,
+                include_msvcr=True,
+            )
+            if constantsModules:
+                freezer_kwargs["constants_module"] = constantsModules
+            freezer = Freezer(executables, **freezer_kwargs)
+            freezer.freeze()
+
+            # Module finder attribute was renamed to snake_case in modern
+            # cx_Freeze; fall back across versions.
+            badModules = (getattr(freezer.finder, "_bad_modules", None)
+                          or getattr(freezer.finder, "_badModules", {}))
             names = list(badModules.keys())
             names.sort()
             self.missing = []
@@ -174,61 +149,6 @@ class BuildThread(QtCore.QThread):
         self.projectSettings = projectSettings
 
         self.start()
-
-
-class Cx_Freeze(Freezer):
-    def __init__(self, executables,
-                 projectPathDict,
-                 useData,
-                 base,
-                 icon,
-                 metadata,
-                 initScript,
-                 path,
-                 compress,
-                 optimizeFlag,
-                 copyDependentFiles,
-                 appendScriptToExe,
-                 appendScriptToLibrary,
-                 includes,
-                 excludes,
-                 replacePaths,
-                 binIncludes,
-                 binExcludes,
-                 binPathIncludes,
-                 binPathExcludes,
-                 includeFiles,
-                 zipIncludes,
-                 namespacePackages,
-                 constantsModules,
-                 packages):
-        Freezer.__init__(self, executables,
-                         silent=True,
-                         icon=icon,
-                         metadata=metadata,
-                         includeMSVCR=True,
-                         targetDir=projectPathDict['builddir'],
-                         initScript=initScript,
-                         path=path,
-                         base=base,
-                         compress=compress,
-                         optimizeFlag=optimizeFlag,
-                         copyDependentFiles=copyDependentFiles,
-                         appendScriptToExe=appendScriptToExe,
-                         appendScriptToLibrary=appendScriptToLibrary,
-                         includes=includes,
-                         excludes=excludes,
-                         replacePaths=replacePaths,
-                         binIncludes=binIncludes,
-                         binExcludes=binExcludes,
-                         binPathIncludes=binPathIncludes,
-                         binPathExcludes=binPathExcludes,
-                         includeFiles=includeFiles,
-                         zipIncludes=zipIncludes,
-                         namespacePackages=namespacePackages,
-                         constantsModules=constantsModules,
-                         packages=packages
-                         )
 
 
 class Build(QtGui.QWidget):
