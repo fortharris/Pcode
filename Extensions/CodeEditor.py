@@ -27,7 +27,7 @@ class TokenizeThread(QtCore.QThread):
                     line = begin[0]
                     if line not in self.tokenList:
                         self.tokenList.append(line - 1)
-        except:
+        except Exception:
             pass
 
     def tokenize(self, source):
@@ -45,7 +45,7 @@ class DocThread(QtCore.QThread):
             doc = codeassist.get_doc(self.ropeProject,
                                      self.source, self.hoverOffset)
             self.docAvailable.emit(doc, self.hoverOffset)
-        except:
+        except Exception:
             pass
 
     def doc(self, ropeProject, source, hoverOffset):
@@ -82,7 +82,7 @@ class AutoCompletionThread(QtCore.QThread):
                 return completions
             else:
                 return []
-        except:
+        except Exception:
             pass
 
     def completions(self):
@@ -163,7 +163,7 @@ class AutoCompletionThread(QtCore.QThread):
             elif path.endswith('.egg'):
                 try:
                     folderList = [f for f in zipimporter(path)._files]
-                except:
+                except Exception:
                     folderList = []
             else:
                 folderList = []
@@ -196,7 +196,7 @@ class AutoCompletionThread(QtCore.QThread):
                 if token == 'class':
                     tokentype, class_name, start = next(g)[0:3]
                     completionList.append(class_name)
-        except:
+        except Exception:
             return []
         return completionList
 
@@ -224,7 +224,7 @@ class AutoCompletionThread(QtCore.QThread):
                     if '__init__.py' in os.listdir(path):
                         completionList.append(item + os.path.sep)
             completionList.remove('__init__')
-        except:
+        except Exception:
             pass
 
         completionList = list(set(filter(lambda x: x.startswith(pathElements[-1]),
@@ -758,7 +758,7 @@ class CodeEditor(BaseScintilla):
         try:
             snippetList = os.listdir(
                 self.useData.appPathDict["snippetsdir"])
-        except:
+        except Exception:
             self.notification.showMessage("Could not fetch snippets.")
             return
         if len(snippetList) > 0:

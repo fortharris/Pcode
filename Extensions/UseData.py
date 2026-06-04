@@ -103,7 +103,7 @@ class FindInstalledPython(QtCore.QObject):
             
             # Done
             return found
-        except:
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
@@ -115,6 +115,7 @@ class FindInstalledPython(QtCore.QObject):
         import winreg
 
         versionList = []
+        key = None
         # Open base key
         regkeys = (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE)
         for regkey in regkeys:
@@ -123,7 +124,7 @@ class FindInstalledPython(QtCore.QObject):
                 key = winreg.OpenKey(
                     base, 'SOFTWARE\\Python\\PythonCore', 0, winreg.KEY_READ)
                 break
-            except:
+            except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 logging.error(repr(traceback.format_exception(exc_type, exc_value,
                              exc_traceback)))
@@ -145,7 +146,7 @@ class FindInstalledPython(QtCore.QObject):
                     versionList.append(os.path.normpath(location))
                     # Close
                     winreg.CloseKey(subkey)
-                except:
+                except Exception:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
                     logging.error(
                         repr(traceback.format_exception(exc_type, exc_value,
@@ -423,7 +424,7 @@ class UseData(QtCore.QObject):
             file = open(self.appPathDict["usedata"], "r")
             dom_document.setContent(file.read())
             file.close()
-        except:
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
@@ -474,7 +475,7 @@ class UseData(QtCore.QObject):
             file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
             file.write(dom_document.toString())
             file.close()
-        except:
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
@@ -485,7 +486,7 @@ class UseData(QtCore.QObject):
             file = open(self.appPathDict["modules"], "r")
             dom_document.setContent(file.read())
             file.close()
-        except:
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
@@ -550,7 +551,7 @@ class UseData(QtCore.QObject):
             file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
             file.write(dom_document.toString())
             file.close()
-        except:
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
@@ -574,7 +575,7 @@ class UseData(QtCore.QObject):
             file = open(self.appPathDict["keymap"], "r")
             x = dom_document.setContent(file.read())
             file.close()
-        except:
+        except Exception:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             logging.error(repr(traceback.format_exception(exc_type, exc_value,
                          exc_traceback)))
