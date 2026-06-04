@@ -253,6 +253,8 @@ def _patch_qt6_compat():
          "EditTrigger", "DragDropMode"])
     _flatten_enum_members(QtWidgets.QListView, ["ViewMode", "Flow", "Movement"])
     _flatten_enum_members(QtWidgets.QSizePolicy, ["Policy"])
+    _flatten_enum_members(QtWidgets.QFileDialog, ["Option", "FileMode",
+                                                  "AcceptMode", "ViewMode"])
     if hasattr(QtGui, "QPlainTextEdit"):
         _flatten_enum_members(QtGui.QPlainTextEdit, ["LineWrapMode"])
     if hasattr(QtGui, "QTextEdit"):

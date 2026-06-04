@@ -101,6 +101,7 @@ def main():
     exercise_rope_rename(editor_window, proj_path)
     exercise_snippets(win)
     exercise_export(proj_path, projects_dir)
+    exercise_filedialog_enums()
 
     print("ALL OK")
 
@@ -300,6 +301,20 @@ def exercise_export(proj_path, projects_dir):
     if exists:
         os.remove(archive)
     print("STEP export OK, archive created:", exists)
+
+
+def exercise_filedialog_enums():
+    """Guard the QFileDialog option flags used by the open/browse dialogs.
+
+    These are accessed at module/handler scope across Start, ProjectView,
+    FileExplorer and FindInFiles; an offscreen window never clicks them, so
+    assert the flattened Qt6 enums resolve and combine.
+    """
+    fd = QtWidgets.QFileDialog
+    options = fd.DontResolveSymlinks | fd.ShowDirsOnly
+    assert fd.AcceptOpen is not None
+    assert options is not None
+    print("STEP filedialog-enums OK")
 
 
 if __name__ == "__main__":
