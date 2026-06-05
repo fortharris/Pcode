@@ -1,13 +1,13 @@
-name: Smoke Test
+name: CI
 
 on:
   push:
-    branches: [master, main]
+    branches: [master, main, pyside]
   pull_request:
   workflow_dispatch:
 
 jobs:
-  smoke:
+  test:
     runs-on: ubuntu-latest
     env:
       QT_QPA_PLATFORM: offscreen
@@ -31,6 +31,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install pytest ruff
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Unit tests (pytest)
+        run: pytest
 
       - name: Run headless smoke test
         run: python -u scripts/exercise_editor.py
