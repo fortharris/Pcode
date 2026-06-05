@@ -1,9 +1,15 @@
+from PyQt6.QtCore import Qt, QThread
+from PyQt6.QtGui import QAction, QBrush, QColor, QIcon
+from PyQt6.QtWidgets import (
+    QDialog, QHBoxLayout, QLabel, QLineEdit, QMenu, QMessageBox, QPushButton,
+    QTreeWidgetItem, QVBoxLayout, QWidget,
+)
+
 import sys
 import os
 import traceback
 import logging
 
-from Extensions.qt_bindings import QtGui, QtCore
 
 # rope
 from rope.refactor.rename import Rename
@@ -18,37 +24,38 @@ from rope.contrib.findit import (find_occurrences, find_definition)
 from Extensions.Refactor.UsageDialog import UsageDialog
 
 
-class GetName(QtGui.QDialog):
+class GetName(QDialog):
 
     def __init__(self, caption, defaultText, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(
+            self, parent,
+            Qt.WindowType.Window | Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle(caption)
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
 
-        mainLayout.addWidget(QtGui.QLabel("New name:"))
+        mainLayout.addWidget(QLabel("New name:"))
 
-        self.nameLine = QtGui.QLineEdit()
+        self.nameLine = QLineEdit()
         self.nameLine.setText(defaultText)
         self.nameLine.selectAll()
         self.nameLine.textChanged.connect(self.enableAcceptButton)
         mainLayout.addWidget(self.nameLine)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
-        self.statusLabel = QtGui.QLabel()
+        self.statusLabel = QLabel()
         hbox.addWidget(self.statusLabel)
 
         hbox.addStretch(1)
 
-        self.acceptButton = QtGui.QPushButton("Ok")
+        self.acceptButton = QPushButton("Ok")
         self.acceptButton.setDisabled(True)
         self.acceptButton.clicked.connect(self.accept)
         hbox.addWidget(self.acceptButton)
 
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QPushButton("Cancel")
         self.cancelButton.clicked.connect(self.cancel)
         hbox.addWidget(self.cancelButton)
 
@@ -78,7 +85,7 @@ class GetName(QtGui.QDialog):
         self.close()
 
 
-class FindUsageThread(QtCore.QThread):
+class FindUsageThread(QThread):
 
     def run(self):
         self.error = None
@@ -112,7 +119,7 @@ class FindUsageThread(QtCore.QThread):
         self.start()
 
 
-class RenameThread(QtCore.QThread):
+class RenameThread(QThread):
 
     def run(self):
         self.error = None
@@ -143,7 +150,7 @@ class RenameThread(QtCore.QThread):
         self.start()
 
 
-class InlineThread(QtCore.QThread):
+class InlineThread(QThread):
 
     def run(self):
         self.error = None
@@ -172,7 +179,7 @@ class InlineThread(QtCore.QThread):
         self.start()
 
 
-class LocalToFieldThread(QtCore.QThread):
+class LocalToFieldThread(QThread):
 
     def run(self):
         self.error = None
@@ -201,7 +208,7 @@ class LocalToFieldThread(QtCore.QThread):
         self.start()
 
 
-class ModuleToPackageThread(QtCore.QThread):
+class ModuleToPackageThread(QThread):
 
     def run(self):
         self.error = None
@@ -224,10 +231,10 @@ class ModuleToPackageThread(QtCore.QThread):
         self.start()
 
 
-class Refactor(QtGui.QWidget):
+class Refactor(QWidget):
 
     def __init__(self, editorTabWidget, busyWidget, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.editorTabWidget = editorTabWidget
         self.busyWidget = busyWidget
@@ -293,7 +300,7 @@ class Refactor(QtGui.QWidget):
 
         self.createActions()
 
-        self.refactorMenu = QtGui.QMenu("Refactor")
+        self.refactorMenu = QMenu("Refactor")
         self.refactorMenu.addAction(self.renameAttributeAct)
         self.refactorMenu.addAction(self.inlineAct)
         self.refactorMenu.addAction(self.localToFieldAct)
@@ -303,34 +310,34 @@ class Refactor(QtGui.QWidget):
 
     def createActions(self):
         self.findDefAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "map_marker")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "map_marker")),
                 "Go-to Definition", self, statusTip="Go-to Definition",
                 triggered=self.findDefinition)
 
         self.findOccurrencesAct = \
-            QtGui.QAction("Usages", self, statusTip="Usages",
+            QAction("Usages", self, statusTip="Usages",
                           triggered=self.findOccurrences)
 
         self.moduleToPackageAct = \
-            QtGui.QAction(
+            QAction(
                 "Convert to Package", self, statusTip="Convert to Package",
                 triggered=self.moduleToPackage)
 
         self.renameModuleAct = \
-            QtGui.QAction("Rename", self, statusTip="Rename",
+            QAction("Rename", self, statusTip="Rename",
                           triggered=self.renameModule)
 
         self.renameAttributeAct = \
-            QtGui.QAction("Rename", self, statusTip="Rename",
+            QAction("Rename", self, statusTip="Rename",
                           triggered=self.renameAttribute)
 
         self.inlineAct = \
-            QtGui.QAction("Inline", self, statusTip="Inline",
+            QAction("Inline", self, statusTip="Inline",
                           triggered=self.inline)
 
         self.localToFieldAct = \
-            QtGui.QAction("Local-to-Field", self, statusTip="Local-to-Field",
+            QAction("Local-to-Field", self, statusTip="Local-to-Field",
                           triggered=self.localToField)
 
     def renameModule(self):
@@ -365,7 +372,7 @@ class Refactor(QtGui.QWidget):
     def renameFinished(self):
         self.busyWidget.showBusy(False)
         if self.renameThread.error is not None:
-            QtGui.QMessageBox.warning(self, "Failed Rename",
+            QMessageBox.warning(self, "Failed Rename",
                                                 self.renameThread.error)
             return
         if self.renameThread.offset is None:
@@ -393,7 +400,7 @@ class Refactor(QtGui.QWidget):
     def inlineFinished(self):
         self.busyWidget.showBusy(False)
         if self.inlineThread.error is not None:
-            QtGui.QMessageBox.warning(self, "Failed Inline",
+            QMessageBox.warning(self, "Failed Inline",
                                                 self.inlineThread.error)
             return
         if len(self.inlineThread.changedFiles) > 0:
@@ -413,7 +420,7 @@ class Refactor(QtGui.QWidget):
     def localToFieldFinished(self):
         self.busyWidget.showBusy(False)
         if self.localToFieldThread.error is not None:
-            QtGui.QMessageBox.warning(self, "Failed Local-to-Field",
+            QMessageBox.warning(self, "Failed Local-to-Field",
                                                 self.localToFieldThread.error)
             return
         if len(self.localToFieldThread.changedFiles) > 0:
@@ -465,7 +472,7 @@ class Refactor(QtGui.QWidget):
     def moduleToPackageFinished(self):
         self.busyWidget.showBusy(False)
         if self.moduleToPackageThread.error is not None:
-            QtGui.QMessageBox.warning(self, "Failed to convert",
+            QMessageBox.warning(self, "Failed to convert",
                                                 self.moduleToPackageThread.error)
 
     def findOccurrences(self):
@@ -490,12 +497,12 @@ class Refactor(QtGui.QWidget):
         if len(self.findThread.itemsDict) > 0:
             foundList = []
             for parent, lines in self.findThread.itemsDict.items():
-                parentItem = QtGui.QTreeWidgetItem()
-                parentItem.setForeground(0, QtGui.QBrush(
-                    QtGui.QColor("#003366")))
+                parentItem = QTreeWidgetItem()
+                parentItem.setForeground(0, QBrush(
+                    QColor("#003366")))
                 parentItem.setText(0, parent)
                 for line in lines:
-                    childItem = QtGui.QTreeWidgetItem()
+                    childItem = QTreeWidgetItem()
                     childItem.setText(0, str(line))
                     childItem.setFirstColumnSpanned(True)
                     parentItem.addChild(childItem)

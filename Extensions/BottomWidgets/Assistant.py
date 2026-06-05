@@ -1,16 +1,22 @@
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import (
+    QHBoxLayout, QLabel, QMenu, QStackedWidget, QTreeWidget, QTreeWidgetItem,
+    QWidget,
+)
+
 import os
 import ast
 import logging
 import traceback
-from Extensions.qt_bindings import QtCore, QtGui
 from pyflakes.checker import Checker as flakeChecker
 import pycodestyle as pep8
 import autopep8
 
 
-class ErrorCheckerThread(QtCore.QThread):
+class ErrorCheckerThread(QThread):
 
-    newAlerts = QtCore.Signal(list, bool)
+    newAlerts = pyqtSignal(list, bool)
 
     def run(self):
         messages = []
@@ -37,9 +43,9 @@ class ErrorCheckerThread(QtCore.QThread):
         self.start()
 
 
-class Pep8CheckerThread(QtCore.QThread):
+class Pep8CheckerThread(QThread):
 
-    newAlerts = QtCore.Signal(list)
+    newAlerts = pyqtSignal(list)
 
     def run(self):
         checkList = []
@@ -78,9 +84,9 @@ class Pep8Report (pep8.BaseReport):
         err = (self.filename, line_number, offset, code, text)
         self.all_errors.append(err)
 
-class AutoPep8FixerThread(QtCore.QThread):
+class AutoPep8FixerThread(QThread):
 
-    new = QtCore.Signal()
+    new = pyqtSignal()
 
     def run(self):
         try:
@@ -101,10 +107,10 @@ class AutoPep8FixerThread(QtCore.QThread):
         self.start()
 
 
-class Pep8View(QtGui.QTreeWidget):
+class Pep8View(QTreeWidget):
 
     def __init__(self, editorTabWidget, parent=None):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
 
         self.editorTabWidget = editorTabWidget
 
@@ -141,51 +147,51 @@ class Pep8View(QtGui.QTreeWidget):
                                                  "Applying Style Guide... please wait!")
 
     def createActions(self):
-        self.fixAct = QtGui.QAction(
+        self.fixAct = QAction(
             "Fix Selected (Not Ready)", self, statusTip="Fix Selected")
         self.fixAct.setDisabled(True)
 
         self.fixAllAct = \
-            QtGui.QAction(
+            QAction(
                 "Fix All Occurrences (Not Ready)", self, statusTip="Fix All Occurrences")
         self.fixAllAct.setDisabled(True)
 
         self.fixModuleAct = \
-            QtGui.QAction(
+            QAction(
                 "Fix All Issues", self, statusTip="Fix All Issues",
                 triggered=self.fixErrors)
 
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.contextMenu.addAction(self.fixAct)
         self.contextMenu.addAction(self.fixAllAct)
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.fixModuleAct)
 
 
-class NoAssistanceWidget(QtGui.QWidget):
+class NoAssistanceWidget(QWidget):
 
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
-        mainLayout = QtGui.QHBoxLayout()
+        mainLayout = QHBoxLayout()
         self.setLayout(mainLayout)
 
         mainLayout.addStretch(1)
 
-        label = QtGui.QLabel('No Assistance')
+        label = QLabel('No Assistance')
         label.setScaledContents(True)
         label.setMinimumWidth(200)
         label.setMinimumHeight(25)
-        label.setAlignment(QtCore.Qt.AlignHCenter)
+        label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         mainLayout.addWidget(label)
 
         mainLayout.addStretch(1)
 
 
-class Assistant(QtGui.QStackedWidget):
+class Assistant(QStackedWidget):
 
     def __init__(self, editorTabWidget, bottomStackSwitcher, parent=None):
-        QtGui.QStackedWidget.__init__(self, parent)
+        QStackedWidget.__init__(self, parent)
 
         self.useData = editorTabWidget.useData
         self.refactor = editorTabWidget.refactor
@@ -199,7 +205,7 @@ class Assistant(QtGui.QStackedWidget):
 
         self.addWidget(NoAssistanceWidget())
 
-        self.errorView = QtGui.QTreeWidget()
+        self.errorView = QTreeWidget()
         self.errorView.setColumnCount(3)
         self.errorView.setHeaderLabels(["", "#", "Alerts"])
         self.errorView.setAutoScroll(True)
@@ -213,7 +219,7 @@ class Assistant(QtGui.QStackedWidget):
         self.pep8View.itemPressed.connect(self.pep8Pressed)
         self.addWidget(self.pep8View)
 
-        self.codeCheckerTimer = QtCore.QTimer()
+        self.codeCheckerTimer = QTimer()
         self.codeCheckerTimer.setSingleShot(True)
         self.codeCheckerTimer.timeout.connect(self.runCheck)
 
@@ -314,21 +320,21 @@ class Assistant(QtGui.QStackedWidget):
                 self.editorTabWidget.updateEditorData("errorLine", None)
             self.bottomStackSwitcher.setCount(self, str(len(alertsList)))
             if len(alertsList) == 0:
-                parentItem = QtGui.QTreeWidgetItem()
-                item = QtGui.QTreeWidgetItem()
+                parentItem = QTreeWidgetItem()
+                item = QTreeWidgetItem()
                 item.setText(2, "<No Alerts>")
-                item.setFlags(QtCore.Qt.NoItemFlags)
+                item.setFlags(Qt.ItemFlag.NoItemFlags)
                 parentItem.addChild(item)
                 self.errorView.addTopLevelItem(parentItem)
                 parentItem.setExpanded(True)
 
     def createItem(self, itemType, line, message, args=None, offset=None):
-        item = QtGui.QTreeWidgetItem(itemType)
+        item = QTreeWidgetItem(itemType)
         if itemType == 0:
-            item.setIcon(0, QtGui.QIcon(
+            item.setIcon(0, QIcon(
                 os.path.join("Resources", "images", "alerts", "_0035_Flashlight")))
         elif itemType == 1:
-            item.setIcon(0, QtGui.QIcon(
+            item.setIcon(0, QIcon(
                 os.path.join("Resources", "images", "alerts", "construction")))
         item.setText(1, str(line))
         item.setText(2, message)
@@ -341,13 +347,13 @@ class Assistant(QtGui.QStackedWidget):
         if self.currentCodeIsPython:
             self.pep8View.clear()
             for i in checkList:
-                item = QtGui.QTreeWidgetItem()
+                item = QTreeWidgetItem()
                 if i[3] in self.autopep8SupportDict:
-                    icon = QtGui.QIcon(
+                    icon = QIcon(
                         os.path.join("Resources", "images", "security", "allowed"))
                     item.setData(9, 2, True)
                 else:
-                    icon = QtGui.QIcon(
+                    icon = QIcon(
                         os.path.join("Resources", "images", "security", "requesting"))
                     item.setData(9, 2, False)
                 item.setIcon(0, icon)
@@ -357,10 +363,10 @@ class Assistant(QtGui.QStackedWidget):
                 item.setData(11, 2, i[3])
                 self.pep8View.addTopLevelItem(item)
             if len(checkList) == 0:
-                parentItem = QtGui.QTreeWidgetItem()
-                item = QtGui.QTreeWidgetItem()
+                parentItem = QTreeWidgetItem()
+                item = QTreeWidgetItem()
                 item.setText(2, "<No Issues>")
-                item.setFlags(QtCore.Qt.NoItemFlags)
+                item.setFlags(Qt.ItemFlag.NoItemFlags)
                 parentItem.addChild(item)
                 self.pep8View.addTopLevelItem(parentItem)
                 parentItem.setExpanded(True)
