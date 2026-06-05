@@ -1,5 +1,5 @@
 from PyQt6.Qsci import QsciScintilla
-from Extensions.qt_bindings import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui
 
 
 class GetShortcut(QtGui.QDialog):
@@ -166,32 +166,9 @@ class Keymap(QtGui.QDialog):
         self.saveKeymap()
 
     def saveKeymap(self, path=None):
-        dom_document = QtXml.QDomDocument("keymap")
-
-        keymap = dom_document.createElement("keymap")
-        dom_document.appendChild(keymap)
-
-        for key, value in self.useData.CUSTOM_SHORTCUTS.items():
-            root = dom_document.createElement(key)
-            keymap.appendChild(root)
-
-            for short, func in value.items():
-                tag = dom_document.createElement(short)
-                if key == "Editor":
-                    shortName = func[0]
-                    keyValue = str(func[1])
-                    tag.setAttribute("shortcut", shortName)
-                    tag.setAttribute("value", keyValue)
-                else:
-                    tag.setAttribute("shortcut", func)
-                root.appendChild(tag)
-
-        if path is None:
-            path = self.useData.appPathDict["keymap"]
-        file = open(path, "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        # Persistence is owned by UseData (single consolidated JSON store);
+        # CUSTOM_SHORTCUTS has already been updated in place by bindKeymap().
+        self.useData.saveKeymap()
 
     def bindKeymap(self):
         for i in range(self.projectWindowStack.count() - 1):

@@ -1,6 +1,7 @@
 import os
 import sys
 import re
+import json
 import codecs
 import traceback
 import logging
@@ -351,21 +352,51 @@ class UseData(QtCore.QObject):
             "DefaultInterpreter": sys.executable,
         }
 
-        # load configuration from file
-        tempList = []
-        file = open("settings.ini", "r")
-        for i in file.readlines():
-            if i.strip() == '':
-                pass
-            else:
-                tempList.append(tuple(i.strip().split('=')))
-        file.close()
-        self.settings = dict(tempList)
+        # App-level bootstrap config (workspace pointer + run flags). Stored as
+        # JSON; the legacy plain-text settings.ini is migrated on first run.
+        self.BOOTSTRAP_FILE = "settings.json"
+        self.LEGACY_BOOTSTRAP_FILE = "settings.ini"
+        # Consolidated workspace data (settings, opened projects, completion
+        # modules, keymap) lives in a single JSON file in the workspace; this
+        # cache is populated by loadUseData().
+        self._data = {}
+
+        self.settings = self._loadBootstrap()
 
         self.loadAppData()
         self.loadUseData()
 
         self.SETTINGS["InstalledInterpreters"] = self.getPythonExecutables()
+
+    def _loadBootstrap(self):
+        """Load the app-level bootstrap config.
+
+        Prefers ``settings.json``; falls back to (and migrates) the legacy
+        ``settings.ini`` plain-text ``key=value`` file. Values are kept as
+        strings so existing ``settings["firstRun"] == "True"`` comparisons
+        elsewhere keep working.
+        """
+        bootstrap = {"workspace": None, "firstRun": "True", "running": "False"}
+        if os.path.isfile(self.BOOTSTRAP_FILE):
+            try:
+                with open(self.BOOTSTRAP_FILE, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                bootstrap.update({k: str(v) for k, v in data.items()})
+                return bootstrap
+            except Exception:
+                logging.error(traceback.format_exc())
+        if os.path.isfile(self.LEGACY_BOOTSTRAP_FILE):
+            try:
+                with open(self.LEGACY_BOOTSTRAP_FILE, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if not line or "=" not in line:
+                            continue
+                        key, value = line.split("=", 1)
+                        bootstrap[key] = value
+            except Exception:
+                logging.error(traceback.format_exc())
+        return bootstrap
 
     def _default_workspace_dir(self):
         repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -407,6 +438,8 @@ class UseData(QtCore.QObject):
             "projectsdir": os.path.join(self.workspaceDir, "Projects"),
             "settingsdir": os.path.join(self.workspaceDir, "Settings"),
             "stylesdir": os.path.join(self.workspaceDir, "Settings", "ColorSchemes"),
+            "datafile": os.path.join(self.workspaceDir, "Settings", "usedata.json"),
+            # Legacy XML files, kept only so they can be migrated on first run.
             "usedata": os.path.join(self.workspaceDir, "Settings", "usedata.xml"),
             "modules": os.path.join(self.workspaceDir, "Settings", "modules.xml"),
             "keymap": os.path.join(self.workspaceDir, "Settings", "keymap.xml")
@@ -419,190 +452,213 @@ class UseData(QtCore.QObject):
         self.loadModulesForCompletion()
 
     def loadUseData(self):
-        dom_document = QtXml.QDomDocument()
-        try:
-            file = open(self.appPathDict["usedata"], "r")
-            dom_document.setContent(file.read())
-            file.close()
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                         exc_traceback)))
-            self._apply_default_settings()
-            return
+        self._data = self._readWorkspaceData()
 
-        elements = dom_document.documentElement()
-        node = elements.firstChild()
+        settings = self._data.get("settings", {})
+        if isinstance(settings, dict):
+            self.SETTINGS.update(settings)
 
-        settingsList = []
-        while node.isNull() is False:
-            property = node.toElement()
-            sub_node = property.firstChild()
-            while sub_node.isNull() is False:
-                sub_prop = sub_node.toElement()
-                if node.nodeName() == "openedprojects":
-                    path = sub_prop.text()
-                    if os.path.exists(path):
-                        self.OPENED_PROJECTS.append(path)
-                elif node.nodeName() == "settings":
-                    settingsList.append((tuple(sub_prop.text().split('=', 1))))
-                sub_node = sub_node.nextSibling()
-            node = node.nextSibling()
+        for path in self._data.get("openedProjects", []):
+            if os.path.exists(path):
+                self.OPENED_PROJECTS.append(path)
 
-        self.SETTINGS.update(dict(settingsList))
         self._apply_default_settings()
 
-    def saveModulesForCompletion(self):
-        dom_document = QtXml.QDomDocument("modules")
+    def _readWorkspaceData(self):
+        """Return the consolidated workspace data dict.
 
-        modules = dom_document.createElement("modules")
-        dom_document.appendChild(modules)
+        Reads ``usedata.json``; on first run (no JSON yet) it migrates the
+        legacy ``usedata.xml`` / ``modules.xml`` / ``keymap.xml`` trio and
+        writes the consolidated file.
+        """
+        datafile = self.appPathDict["datafile"]
+        if os.path.isfile(datafile):
+            try:
+                with open(datafile, "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except Exception:
+                logging.error(traceback.format_exc())
+                return {}
 
-        for i, v in self.libraryDict.items():
-            tag = dom_document.createElement(i)
-            modules.appendChild(tag)
-            tag.setAttribute("use", str(v[1]))
+        data = self._migrateLegacyXml()
+        if data:
+            self._dumpWorkspaceData(data)
+        return data
 
-            for subModule in v[0]:
-                item = dom_document.createElement("item")
-                tag.appendChild(item)
+    def _buildWorkspaceData(self):
+        settings = {k: v for k, v in self.SETTINGS.items()
+                    if k != "InstalledInterpreters"}
+        return {
+            "version": 1,
+            "settings": settings,
+            "openedProjects": list(self.OPENED_PROJECTS),
+            "modules": self.libraryDict,
+            "keymap": self.CUSTOM_SHORTCUTS,
+        }
 
-                t = dom_document.createTextNode(subModule)
-                item.appendChild(t)
-
+    def _dumpWorkspaceData(self, data):
         try:
-            file = open(self.appPathDict["modules"], "w")
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
-            file.close()
+            with open(self.appPathDict["datafile"], "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
         except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                         exc_traceback)))
+            logging.error(traceback.format_exc())
+
+    def _saveWorkspaceData(self):
+        """Persist the full in-memory state to the consolidated JSON file.
+
+        All persisted state lives in memory, so every save is a complete,
+        consistent dump; the individual save* methods are kept as thin
+        wrappers so existing callers keep working.
+        """
+        self._dumpWorkspaceData(self._buildWorkspaceData())
+
+    def saveModulesForCompletion(self):
+        self._saveWorkspaceData()
 
     def loadModulesForCompletion(self):
-        dom_document = QtXml.QDomDocument()
-        try:
-            file = open(self.appPathDict["modules"], "r")
-            dom_document.setContent(file.read())
-            file.close()
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                         exc_traceback)))
-            self.libraryDict = {}
-            return
-
-        element = dom_document.documentElement()
-        node = element.firstChild()
-
         self.libraryDict = {}
-        while node.isNull() is False:
-            property = node.toElement()
-            sub_node = property.firstChild()
-
-            moduleName = node.nodeName()
-            use = property.attribute('use')
-
-            itemList = []
-            while sub_node.isNull() is False:
-                sub_prop = sub_node.toElement()
-                itemList.append(sub_prop.text())
-
-                sub_node = sub_node.nextSibling()
-            self.libraryDict[moduleName] = [itemList, use]
-            node = node.nextSibling()
+        modules = self._data.get("modules", {})
+        if not isinstance(modules, dict):
+            return
+        for moduleName, value in modules.items():
+            try:
+                itemList, use = list(value[0]), value[1]
+            except Exception:
+                continue
+            self.libraryDict[moduleName] = [itemList, str(use)]
 
     def saveUseData(self):
-        dom_document = QtXml.QDomDocument("usedata")
-
-        usedata = dom_document.createElement("usedata")
-        dom_document.appendChild(usedata)
-
-        root = dom_document.createElement("openedprojects")
-        usedata.appendChild(root)
-
-        for i in self.OPENED_PROJECTS:
-            tag = dom_document.createElement("project")
-            root.appendChild(tag)
-
-            t = dom_document.createTextNode(i)
-            tag.appendChild(t)
-
-        root = dom_document.createElement("settings")
-        usedata.appendChild(root)
-
-        s = 0
-        for key, value in self.SETTINGS.items():
-            if key == "InstalledInterpreters":
-                continue
-            tag = dom_document.createElement("key")
-            root.appendChild(tag)
-
-            t = dom_document.createTextNode(key + '=' + value)
-            tag.appendChild(t)
-            s += 1
-
-        usedata = dom_document.createElement("usedata")
-        dom_document.appendChild(usedata)
-
-        try:    
-            file = open(self.appPathDict["usedata"], "w")
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
-            file.close()
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                         exc_traceback)))
-            return
-
+        self._saveWorkspaceData()
         self.settings["running"] = 'False'
         self.saveSettings()
-        self.saveModulesForCompletion()
+
+    def saveKeymap(self):
+        self._saveWorkspaceData()
 
     def loadKeymap(self):
         import copy
         self.CUSTOM_SHORTCUTS = copy.deepcopy(self.DEFAULT_SHORTCUTS)
-        if self.settings["firstRun"] == "True":
+        if self.settings.get("firstRun") == "True":
             return
-        # No custom keymap saved yet is an expected state (fresh workspace),
-        # not an error: fall back to defaults quietly.
-        if not os.path.exists(self.appPathDict["keymap"]):
+        keymap = self._data.get("keymap")
+        if not isinstance(keymap, dict):
             return
-        dom_document = QtXml.QDomDocument()
-        try:
-            file = open(self.appPathDict["keymap"], "r")
-            x = dom_document.setContent(file.read())
-            file.close()
-        except Exception:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                         exc_traceback)))
-            return
+        for group, mapping in keymap.items():
+            if group not in self.CUSTOM_SHORTCUTS or not isinstance(mapping, dict):
+                continue
+            for name, value in mapping.items():
+                if group == "Editor":
+                    try:
+                        self.CUSTOM_SHORTCUTS[group][name] = [value[0],
+                                                              int(value[1])]
+                    except Exception:
+                        continue
+                else:
+                    self.CUSTOM_SHORTCUTS[group][name] = value
 
-        elements = dom_document.documentElement()
-        node = elements.firstChild()
+    # ------------------------------------------------------------------
+    # Legacy (XML) migration helpers
+    # ------------------------------------------------------------------
+
+    def _migrateLegacyXml(self):
+        """Build a consolidated data dict from the legacy XML files, if any."""
+        data = {"version": 1, "settings": {}, "openedProjects": [],
+                "modules": {}, "keymap": {}}
+        found = False
+
+        usedata = self._readLegacyUseDataXml()
+        if usedata is not None:
+            data["settings"], data["openedProjects"] = usedata
+            found = True
+
+        modules = self._readLegacyModulesXml()
+        if modules is not None:
+            data["modules"] = modules
+            found = True
+
+        keymap = self._readLegacyKeymapXml()
+        if keymap is not None:
+            data["keymap"] = keymap
+            found = True
+
+        return data if found else {}
+
+    def _readLegacyXmlDocument(self, path):
+        if not os.path.isfile(path):
+            return None
+        try:
+            with open(path, "r") as f:
+                dom_document = QtXml.QDomDocument()
+                dom_document.setContent(f.read())
+                return dom_document
+        except Exception:
+            logging.error(traceback.format_exc())
+            return None
+
+    def _readLegacyUseDataXml(self):
+        dom_document = self._readLegacyXmlDocument(self.appPathDict["usedata"])
+        if dom_document is None:
+            return None
+        settings = {}
+        openedProjects = []
+        node = dom_document.documentElement().firstChild()
+        while node.isNull() is False:
+            sub_node = node.toElement().firstChild()
+            while sub_node.isNull() is False:
+                sub_prop = sub_node.toElement()
+                if node.nodeName() == "openedprojects":
+                    openedProjects.append(sub_prop.text())
+                elif node.nodeName() == "settings":
+                    key, _, value = sub_prop.text().partition('=')
+                    settings[key] = value
+                sub_node = sub_node.nextSibling()
+            node = node.nextSibling()
+        return settings, openedProjects
+
+    def _readLegacyModulesXml(self):
+        dom_document = self._readLegacyXmlDocument(self.appPathDict["modules"])
+        if dom_document is None:
+            return None
+        modules = {}
+        node = dom_document.documentElement().firstChild()
         while node.isNull() is False:
             property = node.toElement()
             sub_node = property.firstChild()
-            group = node.nodeName()
+            moduleName = node.nodeName()
+            use = property.attribute('use')
+            itemList = []
             while sub_node.isNull() is False:
-                sub_prop = sub_node.toElement()
-                tag = sub_prop.toElement()
+                itemList.append(sub_node.toElement().text())
+                sub_node = sub_node.nextSibling()
+            modules[moduleName] = [itemList, use]
+            node = node.nextSibling()
+        return modules
+
+    def _readLegacyKeymapXml(self):
+        dom_document = self._readLegacyXmlDocument(self.appPathDict["keymap"])
+        if dom_document is None:
+            return None
+        keymap = {}
+        node = dom_document.documentElement().firstChild()
+        while node.isNull() is False:
+            group = node.nodeName()
+            keymap[group] = {}
+            sub_node = node.toElement().firstChild()
+            while sub_node.isNull() is False:
+                tag = sub_node.toElement()
                 name = tag.tagName()
                 shortcut = tag.attribute("shortcut")
                 if group == "Editor":
-                    keyValue = int(tag.attribute("value"))
-                    self.CUSTOM_SHORTCUTS[
-                        group][name] = [shortcut, keyValue]
+                    try:
+                        keymap[group][name] = [shortcut,
+                                               int(tag.attribute("value"))]
+                    except Exception:
+                        pass
                 else:
-                    self.CUSTOM_SHORTCUTS[
-                        group][name] = shortcut
-
+                    keymap[group][name] = shortcut
                 sub_node = sub_node.nextSibling()
-
             node = node.nextSibling()
+        return keymap
 
     def getLastOpenedDir(self):
         if os.path.exists(self.SETTINGS["LastOpenedPath"]):
@@ -618,10 +674,11 @@ class UseData(QtCore.QObject):
             self.SETTINGS["LastOpenedPath"] = path
 
     def saveSettings(self):
-        file = open("settings.ini", "w")
-        for key, value in self.settings.items():
-            file.write('\n' + key + '=' + value)
-        file.close()
+        try:
+            with open(self.BOOTSTRAP_FILE, "w", encoding="utf-8") as f:
+                json.dump(self.settings, f, indent=2)
+        except Exception:
+            logging.error(traceback.format_exc())
 
     def readFile(self, fileName):
         file = open(fileName, 'rb')
