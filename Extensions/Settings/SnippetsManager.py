@@ -158,9 +158,8 @@ class SnippetsManager(QtGui.QDialog):
             event.setDropAction(QtCore.Qt.CopyAction)
             snippet = GetName("Add Snippet", self.path, self)
             if snippet.accepted:
-                file = open(os.path.join(self.path, snippet.name), 'w')
-                file.write(mime.text())
-                file.close()
+                with open(os.path.join(self.path, snippet.name), 'w') as file:
+                    file.write(mime.text())
 
                 self.loadSnippetList()
                 found = self.snippetsListWidget.findItems(snippet.name,
@@ -173,8 +172,8 @@ class SnippetsManager(QtGui.QDialog):
     def addSnippet(self):
         snippet = GetName("Add Snippet", self.path, self)
         if snippet.accepted:
-            file = open(os.path.join(self.path, snippet.name), 'w')
-            file.close()
+            with open(os.path.join(self.path, snippet.name), 'w'):
+                pass
 
             self.loadSnippetList()
             found = self.snippetsListWidget.findItems(snippet.name,
@@ -185,9 +184,8 @@ class SnippetsManager(QtGui.QDialog):
     def saveSnippet(self):
         name = self.snippetsListWidget.currentItem().text()
         path = os.path.join(self.path, name)
-        file = open(path, 'w')
-        file.write(self.snippetViewer.toPlainText())
-        file.close()
+        with open(path, 'w') as file:
+            file.write(self.snippetViewer.toPlainText())
 
     def renameSnippet(self):
         snippet = GetName("Rename Snippet", self.path, self)
@@ -236,6 +234,5 @@ class SnippetsManager(QtGui.QDialog):
         if currentItem is None:
             return
         key = currentItem.text()
-        file = open(os.path.join(self.path, key), 'r')
-        self.snippetViewer.setText(file.read())
-        file.close()
+        with open(os.path.join(self.path, key), 'r') as file:
+            self.snippetViewer.setText(file.read())

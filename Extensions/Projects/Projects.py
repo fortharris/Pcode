@@ -24,8 +24,8 @@ class CreateProjectThread(QtCore.QThread):
 
             data = os.path.join(self.projectPath, "Data")
             os.mkdir(data)
-            file = open(os.path.join(data, "wpad.txt"), "w")
-            file.close()
+            with open(os.path.join(data, "wpad.txt"), "w"):
+                pass
 
             ropeFolder = os.path.join(self.projectPath, "Rope")
             os.mkdir(ropeFolder)
@@ -61,8 +61,8 @@ class CreateProjectThread(QtCore.QThread):
 
             self.mainScript = os.path.join(self.projectPath, "src",
                                            self.projDataDict["mainscript"])
-            file = open(self.mainScript, 'w')
-            file.close()
+            with open(self.mainScript, 'w'):
+                pass
 
             if self.projDataDict["type"] == "Desktop Application":
                 self.writeBuildProfile()
@@ -90,10 +90,9 @@ class CreateProjectThread(QtCore.QThread):
 
         properties.appendChild(tag)
 
-        file = open(os.path.join(self.projectPath, "project.xml"), "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        with open(os.path.join(self.projectPath, "project.xml"), "w") as file:
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(dom_document.toString())
 
         domDocument = QtXml.QDomDocument("projectdata")
 
@@ -139,10 +138,9 @@ class CreateProjectThread(QtCore.QThread):
             s += 1
 
         path = os.path.join(self.projectPath, "Data", "projectdata.xml")
-        file = open(path, "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(domDocument.toString())
-        file.close()
+        with open(path, "w") as file:
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(domDocument.toString())
 
     def writeDefaultSession(self):
         dom_document = QtXml.QDomDocument("session")
@@ -150,10 +148,9 @@ class CreateProjectThread(QtCore.QThread):
         session = dom_document.createElement("session")
         dom_document.appendChild(session)
 
-        file = open(os.path.join(self.projectPath, "Data", "session.xml"), "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        with open(os.path.join(self.projectPath, "Data", "session.xml"), "w") as file:
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(dom_document.toString())
 
     def writeRopeProfile(self):
         dom_document = QtXml.QDomDocument("rope_profile")
@@ -202,10 +199,9 @@ class CreateProjectThread(QtCore.QThread):
         root = dom_document.createElement("CustomFolders")
         main_data.appendChild(root)
 
-        file = open(os.path.join(self.projectPath, "Rope", "profile.xml"), "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        with open(os.path.join(self.projectPath, "Rope", "profile.xml"), "w") as file:
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(dom_document.toString())
 
     def writeBuildProfile(self):
         dom_document = QtXml.QDomDocument("build_profile")
@@ -310,11 +306,10 @@ class CreateProjectThread(QtCore.QThread):
             root = dom_document.createElement(i.replace(' ', '-'))
             main_data.appendChild(root)
 
-        file = open(
-            os.path.join(self.projectPath, "Build", "profile.xml"), "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        with open(
+                os.path.join(self.projectPath, "Build", "profile.xml"), "w") as file:
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(dom_document.toString())
 
     def create(self, data):
         self.projDataDict = data
@@ -352,9 +347,8 @@ class Projects(QtGui.QWidget):
         if os.path.exists(project_file) is False:
             return False
         dom_document = QtXml.QDomDocument()
-        file = open(os.path.join(path, "project.xml"), "r")
-        dom_document.setContent(file.read())
-        file.close()
+        with open(os.path.join(path, "project.xml"), "r") as file:
+            dom_document.setContent(file.read())
 
         data = {}
 

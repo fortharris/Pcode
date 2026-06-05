@@ -44,8 +44,9 @@ class FinderThread(QtCore.QThread):
             file = os.path.abspath(os.path.join(self.libraryDir, files[i]))
 
             try:
-                text = open(file, 'r').read()
-            except:
+                with open(file, 'r') as fh:
+                    text = fh.read()
+            except Exception:
                 continue
             dom_document.setContent(text)
 

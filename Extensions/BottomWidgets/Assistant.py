@@ -124,9 +124,8 @@ class Pep8View(QtGui.QTreeWidget):
         self.editorTabWidget.busyWidget.showBusy(False)
         
         editor = self.editorTabWidget.getEditor()
-        file = open(os.path.join("temp", "temp8.py"), "r")
-        editor.setText(file.read())
-        file.close()
+        with open(os.path.join("temp", "temp8.py"), "r") as file:
+            editor.setText(file.read())
         self.editorTabWidget.getEditor().removeBookmarks()
         self.editorTabWidget.enableBookmarkButtons(False)
 

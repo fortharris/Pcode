@@ -536,8 +536,8 @@ class RunWidget(BaseScintilla):
                 # creates a file with same code but showing how many times
                 # each line of code args
                 countfile = os.path.abspath(os.path.join("temp", "count.txt"))
-                file = open(countfile, 'w')
-                file.close()
+                with open(countfile, 'w'):
+                    pass
                 if run_with_args:
                     self.runProcess.start(pythonPath, ['-m', "trace",
                                                        '--count', '--file={0}'.format(countfile), runScript, args], self.openMode)

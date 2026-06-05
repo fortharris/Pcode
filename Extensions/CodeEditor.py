@@ -187,9 +187,8 @@ class AutoCompletionThread(QtCore.QThread):
         try:
             absolutePath = absolutePath + '.py'
 
-            file = open(absolutePath, "r")
-            f = io.StringIO(file.read())
-            file.close()
+            with open(absolutePath, "r") as file:
+                f = io.StringIO(file.read())
 
             g = tokenize.generate_tokens(f.readline)
             for tokentype, token, start, _end, _line in g:
@@ -673,10 +672,9 @@ class CodeEditor(BaseScintilla):
             self.deleteWordToLeft()
         self.removeSelectedText()
         if id == 1:
-            file = open(os.path.join(self.useData.appPathDict[
-                        "snippetsdir"], text), 'r')
-            cmpl = file.readlines()
-            file.close()
+            with open(os.path.join(self.useData.appPathDict[
+                        "snippetsdir"], text), 'r') as file:
+                cmpl = file.readlines()
             line, col = self.getCursorPosition()
             if self.text(line).strip() == '':
                 padding = ' ' * col

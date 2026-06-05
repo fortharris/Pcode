@@ -29,12 +29,11 @@ class WritePad(QtGui.QMainWindow):
 
         # load notes
         try:
-            file = open(self.path, "r")
-            self.writePad.setPlainText(file.read())
-            file.close()
-        except:
-            file = open(path, "w")
-            file.close()
+            with open(self.path, "r") as file:
+                self.writePad.setPlainText(file.read())
+        except Exception:
+            with open(path, "w"):
+                pass
 
         self.writePad.textChanged.connect(self.startSaveTimer)
         
@@ -42,6 +41,5 @@ class WritePad(QtGui.QMainWindow):
         self.noteSaveTimer.start(1000)
 
     def saveNotes(self):
-        file = open(self.path, "w")
-        file.write(self.writePad.toPlainText())
-        file.close()
+        with open(self.path, "w") as file:
+            file.write(self.writePad.toPlainText())

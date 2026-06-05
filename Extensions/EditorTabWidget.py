@@ -562,9 +562,8 @@ class EditorTabWidget(QtGui.QTabWidget):
 
             savePath = os.path.join(self.projectPathDict["backupdir"], key)
 
-            file = open(savePath, 'w')
-            file.write(editor.text())
-            file.close()
+            with open(savePath, 'w') as file:
+                file.write(editor.text())
         self.saveSession(True)
 
     def saveSession(self, backup=False):
@@ -617,10 +616,9 @@ class EditorTabWidget(QtGui.QTabWidget):
             savePath = self.projectPathDict["backupfile"]
         else:
             savePath = self.projectPathDict["session"]
-        file = open(savePath, "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        with open(savePath, "w") as file:
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(dom_document.toString())
 
     def restoreSession(self):
         # TODO: When backup is True and it turns out empty because
@@ -635,10 +633,9 @@ class EditorTabWidget(QtGui.QTabWidget):
             self.clearBackups()
             loadPath = self.projectPathDict["session"]
 
-        file = open(loadPath, "r")
-        dom_document = QtXml.QDomDocument()
-        dom_document.setContent(file.read())
-        file.close()
+        with open(loadPath, "r") as file:
+            dom_document = QtXml.QDomDocument()
+            dom_document.setContent(file.read())
 
         elements = dom_document.documentElement()
         node = elements.firstChild()
@@ -655,9 +652,8 @@ class EditorTabWidget(QtGui.QTabWidget):
                         self.projectPathDict["backupdir"], backupKey)
                     realPath = tag.attribute("path")
                     if realPath == '':
-                        file = open(backupPath, 'r')
-                        backupText = file.read()
-                        file.close()
+                        with open(backupPath, 'r') as file:
+                            backupText = file.read()
 
                         subStack = self.newEditor(currentIindex)
                         editor = subStack.widget(0).widget(0)
@@ -672,13 +668,11 @@ class EditorTabWidget(QtGui.QTabWidget):
                         if real_mod_time > backup_mod_time:
                             pass
                         else:
-                            file = open(backupPath, 'r')
-                            backupText = file.read()
-                            file.close()
+                            with open(backupPath, 'r') as file:
+                                backupText = file.read()
 
-                            file = open(realPath, "w")
-                            file.write(backupText)
-                            file.close()
+                            with open(realPath, "w") as file:
+                                file.write(backupText)
 
                             restoredBackups += 1
 
@@ -981,10 +975,9 @@ class EditorTabWidget(QtGui.QTabWidget):
             return saved
         else:
             try:
-                file = open(savePath, "w")
                 editor = self.getEditor(index)
-                file.write(editor.text())
-                file.close()
+                with open(savePath, "w") as file:
+                    file.write(editor.text())
                 editor.setModified(False)
 
                 return True
@@ -1001,12 +994,12 @@ class EditorTabWidget(QtGui.QTabWidget):
             index = self.currentIndex()
         try:
             if type == 'pep8':
-                file = open(os.path.join("temp", "temp8.py"), "w")
-            editor = self.getEditor(index)
-            file.write(editor.text())
-            file.close()
-            return True
-        except:
+                editor = self.getEditor(index)
+                with open(os.path.join("temp", "temp8.py"), "w") as file:
+                    file.write(editor.text())
+                return True
+            return False
+        except Exception:
             return False
 
     def saveAs(self, index=None, copyOnly=False):
@@ -1022,9 +1015,8 @@ class EditorTabWidget(QtGui.QTabWidget):
                     index = self.currentIndex()
                 fileName = os.path.normpath(fileName)
                 editor = self.getEditor(index)
-                file = open(fileName, "w")
-                file.write(editor.text())
-                file.close()
+                with open(fileName, "w") as file:
+                    file.write(editor.text())
                 editor.setModified(False)
                 self.updateTabName(index)
                 if not copyOnly:

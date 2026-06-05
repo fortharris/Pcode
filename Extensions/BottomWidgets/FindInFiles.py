@@ -25,9 +25,10 @@ class FinderThread(QtCore.QThread):
                     parentItem = QtGui.QTreeWidgetItem()
                     # read the file and split it into textlines
                     try:
-                        text = open(file, 'r').read()
+                        with open(file, 'r') as fh:
+                            text = fh.read()
                         lines = text.splitlines(True)
-                    except:
+                    except Exception:
                         continue
 
                     # now perform the search and display the lines found
@@ -98,8 +99,10 @@ class ConfirmReplaceDialog(QtGui.QDialog):
         self.replaceText = replaceText
         self.search = search
 
-        a = open(path, 'r').read().splitlines()
-        b = open(path, 'r').read().splitlines()
+        with open(path, 'r') as fh:
+            content = fh.read()
+        a = content.splitlines()
+        b = content.splitlines()
         for i in range(len(b)):
             b[i] = search.sub(replaceText, b[i])
 
@@ -132,13 +135,11 @@ class ConfirmReplaceDialog(QtGui.QDialog):
     def replace(self):
         QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
 
-        file = open(self.path, 'r')
-        new = self.search.sub(self.replaceText, file.read())
-        file.close()
+        with open(self.path, 'r') as file:
+            new = self.search.sub(self.replaceText, file.read())
 
-        file = open(self.path, 'w')
-        file.write(new)
-        file.close()
+        with open(self.path, 'w') as file:
+            file.write(new)
 
         QtGui.QApplication.restoreOverrideCursor()
 

@@ -257,10 +257,9 @@ class RopeConfig(QtGui.QWidget):
         root = dom_document.createElement("CustomFolders")
         main_data.appendChild(root)
 
-        file = open(fileName, "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        with open(fileName, "w") as file:
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(dom_document.toString())
 
 
 class VenvSetup(QtGui.QWidget):
@@ -326,14 +325,13 @@ class VenvSetup(QtGui.QWidget):
     def setVesionFromVenv(self):
         path = os.path.join(self.projectPathDict["venvdir"], 'pyvenv.cfg')
         tempList = []
-        file = open(path, 'r')
-        for i in file.readlines():
-            v = i.strip()
-            if v == '':
-                pass
-            else:
-                tempList.append(tuple(v.split(' = ')))
-        file.close()
+        with open(path, 'r') as file:
+            for i in file.readlines():
+                v = i.strip()
+                if v == '':
+                    pass
+                else:
+                    tempList.append(tuple(v.split(' = ')))
         settings = dict(tempList)
         return settings['version']
 
@@ -864,19 +862,17 @@ class BuildConfig(QtGui.QWidget):
                 tag.appendChild(t)
 
         try:
-            file = open(fileName, "w")
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
-            file.close()
-        except:
+            with open(fileName, "w") as file:
+                file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+                file.write(dom_document.toString())
+        except Exception:
             message = QtGui.QMessageBox.warning(
                 self, "Save Profile", "Saving failed!")
 
     def load(self):
         dom_document = QtXml.QDomDocument()
-        file = open(self.projectPathDict["buildprofile"], "r")
-        dom_document.setContent(file.read())
-        file.close()
+        with open(self.projectPathDict["buildprofile"], "r") as file:
+            dom_document.setContent(file.read())
 
         dataDict = {}
 

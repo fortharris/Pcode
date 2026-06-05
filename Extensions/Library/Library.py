@@ -404,9 +404,8 @@ class Library(QtGui.QMainWindow):
                                 "librarydir"], snippetName)
 
             dom_document = QtXml.QDomDocument()
-            file = open(path, "r")
-            dom_document.setContent(file.read())
-            file.close()
+            with open(path, "r") as file:
+                dom_document.setContent(file.read())
 
             # save changes
             dom_document = QtXml.QDomDocument("snippet")
@@ -431,10 +430,9 @@ class Library(QtGui.QMainWindow):
             t = dom_document.createCDATASection(self.codeViewer.text())
             tag.appendChild(t)
 
-            file = open(path, "w")
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
-            file.close()
+            with open(path, "w") as file:
+                file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+                file.write(dom_document.toString())
             self.viewLibraryItem(self.currentSnippetItem)
 
     def showComments(self):
@@ -522,9 +520,8 @@ class Library(QtGui.QMainWindow):
 
     def showExtraData(self, path):
         dom_document = QtXml.QDomDocument()
-        file = open(path, "r")
-        dom_document.setContent(file.read())
-        file.close()
+        with open(path, "r") as file:
+            dom_document.setContent(file.read())
 
         documentElement = dom_document.documentElement()
         childElement = documentElement.firstChild().toElement()
@@ -665,10 +662,9 @@ class Library(QtGui.QMainWindow):
                         editorTabWidget.focusedEditor().selectedText())
                 tag.appendChild(t)
 
-                file = open(path, "w")
-                file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-                file.write(dom_document.toString())
-                file.close()
+                with open(path, "w") as file:
+                    file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+                    file.write(dom_document.toString())
                 self.loadLibrary()
                 self.close()
             except Exception as err:

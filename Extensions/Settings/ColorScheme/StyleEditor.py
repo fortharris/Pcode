@@ -323,9 +323,8 @@ class StyleEditor(QtGui.QWidget):
         dom_document = QtXml.QDomDocument()
         path = os.path.join(self.useData.appPathDict[
                             "stylesdir"], groupName, style_name + ".xml")
-        file = open(path, "r")
-        dom_document.setContent(file.read())
-        file.close()
+        with open(path, "r") as file:
+            dom_document.setContent(file.read())
 
         properties = {}
 

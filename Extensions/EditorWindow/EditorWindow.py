@@ -720,10 +720,9 @@ class EditorWindow(QtGui.QWidget):
 
     def loadProjectData(self):
         dom_document = QtXml.QDomDocument()
-        file = open(os.path.join(self.projectPathDict[
-                    "root"], "Data", "projectdata.xml"), "r")
-        x = dom_document.setContent(file.read())
-        file.close()
+        with open(os.path.join(self.projectPathDict[
+                    "root"], "Data", "projectdata.xml"), "r") as file:
+            x = dom_document.setContent(file.read())
 
         elements = dom_document.documentElement()
         node = elements.firstChild()
@@ -831,10 +830,9 @@ class EditorWindow(QtGui.QWidget):
 
         path = os.path.join(
             self.projectPathDict["root"], "Data", "projectdata.xml")
-        file = open(path, "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(domDocument.toString())
-        file.close()
+        with open(path, "w") as file:
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(domDocument.toString())
 
     def setKeymap(self):
         shortcuts = self.useData.CUSTOM_SHORTCUTS

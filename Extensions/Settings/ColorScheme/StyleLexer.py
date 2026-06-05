@@ -157,9 +157,8 @@ class StyleLexer(QtGui.QWidget):
         stylePath = os.path.join(self.useData.appPathDict["stylesdir"],
                                  groupName, styleName + ".xml")
         dom_document = QtXml.QDomDocument()
-        file = open(stylePath, "r")
-        x = dom_document.setContent(file.read())
-        file.close()
+        with open(stylePath, "r") as file:
+            x = dom_document.setContent(file.read())
 
         rootElement = dom_document.documentElement()
         lexerElement = rootElement.firstChild().toElement()

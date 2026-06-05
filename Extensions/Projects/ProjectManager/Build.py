@@ -128,9 +128,8 @@ class BuildThread(QtCore.QThread):
             path = os.path.join(dirPath, i)
             if os.path.isfile(path):
                 if i.endswith('.pth'):
-                    file = open(path, 'r')
-                    lines = file.readlines()
-                    file.close()
+                    with open(path, 'r') as file:
+                        lines = file.readlines()
                     for line in lines:
                         lineText = line.rstrip()
                         if os.path.exists(lineText):

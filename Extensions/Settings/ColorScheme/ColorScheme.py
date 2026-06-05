@@ -249,14 +249,12 @@ class ColorScheme(QtGui.QDialog):
         path = os.path.join(
             self.useData.appPathDict["stylesdir"], groupName, name + '.xml')
         try:
-            file = open(path, "w")
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
-            file.close()
+            with open(path, "w") as file:
+                file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+                file.write(dom_document.toString())
         except Exception as err:
             message = QtGui.QMessageBox.warning(self, "Save",
                                                 "Saving failed: {0}".format(str(err)))
-            file.close()
             return
 
     def saveStyleChanges(self):

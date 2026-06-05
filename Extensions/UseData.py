@@ -681,14 +681,12 @@ class UseData(QtCore.QObject):
             logging.error(traceback.format_exc())
 
     def readFile(self, fileName):
-        file = open(fileName, 'rb')
-        bb = file.read()
-        file.close()
+        with open(fileName, 'rb') as file:
+            bb = file.read()
         encoding = textEncoding(bb)
 
-        file = open(fileName, 'r')
-        text = file.read()
-        file.close()
+        with open(fileName, 'r') as file:
+            text = file.read()
 
         ending = lineEnding(text)
 

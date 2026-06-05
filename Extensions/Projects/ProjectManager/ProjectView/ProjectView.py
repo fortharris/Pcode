@@ -104,24 +104,22 @@ class CopyThread(QtCore.QThread):
 
     def copyFile(self, source, dest):
         self.currentJobChanged.emit(os.path.basename(source))
-        sourceFile = open(source, 'rb')
-        destFile = open(dest, 'wb')
-        while True:
-            if self.stopThread is not False:
-                sourceFile.close()
-                destFile.close()
-                os.remove(dest)
-                return
-            chunk = sourceFile.read(1024)
-            if len(chunk) == 0:
-                sourceFile.close()
-                destFile.close()
-                break
-            destFile.write(chunk)
-            self.totalChunkCopied += len(chunk)
+        cancelled = False
+        with open(source, 'rb') as sourceFile, open(dest, 'wb') as destFile:
+            while True:
+                if self.stopThread is not False:
+                    cancelled = True
+                    break
+                chunk = sourceFile.read(1024)
+                if len(chunk) == 0:
+                    break
+                destFile.write(chunk)
+                self.totalChunkCopied += len(chunk)
 
-            value = self.totalChunkCopied * 100 / self.totalSize
-            self.copyingSizeChanged.emit(value)
+                value = self.totalChunkCopied * 100 / self.totalSize
+                self.copyingSizeChanged.emit(value)
+        if cancelled:
+            os.remove(dest)
 
     def getTotalSize(self, itemList):
         # calculate size of items in the list
@@ -393,10 +391,10 @@ class ProjectTree(QtGui.QTreeView):
         if fileName.accepted:
             path = os.path.join(path, fileName.text)
             try:
-                file = open(path, 'w')
-                file.close()
+                with open(path, 'w'):
+                    pass
                 self.editorTabWidget.loadfile(path)
-            except:
+            except Exception:
                 message = QtGui.QMessageBox.warning(self, "New File",
                                                     "File creation failed!")
 
@@ -419,10 +417,10 @@ class ProjectTree(QtGui.QTreeView):
             try:
                 os.mkdir(path)
                 f = os.path.join(path, "__init__.py")
-                file = open(f, "w")
-                file.close()
+                with open(f, "w"):
+                    pass
                 self.editorTabWidget.loadfile(f)
-            except:
+            except Exception:
                 message = QtGui.QMessageBox.warning(self, "New Package",
                                                     "Package creation failed!")
 
@@ -537,9 +535,8 @@ class ProjectTree(QtGui.QTreeView):
         self.projectPathDict["mainscript"] = fileName
 
         dom_document = QtXml.QDomDocument()
-        file = open(self.projectPathDict["projectmainfile"], "r")
-        x = dom_document.setContent(file.read())
-        file.close()
+        with open(self.projectPathDict["projectmainfile"], "r") as file:
+            x = dom_document.setContent(file.read())
 
         elements = dom_document.documentElement()
         node = elements.firstChild()
@@ -567,10 +564,9 @@ class ProjectTree(QtGui.QTreeView):
             tag.setAttribute(key, value)
         properties.appendChild(tag)
 
-        file = open(self.projectPathDict["projectmainfile"], "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        with open(self.projectPathDict["projectmainfile"], "w") as file:
+            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            file.write(dom_document.toString())
 
 
 class SearchThread(QtCore.QThread):
