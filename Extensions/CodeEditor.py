@@ -377,22 +377,19 @@ class CodeEditor(BaseScintilla):
         # minimum number of letters to be typed before list is displayed
         self.setAutoCompletionThreshold(2)
 
-        if self.useData.SETTINGS["EnableFolding"] == "True":
+        if self.useData.setting_bool("EnableFolding"):
             self.setFolding(QsciScintilla.BoxedTreeFoldStyle, 2)
 
-        # Braces matching
-        # TODO: Causes flicker when selecting text. I suspect it has
-        # the layout and widgets placed on top of it
-        if self.useData.SETTINGS["MatchBraces"] == "True":
-            self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
+        if self.useData.setting_bool("MatchBraces"):
+            self.setBraceMatching(QsciScintilla.StrictBraceMatch)
 
-        if self.useData.SETTINGS["ShowEdgeLine"] == 'True':
+        if self.useData.setting_bool("ShowEdgeLine"):
             if self.useData.SETTINGS["EdgeMode"] == 'Line':
                 self.setEdgeMode(QsciScintilla.EdgeLine)
             elif self.useData.SETTINGS["EdgeMode"] == 'Background':
                 self.setEdgeMode(QsciScintilla.EdgeBackground)
                 
-        if self.useData.SETTINGS["LineWrap"] == 'True':
+        if self.useData.setting_bool("LineWrap"):
             if self.useData.SETTINGS["WrapMode"] == 'Word':
                 self.setWrapMode(QsciScintilla.WrapWord)
             elif self.useData.SETTINGS["WrapMode"] == 'Character':
@@ -400,7 +397,7 @@ class CodeEditor(BaseScintilla):
             elif self.useData.SETTINGS["WrapMode"] == 'Whitespace':
                 self.setWrapMode(QsciScintilla.WrapWhitespace)
 
-        if self.useData.SETTINGS["ShowCaretLine"] == 'True':
+        if self.useData.setting_bool("ShowCaretLine"):
             self.setCaretLineVisible(True)
 
         self.showWhiteSpaces()
@@ -409,7 +406,7 @@ class CodeEditor(BaseScintilla):
         self.setAnnotationDisplay(QsciScintilla.AnnotationBoxed)
 
         # Edge Mode shows a vetical bar at specific number of chars
-        if self.useData.SETTINGS["ShowEdgeLine"] == 'True':
+        if self.useData.setting_bool("ShowEdgeLine"):
             if self.useData.SETTINGS['EdgeMode'] == "Line":
                 self.setEdgeMode(QsciScintilla.EdgeLine)
             else:
@@ -451,7 +448,7 @@ class CodeEditor(BaseScintilla):
         self.showLineNumbers()
         self.setMarkOperationalLines()
 
-        if self.useData.SETTINGS["ShowCaretLine"] == 'True':
+        if self.useData.setting_bool("ShowCaretLine"):
             self.setCaretLineVisible(True)
 
         self.lexer = self.colorScheme.styleEditor(self)
@@ -502,7 +499,7 @@ class CodeEditor(BaseScintilla):
         super(CodeEditor, self).mousePressEvent(event)
 
     def mouseMoveEvent(self, event):
-        if self.useData.SETTINGS["DocOnHover"] == "True":
+        if self.useData.setting_bool("DocOnHover"):
             self.lastHoverPos = event.globalPosition().toPoint()
             self.hoverOffset = self.positionFromPoint(event.pos())
 
@@ -643,7 +640,7 @@ class CodeEditor(BaseScintilla):
         self.editorTabWidget.updateLinesCount.emit(lines)
 
     def startCompletion(self):
-        if self.useData.SETTINGS["EnableAutoCompletion"] == "True":
+        if self.useData.setting_bool("EnableAutoCompletion"):
             if self.useData.SETTINGS["AutoCompletion"] == "Api":
                 lineno, col = self.getCursorPosition()
                 self.completionCallPos = self.getCursorPosition()
@@ -770,7 +767,7 @@ class CodeEditor(BaseScintilla):
         self.markerDeleteAll(9)
 
     def setAutoCompletion(self):
-        if self.useData.SETTINGS["EnableAutoCompletion"] == "False":
+        if not self.useData.setting_bool("EnableAutoCompletion"):
             self.setAutoCompletionSource(QsciScintilla.AcsNone)
             return
         if self.useData.SETTINGS["AutoCompletion"] == "Api":
@@ -779,7 +776,7 @@ class CodeEditor(BaseScintilla):
             self.setAutoCompletionSource(QsciScintilla.AcsDocument)
 
     def setMarkOperationalLines(self):
-        if self.useData.SETTINGS["MarkOperationalLines"] == 'True':
+        if self.useData.setting_bool("MarkOperationalLines"):
             self.setMarginWidth(3, font_metrics_width(self.fontMetrics, "0"))
             self.getOperationTokens()
         else:
@@ -806,7 +803,7 @@ class CodeEditor(BaseScintilla):
         self.zoomWidget.show()
 
     def showWhiteSpaces(self):
-        if self.useData.SETTINGS["ShowWhiteSpaces"] == 'True':
+        if self.useData.setting_bool("ShowWhiteSpaces"):
             self.setWhitespaceVisibility(QsciScintilla.WsVisible)
         else:
             self.setWhitespaceVisibility(QsciScintilla.WsInvisible)

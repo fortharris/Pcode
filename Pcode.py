@@ -307,6 +307,12 @@ class Pcode(QtGui.QWidget):
         self.commandPalette.setCommands(self.buildCommands())
         self.commandPalette.launch()
 
+    def _activeProjectWindow(self):
+        window = self.projectWindowStack.currentWidget()
+        if window is not None and hasattr(window, "editorTabWidget"):
+            return window
+        return None
+
     def buildCommands(self):
         commands = [
             ("New Project", self.newProject),
@@ -320,6 +326,20 @@ class Pcode(QtGui.QWidget):
             ("Theme: System", lambda: self.applyTheme("System")),
             ("About Pcode", self.showAbout),
         ]
+        window = self._activeProjectWindow()
+        if window is not None:
+            etw = window.editorTabWidget
+            commands.extend([
+                ("Save All", window.saveAll),
+                ("Save File", etw.save),
+                ("Run Project", window.runProject),
+                ("Run File", window.runFile),
+                ("Find", window.showFinderWidget),
+                ("Replace", window.showReplaceWidget),
+                ("Find in Files", window.showFindInFilesWidget),
+                ("Go to Line", lambda: window.gotoLineAct.trigger()),
+                ("Configure Project", lambda: window.configureAct.trigger()),
+            ])
         return commands
 
     def applyTheme(self, name):

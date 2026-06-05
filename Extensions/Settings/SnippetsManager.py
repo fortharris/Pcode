@@ -138,11 +138,7 @@ class SnippetsManager(QtGui.QDialog):
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasText():
-            if event.source() in self.children():
-                event.setDropAction(QtCore.Qt.CopyAction)
-                event.accept()
-            else:
-                event.acceptProposedAction()
+            event.acceptProposedAction()
         else:
             event.ignore()
 

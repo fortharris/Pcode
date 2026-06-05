@@ -10,6 +10,9 @@ from PyQt6.Qsci import QsciScintilla
 from Extensions.qt_bindings import QtCore, QtXml
 
 from Extensions.Workspace import Workspace
+from Extensions.settings_utils import (
+    normalize_app_settings, app_settings_for_json, to_bool, from_bool,
+)
 
 
 def textEncoding(bb):
@@ -463,6 +466,13 @@ class UseData(QtCore.QObject):
                 self.OPENED_PROJECTS.append(path)
 
         self._apply_default_settings()
+        normalize_app_settings(self.SETTINGS)
+
+    def setting_bool(self, key, default=False):
+        return to_bool(self.SETTINGS.get(key), default)
+
+    def set_setting_bool(self, key, value):
+        self.SETTINGS[key] = to_bool(value)
 
     def _readWorkspaceData(self):
         """Return the consolidated workspace data dict.
@@ -490,7 +500,7 @@ class UseData(QtCore.QObject):
                     if k != "InstalledInterpreters"}
         return {
             "version": 1,
-            "settings": settings,
+            "settings": app_settings_for_json(settings),
             "openedProjects": list(self.OPENED_PROJECTS),
             "modules": self.libraryDict,
             "keymap": self.CUSTOM_SHORTCUTS,

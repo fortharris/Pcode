@@ -6,6 +6,7 @@ from PyQt6.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
 from Extensions.qt_bindings import QtCore, QtGui
 
 
+from Extensions.settings_utils import to_bool, from_bool
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions.PathLineEdit import PathLineEdit
 from Extensions import Global
@@ -55,10 +56,13 @@ class SetRunParameters(QtGui.QLabel):
         self.runTypeBox.addItem("Run")
         self.runTypeBox.addItem("Profiler")
         self.runTypeBox.addItem("Trace")
+        self.runTypeBox.addItem("Debug")
         if self.projectSettings["RunType"] == 'Profiler':
             self.runTypeBox.setCurrentIndex(1)
         elif self.projectSettings["RunType"] == 'Trace':
             self.runTypeBox.setCurrentIndex(2)
+        elif self.projectSettings["RunType"] == 'Debug':
+            self.runTypeBox.setCurrentIndex(3)
         self.runTypeBox.currentIndexChanged.connect(self.saveArguments)
         self.runTypeBox.currentIndexChanged.connect(self.runTypeChanged)
         hbox.addWidget(self.runTypeBox)
@@ -77,7 +81,7 @@ class SetRunParameters(QtGui.QLabel):
             self.traceTypeBox.hide()
 
         self.runWithArgsBox = QtGui.QCheckBox("Arguments:")
-        if self.projectSettings["RunWithArguments"] == 'True':
+        if to_bool(self.projectSettings["RunWithArguments"]):
             self.runWithArgsBox.setChecked(True)
         self.runWithArgsBox.toggled.connect(self.saveArguments)
         mainLayout.addWidget(self.runWithArgsBox)
@@ -90,7 +94,7 @@ class SetRunParameters(QtGui.QLabel):
         hbox = QtGui.QHBoxLayout()
 
         self.clearOutputBox = QtGui.QCheckBox("Clear Output Window")
-        if self.projectSettings["ClearOutputWindowOnRun"] == 'True':
+        if to_bool(self.projectSettings["ClearOutputWindowOnRun"]):
             self.clearOutputBox.setChecked(True)
         self.clearOutputBox.toggled.connect(self.saveArguments)
         hbox.addWidget(self.clearOutputBox)
@@ -111,13 +115,13 @@ class SetRunParameters(QtGui.QLabel):
         self.runPointBox = QtGui.QComboBox()
         self.runPointBox.addItem("Internal Console")
         self.runPointBox.addItem("External Console")
-        if self.projectSettings["RunInternal"] == 'False':
+        if not to_bool(self.projectSettings["RunInternal"]):
             self.runPointBox.setCurrentIndex(1)
         self.runPointBox.currentIndexChanged.connect(self.saveArguments)
         mainLayout.addWidget(self.runPointBox)
 
         self.useVirtualEnvBox = QtGui.QCheckBox("Use Virtual Environment")
-        if self.projectSettings["UseVirtualEnv"] == 'True':
+        if to_bool(self.projectSettings["UseVirtualEnv"]):
             self.useVirtualEnvBox.setChecked(True)
         self.useVirtualEnvBox.toggled.connect(self.setDefaultInterpreter)
         mainLayout.addWidget(self.useVirtualEnvBox)
@@ -146,7 +150,7 @@ class SetRunParameters(QtGui.QLabel):
         if len(self.useData.SETTINGS["InstalledInterpreters"]) > 0:
             for i in self.useData.SETTINGS["InstalledInterpreters"]:
                 self.installedPythonVersionBox.addItem(i)
-                if self.projectSettings["UseVirtualEnv"] == 'False':
+                if not to_bool(self.projectSettings["UseVirtualEnv"]):
                     index = self.installedPythonVersionBox.findText(
                         self.projectSettings["DefaultInterpreter"])
                     if index != -1:
@@ -161,41 +165,31 @@ class SetRunParameters(QtGui.QLabel):
             self.traceTypeBox.hide()
 
     def saveArguments(self):
-        self.projectSettings["RunWithArguments"] = str(
+        self.projectSettings["RunWithArguments"] = from_bool(
             self.runWithArgsBox.isChecked())
         self.projectSettings[
             "RunArguments"] = self.argumentsLine.text().strip()
-        self.projectSettings["ClearOutputWindowOnRun"] = str(
+        self.projectSettings["ClearOutputWindowOnRun"] = from_bool(
             self.clearOutputBox.isChecked())
         self.projectSettings["BufferSize"] = str(self.bufferSizeBox.value())
         self.projectSettings["RunType"] = self.runTypeBox.currentText()
-        self.projectSettings["RunInternal"] = str(
+        self.projectSettings["RunInternal"] = from_bool(
             self.runPointBox.currentIndex() == 0)
         self.projectSettings["TraceType"] = str(
             self.traceTypeBox.currentIndex())
 
     def setDefaultInterpreter(self):
         if self.useVirtualEnvBox.isChecked():
-            # FIXME: Needs to be corrected for each platform
-            if sys.platform == 'win32':
-                self.projectSettings["DefaultInterpreter"] = \
-                    os.path.join(self.projectPathDict["venvdir"],
-                                     "Scripts", "python.exe")
-            elif sys.platform == 'darwin':
-                self.projectSettings["DefaultInterpreter"] = \
-                    os.path.join(self.projectPathDict["venvdir"],
-                                     "Scripts", "python.exe")
-            else:
-                self.projectSettings["DefaultInterpreter"] = \
-                    os.path.join(self.projectPathDict["venvdir"],
-                                     "Scripts", "python.exe")
+            from Extensions.python_paths import venv_python
+            self.projectSettings["DefaultInterpreter"] = venv_python(
+                self.projectPathDict["venvdir"])
         else:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) > 0:
                 self.projectSettings["DefaultInterpreter"] = \
                     self.installedPythonVersionBox.currentText()
             else:
                 self.projectSettings["DefaultInterpreter"] = 'None'
-        self.projectSettings["UseVirtualEnv"] = str(
+        self.projectSettings["UseVirtualEnv"] = from_bool(
             self.useVirtualEnvBox.isChecked())
 
 
@@ -500,6 +494,33 @@ class RunWidget(BaseScintilla):
             # has finished or has been terminated in order for debugging to be
             # done
 
+    def runDebug(self, runScript, fileName, run_internal, run_with_args, args):
+        pythonPath = self.pythonPath()
+        if pythonPath is None:
+            return
+        try:
+            import debugpy  # noqa: F401
+        except ImportError:
+            QtGui.QMessageBox.warning(
+                self, "Debug",
+                "debugpy is not installed.\nInstall with: pip install debugpy")
+            return
+
+        env = QtCore.QProcessEnvironment().systemEnvironment()
+        self.runProcess.setProcessEnvironment(env)
+        debug_args = ["-m", "debugpy", "--listen", "5678", runScript]
+        if run_with_args and args:
+            debug_args.append(args)
+
+        if run_internal:
+            self.currentProcess = fileName
+            self.printout(
+                ">>> Debug (debugpy listen 5678): {0}\n".format(fileName), 4)
+            self.runProcess.start(pythonPath, debug_args, self.openMode)
+            self.runProcess.waitForStarted()
+        else:
+            self.runProcess.startDetached(pythonPath, ["-i"] + debug_args)
+
     def runTrace(self, runScript, fileName, run_internal, run_with_args, args, option):
         pythonPath = self.pythonPath()
         if pythonPath is None:
@@ -683,21 +704,17 @@ class RunWidget(BaseScintilla):
         cwd = os.path.dirname(filePath)
         self.runProcess.setWorkingDirectory(cwd)
 
-        if self.projectData["RunInternal"] == "True":
+        if to_bool(self.projectData["RunInternal"]):
             run_internal = True
         else:
             run_internal = False
-        run_with_args = self.projectData["RunWithArguments"]
-        if run_with_args == "True":
-            run_with_args = True
-        else:
-            run_with_args = False
+        run_with_args = to_bool(self.projectData["RunWithArguments"])
         args = self.projectData["RunArguments"]
         bufferSize = int(self.projectData["BufferSize"])
 
         clearOutput = self.projectData["ClearOutputWindowOnRun"]
 
-        if clearOutput == "True":
+        if to_bool(clearOutput):
             self.clear()
         elif self.lines() >= bufferSize:
             self.clear()
@@ -705,13 +722,16 @@ class RunWidget(BaseScintilla):
         if runType == "Run":
             self.runModule(filePath, fileName, run_internal, run_with_args,
                            args)
-        if runType == "Profiler":
+        elif runType == "Profiler":
             self.runProfiler(filePath, fileName, run_internal, run_with_args,
                              args)
         elif runType == "Trace":
             option = int(self.projectData["TraceType"])
             self.runTrace(filePath, fileName, run_internal, run_with_args,
                           args, option)
+        elif runType == "Debug":
+            self.runDebug(filePath, fileName, run_internal, run_with_args,
+                          args)
 
     def stopProcess(self):
         self.runProcess.kill()

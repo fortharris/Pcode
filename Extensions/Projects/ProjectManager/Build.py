@@ -5,6 +5,7 @@ import logging
 import cx_Freeze
 from cx_Freeze import Freezer
 from Extensions.qt_bindings import QtCore, QtGui
+from Extensions.settings_utils import to_bool
 
 
 class BuildThread(QtCore.QThread):
@@ -98,7 +99,7 @@ class BuildThread(QtCore.QThread):
                            init_script=initScript,
                            base=base,
                            icon=iconPath)]
-            if self.projectSettings["UseVirtualEnv"] == "True":
+            if to_bool(self.projectSettings["UseVirtualEnv"]):
                 venv_path = self.projectPathDict["venvdir"]
                 path = [p for p in [
                     self.projectPathDict['sourcedir'],

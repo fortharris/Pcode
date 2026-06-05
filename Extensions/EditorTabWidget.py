@@ -9,6 +9,7 @@ import logging
 from PyQt6.Qsci import QsciScintilla
 from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
+from Extensions.settings_utils import to_bool
 from Extensions.Diff import DiffWindow
 from Extensions.CodeEditor import CodeEditor
 from Extensions.TextEditor import TextEditor
@@ -630,7 +631,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         # it previousely loaded from backup, cleared it's backup
         # cache and was instantly shut down again, the previous
         # session must be reloaded.
-        backup = self.projectSettings["LastCloseSuccessful"] == "False"
+        backup = not to_bool(self.projectSettings.get("LastCloseSuccessful"), True)
 
         if backup:
             loadPath = self.projectPathDict["backupfile"]

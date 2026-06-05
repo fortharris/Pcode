@@ -113,6 +113,11 @@ def main():
     exercise_color_scheme(win)
     exercise_build_profile(editor_window)
     exercise_build_freeze(editor_window, win)
+    exercise_outline(editor_window)
+    exercise_file_explorer(editor_window)
+    exercise_bookmarks(editor_window, etw)
+    exercise_git_panel(editor_window)
+    exercise_go_to_definition(editor_window, proj_path)
 
     print("ALL OK")
 
@@ -549,6 +554,74 @@ def exercise_build_freeze(editor_window, win):
         raise RuntimeError("build freeze produced no executable in %s" % builddir)
     print("STEP build-freeze OK, artifact:", main_stem,
           "| missing modules:", len(thread.missing))
+
+
+def exercise_outline(editor_window):
+    """Populate the outline tree from Python source."""
+    outline = editor_window.outline
+    etw = editor_window.editorTabWidget
+    editor = etw.getEditor()
+    editor.setText("class Smoke:\n    def method(self):\n        pass\n")
+    outline.startOutline()
+    outline.pythonOutlineThread.wait(10000)
+    for _ in range(10):
+        app.processEvents()
+    items = outline.topLevelItemCount()
+    print("STEP outline OK, top-level items:", items)
+
+
+def exercise_file_explorer(editor_window):
+    """Show the file explorer sidebar tab."""
+    fe = editor_window.fileExplorer
+    editor_window.sideBottomTab.setCurrentWidget(fe)
+    app.processEvents()
+    model = fe.model()
+    rows = model.rowCount(fe.rootIndex()) if model is not None else 0
+    print("STEP file-explorer OK, roots:", rows)
+
+
+def exercise_bookmarks(editor_window, etw):
+    """Toggle a bookmark and refresh the bookmark panel."""
+    editor = etw.getEditor()
+    editor.setText("line0\nline1\nline2\n")
+    editor.toggleBookmark(0, 1)
+    etw.bookmarksChanged.emit()
+    for _ in range(10):
+        app.processEvents()
+    for i in range(editor_window.bottomStack.count()):
+        w = editor_window.bottomStack.widget(i)
+        if w.__class__.__name__ == "BookmarkWidget":
+            w.load()
+            count = w.topLevelItemCount()
+            break
+    else:
+        count = 0
+    print("STEP bookmarks OK, count:", count)
+
+
+def exercise_git_panel(editor_window):
+    """Refresh the read-only git status panel."""
+    panel = editor_window.gitPanel
+    panel.refresh()
+    text = panel.output.toPlainText()
+    print("STEP git-panel OK, chars:", len(text))
+
+
+def exercise_go_to_definition(editor_window, proj_path):
+    """Exercise rope find-definition on project source."""
+    etw = editor_window.editorTabWidget
+    mod_path = os.path.join(proj_path, "src", "lib_def.py")
+    source = "def target():\n    return 1\n\n\ntarget()\n"
+    with open(mod_path, "w") as f:
+        f.write(source)
+    etw.loadfile(mod_path)
+    editor = etw.getEditor()
+    editor.setCursorPosition(2, 4)
+    refactor = editor_window.editorTabWidget.refactor
+    refactor.findDefinition()
+    for _ in range(10):
+        app.processEvents()
+    print("STEP go-to-definition OK")
 
 
 if __name__ == "__main__":

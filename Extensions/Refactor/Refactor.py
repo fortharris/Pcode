@@ -13,6 +13,7 @@ from rope.refactor.localtofield import LocalToField
 from rope.base.project import Project
 from rope.base import libutils
 
+from Extensions.python_paths import interpreter_stdlib_paths
 from rope.contrib.findit import (find_occurrences, find_implementations,
                                  find_definition)
 from Extensions.Refactor.UsageDialog import UsageDialog
@@ -261,8 +262,16 @@ class Refactor(QtGui.QWidget):
 
         self.ropeProject = Project(
             projectroot=self.root, ropefolder=ropeFolder, **prefs)
-        self.ropeProject.prefs.add('python_path', 'c:/Python33')
-        self.ropeProject.prefs.add('source_folders', 'c:/Python33/Lib')
+        interpreter = (self.useData.SETTINGS.get("DefaultInterpreter")
+                       or sys.executable)
+        if interpreter and interpreter != "None" and os.path.isfile(interpreter):
+            self.ropeProject.prefs.add('python_path',
+                                       os.path.dirname(interpreter))
+        else:
+            self.ropeProject.prefs.add('python_path',
+                                       os.path.dirname(sys.executable))
+        for folder in interpreter_stdlib_paths(interpreter):
+            self.ropeProject.prefs.add('source_folders', folder)
         self.ropeProject.validate()
 
         self.noProject = Project(projectroot="temp", ropefolder=None)

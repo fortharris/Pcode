@@ -4,7 +4,8 @@ import sys
 import traceback
 import logging
 
-from Extensions.qt_bindings import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui
+from Extensions.BottomWidgets.GitPanel import GitPanel
 
 from Extensions.FileExplorer import FileExplorer
 from Extensions.BottomWidgets.FindInFiles import FindInFiles
@@ -156,6 +157,10 @@ class EditorWindow(QtGui.QWidget):
         self.fileExplorer.fileActivated.connect(self.editorTabWidget.loadfile)
         self.sideBottomTab.addTab(self.fileExplorer, QtGui.QIcon(
             os.path.join("Resources", "images", "tree")), "File System")
+
+        self.gitPanel = GitPanel(self.projectPathDict)
+        self.sideBottomTab.addTab(self.gitPanel, QtGui.QIcon(
+            os.path.join("Resources", "images", "history")), "Git")
 
         # create menus
         self.mainMenu = QtGui.QMenu()
@@ -712,127 +717,21 @@ class EditorWindow(QtGui.QWidget):
                     return False
         self.saveUiState()
         self.editorTabWidget.saveSession()
-        self.projectData["settings"]["Closed"] = "True"
+        from Extensions.ProjectData import set_project_setting_bool
+        set_project_setting_bool(self.projectData, "Closed", True)
         self.saveProjectData()
         self.editorTabWidget.refactor.closeRope()
 
         return True
 
     def loadProjectData(self):
-        dom_document = QtXml.QDomDocument()
-        with open(os.path.join(self.projectPathDict[
-                    "root"], "Data", "projectdata.xml"), "r") as file:
-            x = dom_document.setContent(file.read())
-
-        elements = dom_document.documentElement()
-        node = elements.firstChild()
-
-        shortcuts = []
-        recentfiles = []
-        favourites = []
-        launchers = {}
-
-        settingsList = []
-        while node.isNull() is False:
-            property = node.toElement()
-            sub_node = property.firstChild()
-            while sub_node.isNull() is False:
-                sub_prop = sub_node.toElement()
-                if node.nodeName() == "shortcuts":
-                    shortcuts.append(sub_prop.text())
-                elif node.nodeName() == "recentfiles":
-                    if os.path.exists(sub_prop.text()):
-                        recentfiles.append(sub_prop.text())
-                    else:
-                        pass
-                elif node.nodeName() == "favourites":
-                    favourites.append(sub_prop.text())
-                elif node.nodeName() == "settings":
-                    settingsList.append((tuple(sub_prop.text().split('=', 1))))
-                elif node.nodeName() == "launchers":
-                    tag = sub_prop.toElement()
-                    path = tag.attribute("path")
-                    param = tag.attribute("param")
-                    launchers[path] = param
-                sub_node = sub_node.nextSibling()
-            node = node.nextSibling()
-        settingsDict = dict(settingsList)
-
-        settingsDict['LastCloseSuccessful'] = settingsDict['Closed']
-        settingsDict['Closed'] = "False"
-
-        self.projectData = {}
-        self.projectData["shortcuts"] = shortcuts
-        self.projectData["favourites"] = favourites
-        self.projectData["recentfiles"] = recentfiles
-        self.projectData["settings"] = settingsDict
-        self.projectData["launchers"] = launchers
-
-        # in order that a crash can be reported
+        from Extensions.ProjectData import load as load_project_data
+        self.projectData = load_project_data(self.projectPathDict["root"])
         self.saveProjectData()
 
     def saveProjectData(self):
-        domDocument = QtXml.QDomDocument("projectdata")
-
-        projectdata = domDocument.createElement("projectdata")
-        domDocument.appendChild(projectdata)
-
-        root = domDocument.createElement("shortcuts")
-        projectdata.appendChild(root)
-
-        for i in self.projectData['shortcuts']:
-            tag = domDocument.createElement("shortcut")
-            root.appendChild(tag)
-
-            t = domDocument.createTextNode(i)
-            tag.appendChild(t)
-
-        root = domDocument.createElement("recentfiles")
-        projectdata.appendChild(root)
-
-        for i in self.projectData['recentfiles']:
-            tag = domDocument.createElement("recent")
-            root.appendChild(tag)
-
-            t = domDocument.createTextNode(i)
-            tag.appendChild(t)
-
-        root = domDocument.createElement("favourites")
-        projectdata.appendChild(root)
-
-        for i in self.projectData['favourites']:
-            tag = domDocument.createElement("fav")
-            root.appendChild(tag)
-
-            t = domDocument.createTextNode(i)
-            tag.appendChild(t)
-
-        root = domDocument.createElement("launchers")
-        projectdata.appendChild(root)
-
-        for path, param in self.projectData['launchers'].items():
-            tag = domDocument.createElement("item")
-            tag.setAttribute("path", path)
-            tag.setAttribute("param", param)
-            root.appendChild(tag)
-
-        root = domDocument.createElement("settings")
-        projectdata.appendChild(root)
-
-        s = 0
-        for key, value in self.projectData['settings'].items():
-            tag = domDocument.createElement("key")
-            root.appendChild(tag)
-
-            t = domDocument.createTextNode(key + '=' + value)
-            tag.appendChild(t)
-            s += 1
-
-        path = os.path.join(
-            self.projectPathDict["root"], "Data", "projectdata.xml")
-        with open(path, "w") as file:
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(domDocument.toString())
+        from Extensions.ProjectData import save as save_project_data
+        save_project_data(self.projectPathDict["root"], self.projectData)
 
     def setKeymap(self):
         shortcuts = self.useData.CUSTOM_SHORTCUTS

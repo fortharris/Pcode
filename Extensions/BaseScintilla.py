@@ -651,7 +651,7 @@ class BaseScintilla(QsciScintilla):
         self.SendScintilla(QsciScintilla.SCI_UPPERCASE)
 
     def showLineNumbers(self):
-        if self.useData.SETTINGS["ShowLineNumbers"] == 'True':
+        if self.useData.setting_bool("ShowLineNumbers"):
             # Line numbers
             # conventionnaly, margin 0 is for line numbers
             self.setMarginLineNumbers(0, True)

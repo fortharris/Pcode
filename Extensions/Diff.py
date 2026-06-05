@@ -86,7 +86,7 @@ class FormatLexer(QsciLexerCustom):
 class DiffWindow(BaseScintilla):
 
     def __init__(self, editor=None, snapShot=None, parent=None):
-        QtGui.QTextEdit.__init__(self, parent)
+        BaseScintilla.__init__(self, parent)
 
         self.setReadOnly(True)
         self.setMarginWidth(1, 0)

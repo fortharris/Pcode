@@ -239,12 +239,12 @@ class Assistant(QtGui.QStackedWidget):
         self.pep8CheckerThread = Pep8CheckerThread()
         self.pep8CheckerThread.newAlerts.connect(self.updatePep8View)
 
-        if self.useData.SETTINGS["EnableAssistance"] == "False":
+        if not self.useData.setting_bool("EnableAssistance"):
             self.setCurrentIndex(0)
         else:
-            if self.useData.SETTINGS["EnableAlerts"] == "True":
+            if self.useData.setting_bool("EnableAlerts"):
                 self.setCurrentIndex(1)
-            if self.useData.SETTINGS["enableStyleGuide"] == "True":
+            if self.useData.setting_bool("enableStyleGuide"):
                 self.setCurrentIndex(2)
 
         self.extendedErrorsCount = 0
@@ -255,9 +255,9 @@ class Assistant(QtGui.QStackedWidget):
 
     def setAssistance(self, index=None):
         if index is None:
-            if self.useData.SETTINGS["EnableAlerts"] == "True":
+            if self.useData.setting_bool("EnableAlerts"):
                 self.setCurrentIndex(1)
-            if self.useData.SETTINGS["enableStyleGuide"] == "True":
+            if self.useData.setting_bool("enableStyleGuide"):
                 self.setCurrentIndex(2)
         else:
             self.setCurrentIndex(index)
@@ -367,18 +367,34 @@ class Assistant(QtGui.QStackedWidget):
                                               str(len(checkList)))
 
     def alertPressed(self, item):
-        # XXX: Fixme this only works if args is not empty
         lineno = int(item.text(1)) - 1
-        word = item.data(10, 3)
+        args = item.data(10, 3)
+        offset = item.data(10, 2)
         editor = self.editorTabWidget.focusedEditor()
         text = editor.text(lineno)
-        if word is None:
+        if args is None or args == () or args == "":
             editor.showLine(lineno)
+            if offset is not None:
+                try:
+                    col = int(offset)
+                    editor.setSelection(lineno, max(0, col - 1), lineno, col)
+                except (TypeError, ValueError):
+                    pass
         else:
-            word = word[0]
+            word = args[0] if isinstance(args, (tuple, list)) else str(args)
             start = text.find(word)
-            end = start + len(word)
-            editor.setSelection(lineno, start, lineno, end)
+            if start < 0:
+                # Fall back: highlight from message token or whole line
+                parts = item.text(2).split()
+                for token in parts:
+                    start = text.find(token.strip("'\",()"))
+                    if start >= 0:
+                        word = token.strip("'\",()")
+                        break
+            if start >= 0:
+                editor.setSelection(lineno, start, lineno, start + len(word))
+            else:
+                editor.showLine(lineno)
         editor.ensureLineVisible(lineno)
 
     def pep8Pressed(self, item):
@@ -386,11 +402,11 @@ class Assistant(QtGui.QStackedWidget):
         self.editorTabWidget.showLine(lineno)
 
     def runCheck(self):
-        if self.useData.SETTINGS["EnableAssistance"] == "False":
+        if not self.useData.setting_bool("EnableAssistance"):
             return
-        if self.useData.SETTINGS["EnableAlerts"] == "True":
+        if self.useData.setting_bool("EnableAlerts"):
             self.codeCheckerThread.runCheck(self.editorTabWidget.getSource())
-        if self.useData.SETTINGS["enableStyleGuide"] == "True":
+        if self.useData.setting_bool("enableStyleGuide"):
             saved = self.editorTabWidget.saveToTemp('pep8')
             if saved:
                 self.pep8CheckerThread.runCheck(self.editorTabWidget.pep8TempPath)

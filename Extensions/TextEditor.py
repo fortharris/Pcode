@@ -81,11 +81,11 @@ class TextEditor(BaseScintilla):
         self.setMarginSensitivity(1, True)
 
         # Braces matching
-        if self.useData.SETTINGS["MatchBraces"] == "True":
-            self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
+        if self.useData.setting_bool("MatchBraces"):
+            self.setBraceMatching(QsciScintilla.StrictBraceMatch)
 
         if self.DATA["fileType"] in self.useData.supportedFileTypes:
-            if self.useData.SETTINGS["ShowCaretLine"] == 'True':
+            if self.useData.setting_bool("ShowCaretLine"):
                 self.setCaretLineVisible(True)
 
         self.setAutoCompletionReplaceWord(True)
@@ -206,7 +206,7 @@ class TextEditor(BaseScintilla):
         self.viewMenu.addAction(self.zoomAct)
 
     def setAutoCompletion(self):
-        if self.useData.SETTINGS["EnableAutoCompletion"] == "True":
+        if self.useData.setting_bool("EnableAutoCompletion"):
             self.setAutoCompletionSource(QsciScintilla.AcsDocument)
         else:
             self.setAutoCompletionSource(QsciScintilla.AcsNone)
@@ -250,7 +250,7 @@ class TextEditor(BaseScintilla):
         self.ensureLineVisible(lineNum)
 
     def showWhiteSpaces(self):
-        if self.useData.SETTINGS["ShowWhiteSpaces"] == 'True':
+        if self.useData.setting_bool("ShowWhiteSpaces"):
             self.setWhitespaceVisibility(QsciScintilla.WsVisible)
         else:
             self.setWhitespaceVisibility(QsciScintilla.WsInvisible)

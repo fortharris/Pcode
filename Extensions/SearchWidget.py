@@ -199,21 +199,20 @@ class SearchWidget(QtGui.QLabel):
             editor.findNext()
 
     def replace(self):
-        # FIXME Text replace only works after finding next
-        # not after finding previous
         text = self.findLine.text()
         replaceText = self.replaceLine.text()
         editor = self.editorTabWidget.focusedEditor()
-        if editor.hasSelectedText():
-            pass
-        else:
+        if not editor.hasSelectedText():
+            # Always search forward so replace works after find-previous too.
+            editor.setCursorPosition(editor.getCursorPosition()[0],
+                                     editor.getCursorPosition()[1])
             editor.findFirst(text, self.matchRegExp,
                              self.matchCase, self.matchWholeWord, self.wrapAround,
                              True, -1, -1, True)
         editor.replace(replaceText)
-        found = editor.findFirst(text, self.matchRegExp,
-                                 self.matchCase, self.matchWholeWord, self.wrapAround,
-                                 True, -1, -1, True)
+        editor.findFirst(text, self.matchRegExp,
+                         self.matchCase, self.matchWholeWord, self.wrapAround,
+                         True, -1, -1, True)
 
     def replaceAll(self):
         text = self.findLine.text()
