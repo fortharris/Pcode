@@ -34,8 +34,17 @@ Pcode seeks to simplify the process of development in python by means of:
 1. Python 3.10+ ( for running programs )
 1. PyQt6 and PyQt6-QScintilla ( if you are running from source — see [RUN.md](RUN.md) )
 
-Then perhaps:
-* Pywin32 for windows ( for stamping executables if you are running from source )
+The previously-vendored libraries (`rope`, `pyflakes`, `autopep8`, `pycodestyle`,
+`cx_Freeze`) are now installed from PyPI via `requirements.txt`.
+
+### From source & development
+```bash
+pip install -r requirements.txt        # run from source
+pip install -e .                       # optional: install the `pcode` command
+pip install -e .[dev]                  # optional: pytest + ruff for development
+QT_QPA_PLATFORM=offscreen pytest       # run the unit tests
+```
+See [RUN.md](RUN.md) for full setup, the headless smoke test, and troubleshooting.
 
 ### License:
 * GPL v3

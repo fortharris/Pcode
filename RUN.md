@@ -24,6 +24,20 @@ cd Pcode
 .\.pcode-venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
 
+`requirements.txt` installs PyQt6 + QScintilla and the previously-vendored
+libraries (`rope`, `pyflakes`, `autopep8`, `pycodestyle`, `cx_Freeze`) from PyPI.
+
+### Editable install / `pcode` entry point (optional)
+
+```powershell
+.\.pcode-venv\Scripts\python.exe -m pip install -e .
+# then run from anywhere:
+pcode
+```
+
+Optional extras: `pip install -e .[dev]` (pytest + ruff) and
+`pip install -e .[build]` (cx_Freeze, for the in-app build/freeze feature).
+
 ## Run
 
 ```powershell
@@ -32,10 +46,23 @@ cd Pcode
 
 Or double-click `run.bat` (Windows).
 
-On first run, a default workspace is created under `workspace/PcodeProjects/` when `settings.ini` has no valid workspace path.
+On first run, a default workspace is created under `workspace/PcodeProjects/`
+when there is no valid workspace path yet. Per-user config is stored as
+`settings.json` (app bootstrap) and `workspace/.../Settings/usedata.json`
+(settings, opened projects, completion modules, keymap). Legacy `settings.ini`
+and the old `*.xml` config files are migrated automatically on first run.
+
+## Tests
+
+```powershell
+$env:QT_QPA_PLATFORM = "offscreen"
+.\.pcode-venv\Scripts\python.exe -m pytest          # fast unit tests
+.\.pcode-venv\Scripts\python.exe scripts\exercise_editor.py   # headless smoke test
+.\.pcode-venv\Scripts\python.exe -m ruff check .    # lint
+```
 
 ## Troubleshooting
 
 - **`No module named 'PySide6.Qsci'`** — use this branch’s `requirements.txt` (PyQt6-QScintilla), not PySide6 alone.
 - **`python -m venv` fails** — run venv creation from the parent directory (see above).
-- **Build / cx_Freeze** — vendored cx_Freeze 4.3 is legacy; desktop builds need a separate upgrade (not required to run the IDE).
+- **Build / cx_Freeze** — the build/freeze feature uses modern `cx_Freeze` (installed via `requirements.txt` or the `build` extra).
