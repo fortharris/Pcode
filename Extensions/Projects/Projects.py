@@ -371,7 +371,7 @@ class Projects(QtGui.QWidget):
                 "session": os.path.join(path, "Data", "session.json"),
                 "session_xml": os.path.join(path, "Data", "session.xml"),
                 "usedata": os.path.join(path, "Data", "usedata.xml"),
-                "windata": os.path.join(path, "Data", "windata.xml"),
+                "windata": os.path.join(path, "Data", "windata.json"),
                 "projectdata": os.path.join(path, "Data", "projectdata.xml"),
                 "snippetsdir": os.path.join(path, "Data", "templates"),
                 "tempdir": os.path.join(path, "temp"),

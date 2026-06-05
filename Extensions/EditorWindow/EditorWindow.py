@@ -275,8 +275,12 @@ class EditorWindow(QtGui.QWidget):
         self.uptimeTimer.timeout.connect(self.updateUptime)
         self.uptimeTimer.start()
 
-        # remember layout
-        if projectPathDict['root'] in self.useData.OPENED_PROJECTS:
+        # remember layout — project-local JSON first, QSettings fallback
+        from Extensions.WindowData import load as load_window_data, apply as apply_window_data
+        layout = load_window_data(projectPathDict["root"])
+        if layout:
+            apply_window_data(self, layout)
+        elif projectPathDict['root'] in self.useData.OPENED_PROJECTS:
             settings = QtCore.QSettings("Clean Code Inc.", "Pcode")
             settings.beginGroup(projectPathDict['root'])
             self.hSplitter.restoreState(settings.value('hsplitter'))
@@ -668,7 +672,9 @@ class EditorWindow(QtGui.QWidget):
         self.linesLabel.setText("Lines: " + str(lines))
 
     def saveUiState(self):
+        from Extensions.WindowData import capture, save as save_window_data
         name = self.projectPathDict["root"]
+        save_window_data(name, capture(self))
         settings = QtCore.QSettings("Clean Code Inc.", "Pcode")
         settings.beginGroup(name)
         settings.setValue('hsplitter', self.hSplitter.saveState())

@@ -1,38 +1,36 @@
-"""A lightweight command palette (Ctrl+Shift+P) action launcher.
+"""A lightweight command palette (Ctrl+Shift+P) action launcher."""
 
-Given a list of ``(label, callback)`` commands it shows a filterable, keyboard
--driven popup: type to fuzzy-filter, Up/Down to move, Enter to run, Esc to
-dismiss.
-"""
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtGui import QKeySequence
+from PyQt6.QtWidgets import (
+    QDialog, QLineEdit, QListWidget, QListWidgetItem, QVBoxLayout,
+)
 
-from Extensions.qt_bindings import QtCore, QtGui
 
-
-class CommandPalette(QtGui.QDialog):
+class CommandPalette(QDialog):
 
     def __init__(self, parent=None):
-        QtGui.QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent)
         self.setWindowFlags(
-            QtCore.Qt.WindowType.FramelessWindowHint
-            | QtCore.Qt.WindowType.Dialog)
+            Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setModal(True)
         self.resize(560, 360)
 
         self._commands = []
 
-        layout = QtGui.QVBoxLayout()
+        layout = QVBoxLayout()
         layout.setContentsMargins(1, 1, 1, 1)
         layout.setSpacing(0)
         self.setLayout(layout)
 
-        self.searchLine = QtGui.QLineEdit()
+        self.searchLine = QLineEdit()
         self.searchLine.setPlaceholderText("Type a command\u2026")
         self.searchLine.setClearButtonEnabled(True)
         self.searchLine.textChanged.connect(self._refilter)
         self.searchLine.installEventFilter(self)
         layout.addWidget(self.searchLine)
 
-        self.listWidget = QtGui.QListWidget()
+        self.listWidget = QListWidget()
         self.listWidget.itemActivated.connect(self._activate)
         layout.addWidget(self.listWidget)
 
@@ -57,15 +55,14 @@ class CommandPalette(QtGui.QDialog):
         self.listWidget.clear()
         for label, callback in self._commands:
             if self._matches(text, label.lower()):
-                item = QtGui.QListWidgetItem(label)
-                item.setData(QtCore.Qt.ItemDataRole.UserRole, callback)
+                item = QListWidgetItem(label)
+                item.setData(Qt.ItemDataRole.UserRole, callback)
                 self.listWidget.addItem(item)
         if self.listWidget.count():
             self.listWidget.setCurrentRow(0)
 
     @staticmethod
     def _matches(query, label):
-        """Subsequence (fuzzy) match: all query chars appear in order."""
         if not query:
             return True
         pos = 0
@@ -77,7 +74,7 @@ class CommandPalette(QtGui.QDialog):
         return True
 
     def _activate(self, item):
-        callback = item.data(QtCore.Qt.ItemDataRole.UserRole)
+        callback = item.data(Qt.ItemDataRole.UserRole)
         self.accept()
         if callable(callback):
             callback()
@@ -91,21 +88,20 @@ class CommandPalette(QtGui.QDialog):
         self.listWidget.setCurrentRow(row)
 
     def eventFilter(self, obj, event):
-        if obj is self.searchLine and event.type() == QtCore.QEvent.Type.KeyPress:
+        if obj is self.searchLine and event.type() == QEvent.Type.KeyPress:
             key = event.key()
-            K = QtCore.Qt.Key
-            if key == K.Key_Down:
+            if key == Qt.Key.Key_Down:
                 self._moveSelection(1)
                 return True
-            if key == K.Key_Up:
+            if key == Qt.Key.Key_Up:
                 self._moveSelection(-1)
                 return True
-            if key in (K.Key_Return, K.Key_Enter):
+            if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
                 item = self.listWidget.currentItem()
                 if item is not None:
                     self._activate(item)
                 return True
-            if key == K.Key_Escape:
+            if key == Qt.Key.Key_Escape:
                 self.reject()
                 return True
-        return QtGui.QDialog.eventFilter(self, obj, event)
+        return QDialog.eventFilter(self, obj, event)

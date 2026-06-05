@@ -471,6 +471,9 @@ class UseData(QtCore.QObject):
     def setting_bool(self, key, default=False):
         return to_bool(self.SETTINGS.get(key), default)
 
+    def bootstrap_bool(self, key, default=False):
+        return to_bool(self.settings.get(key), default)
+
     def set_setting_bool(self, key, value):
         self.SETTINGS[key] = to_bool(value)
 
@@ -548,7 +551,7 @@ class UseData(QtCore.QObject):
     def loadKeymap(self):
         import copy
         self.CUSTOM_SHORTCUTS = copy.deepcopy(self.DEFAULT_SHORTCUTS)
-        if self.settings.get("firstRun") == "True":
+        if self.bootstrap_bool("firstRun", True):
             return
         keymap = self._data.get("keymap")
         if not isinstance(keymap, dict):

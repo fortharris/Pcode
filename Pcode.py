@@ -144,7 +144,7 @@ class Pcode(QtGui.QWidget):
 
         self.setKeymap()
 
-        if to_bool(self.useData.settings.get("firstRun"), True):
+        if self.useData.bootstrap_bool("firstRun", True):
             self.showMaximized()
         else:
             self.restoreUiState()

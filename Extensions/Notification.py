@@ -1,17 +1,18 @@
-from Extensions.qt_bindings import QtGui, QtCore
+from PyQt6.QtCore import QEasingCurve, QPropertyAnimation
+from PyQt6.QtWidgets import QLabel
 
 
-class Notification(QtGui.QLabel):
+class Notification(QLabel):
 
     def __init__(self, parent=None):
-        QtGui.QLabel.__init__(self, parent)
+        QLabel.__init__(self, parent)
 
         self.setMinimumHeight(25)
         self.setContentsMargins(5, 5, 5, 5)
-        
-        self.easingCurve = QtCore.QEasingCurve.OutCubic
 
-        self.showAnimation = QtCore.QPropertyAnimation(self, b'maximumWidth')
+        self.easingCurve = QEasingCurve.Type.OutCubic
+
+        self.showAnimation = QPropertyAnimation(self, b"maximumWidth")
         self.showAnimation.setDuration(200)
         self.showAnimation.setEasingCurve(self.easingCurve)
 
@@ -29,11 +30,9 @@ class Notification(QtGui.QLabel):
         self.hide()
         self.setText(mess)
         self.adjustSize()
-        
+
         max_width = self.geometry().width()
         self.showAnimation.setEndValue(max_width + 10)
         self.setMaximumWidth(0)
         self.show()
         self.showAnimation.start()
-        
-        
