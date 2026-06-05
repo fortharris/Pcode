@@ -5,7 +5,7 @@ from PyQt6.Qsci import QsciScintilla
 from PyQt6.QtCore import QDateTime, Qt
 from PyQt6.QtWidgets import (
     QApplication, QButtonGroup, QCheckBox, QComboBox, QDialog, QFileDialog,
-    QGroupBox, QHBoxLayout, QLabel, QPushButton, QSpinBox,
+    QGroupBox, QHBoxLayout, QLabel, QMessageBox, QPushButton, QSpinBox,
     QVBoxLayout,
 )
 
