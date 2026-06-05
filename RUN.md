@@ -57,9 +57,11 @@ and the old `*.xml` config files are migrated automatically on first run.
 ```powershell
 $env:QT_QPA_PLATFORM = "offscreen"
 .\.pcode-venv\Scripts\python.exe -m pytest          # fast unit tests
-.\.pcode-venv\Scripts\python.exe scripts\exercise_editor.py   # headless smoke test
+.\.pcode-venv\Scripts\python.exe scripts\exercise_editor.py   # headless smoke test (~40s with build)
 .\.pcode-venv\Scripts\python.exe -m ruff check .    # lint
 ```
+
+Set `PCODE_SKIP_BUILD=1` to skip the cx_Freeze build step in the smoke test (~30s saved).
 
 ## Troubleshooting
 

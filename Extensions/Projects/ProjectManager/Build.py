@@ -8,6 +8,47 @@ from Extensions.qt_bindings import QtCore, QtGui
 
 
 class BuildThread(QtCore.QThread):
+    def _interpreter_search_paths(self, interpreter):
+        """Return existing module-search directories for *interpreter*.
+
+        A venv interpreter lives under ``Scripts/`` (Windows) or ``bin/`` (Unix);
+        stdlib and site-packages live under the venv root, not next to the exe.
+        Also include ``sys.base_prefix`` paths when the selected interpreter is
+        a venv shim. Only directories that exist on disk are returned.
+        """
+        py_path = os.path.dirname(os.path.abspath(interpreter))
+        venv_root = os.path.dirname(py_path)
+        candidates = [
+            self.projectPathDict['sourcedir'],
+            py_path,
+            os.path.join(venv_root, "Lib"),
+            os.path.join(venv_root, "Lib", "site-packages"),
+            os.path.join(venv_root, "Include"),
+            os.path.join(venv_root, "include"),
+            os.path.join(py_path, "DLLs"),
+            os.path.join(py_path, "libs"),
+            os.path.join(py_path, "Lib"),
+            os.path.join(py_path, "Lib", "site-packages"),
+            os.path.join(py_path, "include"),
+        ]
+        base = getattr(sys, "base_prefix", None)
+        if base and os.path.normpath(base) != os.path.normpath(venv_root):
+            candidates.extend([
+                base,
+                os.path.join(base, "DLLs"),
+                os.path.join(base, "Lib"),
+                os.path.join(base, "Lib", "site-packages"),
+                os.path.join(base, "include"),
+            ])
+        seen = set()
+        existing = []
+        for item in candidates:
+            item = os.path.normpath(item)
+            if item and os.path.isdir(item) and item not in seen:
+                seen.add(item)
+                existing.append(item)
+        return existing
+
     def run(self):
         self.error = None
 
@@ -59,20 +100,17 @@ class BuildThread(QtCore.QThread):
                            icon=iconPath)]
             if self.projectSettings["UseVirtualEnv"] == "True":
                 venv_path = self.projectPathDict["venvdir"]
-                path = [self.projectPathDict['sourcedir'],
-                        os.path.join(venv_path, "Scripts"),
-                        os.path.join(venv_path, "Lib"),
-                        os.path.join(venv_path, "Lib", "site-packages"),
-                        os.path.join(venv_path, "Include")]
+                path = [p for p in [
+                    self.projectPathDict['sourcedir'],
+                    os.path.join(venv_path, "Scripts"),
+                    os.path.join(venv_path, "bin"),
+                    os.path.join(venv_path, "Lib"),
+                    os.path.join(venv_path, "Lib", "site-packages"),
+                    os.path.join(venv_path, "Include"),
+                ] if os.path.isdir(p)]
             else:
-                py_path = os.path.dirname(self.projectSettings["DefaultInterpreter"])
-                path = [self.projectPathDict['sourcedir'],
-                        py_path,
-                        os.path.join(py_path, "DLLs"),
-                        os.path.join(py_path, "libs"),
-                        os.path.join(py_path, "Lib"),
-                        os.path.join(py_path, "Lib", "site-packages"),
-                        os.path.join(py_path, "include")]
+                path = self._interpreter_search_paths(
+                    self.projectSettings["DefaultInterpreter"])
             extraPathList = []
             for i in path:
                 extraPathList.extend(self.pathListFromDir(i))
@@ -94,7 +132,7 @@ class BuildThread(QtCore.QThread):
                 include_files=includeFiles,
                 zip_includes=zipIncludes,
                 silent=True,
-                include_msvcr=True,
+                include_msvcr=sys.platform.startswith("win"),
             )
             if constantsModules:
                 freezer_kwargs["constants_module"] = constantsModules
@@ -124,7 +162,9 @@ class BuildThread(QtCore.QThread):
         This is to get the list of module search paths from .pth files
         """
         pathList = []
-        for i in  os.listdir(dirPath):
+        if not os.path.isdir(dirPath):
+            return pathList
+        for i in os.listdir(dirPath):
             path = os.path.join(dirPath, i)
             if os.path.isfile(path):
                 if i.endswith('.pth'):

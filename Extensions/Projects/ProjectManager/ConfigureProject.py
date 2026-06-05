@@ -870,6 +870,8 @@ class BuildConfig(QtGui.QWidget):
                 self, "Save Profile", "Saving failed!")
 
     def load(self):
+        for key in self.lists:
+            self.lists[key] = []
         dom_document = QtXml.QDomDocument()
         with open(self.projectPathDict["buildprofile"], "r") as file:
             dom_document.setContent(file.read())

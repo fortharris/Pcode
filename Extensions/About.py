@@ -8,6 +8,10 @@ import pyflakes
 import rope
 
 
+def _rope_version():
+    return getattr(rope, "VERSION", None) or getattr(rope, "__version__", "unknown")
+
+
 def _cx_freeze_version():
     try:
         import cx_Freeze
@@ -73,7 +77,7 @@ class About(QtGui.QDialog):
         table.setHeaderLabels(["Name", "Version", "Author"])
         table.setColumnWidth(0, 150)
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
-            ["Rope", rope.VERSION, "Ali Gholami Rudi"]))
+            ["Rope", _rope_version(), "Ali Gholami Rudi"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["PyFlakes", pyflakes.__version__, "Florent Xicluna"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(

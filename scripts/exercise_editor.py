@@ -112,6 +112,7 @@ def main():
     exercise_diff(etw)
     exercise_color_scheme(win)
     exercise_build_profile(editor_window)
+    exercise_build_freeze(editor_window, win)
 
     print("ALL OK")
 
@@ -502,6 +503,52 @@ def exercise_build_profile(editor_window):
     profile = build.buildConfig.load()
     assert profile.get("name") or profile.get("base")
     print("STEP build-profile OK, keys:", len(profile))
+
+
+def exercise_build_freeze(editor_window, win):
+    """Run cx_Freeze synchronously and verify a build artifact is produced.
+
+    Skipped when PCODE_SKIP_BUILD=1 (saves ~30s on local quick runs).
+    """
+    if os.environ.get("PCODE_SKIP_BUILD") == "1":
+        print("STEP build-freeze SKIPPED (PCODE_SKIP_BUILD=1)")
+        return
+
+    build = editor_window.projectManager.build
+    if build is None:
+        print("STEP build-freeze SKIPPED (no build widget)")
+        return
+
+    settings = editor_window.projectData["settings"]
+    settings["DefaultInterpreter"] = sys.executable
+    settings["UseVirtualEnv"] = "False"
+
+    profile = build.buildConfig.load()
+    thread = build.buildThread
+    thread.profile = profile
+    thread.projectPathDict = editor_window.projectPathDict
+    thread.projectSettings = settings
+    thread.useData = win.useData
+    thread.missing = []
+    thread.run()
+
+    if thread.error is not None:
+        raise RuntimeError("build freeze failed: %s" % thread.error)
+
+    builddir = editor_window.projectPathDict["builddir"]
+    main_stem = os.path.splitext(
+        os.path.basename(editor_window.projectPathDict["mainscript"]))[0]
+    candidates = [main_stem + ".exe", main_stem]
+    if os.path.isdir(builddir):
+        names = set(os.listdir(builddir))
+        artifact = any(name in names for name in candidates)
+    else:
+        artifact = False
+
+    if not artifact:
+        raise RuntimeError("build freeze produced no executable in %s" % builddir)
+    print("STEP build-freeze OK, artifact:", main_stem,
+          "| missing modules:", len(thread.missing))
 
 
 if __name__ == "__main__":
