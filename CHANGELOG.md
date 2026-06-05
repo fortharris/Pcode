@@ -14,6 +14,9 @@
 - Peel `editor_tab_bar`, snapshots, `tab_io`, build/project-manager dialogs, and profiler widgets to PyQt6
 - Peel `Assistant`, `RunWidget`, and `Refactor` to direct PyQt6 imports
 - Peel `EditorTabWidget`, `CodeEditor`, `TextEditor`, `BaseScintilla`, and settings stack to PyQt6
+- Peel `Projects`, `ConfigureProject`, `ProjectView`, `Library`, and persistence modules to PyQt6
+- Peel `EditorWindow`, `FindInFiles`, `FileExplorer`, and `screen_utils` to direct PyQt6 imports
+- `qt_bindings` now only used for `font_metrics_width` (editors) and test/smoke harness
 
 ### Features
 - Command palette (Ctrl+Shift+P) with fuzzy multi-token filter, keymap entries, project switching

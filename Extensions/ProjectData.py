@@ -5,7 +5,7 @@ import logging
 import os
 import traceback
 
-from Extensions.qt_bindings import QtXml
+from PyQt6.QtXml import QDomDocument
 from Extensions.settings_utils import (
     normalize_project_settings, project_settings_for_json, to_bool,
 )
@@ -20,7 +20,7 @@ def _projectdata_xml_path(project_root):
 
 
 def _parse_xml_projectdata(path):
-    dom_document = QtXml.QDomDocument()
+    dom_document = QDomDocument()
     with open(path, "r") as file:
         dom_document.setContent(file.read())
 

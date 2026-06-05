@@ -2,40 +2,50 @@ import os
 import sys
 import shutil
 
-from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions.Projects.ProjectManager.ProjectView.ProjectView import IconProvider
 from Pvenv import EnvBuilder
 
 from Extensions import StyleSheet
+from PyQt6.QtCore import QDir, Qt
+from PyQt6.QtGui import (
+    QIcon, QFileSystemModel, QPalette,
+)
+from PyQt6.QtWidgets import (
+    QComboBox, QDialog, QFileDialog, QFormLayout,
+    QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QMessageBox,
+    QPushButton, QSpinBox, QTabWidget, QToolButton, QTreeView, QVBoxLayout,
+    QWidget,
+)
 
-class SelectBox(QtGui.QDialog):
+class SelectBox(QDialog):
 
     def __init__(self, caption, itemsList, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle(caption)
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
 
-        self.itemBox = QtGui.QComboBox()
+        self.itemBox = QComboBox()
         self.itemBox.addItem()
         for i in itemsList:
             self.itemBox.addItems(itemsList)
         self.itemBox.currentIndexChanged.connect(self.enableAcceptButton)
         mainLayout.addWidget(self.itemBox)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
         hbox.addStretch(1)
 
-        self.acceptButton = QtGui.QPushButton("Ok")
+        self.acceptButton = QPushButton("Ok")
         self.acceptButton.setDisabled(True)
         self.acceptButton.clicked.connect(self.accept)
         hbox.addWidget(self.acceptButton)
 
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QPushButton("Cancel")
         self.cancelButton.clicked.connect(self.cancel)
         hbox.addWidget(self.cancelButton)
 
@@ -64,36 +74,36 @@ class SelectBox(QtGui.QDialog):
         self.close()
 
 
-class GetText(QtGui.QDialog):
+class GetText(QDialog):
 
     def __init__(self, caption, format, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle(caption)
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
 
-        mainLayout.addWidget(QtGui.QLabel(format))
+        mainLayout.addWidget(QLabel(format))
 
-        self.nameLine = QtGui.QLineEdit()
+        self.nameLine = QLineEdit()
         self.nameLine.selectAll()
         self.nameLine.textChanged.connect(self.enableAcceptButton)
         mainLayout.addWidget(self.nameLine)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
-        self.statusLabel = QtGui.QLabel()
+        self.statusLabel = QLabel()
         hbox.addWidget(self.statusLabel)
 
         hbox.addStretch(1)
 
-        self.acceptButton = QtGui.QPushButton("Ok")
+        self.acceptButton = QPushButton("Ok")
         self.acceptButton.setDisabled(True)
         self.acceptButton.clicked.connect(self.accept)
         hbox.addWidget(self.acceptButton)
 
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QPushButton("Cancel")
         self.cancelButton.clicked.connect(self.cancel)
         hbox.addWidget(self.cancelButton)
 
@@ -123,42 +133,42 @@ class GetText(QtGui.QDialog):
         self.close()
 
 
-class RopeConfig(QtGui.QWidget):
+class RopeConfig(QWidget):
 
     def __init__(self, projectPathDict, useData, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         self.setLayout(mainLayout)
 
-        self.ignoreSyntaxErrorsBox = QtGui.QComboBox()
+        self.ignoreSyntaxErrorsBox = QComboBox()
         self.ignoreSyntaxErrorsBox.addItem("Ignore Syntax Errors")
         self.ignoreSyntaxErrorsBox.addItem("Don't Ignore Syntax Errors")
 #        self.ignoreSyntaxErrorsBox.setCurrentIndex(
 # self.ignoreSyntaxErrorsBox.findText(profileData["appendscripttolibrary"]))
         mainLayout.addWidget(self.ignoreSyntaxErrorsBox)
 
-        self.ignoreBadImportsBox = QtGui.QComboBox()
+        self.ignoreBadImportsBox = QComboBox()
         self.ignoreBadImportsBox.addItem("Ignore Bad Imports")
         self.ignoreBadImportsBox.addItem("Don't Ignore Bad Imports")
 #        self.ignoreBadImportsBox.setCurrentIndex(
 # self.ignoreBadImportsBox.findText(profileData["appendscripttolibrary"]))
         mainLayout.addWidget(self.ignoreBadImportsBox)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        hbox.addWidget(QtGui.QLabel("Max History Items: "))
-        self.maxHistoryBox = QtGui.QSpinBox()
+        hbox.addWidget(QLabel("Max History Items: "))
+        self.maxHistoryBox = QSpinBox()
         hbox.addWidget(self.maxHistoryBox)
 
-        frame = QtGui.QFrame()
+        frame = QFrame()
         frame.setGeometry(1, 1, 1, 2)
         frame.setFrameShape(frame.HLine)
         frame.setFrameShadow(frame.Sunken)
         mainLayout.addWidget(frame)
 
-        self.listSelectorBox = QtGui.QComboBox()
+        self.listSelectorBox = QComboBox()
         self.listSelectorBox.addItem("Extensions")
         self.listSelectorBox.addItem("Ignored Resources")
         self.listSelectorBox.addItem("Custom Folders")
@@ -166,7 +176,7 @@ class RopeConfig(QtGui.QWidget):
 #        self.listSelectorBox.currentIndexChanged.connect(self.viewList)
         mainLayout.addWidget(self.listSelectorBox)
 
-        self.listWidget = QtGui.QListWidget()
+        self.listWidget = QListWidget()
         mainLayout.addWidget(self.listWidget)
 
         self.helpDict = {
@@ -184,23 +194,23 @@ class RopeConfig(QtGui.QWidget):
                 )
             }
 
-        self.docLabel = QtGui.QLabel()
+        self.docLabel = QLabel()
         self.docLabel.setWordWrap(True)
         mainLayout.addWidget(self.docLabel)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.addStretch(1)
         mainLayout.addLayout(hbox)
 
-        self.addButton = QtGui.QPushButton()
+        self.addButton = QPushButton()
         self.addButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "add")))
+            QIcon(os.path.join("Resources", "images", "add")))
 #        self.addButton.clicked.connect(self.appendToList)
         hbox.addWidget(self.addButton)
 
-        self.removeButton = QtGui.QPushButton()
+        self.removeButton = QPushButton()
         self.removeButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "minus")))
+            QIcon(os.path.join("Resources", "images", "minus")))
 #        self.removeButton.clicked.connect(self.removeItem)
         hbox.addWidget(self.removeButton)
 
@@ -223,33 +233,33 @@ class RopeConfig(QtGui.QWidget):
         })
 
 
-class VenvSetup(QtGui.QWidget):
+class VenvSetup(QWidget):
 
     def __init__(self, projectPathDict, projectSettings, useData, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.projectPathDict = projectPathDict
         self.useData = useData
         self.projectSettings = projectSettings
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         self.setLayout(mainLayout)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        hbox.addWidget(QtGui.QLabel("Version: "))
+        hbox.addWidget(QLabel("Version: "))
 
-        self.currentVersionLabel = QtGui.QLabel()
+        self.currentVersionLabel = QLabel()
         hbox.addWidget(self.currentVersionLabel)
 
-        self.openButton = QtGui.QPushButton("Open")
+        self.openButton = QPushButton("Open")
         self.openButton.clicked.connect(self.openVenv)
         hbox.addWidget(self.openButton)
 
         hbox.setStretch(1, 1)
 
-        self.treeView = QtGui.QTreeView()
+        self.treeView = QTreeView()
 
         self.iconProvider = IconProvider()
 
@@ -264,18 +274,18 @@ class VenvSetup(QtGui.QWidget):
             self.treeView.setRootIndex(
                 self.treeView.model().index(self.packagesPath))
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        self.installVenvButton = QtGui.QPushButton("Install")
+        self.installVenvButton = QPushButton("Install")
         self.installVenvButton.clicked.connect(self.install)
         hbox.addWidget(self.installVenvButton)
 
-        self.upgradeVenvButton = QtGui.QPushButton("Upgrade")
+        self.upgradeVenvButton = QPushButton("Upgrade")
         self.upgradeVenvButton.clicked.connect(self.upgrade)
         hbox.addWidget(self.upgradeVenvButton)
 
-        self.uninstallVenvButton = QtGui.QPushButton("Uninstall")
+        self.uninstallVenvButton = QPushButton("Uninstall")
         self.uninstallVenvButton.clicked.connect(self.uninstall)
         hbox.addWidget(self.uninstallVenvButton)
 
@@ -297,8 +307,8 @@ class VenvSetup(QtGui.QWidget):
         return settings['version']
 
     def newFileSystemModel(self):
-        fileSystemModel = QtGui.QFileSystemModel()
-        fileSystemModel.setRootPath(QtCore.QDir.rootPath())
+        fileSystemModel = QFileSystemModel()
+        fileSystemModel.setRootPath(QDir.rootPath())
         fileSystemModel.setNameFilterDisables(False)
         fileSystemModel.setIconProvider(self.iconProvider)
 
@@ -306,15 +316,15 @@ class VenvSetup(QtGui.QWidget):
 
     def install(self):
         if os.path.exists(self.projectPathDict["venvdir"]):
-            QtGui.QMessageBox.information(
+            QMessageBox.information(
                 self, "Install", "Virtual environment already installed.")
             return
-        reply = QtGui.QMessageBox.warning(self, "Install",
+        reply = QMessageBox.warning(self, "Install",
                                          "This will install a new virtual environment.\n\nProceed?",
-                                         QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) == 0:
-                QtGui.QMessageBox.information(
+                QMessageBox.information(
                     self, "Install", "There is no Python installation to install against.\n\nPlease make sure Python is installed.")
                 return
             if len(self.useData.SETTINGS["InstalledInterpreters"]) == 1:
@@ -334,25 +344,25 @@ class VenvSetup(QtGui.QWidget):
                     self.treeView.model().index(self.packagesPath))
                 self.currentVersionLabel.setText(self.setVesionFromVenv())
 
-                QtGui.QMessageBox.information(
+                QMessageBox.information(
                     self, "Install", "Install virtual environment completed.")
             except Exception as err:
-                QtGui.QMessageBox.warning(
+                QMessageBox.warning(
                     self, "Failed Install", str(err))
         else:
             return
 
     def upgrade(self):
         if not os.path.exists(self.projectPathDict["venvdir"]):
-            QtGui.QMessageBox.information(
+            QMessageBox.information(
                 self, "Install", "No virtual environment to upgrade.")
             return
-        reply = QtGui.QMessageBox.warning(self, "Install",
+        reply = QMessageBox.warning(self, "Install",
                                          "This will upgrade the current the virtual environment.\n\nProceed?",
-                                         QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) == 0:
-                QtGui.QMessageBox.information(
+                QMessageBox.information(
                     self, "Install", "There is no Python installation to install against.\n\nPlease make sure Python is installed.")
                 return
             if len(self.useData.SETTINGS["InstalledInterpreters"]) == 1:
@@ -371,46 +381,46 @@ class VenvSetup(QtGui.QWidget):
                 self.treeView.setRootIndex(
                     self.treeView.model().index(self.packagesPath))
                 self.currentVersionLabel.setText(self.setVesionFromVenv())
-                QtGui.QMessageBox.information(
+                QMessageBox.information(
                     self, "Upgrade", "Upgrade virtual environment completed.")
             except Exception as err:
-                QtGui.QMessageBox.warning(
+                QMessageBox.warning(
                     self, "Failed Upgrade", str(err))
         else:
             return
 
     def uninstall(self):
         if not os.path.exists(self.projectPathDict["venvdir"]):
-            QtGui.QMessageBox.information(
+            QMessageBox.information(
                 self, "Uninstall", "No virtual environment to uninstall.")
             return
-        reply = QtGui.QMessageBox.warning(self, "Uninstall",
+        reply = QMessageBox.warning(self, "Uninstall",
                                          "This will uninstall the current virtual environment.\n\nProceed?",
-                                         QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             try:
                 self.treeView.setModel(self.newFileSystemModel())
                 if os.path.exists(self.projectPathDict["venvdir"]):
                     shutil.rmtree(self.projectPathDict["venvdir"])
                 self.currentVersionLabel.clear()
-                QtGui.QMessageBox.information(
+                QMessageBox.information(
                     self, "Uninstall", "Uninstall virtual environment completed.")
             except Exception as err:
-                QtGui.QMessageBox.warning(
+                QMessageBox.warning(
                     self, "Failed Uninstall", str(err))
         else:
             return
 
 
-class BuildConfig(QtGui.QWidget):
+class BuildConfig(QWidget):
 
     def __init__(self, projectPathDict, useData, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.projectPathDict = projectPathDict
         self.useData = useData
         
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
@@ -429,63 +439,63 @@ class BuildConfig(QtGui.QWidget):
 
         self.profileData = self.load()
         
-        self.tabWidget = QtGui.QTabWidget()
+        self.tabWidget = QTabWidget()
         self.tabWidget.setObjectName("buildTab")
         mainLayout.addWidget(self.tabWidget)
 
-        versionWidget = QtGui.QWidget()
+        versionWidget = QWidget()
         self.tabWidget.addTab(versionWidget,
-                        QtGui.QIcon(os.path.join("Resources", "images", "arrow-045")),
+                        QIcon(os.path.join("Resources", "images", "arrow-045")),
                             "Version Information")
 
-        versionLayout = QtGui.QFormLayout()
+        versionLayout = QFormLayout()
         versionWidget.setLayout(versionLayout)
 
-        self.itemLine = QtGui.QLineEdit()
+        self.itemLine = QLineEdit()
         self.itemLine.setText(self.profileData["name"])
         versionLayout.addRow("Name", self.itemLine)
 
-        self.authorLine = QtGui.QLineEdit()
+        self.authorLine = QLineEdit()
         self.authorLine.setText(self.profileData["author"])
         versionLayout.addRow("Author", self.authorLine)
 
-        self.versionLine = QtGui.QLineEdit()
+        self.versionLine = QLineEdit()
         self.versionLine.setText(self.profileData["version"])
         versionLayout.addRow("Version", self.versionLine)
 
-        self.descriptionLine = QtGui.QLineEdit()
+        self.descriptionLine = QLineEdit()
         self.descriptionLine.setText(self.profileData["description"])
         versionLayout.addRow("Description", self.descriptionLine)
 
-        self.commentsLine = QtGui.QLineEdit()
+        self.commentsLine = QLineEdit()
         self.commentsLine.setText(self.profileData["comments"])
         versionLayout.addRow("Comments", self.commentsLine)
 
-        self.companyLine = QtGui.QLineEdit()
+        self.companyLine = QLineEdit()
         self.companyLine.setText(self.profileData["company"])
         versionLayout.addRow("Company", self.companyLine)
 
-        self.copyrightLine = QtGui.QLineEdit()
+        self.copyrightLine = QLineEdit()
         self.copyrightLine.setText(self.profileData["copyright"])
         versionLayout.addRow("Copyright", self.copyrightLine)
 
-        self.trademarksLine = QtGui.QLineEdit()
+        self.trademarksLine = QLineEdit()
         versionLayout.addRow("Trademarks", self.trademarksLine)
 
-        self.productLine = QtGui.QLineEdit()
+        self.productLine = QLineEdit()
         self.productLine.setText(self.profileData["product"])
         versionLayout.addRow("Product", self.productLine)
 
         #-------------------------------------------------------------------
 
-        optionsWidget = QtGui.QWidget()
-        self.tabWidget.addTab(optionsWidget, QtGui.QIcon(
+        optionsWidget = QWidget()
+        self.tabWidget.addTab(optionsWidget, QIcon(
             os.path.join("Resources", "images", "arrow-045")), "Options")
 
-        optionsLayout = QtGui.QFormLayout()
+        optionsLayout = QFormLayout()
         optionsWidget.setLayout(optionsLayout)
 
-        self.optimizeBox = QtGui.QComboBox()
+        self.optimizeBox = QComboBox()
         self.optimizeBox.addItem("Don't Optimize")
         self.optimizeBox.addItem("Optimize")
         self.optimizeBox.addItem("Optimize (Remove Doc Strings)")
@@ -493,33 +503,33 @@ class BuildConfig(QtGui.QWidget):
             self.optimizeBox.findText(self.profileData["optimize"]))
         optionsLayout.addRow('', self.optimizeBox)
 
-        self.compressBox = QtGui.QComboBox()
+        self.compressBox = QComboBox()
         self.compressBox.addItem("Compress")
         self.compressBox.addItem("Don't Compress")
         optionsLayout.addRow('',  self.compressBox)
 
-        self.copyDepsBox = QtGui.QComboBox()
+        self.copyDepsBox = QComboBox()
         self.copyDepsBox.addItem("Copy Dependencies")
         self.copyDepsBox.addItem("Don't Copy Dependencies")
         self.copyDepsBox.setCurrentIndex(
             self.copyDepsBox.findText(self.profileData["copydeps"]))
         optionsLayout.addRow('', self.copyDepsBox)
 
-        self.appendScriptToExeBox = QtGui.QComboBox()
+        self.appendScriptToExeBox = QComboBox()
         self.appendScriptToExeBox.addItem("Append Script to Exe")
         self.appendScriptToExeBox.addItem("Don't Append Script to Exe")
         self.appendScriptToExeBox.setCurrentIndex(
             self.appendScriptToExeBox.findText(self.profileData["appendscripttoexe"]))
         optionsLayout.addRow('', self.appendScriptToExeBox)
 
-        self.appendScriptToLibraryBox = QtGui.QComboBox()
+        self.appendScriptToLibraryBox = QComboBox()
         self.appendScriptToLibraryBox.addItem("Append Script to Library")
         self.appendScriptToLibraryBox.addItem("Don't Append Script to Library")
         self.appendScriptToLibraryBox.setCurrentIndex(
             self.appendScriptToLibraryBox.findText(self.profileData["appendscripttolibrary"]))
         optionsLayout.addRow('', self.appendScriptToLibraryBox)
 
-        self.windowTypeBox = QtGui.QComboBox()
+        self.windowTypeBox = QComboBox()
         self.windowTypeBox.addItem("GUI")
         self.windowTypeBox.addItem("Console")
         if self.profileData["base"] == "Win32GUI.exe":
@@ -528,27 +538,27 @@ class BuildConfig(QtGui.QWidget):
             self.windowTypeBox.setCurrentIndex(1)
         optionsLayout.addRow("Window Type", self.windowTypeBox)
 
-        hbox = QtGui.QHBoxLayout()
-        self.iconBox = QtGui.QComboBox()
+        hbox = QHBoxLayout()
+        self.iconBox = QComboBox()
         self.updateIconBox()
         f = self.iconBox.findText(self.profileData["icon"])
         if f != -1:
             self.iconBox.setCurrentIndex(f)
         hbox.addWidget(self.iconBox)
 
-        self.addButton = QtGui.QToolButton()
+        self.addButton = QToolButton()
         self.addButton.setAutoRaise(True)
         self.addButton.setToolTip("Add")
         self.addButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "add")))
+            QIcon(os.path.join("Resources", "images", "add")))
         self.addButton.clicked.connect(self.addIcon)
         hbox.addWidget(self.addButton)
 
-        self.removeButton = QtGui.QToolButton()
+        self.removeButton = QToolButton()
         self.removeButton.setAutoRaise(True)
         self.removeButton.setToolTip("Remove")
         self.removeButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "minus")))
+            QIcon(os.path.join("Resources", "images", "minus")))
         self.removeButton.clicked.connect(self.removeIcon)
         hbox.addWidget(self.removeButton)
 
@@ -556,21 +566,21 @@ class BuildConfig(QtGui.QWidget):
 
         #-------------------------------------------------------------------
 
-        advancedWidget = QtGui.QWidget()
-        self.tabWidget.addTab(advancedWidget, QtGui.QIcon(
+        advancedWidget = QWidget()
+        self.tabWidget.addTab(advancedWidget, QIcon(
             os.path.join("Resources", "images", "arrow-045")), "Advanced")
 
-        advancedLayout = QtGui.QVBoxLayout()
+        advancedLayout = QVBoxLayout()
         advancedWidget.setLayout(advancedLayout)
 
-        self.listSelectorBox = QtGui.QComboBox()
+        self.listSelectorBox = QComboBox()
         for i in self.lists:
             self.listSelectorBox.addItem(i)
         self.listSelectorBox.activated.connect(self.viewList)
         self.listSelectorBox.currentIndexChanged.connect(self.viewList)
         advancedLayout.addWidget(self.listSelectorBox)
 
-        self.listWidget = QtGui.QListWidget()
+        self.listWidget = QListWidget()
         advancedLayout.addWidget(self.listWidget)
 
         self.helpDict = {
@@ -605,37 +615,37 @@ class BuildConfig(QtGui.QWidget):
                 "be included, generally because they contain standard system libraries."),
             }
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         advancedLayout.addLayout(hbox)
 
-        self.itemLine = QtGui.QLineEdit()
+        self.itemLine = QLineEdit()
         self.itemLine.selectAll()
         self.itemLine.textChanged.connect(self.enableAddButton)
         hbox.addWidget(self.itemLine)
 
-        self.addButton = QtGui.QPushButton()
+        self.addButton = QPushButton()
         self.addButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "add")))
+            QIcon(os.path.join("Resources", "images", "add")))
         self.addButton.clicked.connect(self.appendToList)
         hbox.addWidget(self.addButton)
 
-        self.removeButton = QtGui.QPushButton()
+        self.removeButton = QPushButton()
         self.removeButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "minus")))
+            QIcon(os.path.join("Resources", "images", "minus")))
         self.removeButton.clicked.connect(self.removeItem)
         hbox.addWidget(self.removeButton)
         self.enableAddButton()
 
-        self.docLabel = QtGui.QLabel()
+        self.docLabel = QLabel()
         self.docLabel.setWordWrap(True)
         advancedLayout.addWidget(self.docLabel)
 
         self.viewList()
         
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        self.saveButton = QtGui.QPushButton("Save")
+        self.saveButton = QPushButton("Save")
         self.saveButton.clicked.connect(self.save)
         hbox.addWidget(self.saveButton)
 
@@ -643,7 +653,7 @@ class BuildConfig(QtGui.QWidget):
         self.iconBox.clear()
         for i in os.listdir(self.projectPathDict['iconsdir']):
             path = os.path.join(self.projectPathDict['iconsdir'], i)
-            self.iconBox.addItem(QtGui.QIcon(path), i)
+            self.iconBox.addItem(QIcon(path), i)
 
     def enableAddButton(self):
         text = self.itemLine.text().strip()
@@ -659,7 +669,7 @@ class BuildConfig(QtGui.QWidget):
                               self.listSelectorBox.currentText()])
         self.listWidget.clear()
         for i in self.lists[self.listSelectorBox.currentText()]:
-            self.listWidget.addItem(QtGui.QListWidgetItem(i))
+            self.listWidget.addItem(QListWidgetItem(i))
 
     def updateList(self):
         itemsList = []
@@ -670,7 +680,7 @@ class BuildConfig(QtGui.QWidget):
 
     def appendToList(self):
         item = self.itemLine.text()
-        self.listWidget.addItem(QtGui.QListWidgetItem(item))
+        self.listWidget.addItem(QListWidgetItem(item))
         self.updateList()
         self.enableAddButton()
 
@@ -680,24 +690,24 @@ class BuildConfig(QtGui.QWidget):
         self.enableAddButton()
 
     def addIcon(self):
-        options = QtGui.QFileDialog.Options()
+        options = QFileDialog.Options()
         if sys.platform == "win32":
             filter = "Icon Files (*.ico)"
         elif sys.platform == "darwin":
             filter = "Icon Files (*.icns)"
         else:
             filter = "Icon Files (*.png)"
-        filePath = QtGui.QFileDialog.getOpenFileName(self,
+        filePath = QFileDialog.getOpenFileName(self,
                                                     "Select Icon", self.useData.getLastOpenedDir(
                                                     ), filter, options)
         if filePath:
             destPath = os.path.join(self.projectPathDict['iconsdir'],
                                    os.path.basename(filePath))
             if os.path.exists(destPath):
-                reply = QtGui.QMessageBox.warning(self, "Add Icon",
+                reply = QMessageBox.warning(self, "Add Icon",
                                                  "Icon with same name already exists. Replace?",
-                                                 QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-                if reply == QtGui.QMessageBox.Yes:
+                                                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.Yes:
                     pass
                 else:
                     return
@@ -717,7 +727,7 @@ class BuildConfig(QtGui.QWidget):
                     os.remove(path)
                     self.updateIconBox()
                 except Exception as err:
-                    QtGui.QMessageBox.warning(
+                    QMessageBox.warning(
                         self, "Failed Remove", str(err))
 
     def _scalars_from_ui(self):
@@ -746,7 +756,7 @@ class BuildConfig(QtGui.QWidget):
         try:
             save_build_profile(build_folder, self._scalars_from_ui(), self.lists)
         except Exception:
-            QtGui.QMessageBox.warning(
+            QMessageBox.warning(
                 self, "Save Profile", "Saving failed!")
 
     def load(self):
@@ -758,12 +768,12 @@ class BuildConfig(QtGui.QWidget):
         return data
 
 
-class ConfigureProject(QtGui.QLabel):
+class ConfigureProject(QLabel):
 
     def __init__(self, projectPathDict, projectSettings, useData, parent=None):
-        QtGui.QLabel.__init__(self, parent)
+        QLabel.__init__(self, parent)
 
-        self.setBackgroundRole(QtGui.QPalette.Background)
+        self.setBackgroundRole(QPalette.ColorRole.Window)
         self.setAutoFillBackground(True)
         self.setObjectName("containerLabel")
         self.setStyleSheet(StyleSheet.toolWidgetStyle)
@@ -771,39 +781,39 @@ class ConfigureProject(QtGui.QLabel):
         self.setMinimumSize(500, 350)
         self.pagesList = []
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         self.setLayout(mainLayout)
         
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        label = QtGui.QLabel("Project Configuration")
+        label = QLabel("Project Configuration")
         label.setObjectName("toolWidgetNameLabel")
         hbox.addWidget(label)
         
         hbox.addStretch(1)
         
-        self.hideButton = QtGui.QToolButton()
+        self.hideButton = QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "cross_")))
+            QIcon(os.path.join("Resources", "images", "cross_")))
         self.hideButton.clicked.connect(self.hide)
         hbox.addWidget(self.hideButton)
 
-        self.tabWidget = QtGui.QTabWidget()
+        self.tabWidget = QTabWidget()
 
         if projectPathDict["type"] == "Desktop Application":
             self.buildConfig = BuildConfig(projectPathDict, useData)
             self.tabWidget.addTab(self.buildConfig,
-                                  QtGui.QIcon(os.path.join("Resources", "images", "build")), "Build")
+                                  QIcon(os.path.join("Resources", "images", "build")), "Build")
 
         self.venvSetup = VenvSetup(projectPathDict, projectSettings, useData)
         self.tabWidget.addTab(self.venvSetup,
-                                  QtGui.QIcon(os.path.join("Resources", "images", "script_grey")), "Virtual Environment")
+                                  QIcon(os.path.join("Resources", "images", "script_grey")), "Virtual Environment")
 
         self.refactorConfig = RopeConfig(projectPathDict, useData)
         # self.tabWidget.addTab(self.refactorConfig,
-                              # QtGui.QIcon(os.path.join("Resources", "images", "erase"), "Refactor")
+                              # QIcon(os.path.join("Resources", "images", "erase"), "Refactor")
 #        self.pagesList.append(self.libraries)
 
         mainLayout.addWidget(self.tabWidget)

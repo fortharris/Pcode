@@ -5,7 +5,7 @@ import logging
 import os
 import traceback
 
-from Extensions.qt_bindings import QtXml
+from PyQt6.QtXml import QDomDocument
 
 
 def _json_path(project_root):
@@ -17,7 +17,7 @@ def _xml_path(project_root):
 
 
 def _parse_xml(path):
-    dom_document = QtXml.QDomDocument()
+    dom_document = QDomDocument()
     with open(path, "r") as f:
         dom_document.setContent(f.read())
     node = dom_document.documentElement().firstChild()
@@ -74,7 +74,7 @@ def write(project_root, name, project_type, mainscript, version="0.1"):
     with open(_json_path(project_root), "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
 
-    dom_document = QtXml.QDomDocument("Project")
+    dom_document = QDomDocument("Project")
     properties = dom_document.createElement("properties")
     dom_document.appendChild(properties)
     tag = dom_document.createElement("pcode_project")

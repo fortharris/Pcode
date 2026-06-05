@@ -69,12 +69,31 @@ REPLACEMENTS = [
      "from Extensions.qt_bindings import font_metrics_width\n"),
     (r"from Extensions\.qt_bindings import font_metrics_width, QtGui, QtCore\n",
      "from Extensions.qt_bindings import font_metrics_width\n"),
+    (r"from Extensions\.qt_bindings import QtGui, QtCore, QtXml\n", ""),
+    (r"from Extensions\.qt_bindings import QtCore, QtGui, QtXml\n", ""),
+    (r"\bQtXml\.QDomDocument\b", "QDomDocument"),
+    (r"\bQtCore\.QDir\b", "QDir"),
+    (r"\bQtCore\.QUrl\b", "QUrl"),
+    (r"\bQtCore\.QMimeData\b", "QMimeData"),
+    (r"\bQtGui\.QFrame\b", "QFrame"),
+    (r"\bQtGui\.QMainWindow\b", "QMainWindow"),
+    (r"\bQtGui\.QPlainTextEdit\b", "QPlainTextEdit"),
+    (r"\bQtGui\.QProgressBar\b", "QProgressBar"),
+    (r"\bQtCore\.Qt\.ToolButtonTextBesideIcon\b",
+     "Qt.ToolButtonStyle.ToolButtonTextBesideIcon"),
+    (r"\bQtCore\.Qt\.MatchStartsWith\b", "Qt.MatchFlag.MatchStartsWith"),
+    (r"\bQtCore\.Qt\.MatchRecursive\b", "Qt.MatchFlag.MatchRecursive"),
+    (r"\bQtCore\.Qt\.Key_Up\b", "Qt.Key.Key_Up"),
+    (r"\bQtCore\.Qt\.Key_Down\b", "Qt.Key.Key_Down"),
+    (r"\bQtCore\.Qt\.NoItemFlags\b", "Qt.ItemFlag.NoItemFlags"),
+    (r"\bQtGui\.QFrame\.HLine\b", "QFrame.Shape.HLine"),
+    (r"\bQtGui\.QFrame\.Sunken\b", "QFrame.Shadow.Sunken"),
 ]
 
 CORE_IMPORT = (
     "from PyQt6.QtCore import "
-    "QDateTime, QEvent, QFileInfo, QFileSystemWatcher, QPoint, QPointF, "
-    "Qt, QThread, QTimer, pyqtSignal\n"
+    "QDateTime, QDir, QEvent, QFileInfo, QFileSystemWatcher, QMimeData, "
+    "QPoint, QPointF, Qt, QThread, QTimer, QUrl, pyqtSignal\n"
 )
 GUI_IMPORT = (
     "from PyQt6.QtGui import "
@@ -83,11 +102,11 @@ GUI_IMPORT = (
 )
 WIDGETS_IMPORT = (
     "from PyQt6.QtWidgets import QApplication, QButtonGroup, QCheckBox, "
-    "QComboBox, QDialog, QFileDialog, QFontDialog, QFormLayout, QGroupBox, "
-    "QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, QMenu, "
-    "QMessageBox, QPrintDialog, QPrinter, QPushButton, QRadioButton, "
-    "QSpinBox, QStackedLayout, QStackedWidget, QTabWidget, QTextEdit, "
-    "QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget\n"
+    "QComboBox, QDialog, QFileDialog, QFontDialog, QFormLayout, QFrame, "
+    "QGroupBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem, "
+    "QMainWindow, QMenu, QMessageBox, QPlainTextEdit, QProgressBar, QPushButton, "
+    "QRadioButton, QSpinBox, QStackedLayout, QStackedWidget, QTabWidget, "
+    "QTextEdit, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget\n"
 )
 XML_IMPORT = "from PyQt6.QtXml import QDomDocument\n"
 

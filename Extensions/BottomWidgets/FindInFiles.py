@@ -1,5 +1,4 @@
-from PyQt6 import QtCore
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPixmap
 from PyQt6.QtWidgets import QApplication, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QMenu, QMessageBox, QPushButton, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
 
@@ -11,7 +10,7 @@ from Extensions import Global
 from Extensions.Diff import DiffWindow
 
 
-class FinderThread(QtCore.QThread):
+class FinderThread(QThread):
 
     listItemAvailable = pyqtSignal()
     currentDir = pyqtSignal(str)
@@ -88,8 +87,8 @@ class ConfirmReplaceDialog(QDialog):
     def __init__(self, path, text, replaceText, search, parent=None):
         QDialog.__init__(
             self, parent,
-            QtCore.Qt.WindowType.Window
-            | QtCore.Qt.WindowType.WindowCloseButtonHint)
+            Qt.WindowType.Window
+            | Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle(path)
         self.resize(700, 400)
@@ -139,7 +138,7 @@ class ConfirmReplaceDialog(QDialog):
         self.exec()
 
     def replace(self):
-        QApplication.setOverrideCursor(QtCore.Qt.CursorShape.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
         with open(self.path, 'r') as file:
             new = self.search.sub(self.replaceText, file.read())

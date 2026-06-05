@@ -1,11 +1,17 @@
 import os
 import re
-from Extensions.qt_bindings import QtCore, QtGui, QtXml
+
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtWidgets import (
+    QCheckBox, QComboBox, QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QProgressBar, QPushButton, QVBoxLayout, QWidget,
+)
+from PyQt6.QtXml import QDomDocument
 
 
-class FinderThread(QtCore.QThread):
+class FinderThread(QThread):
 
-    searchSoFar = QtCore.Signal(int)
+    searchSoFar = pyqtSignal(int)
 
     def find(self, text, matchCase, matchWholeWord, regExp, searchLoc, libraryDir):
         self.text = text
@@ -37,7 +43,7 @@ class FinderThread(QtCore.QThread):
             print(why)
 
         files = os.listdir(self.libraryDir)
-        dom_document = QtXml.QDomDocument()
+        dom_document = QDomDocument()
         for i in range(len(files)):
             if self.stop:
                 break
@@ -73,11 +79,11 @@ class FinderThread(QtCore.QThread):
         self.stop = True
 
 
-class AdvancedSearch(QtGui.QWidget):
+class AdvancedSearch(QWidget):
 
     def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QWidget.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle("Advanced Search")
         self.resize(400, 120)
@@ -85,54 +91,54 @@ class AdvancedSearch(QtGui.QWidget):
         self.library = parent
         self.finderThread = FinderThread()
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.searchResultsListWidget = QtGui.QListWidget()
+        self.searchResultsListWidget = QListWidget()
         self.searchResultsListWidget.itemPressed.connect(
             self.library.viewSearchItem)
         self.searchResultsListWidget.itemActivated.connect(
             self.library.viewSearchItem)
         mainLayout.addWidget(self.searchResultsListWidget)
 
-        mainLayout.addWidget(QtGui.QLabel("Find:"))
+        mainLayout.addWidget(QLabel("Find:"))
 
-        self.searchLine = QtGui.QLineEdit()
+        self.searchLine = QLineEdit()
         self.searchLine.returnPressed.connect(self.startSearch)
         mainLayout.addWidget(self.searchLine)
 
-        mainLayout.addWidget(QtGui.QLabel("Location:"))
+        mainLayout.addWidget(QLabel("Location:"))
 
-        self.searchLocBox = QtGui.QComboBox()
+        self.searchLocBox = QComboBox()
         self.searchLocBox.addItem("Comments AND Source Code")
         self.searchLocBox.addItem("Source Code")
         self.searchLocBox.addItem("Comments")
         mainLayout.addWidget(self.searchLocBox)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
-        self.matchCaseBox = QtGui.QCheckBox("Match Case")
+        self.matchCaseBox = QCheckBox("Match Case")
         hbox.addWidget(self.matchCaseBox)
 
-        self.matchWholeWordBox = QtGui.QCheckBox("Whole Word")
+        self.matchWholeWordBox = QCheckBox("Whole Word")
         hbox.addWidget(self.matchWholeWordBox)
 
-        self.regExpBox = QtGui.QCheckBox("Regular Expression")
+        self.regExpBox = QCheckBox("Regular Expression")
         hbox.addWidget(self.regExpBox)
 
         mainLayout.addLayout(hbox)
 
-        frame = QtGui.QFrame()
-        frame.setFrameShape(QtGui.QFrame.HLine)
-        frame.setFrameShadow(QtGui.QFrame.Sunken)
+        frame = QFrame()
+        frame.setFrameShape(QFrame.HLine)
+        frame.setFrameShadow(QFrame.Sunken)
         mainLayout.addWidget(frame)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
-        self.searchLabel = QtGui.QLabel("Searching...")
+        self.searchLabel = QLabel("Searching...")
         hbox.addWidget(self.searchLabel)
 
-        self.progressBar = QtGui.QProgressBar()
+        self.progressBar = QProgressBar()
         self.progressBar.setMaximumHeight(15)
         self.progressBar.setMinimumWidth(100)
         hbox.addWidget(self.progressBar)
@@ -140,13 +146,13 @@ class AdvancedSearch(QtGui.QWidget):
         self.searchLabel.hide()
         self.progressBar.hide()
 
-        self.foundLabel = QtGui.QLabel()
+        self.foundLabel = QLabel()
         hbox.addWidget(self.foundLabel)
         self.foundLabel.hide()
 
         hbox.addStretch(1)
 
-        searchButton = QtGui.QPushButton("Search")
+        searchButton = QPushButton("Search")
         searchButton.clicked.connect(self.startSearch)
         hbox.addWidget(searchButton)
 
@@ -184,7 +190,7 @@ class AdvancedSearch(QtGui.QWidget):
 
         self.searchResultsListWidget.clear()
         for i in self.finderThread.found:
-            self.searchResultsListWidget.addItem(QtGui.QListWidgetItem(i))
+            self.searchResultsListWidget.addItem(QListWidgetItem(i))
 
     def updateProgress(self, value):
         self.progressBar.setValue(value)

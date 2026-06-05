@@ -92,10 +92,11 @@ def resolve_palette(name):
 def _detect_system_theme():
     """Best-effort OS dark-mode detection; falls back to Light."""
     try:
-        from Extensions.qt_bindings import QtGui
-        app = QtGui.QApplication.instance()
+        from PyQt6.QtGui import QPalette
+        from PyQt6.QtWidgets import QApplication
+        app = QApplication.instance()
         if app is not None:
-            win = app.palette().color(QtGui.QPalette.ColorRole.Window)
+            win = app.palette().color(QPalette.ColorRole.Window)
             # Perceived luminance; < 0.5 means a dark window background.
             lum = (0.299 * win.red() + 0.587 * win.green()
                    + 0.114 * win.blue()) / 255.0
@@ -490,10 +491,9 @@ def themed(name="Light"):
 def _qpalette(palette):
     """Build a QPalette from token colours so natively-painted surfaces
     (window/dialog backgrounds, etc.) match the stylesheet."""
-    from Extensions.qt_bindings import QtGui
-    QColor = QtGui.QColor
-    Role = QtGui.QPalette.ColorRole
-    qp = QtGui.QPalette()
+    from PyQt6.QtGui import QColor, QPalette
+    Role = QPalette.ColorRole
+    qp = QPalette()
     mapping = {
         "Window": "bg",
         "WindowText": "text",

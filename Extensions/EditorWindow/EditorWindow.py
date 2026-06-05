@@ -1,4 +1,4 @@
-from PyQt6 import QtCore
+from PyQt6.QtCore import QDir, QProcess, Qt, QTimer, QUrl
 from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices, QIcon, QShortcut
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QMenu, QMessageBox, QSplitter, QStackedWidget, QStatusBar, QTabWidget, QToolBar, QToolButton, QVBoxLayout, QWidget
 
@@ -56,7 +56,7 @@ class EditorWindow(QWidget):
 
         self.standardToolbar = QToolBar("Standard")
         self.standardToolbar.setMovable(False)
-        self.standardToolbar.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
+        self.standardToolbar.setContextMenuPolicy(Qt.ContextMenuPolicy.PreventContextMenu)
         self.standardToolbar.setMaximumHeight(26)
         self.standardToolbar.setObjectName("StandardToolBar")
         mainLayout.addWidget(self.standardToolbar)
@@ -101,7 +101,7 @@ class EditorWindow(QWidget):
         self.bookmarkToolbar = QToolBar("Bookmarks")
         self.bookmarkToolbar.setMovable(False)
         self.bookmarkToolbar.setFloatable(False)
-        self.bookmarkToolbar.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
+        self.bookmarkToolbar.setContextMenuPolicy(Qt.ContextMenuPolicy.PreventContextMenu)
         self.bookmarkToolbar.setObjectName("Bookmarks")
         self.bookmarkToolbar.addSeparator()
 
@@ -282,7 +282,7 @@ class EditorWindow(QWidget):
         mainLayout.addLayout(hbox)
 
         self.uptime = 0
-        self.uptimeTimer = QtCore.QTimer()
+        self.uptimeTimer = QTimer()
         self.uptimeTimer.setInterval(60000)
         self.uptimeTimer.timeout.connect(self.updateUptime)
         self.uptimeTimer.start()
@@ -429,7 +429,7 @@ class EditorWindow(QWidget):
                 triggered=self.closeProject)
 
     def visitHomepage(self):
-        QDesktopServices().openUrl(QtCore.QUrl(
+        QDesktopServices().openUrl(QUrl(
             """https://github.com/fortharris/Pcode"""))
 
     def showProjectConfiguration(self):
@@ -480,7 +480,7 @@ class EditorWindow(QWidget):
         self.editorMenuButton = QToolButton()
         self.editorMenuButton.setText("Menu")
         self.editorMenuButton.setToolButtonStyle(
-            QtCore.Qt.ToolButtonTextBesideIcon)
+            Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
         self.editorMenuButton.setAutoRaise(True)
         self.editorMenuButton.setPopupMode(
             QToolButton.ToolButtonPopupMode.InstantPopup)
@@ -656,13 +656,13 @@ class EditorWindow(QWidget):
         self.runWidget.stopProcess()
 
     def showPythonInterpreter(self):
-        process = QtCore.QProcess()
+        process = QProcess()
         process.startDetached(self.useData.SETTINGS["DefaultInterpreter"])
 
     def showCommandPrompt(self):
         prompt = os.environ["COMSPEC"]
-        process = QtCore.QProcess()
-        process.startDetached(prompt, [], QtCore.QDir().rootPath())
+        process = QProcess()
+        process.startDetached(prompt, [], QDir().rootPath())
 
     def showCursorPosition(self):
         line, index = self.editorTabWidget.currentEditor.getCursorPosition()

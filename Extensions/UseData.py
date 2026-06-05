@@ -7,7 +7,8 @@ import traceback
 import logging
 
 from PyQt6.Qsci import QsciScintilla
-from Extensions.qt_bindings import QtCore, QtXml
+from PyQt6.QtCore import QDir, QObject
+from PyQt6.QtXml import QDomDocument
 
 from Extensions.Workspace import Workspace
 from Extensions.settings_utils import (
@@ -75,7 +76,7 @@ def lineEnding(text):
     return mode
 
 
-class FindInstalledPython(QtCore.QObject):
+class FindInstalledPython(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -172,7 +173,7 @@ class FindInstalledPython(QtCore.QObject):
         for path in versionList:
             yield path
 
-class UseData(QtCore.QObject):
+class UseData(QObject):
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -351,7 +352,7 @@ class UseData(QtCore.QObject):
             "EditorStyleXml": "Default",
             "EditorStyleHtml": "Default",
             "EditorStyleCss": "Default",
-            "LastOpenedPath": QtCore.QDir().homePath(),
+            "LastOpenedPath": QDir().homePath(),
             "DefaultInterpreter": sys.executable,
         }
 
@@ -601,7 +602,7 @@ class UseData(QtCore.QObject):
             return None
         try:
             with open(path, "r") as f:
-                dom_document = QtXml.QDomDocument()
+                dom_document = QDomDocument()
                 dom_document.setContent(f.read())
                 return dom_document
         except Exception:
@@ -677,7 +678,7 @@ class UseData(QtCore.QObject):
         if os.path.exists(self.SETTINGS["LastOpenedPath"]):
             pass
         else:
-            self.SETTINGS["LastOpenedPath"] = QtCore.QDir().homePath()
+            self.SETTINGS["LastOpenedPath"] = QDir().homePath()
         return self.SETTINGS["LastOpenedPath"]
 
     def saveLastOpenedDir(self, path):

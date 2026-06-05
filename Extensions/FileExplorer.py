@@ -1,5 +1,4 @@
-from PyQt6 import QtCore
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import QDir, pyqtSignal
 from PyQt6.QtGui import QAction, QActionGroup, QFileSystemModel, QIcon, QPalette
 from PyQt6.QtWidgets import (
     QFileDialog, QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMenu,
@@ -163,7 +162,7 @@ class FileExplorer(QTreeView):
         self.setObjectName("sidebarItem")
 
         self.fileSystemModel = QFileSystemModel()
-        self.fileSystemModel.setRootPath(QtCore.QDir.rootPath())
+        self.fileSystemModel.setRootPath(QDir.rootPath())
         self.fileSystemModel.setNameFilterDisables(False)
         self.setModel(self.fileSystemModel)
         self.setColumnWidth(0, 300)
@@ -296,7 +295,7 @@ class FileExplorer(QTreeView):
 
     def refreshFileSytemModel(self):
         self.fileSystemModel = QFileSystemModel()
-        self.fileSystemModel.setRootPath(QtCore.QDir.rootPath())
+        self.fileSystemModel.setRootPath(QDir.rootPath())
         if self.showAllFilesAct.isChecked():
             self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
         self.fileSystemModel.setNameFilterDisables(False)

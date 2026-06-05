@@ -5,7 +5,7 @@ import logging
 import os
 import traceback
 
-from Extensions.qt_bindings import QtXml
+from PyQt6.QtXml import QDomDocument
 
 DEFAULT_EXTENSIONS = ["*.py", "*.pyw"]
 DEFAULT_IGNORED = [
@@ -22,7 +22,7 @@ def _xml_path(rope_folder):
 
 
 def _parse_xml(path):
-    dom_document = QtXml.QDomDocument()
+    dom_document = QDomDocument()
     with open(path, "r", encoding="utf-8") as file:
         dom_document.setContent(file.read())
 
@@ -95,7 +95,7 @@ def load(rope_folder):
 
 
 def _write_xml(rope_folder, data):
-    dom_document = QtXml.QDomDocument("rope_profile")
+    dom_document = QDomDocument("rope_profile")
     main_data = dom_document.createElement("rope")
     dom_document.appendChild(main_data)
 

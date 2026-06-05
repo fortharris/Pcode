@@ -7,13 +7,15 @@ import sys
 import shutil
 import traceback
 import logging
-from Extensions.qt_bindings import QtCore, QtGui
+
+from PyQt6.QtCore import Qt, QThread
+from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget
 
 from Extensions.EditorWindow.EditorWindow import EditorWindow
 from Extensions.Projects.NewProjectDialog import NewProjectDialog
 
 
-class CreateProjectThread(QtCore.QThread):
+class CreateProjectThread(QThread):
 
     def run(self):
         self.error = False
@@ -152,11 +154,11 @@ class CreateProjectThread(QtCore.QThread):
         self.start()
 
 
-class Projects(QtGui.QWidget):
+class Projects(QWidget):
 
     def __init__(self, useData, busyWidget, library, settingsWidget, app,
                  projectWindowStack, projectTitleBox, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.createProjectThread = CreateProjectThread()
         self.createProjectThread.finished.connect(self.finalizeNewProject)
@@ -187,7 +189,7 @@ class Projects(QtGui.QWidget):
 
     def loadProject(self, path, show, new):
         if not self.pcode.showProject(path):
-            QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             projectPathDict = {
                 "notes": os.path.join(path, "Data", "wpad.txt"),
                 "session": os.path.join(path, "Data", "session.json"),
@@ -223,8 +225,8 @@ class Projects(QtGui.QWidget):
             try:
                 project_data = self.readProject(path)
                 if project_data is False:
-                    QtGui.QApplication.restoreOverrideCursor()
-                    QtGui.QMessageBox.warning(self, "Open Project",
+                    QApplication.restoreOverrideCursor()
+                    QMessageBox.warning(self, "Open Project",
                                                         "Failed:\n\n" + path)
                     return
                 projectPathDict["name"] = project_data[1]["Name"]
@@ -268,10 +270,10 @@ class Projects(QtGui.QWidget):
                 logging.error(
                     repr(traceback.format_exception(exc_type, exc_value,
                              exc_traceback)))
-                QtGui.QApplication.restoreOverrideCursor()
-                QtGui.QMessageBox.warning(self, "Failed Open",
+                QApplication.restoreOverrideCursor()
+                QMessageBox.warning(self, "Failed Open",
                                                     "Problem opening project: \n\n" + str(err))
-            QtGui.QApplication.restoreOverrideCursor()
+            QApplication.restoreOverrideCursor()
 
     def closeProject(self):
         window = self.projectWindowStack.currentWidget()
@@ -288,7 +290,7 @@ class Projects(QtGui.QWidget):
     def finalizeNewProject(self):
         self.busyWidget.showBusy(False)
         if self.createProjectThread.error is not False:
-            QtGui.QMessageBox.warning(self, "New Project",
+            QMessageBox.warning(self, "New Project",
                                                 "Failed to create project:\n\n" + self.createProjectThread.error)
         else:
             projectPath = os.path.normpath(

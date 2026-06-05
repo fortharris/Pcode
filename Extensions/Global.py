@@ -1,7 +1,8 @@
 import sys
 
 from PyQt6.QtCore import QFileInfo
-from PyQt6.QtGui import QFileIconProvider, QFont
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QFileIconProvider
 
 
 def getDefaultFont():

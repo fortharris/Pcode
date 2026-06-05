@@ -1,5 +1,4 @@
-from PyQt6 import QtCore
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtWidgets import QComboBox, QDialog, QFileDialog, QFormLayout, QHBoxLayout, QLineEdit, QPushButton, QVBoxLayout, QWidget
 
 import os
@@ -42,11 +41,12 @@ class GetPathLine(QWidget):
 
 class NewProjectDialog(QDialog):
 
-    projectDataReady = QtCore.Signal(dict)
+    projectDataReady = pyqtSignal(dict)
 
     def __init__(self, useData, parent=None):
-        QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(
+            self, parent,
+            Qt.WindowType.Window | Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle('New Project')
         self.resize(500, 100)

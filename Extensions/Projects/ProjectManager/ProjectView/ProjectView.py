@@ -1,46 +1,53 @@
 import os
 import ctypes
 import shutil
-from Extensions.qt_bindings import QtGui, QtCore, QtXml
 from Extensions.settings_utils import to_bool
 
 from Extensions import Global
 from Extensions.Projects.ProjectManager.ProjectView.ProgressWidget import ProgressWidget
+from PyQt6.QtCore import QDir, QMimeData, Qt, QThread, QTimer, QUrl, pyqtSignal
+from PyQt6.QtGui import QAction, QBrush, QColor, QFileSystemModel, QIcon, QKeySequence
+from PyQt6.QtWidgets import (
+    QDialog, QFileDialog, QFileIconProvider, QHBoxLayout, QLabel,
+    QLineEdit, QMenu, QMessageBox, QProgressBar, QPushButton, QStackedWidget,
+    QToolButton, QTreeView, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget,
+)
+from PyQt6.QtXml import QDomDocument
 
 
-class GetName(QtGui.QDialog):
+class GetName(QDialog):
 
     def __init__(self, caption, path, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle(caption)
 
         self.path = path
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         self.setLayout(mainLayout)
-        mainLayout.addWidget(QtGui.QLabel("Name:"))
+        mainLayout.addWidget(QLabel("Name:"))
 
-        self.nameLine = QtGui.QLineEdit()
+        self.nameLine = QLineEdit()
         self.nameLine.selectAll()
         self.nameLine.textChanged.connect(self.enableAcceptButton)
         mainLayout.addWidget(self.nameLine)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        self.statusLabel = QtGui.QLabel()
+        self.statusLabel = QLabel()
         hbox.addWidget(self.statusLabel)
 
         hbox.addStretch(1)
 
-        self.acceptButton = QtGui.QPushButton("Ok")
+        self.acceptButton = QPushButton("Ok")
         self.acceptButton.setDisabled(True)
         self.acceptButton.clicked.connect(self.accept)
         hbox.addWidget(self.acceptButton)
 
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QPushButton("Cancel")
         self.cancelButton.clicked.connect(self.cancel)
         hbox.addWidget(self.cancelButton)
 
@@ -72,10 +79,10 @@ class GetName(QtGui.QDialog):
         self.close()
 
 
-class CopyThread(QtCore.QThread):
+class CopyThread(QThread):
 
-    currentJobChanged = QtCore.Signal(str)
-    copyingSizeChanged = QtCore.Signal(int)
+    currentJobChanged = pyqtSignal(str)
+    copyingSizeChanged = pyqtSignal(int)
 
     def run(self):
         try:
@@ -157,44 +164,44 @@ class CopyThread(QtCore.QThread):
         self.stopThread = True
 
 
-class IconProvider(QtGui.QFileIconProvider):
+class IconProvider(QFileIconProvider):
 
     def __init__(self, parent=None):
-        QtGui.QFileIconProvider.__init__(self)
+        QFileIconProvider.__init__(self)
 
     def icon(self, icontype_or_qfileinfo):
         """Reimplement Qt method"""
-        if isinstance(icontype_or_qfileinfo, QtGui.QFileIconProvider.IconType):
+        if isinstance(icontype_or_qfileinfo, QFileIconProvider.IconType):
             return super(IconProvider, self).icon(icontype_or_qfileinfo)
         else:
             qfileinfo = icontype_or_qfileinfo
             fname = os.path.normpath(qfileinfo.absoluteFilePath())
             if os.path.isdir(fname):
-                dir = QtCore.QDir(fname)
-                dirList = dir.entryList(QtCore.QDir.Files)
+                dir = QDir(fname)
+                dirList = dir.entryList(QDir.Files)
                 if "__init__.py" in dirList:
-                    icon = QtGui.QIcon(
+                    icon = QIcon(
                         os.path.join("Resources", "images", "box"))
                 else:
-                    icon = QtGui.QIcon(
+                    icon = QIcon(
                         os.path.join("Resources", "images", "folder-horizontal"))
                 return icon
             else:
                 if os.path.basename(fname) == "__init__.py":
-                    return QtGui.QIcon(os.path.join("Resources", "images", "haiku-wide"))
+                    return QIcon(os.path.join("Resources", "images", "haiku-wide"))
                 ext = os.path.splitext(fname)[1][1:]
                 if ext == "py" or ext == "pyw":
-                    return QtGui.QIcon(os.path.join("Resources", "images", "gear"))
+                    return QIcon(os.path.join("Resources", "images", "gear"))
                 else:
                     return super(IconProvider, self).icon(qfileinfo)
 
 
-class ProjectTree(QtGui.QTreeView):
+class ProjectTree(QTreeView):
 
-    fileActivated = QtCore.Signal(str)
+    fileActivated = pyqtSignal(str)
 
     def __init__(self, editorTabWidget, root, app, projectSettings, progressWidget, parent):
-        QtGui.QTreeView.__init__(self, parent)
+        QTreeView.__init__(self, parent)
 
         self.root = root
         self.app = app
@@ -222,8 +229,8 @@ class ProjectTree(QtGui.QTreeView):
 
         iconProvider = IconProvider()
 
-        self.fileSystemModel = QtGui.QFileSystemModel()
-        self.fileSystemModel.setRootPath(QtCore.QDir.rootPath())
+        self.fileSystemModel = QFileSystemModel()
+        self.fileSystemModel.setRootPath(QDir.rootPath())
         self.fileSystemModel.setNameFilterDisables(False)
         self.fileSystemModel.setIconProvider(iconProvider)
         self.setModel(self.fileSystemModel)
@@ -241,7 +248,7 @@ class ProjectTree(QtGui.QTreeView):
         indexList = self.selectedIndexes()
         selection = len(indexList) != 0
 
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.newMenu = self.contextMenu.addMenu("New...")
         self.newMenu.addAction(self.addFileAct)
         self.newMenu.addAction(self.addDirAct)
@@ -274,60 +281,60 @@ class ProjectTree(QtGui.QTreeView):
         self.contextMenu.exec(event.globalPos())
 
     def createActions(self):
-        self.addFileAct = QtGui.QAction(
+        self.addFileAct = QAction(
             "File", self,
             statusTip="File", triggered=self.newFile)
 
-        self.addDirAct = QtGui.QAction(
+        self.addDirAct = QAction(
             "Directory", self,
             statusTip="Directory", triggered=self.newDirectory)
 
-        self.addPackageAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "box")),
+        self.addPackageAct = QAction(
+            QIcon(os.path.join("Resources", "images", "box")),
             "Package", self,
             statusTip="Package", triggered=self.newPackage)
 
-        self.copyAct = QtGui.QAction(
-            "Copy", self, shortcut=QtGui.QKeySequence.Copy,
+        self.copyAct = QAction(
+            "Copy", self, shortcut=QKeySequence.Copy,
             statusTip="Copy", triggered=self.copyItem)
 
-        self.pasteAct = QtGui.QAction(
-            "Paste", self, shortcut=QtGui.QKeySequence.Paste,
+        self.pasteAct = QAction(
+            "Paste", self, shortcut=QKeySequence.Paste,
             statusTip="Paste", triggered=self.pasteItem)
 
-        self.deleteAct = QtGui.QAction(
-            "Delete", self, shortcut=QtGui.QKeySequence.Delete,
+        self.deleteAct = QAction(
+            "Delete", self, shortcut=QKeySequence.Delete,
             statusTip="Delete Selection", triggered=self.deleteItem)
 
         self.addExistingFilesAct = \
-            QtGui.QAction(
+            QAction(
                 "Files", self,
                 statusTip="Files", triggered=self.addExistingFiles)
 
         self.addExistingDirectoriesAct = \
-            QtGui.QAction(
+            QAction(
                 "Directory", self,
                 statusTip="Directory", triggered=self.addExistingDirectory)
 
-        self.mainScriptsAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "location")),
+        self.mainScriptsAct = QAction(
+            QIcon(os.path.join("Resources", "images", "location")),
             "Set as Main Script", self, statusTip="Set as Main Script",
             triggered=self.setMainScript)
 
         self.collapseAllAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "collapse")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "collapse")),
                 "Collapse All", self,
                 statusTip="Collapse Tree", triggered=self.collapseAll)
 
         self.expandAllAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "expand")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "expand")),
                 "Expand All", self,
                 statusTip="Expand Tree", triggered=self.expandAll)
 
         self.showAllFilesAct = \
-            QtGui.QAction(
+            QAction(
                 "Show All Files", self, statusTip="Show All Files",
                 triggered=self.showAllFiles)
         self.showAllFilesAct.setCheckable(True)
@@ -356,8 +363,8 @@ class ProjectTree(QtGui.QTreeView):
 
     def copyItem(self):
         path = self.getCurrentFilePath()
-        url = QtCore.QUrl.fromLocalFile(path)
-        data = QtCore.QMimeData()
+        url = QUrl.fromLocalFile(path)
+        data = QMimeData()
         data.setUrls([url])
 
         clipboard = self.app.clipboard()
@@ -374,11 +381,11 @@ class ProjectTree(QtGui.QTreeView):
                 path = url.toLocalFile()
                 dest = os.path.join(destDir, os.path.basename(path))
                 if os.path.exists(dest):
-                    reply = QtGui.QMessageBox.warning(self, "Paste",
+                    reply = QMessageBox.warning(self, "Paste",
                                                       "'" + os.path.basename(
                                                           dest) + "' already exists in the destination directory.\n\nWould you like to replace it?",
-                                                      QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-                    if reply == QtGui.QMessageBox.Yes:
+                                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                    if reply == QMessageBox.StandardButton.Yes:
                         pass
                     else:
                         continue
@@ -396,7 +403,7 @@ class ProjectTree(QtGui.QTreeView):
                     pass
                 self.editorTabWidget.loadfile(path)
             except Exception:
-                QtGui.QMessageBox.warning(self, "New File",
+                QMessageBox.warning(self, "New File",
                                                     "File creation failed!")
 
     def newDirectory(self):
@@ -407,7 +414,7 @@ class ProjectTree(QtGui.QTreeView):
             try:
                 os.mkdir(path)
             except Exception:
-                QtGui.QMessageBox.warning(self, "New Directory",
+                QMessageBox.warning(self, "New Directory",
                                                     "Failed to create directory!")
 
     def newPackage(self):
@@ -422,13 +429,13 @@ class ProjectTree(QtGui.QTreeView):
                     pass
                 self.editorTabWidget.loadfile(f)
             except Exception:
-                QtGui.QMessageBox.warning(self, "New Package",
+                QMessageBox.warning(self, "New Package",
                                                     "Package creation failed!")
 
     def addExistingFiles(self):
-        options = QtGui.QFileDialog.Options()
-        files = QtGui.QFileDialog.getOpenFileNames(self,
-                                                  "Select Files", QtCore.QDir.homePath(
+        options = QFileDialog.Options()
+        files = QFileDialog.getOpenFileNames(self,
+                                                  "Select Files", QDir.homePath(
                                                   ),
             "All Files (*);;Text Files (*.txt)", options)
         if files:
@@ -437,12 +444,12 @@ class ProjectTree(QtGui.QTreeView):
             for file in files:
                 destPathName = os.path.join(destDir, os.path.basename(file))
                 if os.path.exists(destPathName):
-                    reply = QtGui.QMessageBox.warning(
+                    reply = QMessageBox.warning(
                         self, "Add Existing Files",
                         "'" + os.path.basename(
                             destPathName) + "' already exists in the destination directory.\n\nWould you like to replace it?",
-                        QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-                    if reply == QtGui.QMessageBox.Yes:
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                    if reply == QMessageBox.StandardButton.Yes:
                         pass
                     else:
                         continue
@@ -451,20 +458,20 @@ class ProjectTree(QtGui.QTreeView):
             self.progressWidget.showBusy(True, "Preparing to copy...")
 
     def addExistingDirectory(self):
-        options = QtGui.QFileDialog.DontResolveSymlinks | QtGui.QFileDialog.ShowDirsOnly
-        directory = QtGui.QFileDialog.getExistingDirectory(self,
-                                                          "Select Directory", QtCore.QDir.homePath(
+        options = QFileDialog.DontResolveSymlinks | QFileDialog.ShowDirsOnly
+        directory = QFileDialog.getExistingDirectory(self,
+                                                          "Select Directory", QDir.homePath(
                                                           ), options)
         if directory:
             destDir = self.getCurrentDirectory()
             destPathName = os.path.join(destDir, os.path.basename(directory))
             if os.path.exists(destPathName):
-                reply = QtGui.QMessageBox.warning(
+                reply = QMessageBox.warning(
                     self, "Add Existing Directory",
                                                   "'" + os.path.basename(
                                                       destPathName) + "' already exists in the destination directory.\n\nWould you like to replace it?",
-                                                  QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-                if reply == QtGui.QMessageBox.Yes:
+                                                  QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                if reply == QMessageBox.StandardButton.Yes:
                     pass
                 else:
                     return
@@ -480,23 +487,23 @@ class ProjectTree(QtGui.QTreeView):
     def copyFinished(self):
         self.progressWidget.showBusy(False)
         if self.copyThread.errors is not None:
-            QtGui.QMessageBox.warning(
+            QMessageBox.warning(
                     self, "Add Existing Items", "Failed to complete copy!\n\n" + str(self.copyThread.errors))
 
     def deleteItem(self):
         path = self.getCurrentFilePath()
-        reply = QtGui.QMessageBox.warning(self, "Delete",
+        reply = QMessageBox.warning(self, "Delete",
                                           "Permanently delete '" + os.path.basename(
                                               path) + "' from the project?",
-                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             try:
                 if os.path.isdir(path):
                     shutil.rmtree(path)
                 else:
                     os.remove(path)
             except Exception as err:
-                QtGui.QMessageBox.warning(self, "Delete",
+                QMessageBox.warning(self, "Delete",
                                                     "Failed to delete item!\n\n" + str(err))
         else:
             return
@@ -505,7 +512,7 @@ class ProjectTree(QtGui.QTreeView):
         if os.path.exists(path):
             self.setRootIndex(self.fileSystemModel.index(path))
         else:
-            QtGui.QMessageBox.warning(self, "Open",
+            QMessageBox.warning(self, "Open",
                                                 "Directory not found!")
 
     def showAllFiles(self):
@@ -535,7 +542,7 @@ class ProjectTree(QtGui.QTreeView):
         fileName = self.getCurrentFilePath()
         self.projectPathDict["mainscript"] = fileName
 
-        dom_document = QtXml.QDomDocument()
+        dom_document = QDomDocument()
         with open(self.projectPathDict["projectmainfile"], "r") as file:
             dom_document.setContent(file.read())
 
@@ -556,7 +563,7 @@ class ProjectTree(QtGui.QTreeView):
         settingsDict["MainScript"] = fileName
 
         # save data
-        dom_document = QtXml.QDomDocument("Project")
+        dom_document = QDomDocument("Project")
         properties = dom_document.createElement("properties")
         dom_document.appendChild(properties)
 
@@ -570,9 +577,9 @@ class ProjectTree(QtGui.QTreeView):
             file.write(dom_document.toString())
 
 
-class SearchThread(QtCore.QThread):
+class SearchThread(QThread):
 
-    foundList = QtCore.Signal(dict)
+    foundList = pyqtSignal(dict)
 
     def run(self):
         resultsDict = {}
@@ -598,42 +605,42 @@ class SearchThread(QtCore.QThread):
         self.start()
 
 
-class LineEdit(QtGui.QLineEdit):
+class LineEdit(QLineEdit):
 
-    fileActivated = QtCore.Signal(str)
+    fileActivated = pyqtSignal(str)
 
     def __init__(self, viewStack, searchResultsTree, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.searchResultsTree = searchResultsTree
         self.viewStack = viewStack
 
         self.setPlaceholderText("Search")
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.setContentsMargins(1, 1, 1, 1)
         hbox.addStretch(1)
         self.setLayout(hbox)
 
-        self.clearButton = QtGui.QToolButton()
+        self.clearButton = QToolButton()
         self.clearButton.setAutoRaise(True)
         self.clearButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "disabled")))
+            QIcon(os.path.join("Resources", "images", "disabled")))
         self.clearButton.clicked.connect(self.clearSearch)
         hbox.addWidget(self.clearButton)
 
     def keyPressEvent(self, event):
         key = event.key()
 
-        ctrl = event.modifiers() & QtCore.Qt.ControlModifier
-        alt = event.modifiers() & QtCore.Qt.AltModifier
-        event.modifiers() & QtCore.Qt.ShiftModifier
+        ctrl = event.modifiers() & Qt.KeyboardModifier.ControlModifier
+        alt = event.modifiers() & Qt.KeyboardModifier.AltModifier
+        event.modifiers() & Qt.KeyboardModifier.ShiftModifier
 
         if ctrl:
             pass
         elif alt:
             pass
-        elif key == QtCore.Qt.Key_Up:
+        elif key == Qt.Key.Key_Up:
             currentItem = self.currentItem()
             if currentItem is not None:
                 itemAbove = self.searchResultsTree.itemAbove(currentItem)
@@ -641,7 +648,7 @@ class LineEdit(QtGui.QLineEdit):
                     return
                 self.searchResultsTree.setCurrentItem(itemAbove)
                 self.setFocus()
-        elif key == QtCore.Qt.Key_Down:
+        elif key == Qt.Key.Key_Down:
             currentItem = self.currentItem()
             if currentItem is not None:
                 itemBelow = self.searchResultsTree.itemBelow(currentItem)
@@ -650,7 +657,7 @@ class LineEdit(QtGui.QLineEdit):
                 self.searchResultsTree.setCurrentItem(itemBelow)
                 self.setFocus()
         else:
-            QtGui.QLineEdit.keyPressEvent(self, event)
+            QLineEdit.keyPressEvent(self, event)
 
     def clearSearch(self):
         self.clear()
@@ -664,17 +671,17 @@ class LineEdit(QtGui.QLineEdit):
             return None
 
 
-class ProjectView(QtGui.QWidget):
+class ProjectView(QWidget):
 
-    fileActivated = QtCore.Signal(str)
+    fileActivated = pyqtSignal(str)
 
     def __init__(self, editorTabWidget, root, app, projectSettings, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.refactor = editorTabWidget.refactor
         self.root = root
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 2, 2)
         self.setLayout(mainLayout)
 
@@ -682,28 +689,28 @@ class ProjectView(QtGui.QWidget):
         mainLayout.addWidget(self.progressWidget)
         self.progressWidget.hide()
 
-        self.viewStack = QtGui.QStackedWidget()
+        self.viewStack = QStackedWidget()
         mainLayout.addWidget(self.viewStack)
 
         self.projectTree = ProjectTree(
             editorTabWidget, root, app, projectSettings, self.progressWidget, self)
         self.viewStack.addWidget(self.projectTree)
 
-        self.searchResultsTree = QtGui.QTreeWidget(self)
+        self.searchResultsTree = QTreeWidget(self)
         self.searchResultsTree.setObjectName("sidebarItem")
         self.searchResultsTree.setHeaderItem(
-            QtGui.QTreeWidgetItem(["Search Results:"]))
+            QTreeWidgetItem(["Search Results:"]))
         self.searchResultsTree.activated.connect(self.loadFile)
         self.viewStack.addWidget(self.searchResultsTree)
 
         self.searchThread = SearchThread()
         self.searchThread.foundList.connect(self.updateSearchTree)
 
-        self.searchTimer = QtCore.QTimer()
+        self.searchTimer = QTimer()
         self.searchTimer.setSingleShot(True)
         self.searchTimer.timeout.connect(self.search)
         
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
         vbox.setSpacing(0)
         mainLayout.addLayout(vbox)
 
@@ -712,7 +719,7 @@ class ProjectView(QtGui.QWidget):
         self.searchLine.returnPressed.connect(self.loadFile)
         vbox.addWidget(self.searchLine)
 
-        self.progressBar = QtGui.QProgressBar()
+        self.progressBar = QProgressBar()
         self.progressBar.setMaximumHeight(2)
         self.progressBar.setStyleSheet(
             """
@@ -765,26 +772,26 @@ class ProjectView(QtGui.QWidget):
         self.viewStack.setCurrentIndex(1)
         if len(resultsDict) > 0:
             for folder, fileList in resultsDict.items():
-                folderItem = QtGui.QTreeWidgetItem(self.searchResultsTree)
+                folderItem = QTreeWidgetItem(self.searchResultsTree)
                 pathRelativeToProject = folder.partition(
                     self.root + os.path.sep)[-1]
                 folderItem.setText(0, pathRelativeToProject)
-                folderItem.setForeground(0, QtGui.QBrush(
-                    QtGui.QColor("#003366")))
+                folderItem.setForeground(0, QBrush(
+                    QColor("#003366")))
                 for i in fileList:
-                    fileItem = QtGui.QTreeWidgetItem(folderItem)
+                    fileItem = QTreeWidgetItem(folderItem)
                     icon = Global.iconFromPath(os.path.join(folder, i))
                     fileItem.setText(0, i)
-                    fileItem.setIcon(0, QtGui.QIcon(icon))
+                    fileItem.setIcon(0, QIcon(icon))
                 folderItem.setExpanded(True)
 
             item = self.searchResultsTree.topLevelItem(0)
             self.searchResultsTree.setCurrentItem(item.child(0))
         else:
-            folderItem = QtGui.QTreeWidgetItem()
-            item = QtGui.QTreeWidgetItem()
+            folderItem = QTreeWidgetItem()
+            item = QTreeWidgetItem()
             item.setText(0, "<No results found>")
-            item.setFlags(QtCore.Qt.NoItemFlags)
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
             folderItem.addChild(item)
             self.searchResultsTree.addTopLevelItem(folderItem)
             folderItem.setExpanded(True)

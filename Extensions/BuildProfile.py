@@ -5,7 +5,7 @@ import logging
 import os
 import traceback
 
-from Extensions.qt_bindings import QtXml
+from PyQt6.QtXml import QDomDocument
 
 LIST_KEYS = [
     "Includes", "Excludes", "Constants Modules", "Packages", "Replace Paths",
@@ -56,7 +56,7 @@ def default_profile(window_type="Console"):
 
 
 def _parse_xml(path):
-    dom_document = QtXml.QDomDocument()
+    dom_document = QDomDocument()
     with open(path, "r", encoding="utf-8") as file:
         dom_document.setContent(file.read())
 
@@ -120,7 +120,7 @@ def load(build_folder):
 
 
 def _write_xml(build_folder, scalars, lists):
-    dom_document = QtXml.QDomDocument("build_profile")
+    dom_document = QDomDocument("build_profile")
     main_data = dom_document.createElement("build")
     dom_document.appendChild(main_data)
 

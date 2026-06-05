@@ -5,7 +5,7 @@ import logging
 import os
 import traceback
 
-from Extensions.qt_bindings import QtXml
+from PyQt6.QtXml import QDomDocument
 from Extensions.settings_utils import to_bool
 
 
@@ -28,7 +28,7 @@ def _backup_legacy_path(project_path_dict):
 
 
 def _parse_xml_session(path):
-    dom_document = QtXml.QDomDocument()
+    dom_document = QDomDocument()
     with open(path, "r", encoding="utf-8") as f:
         dom_document.setContent(f.read())
 

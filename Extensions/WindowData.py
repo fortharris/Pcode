@@ -6,7 +6,7 @@ import logging
 import os
 import traceback
 
-from Extensions.qt_bindings import QtCore
+from PyQt6.QtCore import QByteArray
 
 
 def _windata_path(project_root):
@@ -22,7 +22,7 @@ def _encode_state(byte_array):
 def _decode_state(data):
     if not data:
         return None
-    return QtCore.QByteArray(base64.b64decode(data.encode("ascii")))
+    return QByteArray(base64.b64decode(data.encode("ascii")))
 
 
 def capture(editor_window):
