@@ -1,7 +1,6 @@
 """A lightweight command palette (Ctrl+Shift+P) action launcher."""
 
 from PyQt6.QtCore import QEvent, Qt
-from PyQt6.QtGui import QKeySequence
 from PyQt6.QtWidgets import (
     QDialog, QLineEdit, QListWidget, QListWidgetItem, QVBoxLayout,
 )

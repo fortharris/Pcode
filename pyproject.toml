@@ -76,7 +76,8 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-# Start conservative on a large legacy codebase: real bugs, not style noise.
-# E9 syntax, F63 bad assert/comparison, F7 syntax, F82 undefined name.
-select = ["E9", "F63", "F7", "F82"]
-# Next: add F401 (unused imports) once the migration branch stabilizes.
+select = ["E9", "F63", "F7", "F82", "F401"]
+
+[tool.ruff.lint.per-file-ignores]
+# QtXml is re-exported for legacy migration imports.
+"Extensions/qt_bindings.py" = ["F401"]

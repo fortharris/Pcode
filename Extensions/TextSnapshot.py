@@ -4,7 +4,6 @@ from Extensions.qt_bindings import QtGui
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions import Global
-from Extensions import StyleSheet
 
 
 class TextSnapshot(BaseScintilla):

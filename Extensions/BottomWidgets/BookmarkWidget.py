@@ -1,10 +1,11 @@
-from Extensions.qt_bindings import QtCore, QtGui
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 
-class BookmarkWidget(QtGui.QTreeWidget):
+class BookmarkWidget(QTreeWidget):
 
     def __init__(self, editorTabWidget, bottomStackSwitcher, parent=None):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
 
         self.markersLineList = []
         self.editorTabWidget = editorTabWidget
@@ -17,7 +18,7 @@ class BookmarkWidget(QtGui.QTreeWidget):
         self.setColumnWidth(0, 50)
         self.setColumnWidth(1, 80)
 
-        self.loadTimer = QtCore.QTimer()
+        self.loadTimer = QTimer()
         self.loadTimer.setSingleShot(True)
         self.loadTimer.timeout.connect(self.load)
 
@@ -39,7 +40,7 @@ class BookmarkWidget(QtGui.QTreeWidget):
             self.clear()
             m = 1
             for i in markerLines:
-                item = QtGui.QTreeWidgetItem()
+                item = QTreeWidgetItem()
                 item.setText(0, str(m))
                 item.setText(1, str(i[0] + 1))
                 item.setToolTip(2, i[1])

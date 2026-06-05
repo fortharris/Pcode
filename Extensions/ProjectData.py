@@ -7,7 +7,7 @@ import traceback
 
 from Extensions.qt_bindings import QtXml
 from Extensions.settings_utils import (
-    normalize_project_settings, project_settings_for_json, from_bool, to_bool,
+    normalize_project_settings, project_settings_for_json, to_bool,
 )
 
 

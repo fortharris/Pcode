@@ -4,7 +4,6 @@ import logging
 
 from Extensions.qt_bindings import QtCore, QtGui, primary_screen_geometry
 
-from Extensions.settings_utils import to_bool
 from Extensions.UseData import UseData
 from Extensions.Library.Library import Library
 from Extensions.About import About

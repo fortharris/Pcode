@@ -14,8 +14,7 @@ from rope.base.project import Project
 from rope.base import libutils
 
 from Extensions.python_paths import interpreter_stdlib_paths
-from rope.contrib.findit import (find_occurrences, find_implementations,
-                                 find_definition)
+from rope.contrib.findit import (find_occurrences, find_definition)
 from Extensions.Refactor.UsageDialog import UsageDialog
 
 

@@ -69,5 +69,8 @@ jobs:
       - name: Lint (ruff)
         run: ruff check .
 
-      - name: Tests (pytest, no slow build)
+      - name: Unit tests (pytest)
         run: pytest -m "not slow and not smoke"
+
+      - name: Smoke tests (pytest)
+        run: pytest tests/test_smoke.py -m "not slow"

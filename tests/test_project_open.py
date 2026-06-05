@@ -23,7 +23,6 @@ def app():
 
 def test_open_project_creates_editor_tabs(app):
     import importlib.util
-    import shutil
 
     from Pcode import Pcode  # noqa: E402
 

@@ -3,7 +3,6 @@ import os
 from Extensions.qt_bindings import QtGui
 
 from Extensions.BaseScintilla import BaseScintilla
-from Extensions import StyleSheet
 
 
 class CodeSnapshot(BaseScintilla):

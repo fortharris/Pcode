@@ -1,6 +1,5 @@
-from Extensions.qt_bindings import QtGui, QtCore
+from Extensions.qt_bindings import QtGui
 
-from Extensions.MiniMap import MiniMap
 
         
 

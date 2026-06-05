@@ -11,7 +11,7 @@ from Extensions.qt_bindings import QtCore, QtXml
 
 from Extensions.Workspace import Workspace
 from Extensions.settings_utils import (
-    normalize_app_settings, app_settings_for_json, to_bool, from_bool,
+    normalize_app_settings, app_settings_for_json, to_bool,
 )
 
 
