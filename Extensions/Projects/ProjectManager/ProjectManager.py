@@ -95,5 +95,5 @@ class ProjectManager(QtGui.QWidget):
     def finishExport(self):
         self.busyWidget.showBusy(False)
         if self.exportThread.error is not None:
-            message = QtGui.QMessageBox.warning(
+            QtGui.QMessageBox.warning(
                 self, "Export Failed", self.exportThread.error)

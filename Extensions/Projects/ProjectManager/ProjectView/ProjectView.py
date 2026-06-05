@@ -396,7 +396,7 @@ class ProjectTree(QtGui.QTreeView):
                     pass
                 self.editorTabWidget.loadfile(path)
             except Exception:
-                message = QtGui.QMessageBox.warning(self, "New File",
+                QtGui.QMessageBox.warning(self, "New File",
                                                     "File creation failed!")
 
     def newDirectory(self):
@@ -407,7 +407,7 @@ class ProjectTree(QtGui.QTreeView):
             try:
                 os.mkdir(path)
             except Exception:
-                message = QtGui.QMessageBox.warning(self, "New Directory",
+                QtGui.QMessageBox.warning(self, "New Directory",
                                                     "Failed to create directory!")
 
     def newPackage(self):
@@ -422,7 +422,7 @@ class ProjectTree(QtGui.QTreeView):
                     pass
                 self.editorTabWidget.loadfile(f)
             except Exception:
-                message = QtGui.QMessageBox.warning(self, "New Package",
+                QtGui.QMessageBox.warning(self, "New Package",
                                                     "Package creation failed!")
 
     def addExistingFiles(self):
@@ -480,7 +480,7 @@ class ProjectTree(QtGui.QTreeView):
     def copyFinished(self):
         self.progressWidget.showBusy(False)
         if self.copyThread.errors is not None:
-            message = QtGui.QMessageBox.warning(
+            QtGui.QMessageBox.warning(
                     self, "Add Existing Items", "Failed to complete copy!\n\n" + str(self.copyThread.errors))
 
     def deleteItem(self):
@@ -496,7 +496,7 @@ class ProjectTree(QtGui.QTreeView):
                 else:
                     os.remove(path)
             except Exception as err:
-                message = QtGui.QMessageBox.warning(self, "Delete",
+                QtGui.QMessageBox.warning(self, "Delete",
                                                     "Failed to delete item!\n\n" + str(err))
         else:
             return
@@ -505,7 +505,7 @@ class ProjectTree(QtGui.QTreeView):
         if os.path.exists(path):
             self.setRootIndex(self.fileSystemModel.index(path))
         else:
-            message = QtGui.QMessageBox.warning(self, "Open",
+            QtGui.QMessageBox.warning(self, "Open",
                                                 "Directory not found!")
 
     def showAllFiles(self):
@@ -537,7 +537,7 @@ class ProjectTree(QtGui.QTreeView):
 
         dom_document = QtXml.QDomDocument()
         with open(self.projectPathDict["projectmainfile"], "r") as file:
-            x = dom_document.setContent(file.read())
+            dom_document.setContent(file.read())
 
         elements = dom_document.documentElement()
         node = elements.firstChild()
@@ -627,7 +627,7 @@ class LineEdit(QtGui.QLineEdit):
 
         ctrl = event.modifiers() & QtCore.Qt.ControlModifier
         alt = event.modifiers() & QtCore.Qt.AltModifier
-        shift_down = event.modifiers() & QtCore.Qt.ShiftModifier
+        event.modifiers() & QtCore.Qt.ShiftModifier
 
         if ctrl:
             pass

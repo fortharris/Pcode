@@ -190,11 +190,11 @@ class Keymap(QtGui.QDialog):
             mainItem.setText(0, i)
             if i == "Editor":
                 for function, action in self.useData.CUSTOM_SHORTCUTS[i].items():
-                    item = QtGui.QTreeWidgetItem(
+                    QtGui.QTreeWidgetItem(
                         mainItem, [function, action[0]])
             else:
                 for function, action in self.useData.CUSTOM_SHORTCUTS[i].items():
-                    item = QtGui.QTreeWidgetItem(mainItem, [function, action])
+                    QtGui.QTreeWidgetItem(mainItem, [function, action])
             mainItem.setExpanded(True)
 
     def setDefaultShortcuts(self):

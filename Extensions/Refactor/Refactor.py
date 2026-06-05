@@ -365,7 +365,7 @@ class Refactor(QtGui.QWidget):
     def renameFinished(self):
         self.busyWidget.showBusy(False)
         if self.renameThread.error is not None:
-            message = QtGui.QMessageBox.warning(self, "Failed Rename",
+            QtGui.QMessageBox.warning(self, "Failed Rename",
                                                 self.renameThread.error)
             return
         if self.renameThread.offset is None:
@@ -393,7 +393,7 @@ class Refactor(QtGui.QWidget):
     def inlineFinished(self):
         self.busyWidget.showBusy(False)
         if self.inlineThread.error is not None:
-            message = QtGui.QMessageBox.warning(self, "Failed Inline",
+            QtGui.QMessageBox.warning(self, "Failed Inline",
                                                 self.inlineThread.error)
             return
         if len(self.inlineThread.changedFiles) > 0:
@@ -413,7 +413,7 @@ class Refactor(QtGui.QWidget):
     def localToFieldFinished(self):
         self.busyWidget.showBusy(False)
         if self.localToFieldThread.error is not None:
-            message = QtGui.QMessageBox.warning(self, "Failed Local-to-Field",
+            QtGui.QMessageBox.warning(self, "Failed Local-to-Field",
                                                 self.localToFieldThread.error)
             return
         if len(self.localToFieldThread.changedFiles) > 0:
@@ -465,7 +465,7 @@ class Refactor(QtGui.QWidget):
     def moduleToPackageFinished(self):
         self.busyWidget.showBusy(False)
         if self.moduleToPackageThread.error is not None:
-            message = QtGui.QMessageBox.warning(self, "Failed to convert",
+            QtGui.QMessageBox.warning(self, "Failed to convert",
                                                 self.moduleToPackageThread.error)
 
     def findOccurrences(self):
@@ -500,7 +500,7 @@ class Refactor(QtGui.QWidget):
                     childItem.setFirstColumnSpanned(True)
                     parentItem.addChild(childItem)
                     foundList.append(parentItem)
-            usageDialog = UsageDialog(
+            UsageDialog(
                 self.editorTabWidget, "Usages: " + self.objectName, foundList, self)
         else:
             self.editorTabWidget.showNotification("No usages found.")

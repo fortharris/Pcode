@@ -85,7 +85,7 @@ class BuildThread(QtCore.QThread):
         binPathExcludes = self.profile["Bin Path Excludes"]
         includeFiles = self.profile["Include Files"]
         zipIncludes = self.profile["Zip Includes"]
-        namespacePackages = self.profile["Namespace Packages"]
+        self.profile["Namespace Packages"]
         constantsModules = self.profile["Constants Modules"]
         packages = self.profile["Packages"]
 
@@ -215,7 +215,7 @@ class Build(QtGui.QWidget):
         if os.path.exists(self.projectPathDict["builddir"]):
             os.startfile(self.projectPathDict["builddir"], 'explore')
         else:
-            message = QtGui.QMessageBox.critical(self, "Open",
+            QtGui.QMessageBox.critical(self, "Open",
                                                  "Build folder is missing!")
 
     def cancelBuild(self):

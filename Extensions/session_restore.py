@@ -1,4 +1,4 @@
-"""Apply persisted editor session entries to an EditorTabWidget."""
+"""Apply and capture persisted editor session entries."""
 
 import logging
 import os
@@ -6,6 +6,32 @@ import sys
 import traceback
 
 from Extensions.settings_utils import to_bool
+
+
+def capture_entries(editor_tab, backup=False):
+    """Build session entry dicts from the current tab widget state."""
+    entries = []
+    for i in range(editor_tab.count()):
+        editor = editor_tab.getEditor(i)
+        path = editor_tab.getEditorData("filePath", i)
+        if not backup and path is None:
+            continue
+        line, index = editor.getCursorPosition()
+        entry = {
+            "path": path,
+            "active": editor_tab.currentEditor == editor,
+            "locked": editor.isReadOnly(),
+            "lines": editor.lines(),
+            "cursorPosition": "{0},{1}".format(line, index),
+            "firstVisibleLine": editor.firstVisibleLine(),
+            "bookmarks": str(editor.getBookmarks()).replace(', ', '-').strip('[]'),
+            "folds": str(editor.contractedFolds()).replace(', ', '-').strip('[]'),
+        }
+        if backup:
+            entry["backupKey"] = editor_tab.getEditorData("backupKey", i)
+            entry["baseName"] = editor_tab.tabText(i)
+        entries.append(entry)
+    return entries
 
 
 def restore_entries(editor_tab, entries, backup=False):

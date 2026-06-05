@@ -1,8 +1,16 @@
+from PyQt6 import QtCore
+from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QShortcut
+from PyQt6.QtWidgets import (
+    QApplication, QComboBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox,
+    QSplashScreen, QStackedWidget, QStyledItemDelegate, QToolButton,
+    QVBoxLayout, QWidget,
+)
+
 import sys
 import os
 import logging
 
-from Extensions.qt_bindings import QtCore, QtGui, primary_screen_geometry
+from Extensions.screen_utils import primary_screen_geometry
 
 from Extensions.UseData import UseData
 from Extensions.Library.Library import Library
@@ -16,18 +24,18 @@ from Extensions.StackSwitcher import StackSwitcher
 from Extensions.CommandPalette import CommandPalette
 
 
-class Pcode(QtGui.QWidget):
+class Pcode(QWidget):
 
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
-        app = QtGui.QApplication.instance()
+        app = QApplication.instance()
         if app is None:
-            app = QtGui.QApplication(sys.argv)
+            app = QApplication(sys.argv)
         self.app = app
 
         self.setWindowIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "Icon")))
+            QIcon(os.path.join("Resources", "images", "Icon")))
         self.setWindowTitle("Pcode - Loading...")
 
         screen = primary_screen_geometry()
@@ -37,7 +45,7 @@ class Pcode(QtGui.QWidget):
                   int((screen.height() - size.height()) / 2))
         self.lastWindowGeometry = self.geometry()
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         mainLayout.setSpacing(0)
         mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
@@ -59,12 +67,12 @@ class Pcode(QtGui.QWidget):
         if self.useData.SETTINGS["UI"] == "Custom":
             StyleSheet.apply_theme(app, self.useData.SETTINGS.get("Theme", "Light"))
 
-        self.projectWindowStack = QtGui.QStackedWidget()
+        self.projectWindowStack = QStackedWidget()
 
-        self.projectTitleBox = QtGui.QComboBox()
+        self.projectTitleBox = QComboBox()
         self.projectTitleBox.setMinimumWidth(180)
         self.projectTitleBox.setStyleSheet(StyleSheet.projectTitleBoxStyle)
-        self.projectTitleBox.setItemDelegate(QtGui.QStyledItemDelegate())
+        self.projectTitleBox.setItemDelegate(QStyledItemDelegate())
         self.projectTitleBox.currentIndexChanged.connect(self.projectChanged)
         self.projectTitleBox.activated.connect(self.projectChanged)
 
@@ -82,12 +90,12 @@ class Pcode(QtGui.QWidget):
 
         self.createActions()
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.setContentsMargins(5, 3, 5, 3)
         mainLayout.addLayout(hbox)
 
-        self.logoLabel = QtGui.QLabel()
-        logoPix = QtGui.QPixmap(os.path.join("Resources", "images", "Icon"))
+        self.logoLabel = QLabel()
+        logoPix = QPixmap(os.path.join("Resources", "images", "Icon"))
         if not logoPix.isNull():
             self.logoLabel.setPixmap(logoPix.scaled(
                 22, 22,
@@ -95,7 +103,7 @@ class Pcode(QtGui.QWidget):
                 QtCore.Qt.TransformationMode.SmoothTransformation))
         hbox.addWidget(self.logoLabel)
 
-        self.titleLabel = QtGui.QLabel("Pcode")
+        self.titleLabel = QLabel("Pcode")
         titleFont = self.titleLabel.font()
         titleFont.setBold(True)
         self.titleLabel.setFont(titleFont)
@@ -104,36 +112,36 @@ class Pcode(QtGui.QWidget):
 
         hbox.addStretch(1)
 
-        self.pagesStack = QtGui.QStackedWidget()
+        self.pagesStack = QStackedWidget()
         mainLayout.addWidget(self.pagesStack)
 
         self.projectSwitcher = StackSwitcher(self.pagesStack)
         self.projectSwitcher.setStyleSheet(StyleSheet.mainMenuStyle)
         hbox.addWidget(self.projectSwitcher)
 
-        self.addPage(self.projectWindowStack, "EDITOR", QtGui.QIcon(
+        self.addPage(self.projectWindowStack, "EDITOR", QIcon(
             os.path.join("Resources", "images", "hire-me")))
 
-        self.addPage(self.library, "LIBRARY", QtGui.QIcon(
+        self.addPage(self.library, "LIBRARY", QIcon(
             os.path.join("Resources", "images", "library")))
         self.projectSwitcher.setDefault()
 
         hbox.addWidget(self.projectTitleBox)
         hbox.setSpacing(5)
 
-        self.settingsButton = QtGui.QToolButton()
+        self.settingsButton = QToolButton()
         self.settingsButton.setAutoRaise(True)
         self.settingsButton.setDefaultAction(self.settingsAct)
         self.settingsButton.setToolTip("Settings")
         hbox.addWidget(self.settingsButton)
 
-        self.fullScreenButton = QtGui.QToolButton()
+        self.fullScreenButton = QToolButton()
         self.fullScreenButton.setAutoRaise(True)
         self.fullScreenButton.setDefaultAction(self.showFullScreenAct)
         self.fullScreenButton.setToolTip("Toggle fullscreen")
         hbox.addWidget(self.fullScreenButton)
 
-        self.aboutButton = QtGui.QToolButton()
+        self.aboutButton = QToolButton()
         self.aboutButton.setAutoRaise(True)
         self.aboutButton.setDefaultAction(self.aboutAct)
         self.aboutButton.setToolTip("About Pcode")
@@ -153,20 +161,20 @@ class Pcode(QtGui.QWidget):
         self.useData.saveSettings()
 
     def createActions(self):
-        self.aboutAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "properties")),
+        self.aboutAct = QAction(
+            QIcon(os.path.join("Resources", "images", "properties")),
             "About Pcode", self, statusTip="About Pcode",
             triggered=self.showAbout)
 
         self.showFullScreenAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "fullscreen")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "fullscreen")),
                 "Fullscreen", self,
                 statusTip="Fullscreen",
                           triggered=self.showFullScreenMode)
 
-        self.settingsAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "config")),
+        self.settingsAct = QAction(
+            QIcon(os.path.join("Resources", "images", "config")),
             "Settings", self,
             statusTip="Settings", triggered=self.showSettings)
 
@@ -182,7 +190,7 @@ class Pcode(QtGui.QWidget):
 
     def showProject(self, path):
         if not os.path.exists(path):
-            message = QtGui.QMessageBox.warning(
+            QMessageBox.warning(
                 self, "Open Project", "Project cannot be be found!")
         else:
             if path in self.useData.OPENED_PROJECTS:
@@ -197,10 +205,10 @@ class Pcode(QtGui.QWidget):
     def addProject(self, window, name, type='Project', iconPath=None):
         self.projectWindowStack.insertWidget(0, window)
         if type == 'Project':
-            self.projectTitleBox.insertItem(0, QtGui.QIcon(
+            self.projectTitleBox.insertItem(0, QIcon(
                 os.path.join("Resources", "images", "project")), name, [window, type])
         else:
-            self.projectTitleBox.insertItem(0, QtGui.QIcon(
+            self.projectTitleBox.insertItem(0, QIcon(
                 iconPath), name, [window, type])
 
     def projectChanged(self, index):
@@ -295,12 +303,12 @@ class Pcode(QtGui.QWidget):
     def setKeymap(self):
         shortcuts = self.useData.CUSTOM_SHORTCUTS
 
-        self.shortFullscreen = QtGui.QShortcut(
+        self.shortFullscreen = QShortcut(
             shortcuts["Ide"]["Fullscreen"], self)
         self.shortFullscreen.activated.connect(self.showFullScreenMode)
 
-        self.shortCommandPalette = QtGui.QShortcut(
-            QtGui.QKeySequence("Ctrl+Shift+P"), self)
+        self.shortCommandPalette = QShortcut(
+            QKeySequence("Ctrl+Shift+P"), self)
         self.shortCommandPalette.activated.connect(self.showCommandPalette)
 
     def showCommandPalette(self):
@@ -369,6 +377,18 @@ class Pcode(QtGui.QWidget):
                     label = "Keymap: {0} ({1})".format(
                         name.replace("-", " "), shortcut)
                     commands.append((label, handler))
+            editor_dispatch = {
+                "Comment": etw.comment,
+                "Uncomment": etw.unComment,
+            }
+            for name, value in self.useData.CUSTOM_SHORTCUTS.get(
+                    "Editor", {}).items():
+                shortcut = value[0] if isinstance(value, (list, tuple)) else value
+                handler = editor_dispatch.get(name)
+                if shortcut and handler is not None:
+                    label = "Keymap (Editor): {0} ({1})".format(
+                        name.replace("-", " "), shortcut)
+                    commands.append((label, handler))
         for i in range(self.projectWindowStack.count() - 1):
             proj_window = self.projectWindowStack.widget(i)
             if not hasattr(proj_window, "projectPathDict"):
@@ -392,10 +412,10 @@ class Pcode(QtGui.QWidget):
             StyleSheet.apply_theme(self.app, name)
 
     def openProjectDialog(self):
-        directory = QtGui.QFileDialog.getExistingDirectory(
+        directory = QFileDialog.getExistingDirectory(
             self, "Project Folder", self.useData.getLastOpenedDir(),
-            QtGui.QFileDialog.ShowDirsOnly
-            | QtGui.QFileDialog.DontResolveSymlinks)
+            QFileDialog.Option.ShowDirsOnly
+            | QFileDialog.Option.DontResolveSymlinks)
         if directory:
             directory = os.path.normpath(directory)
             self.useData.saveLastOpenedDir(directory)
@@ -415,13 +435,13 @@ def main():
         filename=os.path.join(tempfile.gettempdir(), "pcode-startup.log"),
         level=logging.DEBUG)
 
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
     from Extensions import ErrorHandler
     ErrorHandler.install()
 
-    splash = QtGui.QSplashScreen(
-        QtGui.QPixmap(os.path.join("Resources", "images", "splash")))
+    splash = QSplashScreen(
+        QPixmap(os.path.join("Resources", "images", "splash")))
     splash.show()
 
     window = Pcode()

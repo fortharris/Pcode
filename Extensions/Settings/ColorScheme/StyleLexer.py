@@ -158,7 +158,7 @@ class StyleLexer(QtGui.QWidget):
                                  groupName, styleName + ".xml")
         dom_document = QtXml.QDomDocument()
         with open(stylePath, "r") as file:
-            x = dom_document.setContent(file.read())
+            dom_document.setContent(file.read())
 
         rootElement = dom_document.documentElement()
         lexerElement = rootElement.firstChild().toElement()
@@ -192,10 +192,10 @@ class StyleLexer(QtGui.QWidget):
         self.currentPropertyAttrib = \
             self.currentStyle[self.currentPropertyName]
 
-        color = QtGui.QColor(self.currentPropertyAttrib[1])
+        QtGui.QColor(self.currentPropertyAttrib[1])
         self.fontColorChooser.setColor(self.currentPropertyAttrib[1])
 
-        color = QtGui.QColor(self.currentPropertyAttrib[5])
+        QtGui.QColor(self.currentPropertyAttrib[5])
         self.backgroundColorChooser.setColor(self.currentPropertyAttrib[5])
 
     def fontChanged(self):

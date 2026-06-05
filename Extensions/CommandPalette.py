@@ -64,12 +64,16 @@ class CommandPalette(QDialog):
     def _matches(query, label):
         if not query:
             return True
-        pos = 0
-        for ch in query:
-            pos = label.find(ch, pos)
-            if pos == -1:
-                return False
-            pos += 1
+        tokens = query.split()
+        if not tokens:
+            return True
+        for token in tokens:
+            pos = 0
+            for ch in token:
+                pos = label.find(ch, pos)
+                if pos == -1:
+                    return False
+                pos += 1
         return True
 
     def _activate(self, item):

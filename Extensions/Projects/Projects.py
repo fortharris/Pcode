@@ -340,9 +340,9 @@ class Projects(QtGui.QWidget):
                 "notes": os.path.join(path, "Data", "wpad.txt"),
                 "session": os.path.join(path, "Data", "session.json"),
                 "session_xml": os.path.join(path, "Data", "session.xml"),
-                "usedata": os.path.join(path, "Data", "usedata.xml"),
                 "windata": os.path.join(path, "Data", "windata.json"),
                 "projectdata": os.path.join(path, "Data", "projectdata.json"),
+                "projectdata_xml": os.path.join(path, "Data", "projectdata.xml"),
                 "snippetsdir": os.path.join(path, "Data", "templates"),
                 "tempdir": os.path.join(path, "temp"),
                 "backupdir": os.path.join(path, "temp", "Backup", "Files"),
@@ -370,7 +370,7 @@ class Projects(QtGui.QWidget):
                 project_data = self.readProject(path)
                 if project_data is False:
                     QtGui.QApplication.restoreOverrideCursor()
-                    message = QtGui.QMessageBox.warning(self, "Open Project",
+                    QtGui.QMessageBox.warning(self, "Open Project",
                                                         "Failed:\n\n" + path)
                     return
                 projectPathDict["name"] = project_data[1]["Name"]
@@ -415,7 +415,7 @@ class Projects(QtGui.QWidget):
                     repr(traceback.format_exception(exc_type, exc_value,
                              exc_traceback)))
                 QtGui.QApplication.restoreOverrideCursor()
-                message = QtGui.QMessageBox.warning(self, "Failed Open",
+                QtGui.QMessageBox.warning(self, "Failed Open",
                                                     "Problem opening project: \n\n" + str(err))
             QtGui.QApplication.restoreOverrideCursor()
 
@@ -434,7 +434,7 @@ class Projects(QtGui.QWidget):
     def finalizeNewProject(self):
         self.busyWidget.showBusy(False)
         if self.createProjectThread.error is not False:
-            message = QtGui.QMessageBox.warning(self, "New Project",
+            QtGui.QMessageBox.warning(self, "New Project",
                                                 "Failed to create project:\n\n" + self.createProjectThread.error)
         else:
             projectPath = os.path.normpath(

@@ -345,7 +345,7 @@ class VenvSetup(QtGui.QWidget):
 
     def install(self):
         if os.path.exists(self.projectPathDict["venvdir"]):
-            message = QtGui.QMessageBox.information(
+            QtGui.QMessageBox.information(
                 self, "Install", "Virtual environment already installed.")
             return
         reply = QtGui.QMessageBox.warning(self, "Install",
@@ -353,7 +353,7 @@ class VenvSetup(QtGui.QWidget):
                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) == 0:
-                message = QtGui.QMessageBox.information(
+                QtGui.QMessageBox.information(
                     self, "Install", "There is no Python installation to install against.\n\nPlease make sure Python is installed.")
                 return
             if len(self.useData.SETTINGS["InstalledInterpreters"]) == 1:
@@ -373,17 +373,17 @@ class VenvSetup(QtGui.QWidget):
                     self.treeView.model().index(self.packagesPath))
                 self.currentVersionLabel.setText(self.setVesionFromVenv())
 
-                message = QtGui.QMessageBox.information(
+                QtGui.QMessageBox.information(
                     self, "Install", "Install virtual environment completed.")
             except Exception as err:
-                message = QtGui.QMessageBox.warning(
+                QtGui.QMessageBox.warning(
                     self, "Failed Install", str(err))
         else:
             return
 
     def upgrade(self):
         if not os.path.exists(self.projectPathDict["venvdir"]):
-            message = QtGui.QMessageBox.information(
+            QtGui.QMessageBox.information(
                 self, "Install", "No virtual environment to upgrade.")
             return
         reply = QtGui.QMessageBox.warning(self, "Install",
@@ -391,7 +391,7 @@ class VenvSetup(QtGui.QWidget):
                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) == 0:
-                message = QtGui.QMessageBox.information(
+                QtGui.QMessageBox.information(
                     self, "Install", "There is no Python installation to install against.\n\nPlease make sure Python is installed.")
                 return
             if len(self.useData.SETTINGS["InstalledInterpreters"]) == 1:
@@ -410,17 +410,17 @@ class VenvSetup(QtGui.QWidget):
                 self.treeView.setRootIndex(
                     self.treeView.model().index(self.packagesPath))
                 self.currentVersionLabel.setText(self.setVesionFromVenv())
-                message = QtGui.QMessageBox.information(
+                QtGui.QMessageBox.information(
                     self, "Upgrade", "Upgrade virtual environment completed.")
             except Exception as err:
-                message = QtGui.QMessageBox.warning(
+                QtGui.QMessageBox.warning(
                     self, "Failed Upgrade", str(err))
         else:
             return
 
     def uninstall(self):
         if not os.path.exists(self.projectPathDict["venvdir"]):
-            message = QtGui.QMessageBox.information(
+            QtGui.QMessageBox.information(
                 self, "Uninstall", "No virtual environment to uninstall.")
             return
         reply = QtGui.QMessageBox.warning(self, "Uninstall",
@@ -432,10 +432,10 @@ class VenvSetup(QtGui.QWidget):
                 if os.path.exists(self.projectPathDict["venvdir"]):
                     shutil.rmtree(self.projectPathDict["venvdir"])
                 self.currentVersionLabel.clear()
-                message = QtGui.QMessageBox.information(
+                QtGui.QMessageBox.information(
                     self, "Uninstall", "Uninstall virtual environment completed.")
             except Exception as err:
-                message = QtGui.QMessageBox.warning(
+                QtGui.QMessageBox.warning(
                     self, "Failed Uninstall", str(err))
         else:
             return
@@ -756,7 +756,7 @@ class BuildConfig(QtGui.QWidget):
                     os.remove(path)
                     self.updateIconBox()
                 except Exception as err:
-                    message = QtGui.QMessageBox.warning(
+                    QtGui.QMessageBox.warning(
                         self, "Failed Remove", str(err))
 
     def save(self):
@@ -866,7 +866,7 @@ class BuildConfig(QtGui.QWidget):
                 file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
                 file.write(dom_document.toString())
         except Exception:
-            message = QtGui.QMessageBox.warning(
+            QtGui.QMessageBox.warning(
                 self, "Save Profile", "Saving failed!")
 
     def load(self):

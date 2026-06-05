@@ -273,13 +273,13 @@ class OutputLexer(QsciLexerCustom):
         if not source:
             return
 
-        set_style = self.setStyling
         self.startStyling(start, 0x1f)
 
 
 class RunWidget(BaseScintilla):
 
     loadProfile = QtCore.Signal()
+    debugStatusChanged = QtCore.Signal(str)
 
     def __init__(
         self, bottomStackSwitcher, projectData, useData, editorTabWidget, vSplitter, runProjectAct, stopRunAct,
@@ -438,6 +438,7 @@ class RunWidget(BaseScintilla):
         self.runFileAct.setEnabled(True)
 
         self.currentProcess = None
+        self.debugStatusChanged.emit("")
         if self.profileMode:
             self.loadProfile.emit()
             self.profileMode = False
@@ -457,19 +458,19 @@ class RunWidget(BaseScintilla):
 
     def pythonPath(self):
         if self.projectData["DefaultInterpreter"] == "None":
-            message = QtGui.QMessageBox.critical(
+            QtGui.QMessageBox.critical(
                 self, "Run", "No Python interpreter to run your code. Please install Python.")
             return None
         else:
             if os.path.exists(self.projectData["DefaultInterpreter"]):
                 if len(self.useData.SETTINGS["InstalledInterpreters"]) == 0:
-                    message = QtGui.QMessageBox.critical(
+                    QtGui.QMessageBox.critical(
                         self, "Run", "Python must be installed for virtual environment to work.")
                     return None
                 else:
                     return self.projectData["DefaultInterpreter"]
             else:
-                message = QtGui.QMessageBox.critical(
+                QtGui.QMessageBox.critical(
                     self, "Run", "The current Python interpreter is not available.")
                 return None
 
@@ -531,6 +532,10 @@ class RunWidget(BaseScintilla):
             self.printout(
                 ">>> Debug (debugpy listen 5678{0}): {1}\n".format(
                     wait_note, fileName), 4)
+            status = "Debug: listening on :5678"
+            if to_bool(self.projectData.get("DebugWait")):
+                status += " (waiting for attach)"
+            self.debugStatusChanged.emit(status)
             self.runProcess.start(pythonPath, debug_args, self.openMode)
             self.runProcess.waitForStarted()
         else:
@@ -699,12 +704,12 @@ class RunWidget(BaseScintilla):
             filePath = self.editorTabWidget.projectPathDict["mainscript"]
             fileName = self.editorTabWidget.projectPathDict["name"]
             if os.path.exists(filePath) is not True:
-                message = QtGui.QMessageBox.warning(self, "Run Project",
+                QtGui.QMessageBox.warning(self, "Run Project",
                                                     "Main script is missing: " + fileName)
                 return
         else:
             if self.editorTabWidget.getSource().strip() == '':
-                message = QtGui.QMessageBox.warning(self, "Run",
+                QtGui.QMessageBox.warning(self, "Run",
                                                     "Source code must be present!")
                 return
             if rerun is False:
@@ -751,6 +756,7 @@ class RunWidget(BaseScintilla):
     def stopProcess(self):
         self.runProcess.kill()
         self.currentProcess = None
+        self.debugStatusChanged.emit("")
 
     def contextMenuEvent(self, event):
         if self.isReadOnly():
@@ -773,7 +779,7 @@ class RunWidget(BaseScintilla):
         lineText = self.text(line)
 
         if self.tracebackRe.match(lineText):
-            file_word_index = lineText.find('File')
+            lineText.find('File')
             min_index = lineText.find('"') + 1
             max_index = lineText.find('"', min_index)
             path = lineText[min_index:max_index]
@@ -801,7 +807,7 @@ class RunWidget(BaseScintilla):
         key = event.key()
         ctrl = event.modifiers() & QtCore.Qt.ControlModifier
         alt = event.modifiers() & QtCore.Qt.AltModifier
-        shift_down = event.modifiers() & QtCore.Qt.ShiftModifier
+        event.modifiers() & QtCore.Qt.ShiftModifier
         if ctrl:
             pass
         elif alt:

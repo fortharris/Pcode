@@ -330,7 +330,7 @@ class GeneralSettings(QtGui.QDialog):
                                     self.useData.appPathDict["settingsdir"])
             except Exception as err:
                 QtGui.QApplication.restoreOverrideCursor()
-                message = QtGui.QMessageBox.warning(self, "Export", str(err))
+                QtGui.QMessageBox.warning(self, "Export", str(err))
             QtGui.QApplication.restoreOverrideCursor()
 
     def enableAssistance(self, state):

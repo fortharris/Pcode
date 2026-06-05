@@ -127,7 +127,7 @@ class Workspace(QtGui.QDialog):
             self.close()
         else:
             self.statusLabel.clear()
-            message = QtGui.QMessageBox.warning(
+            QtGui.QMessageBox.warning(
                 self, "Workspace", "Error creating workspace:\n\n{0}".format(self.createWorkSpaceThread.errors))
             self.okButton.setDisabled(False)
             self.cancelButton.setDisabled(False)
@@ -143,7 +143,7 @@ class Workspace(QtGui.QDialog):
                     self.created = True
                     self.close()
                 else:
-                    message = QtGui.QMessageBox.warning(
+                    QtGui.QMessageBox.warning(
                         self, "Workspace", "The workspace is not valid!")
                     return
             else:
@@ -156,7 +156,7 @@ class Workspace(QtGui.QDialog):
 
                 self.createWorkSpaceThread.createWorkspace(path)
         else:
-            message = QtGui.QMessageBox.warning(
+            QtGui.QMessageBox.warning(
                 self, "Workspace", "Path does not exist.")
 
     def cancel(self):

@@ -573,28 +573,9 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def saveSession(self, backup=False):
         from Extensions.SessionData import save as save_session
-        entries = []
-        for i in range(self.count()):
-            editor = self.getEditor(i)
-            path = self.getEditorData("filePath", i)
-            if not backup and path is None:
-                continue
-            line, index = editor.getCursorPosition()
-            entry = {
-                "path": path,
-                "active": self.currentEditor == editor,
-                "locked": editor.isReadOnly(),
-                "lines": editor.lines(),
-                "cursorPosition": "{0},{1}".format(line, index),
-                "firstVisibleLine": editor.firstVisibleLine(),
-                "bookmarks": str(editor.getBookmarks()).replace(', ', '-').strip('[]'),
-                "folds": str(editor.contractedFolds()).replace(', ', '-').strip('[]'),
-            }
-            if backup:
-                entry["backupKey"] = self.getEditorData("backupKey", i)
-                entry["baseName"] = self.tabText(i)
-            entries.append(entry)
-        save_session(self.projectPathDict, entries, backup=backup)
+        from Extensions.session_restore import capture_entries
+        save_session(self.projectPathDict, capture_entries(self, backup=backup),
+                     backup=backup)
 
     def restoreSession(self):
         from Extensions.SessionData import load as load_session
@@ -862,12 +843,12 @@ class EditorTabWidget(QtGui.QTabWidget):
             return saved
         else:
             try:
+                from Extensions.tab_io import write_editor_to_path
                 editor = self.getEditor(index)
-                with open(savePath, "w") as file:
-                    file.write(editor.text())
-                editor.setModified(False)
-
-                return True
+                if write_editor_to_path(editor, savePath):
+                    return True
+                self.saveErrorMess("Failed to write file.")
+                return False
             except Exception as err:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 logging.error(repr(traceback.format_exception(exc_type, exc_value,
@@ -942,7 +923,7 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def saveProject(self):
         saved = True
-        source_dir = self.projectPathDict["sourcedir"]
+        self.projectPathDict["sourcedir"]
         for i in range(self.count()):
             path = self.getEditorData("filePath", i)
             if path is not None:
@@ -957,7 +938,7 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def saveErrorMess(self, mess):
 
-        message = QtGui.QMessageBox.critical(self,
+        QtGui.QMessageBox.critical(self,
                                              "Save", "Error saving file!\n\n" + mess)
 
     def printCode(self):
@@ -1127,7 +1108,7 @@ class EditorTabWidget(QtGui.QTabWidget):
                          exc_traceback)))
             QtGui.QApplication.restoreOverrideCursor()
             if showError:
-                message = QtGui.QMessageBox.warning(self, "Open", str(err))
+                QtGui.QMessageBox.warning(self, "Open", str(err))
             else:
                 pass
             return False

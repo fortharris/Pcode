@@ -131,15 +131,11 @@ class Pep8View(QtGui.QTreeWidget):
     def contextMenuEvent(self, event):
         selectedItems = self.selectedItems()
         if len(selectedItems) > 0:
-            item = selectedItems[0]
-            # item.data(9, 2) indicates whether autopep8 can fix the issue
             self.contextMenu.exec(event.globalPos())
 
     def fixErrors(self):
         # just in case autopep8 check has not been done already
-        saved = self.editorTabWidget.saveToTemp('pep8')
-        #if saved:
-            #self.pep8CheckerThread.runCheck()
+        self.editorTabWidget.saveToTemp('pep8')
         self.fixerThread.runFix(self.editorTabWidget.pep8TempPath)
         self.editorTabWidget.busyWidget.showBusy(True,
                                                  "Applying Style Guide... please wait!")
@@ -261,7 +257,17 @@ class Assistant(QtGui.QStackedWidget):
 
         self.startTimer()
 
+    def _cancel_running_checks(self):
+        self.codeCheckerTimer.stop()
+        if self.codeCheckerThread.isRunning():
+            self.codeCheckerThread.terminate()
+            self.codeCheckerThread.wait(200)
+        if self.pep8CheckerThread.isRunning():
+            self.pep8CheckerThread.terminate()
+            self.pep8CheckerThread.wait(200)
+
     def changeWorkingMode(self):
+        self._cancel_running_checks()
         if self.editorTabWidget.getEditorData("fileType") == "python":
             self.currentCodeIsPython = True
             self.codeCheckerTimer.start()

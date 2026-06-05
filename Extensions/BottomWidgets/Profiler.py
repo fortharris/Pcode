@@ -86,7 +86,7 @@ class Profiler(QtGui.QTreeWidget):
                 self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
                 self.p.dump_stats(fileName)
             except Exception as err:
-                message = QtGui.QMessageBox.warning(
+                QtGui.QMessageBox.warning(
                     self, "Save Profile", str(err))
 
     def openProfile(self):
@@ -100,5 +100,5 @@ class Profiler(QtGui.QTreeWidget):
                 self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
                 self.viewProfile(fileName)
             except Exception as err:
-                message = QtGui.QMessageBox.warning(
+                QtGui.QMessageBox.warning(
                     self, "Open Profile", str(err))

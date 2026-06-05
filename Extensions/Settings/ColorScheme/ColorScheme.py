@@ -253,7 +253,7 @@ class ColorScheme(QtGui.QDialog):
                 file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
                 file.write(dom_document.toString())
         except Exception as err:
-            message = QtGui.QMessageBox.warning(self, "Save",
+            QtGui.QMessageBox.warning(self, "Save",
                                                 "Saving failed: {0}".format(str(err)))
             return
 
@@ -296,7 +296,7 @@ class ColorScheme(QtGui.QDialog):
                         "EditorStyle" + self.schemeTypeBox.currentText()] = newName.name
                     self.useData.saveUseData()
             except Exception as err:
-                message = QtGui.QMessageBox.warning(self, "Rename",
+                QtGui.QMessageBox.warning(self, "Rename",
                                                     "Rename failed!\n\n{0}".format(str(err)))
 
     def remove(self):
@@ -321,7 +321,7 @@ class ColorScheme(QtGui.QDialog):
                         "EditorStyle" + self.schemeTypeBox.currentText()] = self.schemeNameBox.currentText()
                     self.useData.saveUseData()
             except Exception as err:
-                message = QtGui.QMessageBox.warning(self, "Remove",
+                QtGui.QMessageBox.warning(self, "Remove",
                                                     "Removing failed!\n\n{0}".format(str(err)))
         elif reply == QtGui.QMessageBox.No:
             pass

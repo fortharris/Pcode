@@ -52,6 +52,21 @@ when there is no valid workspace path yet. Per-user config is stored as
 (settings, opened projects, completion modules, keymap). Legacy `settings.ini`
 and the old `*.xml` config files are migrated automatically on first run.
 
+### Project layout (new projects)
+
+| File | Purpose |
+|------|---------|
+| `project.json` | Project manifest (name, type, main script) |
+| `Data/projectdata.json` | Shortcuts, favourites, recent files, settings |
+| `Data/session.json` | Open tabs, cursor, bookmarks, folds |
+| `Data/windata.json` | Splitter and write-pad layout |
+| `pyproject.toml` | Modern Python project metadata template |
+| `src/main.py` | Hello-world entry script |
+
+Older projects with `project.xml` / `projectdata.xml` / `session.xml` still open;
+data is migrated to JSON on load where supported. Rope/build profiles remain XML
+for now (`Rope/profile.xml`, `Build/profile.xml`).
+
 ## Tests
 
 ```powershell
@@ -62,6 +77,10 @@ $env:QT_QPA_PLATFORM = "offscreen"
 ```
 
 Set `PCODE_SKIP_BUILD=1` to skip the cx_Freeze build step in the smoke test (~30s saved).
+
+CI runs unit + smoke tests on every push/PR. The full cx_Freeze freeze smoke runs
+only when you manually trigger the **freeze-smoke** job via GitHub Actions
+`workflow_dispatch`.
 
 ## Troubleshooting
 

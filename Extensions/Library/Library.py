@@ -551,7 +551,7 @@ class Library(QtGui.QMainWindow):
                 os.remove(path)
                 self.loadLibrary()
             except Exception:
-                message = QtGui.QMessageBox.warning(self, "Remove",
+                QtGui.QMessageBox.warning(self, "Remove",
                                                     "Failed to remove item!")
 
     def printFile(self):
@@ -580,7 +580,7 @@ class Library(QtGui.QMainWindow):
                 os.rename(old_path, new_path)
                 self.loadLibrary()
             except Exception as err:
-                message = QtGui.QMessageBox.warning(self, "Rename",
+                QtGui.QMessageBox.warning(self, "Rename",
                                                     "Renaming failed!\n\n{0}".format(str(err)))
 
     def selectAll(self):
@@ -605,7 +605,7 @@ class Library(QtGui.QMainWindow):
             except Exception as err:
                 mess = str(err.args[1])
                 QtGui.QApplication.restoreOverrideCursor()
-                message = QtGui.QMessageBox.critical(self,
+                QtGui.QMessageBox.critical(self,
                                                      "Export Library", mess)
             QtGui.QApplication.restoreOverrideCursor()
         else:
@@ -613,7 +613,7 @@ class Library(QtGui.QMainWindow):
 
     def addToLibrary(self, editorTabWidget):
         if editorTabWidget.getSource().strip() == '':
-            message = QtGui.QMessageBox.warning(self, "Library Add",
+            QtGui.QMessageBox.warning(self, "Library Add",
                                                 "Source code must be present to add to library!")
             return
         add = LibraryAddDialog(editorTabWidget, self)
@@ -668,5 +668,5 @@ class Library(QtGui.QMainWindow):
                 self.loadLibrary()
                 self.close()
             except Exception as err:
-                message = QtGui.QMessageBox.warning(self, "Library Add",
+                QtGui.QMessageBox.warning(self, "Library Add",
                                                     "Adding to Library failed!\n\n{0}".format(str(err)))

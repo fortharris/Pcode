@@ -38,11 +38,20 @@ class GitPanel(QWidget):
         self.diffButton.clicked.connect(self.diff_at_cursor)
         toolbar.addWidget(self.diffButton)
 
+        self.unstageButton = QPushButton("Unstage File")
+        self.unstageButton.clicked.connect(self.unstage_selected)
+        toolbar.addWidget(self.unstageButton)
+
+        self.openButton = QPushButton("Open File")
+        self.openButton.clicked.connect(self.open_selected)
+        toolbar.addWidget(self.openButton)
+
         toolbar.addStretch(1)
         layout.addLayout(toolbar)
 
         self.fileList = QListWidget()
         self.fileList.setMaximumHeight(120)
+        self.fileList.itemDoubleClicked.connect(self.open_selected)
         layout.addWidget(self.fileList)
 
         commit_row = QHBoxLayout()
@@ -138,6 +147,32 @@ class GitPanel(QWidget):
         self.output.appendPlainText("\n=== stage file ===\n" + out)
         if code == 0:
             self.refresh()
+
+    def unstage_selected(self):
+        if not self._is_repo():
+            return
+        path = self._selected_path()
+        if not path:
+            self.output.appendPlainText("\n(select a file to unstage)")
+            return
+        code, out = self._run_git("restore", "--staged", "--", path)
+        self.output.appendPlainText("\n=== unstage file ===\n" + out)
+        if code == 0:
+            self.refresh()
+
+    def open_selected(self):
+        path = self._selected_path()
+        if path is None and self.editor_tab is not None:
+            path = self.editor_tab.getEditorData("filePath")
+        if not path:
+            return
+        full = path if os.path.isabs(path) else os.path.join(self.root, path)
+        if self.editor_tab is not None and os.path.isfile(full):
+            self.editor_tab.loadfile(full)
+        elif os.path.isfile(full):
+            self.output.appendPlainText("\n(open in editor: {0})".format(full))
+        else:
+            self.output.appendPlainText("\n(file not found: {0})".format(full))
 
     def stage_all(self):
         if not self._is_repo():

@@ -50,7 +50,9 @@ def apply(editor_window, data):
     wp = data.get("writepad")
     if isinstance(wp, (list, tuple)) and len(wp) == 4:
         editor_window.writePad.setGeometry(*wp)
-    editor_window.vSplitter.updateStatus()
+    update_status = getattr(editor_window.vSplitter, "updateStatus", None)
+    if callable(update_status):
+        update_status()
 
 
 def save(project_root, data):
