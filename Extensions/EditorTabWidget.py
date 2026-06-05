@@ -2,6 +2,7 @@ import os
 import sys
 import ctypes
 import time
+import tempfile
 import traceback
 import logging
 
@@ -167,6 +168,10 @@ class EditorTabWidget(QtGui.QTabWidget):
 
         self.useData = useData
         self.projectPathDict = projectPathDict
+        # Unique per-instance scratch file for the style-guide (pep8/autopep8)
+        # round-trip, so concurrent editor windows don't clobber each other.
+        fd, self.pep8TempPath = tempfile.mkstemp(prefix="pcode-pep8-", suffix=".py")
+        os.close(fd)
         self.colorScheme = colorScheme
         self.messagesWidget = messagesWidget
         self.app = app
@@ -552,7 +557,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             remPath = os.path.join(self.projectPathDict["backupdir"], i)
             try:
                 os.remove(remPath)
-            except:
+            except Exception:
                 pass
 
     def createBackup(self):
@@ -715,7 +720,7 @@ class EditorTabWidget(QtGui.QTabWidget):
 
                 currentIindex += 1
                 node = node.nextSibling()
-            except:
+            except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 logging.error(repr(traceback.format_exception(exc_type, exc_value,
                              exc_traceback)))
@@ -947,7 +952,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         key = self.getEditorData("backupKey", tabIndex)
         try:
             os.remove(os.path.join(self.projectPathDict["backupdir"], key))
-        except:
+        except Exception:
             pass
 
     def requestSaveMess(self, tabIndex):
@@ -995,7 +1000,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         try:
             if type == 'pep8':
                 editor = self.getEditor(index)
-                with open(os.path.join("temp", "temp8.py"), "w") as file:
+                with open(self.pep8TempPath, "w") as file:
                     file.write(editor.text())
                 return True
             return False

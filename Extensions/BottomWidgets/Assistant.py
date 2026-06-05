@@ -47,7 +47,7 @@ class Pep8CheckerThread(QtCore.QThread):
         checkList = []
         try:
             styleGuide = pep8.StyleGuide(reporter=Pep8Report)
-            report = styleGuide.check_files([os.path.join("temp", "temp8.py")])
+            report = styleGuide.check_files([self.tempPath])
             for i in report.all_errors:
                 fname = i[0]
                 lineno = i[1]
@@ -59,11 +59,12 @@ class Pep8CheckerThread(QtCore.QThread):
                     # means the code has been marked to be ignored
                     continue
                 checkList.append((fname, lineno, offset, code, error))
-        except:
-            pass
+        except Exception:
+            logging.error(traceback.format_exc())
         self.newAlerts.emit(checkList)
 
-    def runCheck(self):
+    def runCheck(self, tempPath):
+        self.tempPath = tempPath
         self.start()
 
 
@@ -86,7 +87,7 @@ class AutoPep8FixerThread(QtCore.QThread):
 
     def run(self):
         try:
-            file = os.path.join("temp", "temp8.py")
+            file = self.tempPath
             # Build a complete options namespace via autopep8 itself so every
             # attribute modern autopep8 expects is present (a hand-rolled
             # object would miss newer fields like hang_closing/global_config).
@@ -98,7 +99,8 @@ class AutoPep8FixerThread(QtCore.QThread):
         except Exception:
             logging.error(traceback.format_exc())
 
-    def runFix(self):
+    def runFix(self, tempPath):
+        self.tempPath = tempPath
         self.start()
 
 
@@ -124,7 +126,7 @@ class Pep8View(QtGui.QTreeWidget):
         self.editorTabWidget.busyWidget.showBusy(False)
         
         editor = self.editorTabWidget.getEditor()
-        with open(os.path.join("temp", "temp8.py"), "r") as file:
+        with open(self.editorTabWidget.pep8TempPath, "r") as file:
             editor.setText(file.read())
         self.editorTabWidget.getEditor().removeBookmarks()
         self.editorTabWidget.enableBookmarkButtons(False)
@@ -143,7 +145,7 @@ class Pep8View(QtGui.QTreeWidget):
         saved = self.editorTabWidget.saveToTemp('pep8')
         #if saved:
             #self.pep8CheckerThread.runCheck()
-        self.fixerThread.runFix()
+        self.fixerThread.runFix(self.editorTabWidget.pep8TempPath)
         self.editorTabWidget.busyWidget.showBusy(True,
                                                  "Applying Style Guide... please wait!")
 
@@ -391,4 +393,4 @@ class Assistant(QtGui.QStackedWidget):
         if self.useData.SETTINGS["enableStyleGuide"] == "True":
             saved = self.editorTabWidget.saveToTemp('pep8')
             if saved:
-                self.pep8CheckerThread.runCheck()
+                self.pep8CheckerThread.runCheck(self.editorTabWidget.pep8TempPath)

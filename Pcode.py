@@ -44,8 +44,11 @@ class Pcode(QtGui.QWidget):
 
         self.useData = UseData()
 
+        # Re-point logging from the early startup log (configured in main())
+        # to the workspace log now that the workspace path is known.
         logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s',
-                            filename=self.useData.appPathDict["logfile"], level=logging.DEBUG)
+                            filename=self.useData.appPathDict["logfile"],
+                            level=logging.DEBUG, force=True)
         if sys.version_info.major < 3:
             logging.error("This application requires Python 3")
             sys.exit(1)
@@ -338,6 +341,15 @@ def main():
     # Resources are resolved relative to the working directory, so anchor it to
     # this file's location regardless of where the entry point is launched from.
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+    # Configure logging before anything else so errors during early startup
+    # (before the workspace log path is known) are still captured. Pcode
+    # re-points this to the workspace LOG.txt once UseData has loaded.
+    import tempfile
+    logging.basicConfig(
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        filename=os.path.join(tempfile.gettempdir(), "pcode-startup.log"),
+        level=logging.DEBUG)
 
     app = QtGui.QApplication(sys.argv)
 
