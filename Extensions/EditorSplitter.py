@@ -1,12 +1,10 @@
-from Extensions.qt_bindings import QtGui
+from PyQt6.QtWidgets import QHBoxLayout, QSplitter, QWidget
 
 
-        
-
-class EditorSplitter(QtGui.QWidget):
+class EditorSplitter(QWidget):
 
     def __init__(self, editor, editor2, DATA, editorTabWidget, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.editorTabWidget = editorTabWidget
         self.DATA = DATA
@@ -14,13 +12,13 @@ class EditorSplitter(QtGui.QWidget):
 
         self.editor = editor
         self.editor2 = editor2
-        
-        mainLayout = QtGui.QHBoxLayout()
+
+        mainLayout = QHBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
         mainLayout.setSpacing(0)
         self.setLayout(mainLayout)
-        
-        self.splitter = QtGui.QSplitter()
+
+        self.splitter = QSplitter()
         mainLayout.addWidget(self.splitter)
 
         self.splitter.addWidget(self.editor)
@@ -32,9 +30,6 @@ class EditorSplitter(QtGui.QWidget):
 
         self.editor.modificationChanged.connect(self.textModified)
         self.editor2.modificationChanged.connect(self.textModified)
-
-        #self.minimap = MiniMap(self.editor, self)
-        #mainLayout.addWidget(self.minimap)
 
     def getEditor(self, index=None):
         if index is None:

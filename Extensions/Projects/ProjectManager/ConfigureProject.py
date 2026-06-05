@@ -207,59 +207,20 @@ class RopeConfig(QtGui.QWidget):
         hbox.addStretch(1)
 
     def save(self):
-        fileName = self.projectPathDict["ropeprofile"]
-
-        dom_document = QtXml.QDomDocument("rope_profile")
-
-        main_data = dom_document.createElement("rope")
-        dom_document.appendChild(main_data)
-
-        root = dom_document.createElement("ignoresyntaxerrors")
-        attrib = dom_document.createTextNode(
-            self.ignoreSyntaxErrorsBox.currentText())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("ignorebadimports")
-        attrib = dom_document.createTextNode(
-            self.ignoreBadImportsBox.currentText())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("maxhistoryitems")
-        attrib = dom_document.createTextNode(str(self.maxHistoryBox.value()))
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("Extensions")
-        main_data.appendChild(root)
-
-        defExt = ['*.py', '*.pyw']
-        for i in defExt:
-            tag = dom_document.createElement("item")
-            root.appendChild(tag)
-
-            t = dom_document.createTextNode(i)
-            tag.appendChild(t)
-
-        root = dom_document.createElement("IgnoredResources")
-        main_data.appendChild(root)
-
-        defIgnore = ["*.pyc", "*~", ".ropeproject",
-                     ".hg", ".svn", "_svn", ".git", "__pycache__"]
-        for i in defIgnore:
-            tag = dom_document.createElement("item")
-            root.appendChild(tag)
-
-            t = dom_document.createTextNode(i)
-            tag.appendChild(t)
-
-        root = dom_document.createElement("CustomFolders")
-        main_data.appendChild(root)
-
-        with open(fileName, "w") as file:
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
+        from Extensions.RopeProfile import save as save_rope_profile
+        rope_folder = os.path.join(
+            self.projectPathDict["root"], "Rope")
+        save_rope_profile(rope_folder, {
+            "ignore_syntax_errors": self.ignoreSyntaxErrorsBox.currentText(),
+            "ignore_bad_imports": self.ignoreBadImportsBox.currentText(),
+            "max_history_items": self.maxHistoryBox.value(),
+            "extensions": ["*.py", "*.pyw"],
+            "ignored_resources": [
+                "*.pyc", "*~", ".ropeproject",
+                ".hg", ".svn", "_svn", ".git", "__pycache__",
+            ],
+            "custom_folders": [],
+        })
 
 
 class VenvSetup(QtGui.QWidget):

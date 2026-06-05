@@ -64,8 +64,9 @@ and the old `*.xml` config files are migrated automatically on first run.
 | `src/main.py` | Hello-world entry script |
 
 Older projects with `project.xml` / `projectdata.xml` / `session.xml` still open;
-data is migrated to JSON on load where supported. Rope/build profiles remain XML
-for now (`Rope/profile.xml`, `Build/profile.xml`).
+data is migrated to JSON on load where supported. New projects also write
+`Rope/profile.json` (legacy `profile.xml` is still updated for compatibility).
+Build profiles remain XML (`Build/profile.xml`).
 
 ## Tests
 

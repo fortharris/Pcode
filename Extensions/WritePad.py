@@ -1,10 +1,14 @@
-from Extensions.qt_bindings import QtCore, QtGui, primary_screen_geometry
+from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QMainWindow, QPlainTextEdit
+
+from Extensions.screen_utils import primary_screen_geometry
 
 
-class WritePad(QtGui.QMainWindow):
+class WritePad(QMainWindow):
 
     def __init__(self, path, name, parent=None):
-        QtGui.QMainWindow.__init__(self, parent)
+        QMainWindow.__init__(self, parent)
 
         self.setWindowTitle(name + " - Notes")
         self.resize(600, 300)
@@ -16,30 +20,29 @@ class WritePad(QtGui.QMainWindow):
         self.path = path
         self.setObjectName("writePad")
 
-        self.noteSaveTimer = QtCore.QTimer()
+        self.noteSaveTimer = QTimer()
         self.noteSaveTimer.setSingleShot(True)
         self.noteSaveTimer.timeout.connect(self.saveNotes)
 
-        self.writePad = QtGui.QPlainTextEdit()
-        self.writePad.setLineWrapMode(QtGui.QPlainTextEdit.NoWrap)
-        _font = QtGui.QFont("Ms Reference Sans Serif")
+        self.writePad = QPlainTextEdit()
+        self.writePad.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
+        _font = QFont("Ms Reference Sans Serif")
         _font.setPointSizeF(10.9)
         self.writePad.setFont(_font)
         self.setCentralWidget(self.writePad)
 
-        # load notes
         try:
-            with open(self.path, "r") as file:
+            with open(self.path, "r", encoding="utf-8") as file:
                 self.writePad.setPlainText(file.read())
         except Exception:
-            with open(path, "w"):
+            with open(path, "w", encoding="utf-8"):
                 pass
 
         self.writePad.textChanged.connect(self.startSaveTimer)
-        
+
     def startSaveTimer(self):
         self.noteSaveTimer.start(1000)
 
     def saveNotes(self):
-        with open(self.path, "w") as file:
+        with open(self.path, "w", encoding="utf-8") as file:
             file.write(self.writePad.toPlainText())

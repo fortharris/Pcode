@@ -1,23 +1,24 @@
-from Extensions.qt_bindings import QtCore, QtGui
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QProgressBar, QWidget
 
 
-class BuildStatusWidget(QtGui.QWidget):
+class BuildStatusWidget(QWidget):
 
-    cancel = QtCore.Signal()
+    cancel = pyqtSignal()
 
     def __init__(self, app, useData, parent=None):
-        QtGui.QDialog.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.useData = useData
         self.app = app
 
-        mainLayout = QtGui.QHBoxLayout()
+        mainLayout = QHBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
-        mainLayout.addWidget(QtGui.QLabel("Build Started..."))
+        mainLayout.addWidget(QLabel("Build Started..."))
 
-        self.progressBar = QtGui.QProgressBar()
+        self.progressBar = QProgressBar()
         self.progressBar.setMaximumHeight(10)
         self.progressBar.setMinimumWidth(100)
         self.progressBar.setStyleSheet("""

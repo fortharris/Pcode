@@ -136,55 +136,8 @@ class CreateProjectThread(QtCore.QThread):
         write_empty_session(self.projectPath)
 
     def writeRopeProfile(self):
-        dom_document = QtXml.QDomDocument("rope_profile")
-
-        main_data = dom_document.createElement("rope")
-        dom_document.appendChild(main_data)
-
-        root = dom_document.createElement("ignoresyntaxerrors")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("ignorebadimports")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("maxhistoryitems")
-        attrib = dom_document.createTextNode('32')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("Extensions")
-        main_data.appendChild(root)
-
-        defExt = ['*.py', '*.pyw']
-        for i in defExt:
-            tag = dom_document.createElement("item")
-            root.appendChild(tag)
-
-            t = dom_document.createTextNode(i)
-            tag.appendChild(t)
-
-        root = dom_document.createElement("IgnoredResources")
-        main_data.appendChild(root)
-
-        defIgnore = ["*.pyc", "*~", ".ropeproject",
-                     ".hg", ".svn", "_svn", ".git", "__pycache__"]
-        for i in defIgnore:
-            tag = dom_document.createElement("item")
-            root.appendChild(tag)
-
-            t = dom_document.createTextNode(i)
-            tag.appendChild(t)
-
-        root = dom_document.createElement("CustomFolders")
-        main_data.appendChild(root)
-
-        with open(os.path.join(self.projectPath, "Rope", "profile.xml"), "w") as file:
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
+        from Extensions.RopeProfile import default_profile, save as save_rope_profile
+        save_rope_profile(os.path.join(self.projectPath, "Rope"), default_profile())
 
     def writeBuildProfile(self):
         dom_document = QtXml.QDomDocument("build_profile")
@@ -350,7 +303,8 @@ class Projects(QtGui.QWidget):
                 "sourcedir": os.path.join(path, "src"),
                 "ropeFolder": os.path.join(path, "Rope"),
                 "buildprofile": os.path.join(path, "Build", "profile.xml"),
-                "ropeprofile": os.path.join(path, "Rope", "profile.xml"),
+                "ropeprofile": os.path.join(path, "Rope", "profile.json"),
+                "ropeprofile_xml": os.path.join(path, "Rope", "profile.xml"),
                 "projectmainfile": os.path.join(path, "project.json"),
                 "iconsdir": os.path.join(path, "Resources", "Icons"),
                 "root": path

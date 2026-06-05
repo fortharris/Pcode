@@ -1,6 +1,10 @@
 import os
 
-from Extensions.qt_bindings import QtGui, QtCore
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
+    QDialog, QFormLayout, QHBoxLayout, QLabel, QPushButton, QStackedWidget,
+    QTextEdit, QTreeWidget, QTreeWidgetItem, QVBoxLayout,
+)
 
 import autopep8
 import pycodestyle as pep8
@@ -32,66 +36,67 @@ def _pyqt6_version():
             return "unknown"
 
 
-class About(QtGui.QDialog):
+class About(QDialog):
 
     def __init__(self, parent=None):
-        QtGui.QDialog.__init__(self, parent,
-                               QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(
+            self, parent,
+            Qt.WindowType.Window | Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle("About")
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         self.setFixedSize(500, 270)
 
-        form = QtGui.QFormLayout()
+        form = QFormLayout()
         form.setContentsMargins(10, 10, 10, 10)
-        form.addRow("<b>Version</b>", QtGui.QLabel("0.1.5"))
-        form.addRow("<b>Author</b>", QtGui.QLabel("Amoatey Harrison"))
-        form.addRow("<b>Email</b>", QtGui.QLabel("fortharris@gmail.com"))
+        form.addRow("<b>Version</b>", QLabel("0.1.5"))
+        form.addRow("<b>Author</b>", QLabel("Amoatey Harrison"))
+        form.addRow("<b>Email</b>", QLabel("fortharris@gmail.com"))
 
         mainLayout.addLayout(form)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.setContentsMargins(5, 0, 5, 0)
         mainLayout.addLayout(hbox)
 
-        self.label = QtGui.QLabel("External Libraries:")
+        self.label = QLabel("External Libraries:")
         hbox.addWidget(self.label)
 
         hbox.addStretch(1)
 
-        licenseButton = QtGui.QPushButton("License")
+        licenseButton = QPushButton("License")
         licenseButton.setCheckable(True)
         licenseButton.clicked.connect(self.showLicense)
         hbox.addWidget(licenseButton)
 
-        self.view = QtGui.QStackedWidget()
+        self.view = QStackedWidget()
         mainLayout.addWidget(self.view)
 
-        table = QtGui.QTreeWidget()
+        table = QTreeWidget()
         table.setMinimumHeight(150)
         table.setIndentation(0)
         table.setHeaderLabels(["Name", "Version", "Author"])
         table.setColumnWidth(0, 150)
-        table.addTopLevelItem(QtGui.QTreeWidgetItem(
+        table.addTopLevelItem(QTreeWidgetItem(
             ["Rope", _rope_version(), "Ali Gholami Rudi"]))
-        table.addTopLevelItem(QtGui.QTreeWidgetItem(
+        table.addTopLevelItem(QTreeWidgetItem(
             ["PyFlakes", pyflakes.__version__, "Florent Xicluna"]))
-        table.addTopLevelItem(QtGui.QTreeWidgetItem(
+        table.addTopLevelItem(QTreeWidgetItem(
             ["Pep8", pep8.__version__, "Florent Xicluna"]))
-        table.addTopLevelItem(QtGui.QTreeWidgetItem(
+        table.addTopLevelItem(QTreeWidgetItem(
             ["PyQt6", _pyqt6_version(), "The Qt Company"]))
-        table.addTopLevelItem(QtGui.QTreeWidgetItem(
+        table.addTopLevelItem(QTreeWidgetItem(
             ["AutoPep8", autopep8.__version__, "Hideo Hattori"]))
-        table.addTopLevelItem(QtGui.QTreeWidgetItem(
+        table.addTopLevelItem(QTreeWidgetItem(
             ["CxFreeze", _cx_freeze_version(), "Anthony Tuininga"]))
         self.view.addWidget(table)
 
-        self.licenseEdit = QtGui.QTextEdit()
-        with open(os.path.join("Resources", "LICENSE"), "r") as file:
+        self.licenseEdit = QTextEdit()
+        with open(os.path.join("Resources", "LICENSE"), "r", encoding="utf-8") as file:
             self.licenseEdit.setText(file.read())
 
         self.view.addWidget(self.licenseEdit)

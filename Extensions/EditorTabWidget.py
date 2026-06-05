@@ -1081,46 +1081,8 @@ class EditorTabWidget(QtGui.QTabWidget):
         return False
 
     def loadfile(self, filePath, showError=True, index=None):
-
-        filePath = os.path.normpath(filePath)
-        # prevent same file from being opened more than once
-        if self.alreadyOpened(filePath):
-            return True
-
-        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-        try:
-            text, encoding, eolMode = self.useData.readFile(filePath)
-            baseName = os.path.basename(filePath)
-            subStack = self.newEditor(index, baseName, filePath, encoding)
-
-            editor = subStack.widget(0).getEditor(0)
-            editor.setText(text)
-            editor.convertEols(eolMode)
-            editor.setEolMode(eolMode)
-
-            snapshotWidget = subStack.widget(1)
-            snapshotWidget.setText(text)
-            snapshotWidget.convertEols(eolMode)
-            snapshotWidget.setEolMode(eolMode)
-        except Exception as err:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                         exc_traceback)))
-            QtGui.QApplication.restoreOverrideCursor()
-            if showError:
-                QtGui.QMessageBox.warning(self, "Open", str(err))
-            else:
-                pass
-            return False
-
-        QtGui.QApplication.restoreOverrideCursor()
-
-        editor.setModified(False)
-        editor.setFocus()
-        self.updateRecentFilesList.emit(filePath)
-        self.updateOpenedTabsMenu()
-
-        return True
+        from Extensions.tab_io import open_file_in_tab
+        return open_file_in_tab(self, filePath, showError, index)
 
     def get_current_word(self):
         current_word = self.focusedEditor().get_current_word()
