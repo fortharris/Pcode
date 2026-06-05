@@ -1,6 +1,7 @@
 import re
 from PyQt6.Qsci import QsciScintilla, QsciCommand
-from Extensions.qt_bindings import font_metrics_width,  QtGui, QtCore
+from Extensions.qt_bindings import font_metrics_width, QtGui, QtCore
+from Extensions.settings_utils import to_bool
 
 
 class FindOccurenceThread(QtCore.QThread):
@@ -78,7 +79,7 @@ class BaseScintilla(QsciScintilla):
 
     def findOccurrences(self):
         self.clearAllIndicators(self.matchIndicator)
-        if self.useData.SETTINGS['MarkSearchOccurrence'] == 'True':
+        if to_bool(self.useData.SETTINGS.get('MarkSearchOccurrence')):
             wholeWord = True
             if self.hasSelectedText():
                 lineFrom_, indexFrom_, lineTo_, indexTo_ = self.getSelection()

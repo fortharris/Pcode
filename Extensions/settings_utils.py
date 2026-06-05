@@ -12,6 +12,7 @@ APP_BOOL_KEYS = frozenset([
 PROJECT_BOOL_KEYS = frozenset([
     "ClearOutputWindowOnRun", "RunWithArguments", "RunInternal",
     "UseVirtualEnv", "Closed", "ShowAllFiles", "LastCloseSuccessful",
+    "DebugWait",
 ])
 
 

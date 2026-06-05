@@ -238,13 +238,13 @@ class EditorWindow(QtGui.QWidget):
         self.addBottomWidget(self.assistantWidget,
                              QtGui.QIcon(os.path.join("Resources", "images", "flag")), "Alerts")
 
-        bookmarkWidget = BookmarkWidget(
+        self.bookmarkWidget = BookmarkWidget(
             self.editorTabWidget, self.bottomStackSwitcher)
-        self.addBottomWidget(bookmarkWidget,
+        self.addBottomWidget(self.bookmarkWidget,
                              QtGui.QIcon(os.path.join("Resources", "images", "tag")), "Bookmarks")
 
-        tasksWidget = Tasks(self.editorTabWidget, self.bottomStackSwitcher)
-        self.addBottomWidget(tasksWidget,
+        self.tasksWidget = Tasks(self.editorTabWidget, self.bottomStackSwitcher)
+        self.addBottomWidget(self.tasksWidget,
                              QtGui.QIcon(os.path.join("Resources", "images", "issue")), "Tasks")
 
         self.addBottomWidget(self.messagesWidget,

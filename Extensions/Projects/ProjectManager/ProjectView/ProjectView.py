@@ -2,6 +2,7 @@ import os
 import ctypes
 import shutil
 from Extensions.qt_bindings import QtGui, QtCore, QtXml
+from Extensions.settings_utils import to_bool
 
 from Extensions import Global
 from Extensions.Projects.ProjectManager.ProjectView.ProgressWidget import ProgressWidget
@@ -231,10 +232,10 @@ class ProjectTree(QtGui.QTreeView):
         self.createActions()
         self.loadShortcut(self.root)
 
-        if self.projectSettings["ShowAllFiles"] == 'False':
+        if not to_bool(self.projectSettings.get("ShowAllFiles"), True):
             self.fileSystemModel.setNameFilters(['*.py', '*.pyw'])
         self.showAllFilesAct.setChecked(
-            self.projectSettings["ShowAllFiles"] == 'True')
+            to_bool(self.projectSettings.get("ShowAllFiles"), True))
 
     def contextMenuEvent(self, event):
         indexList = self.selectedIndexes()

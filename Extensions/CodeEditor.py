@@ -466,7 +466,7 @@ class CodeEditor(BaseScintilla):
         self.completionThreadTimer.start(500)
 
     def getOperationTokens(self):
-        if self.useData.SETTINGS['MarkOperationalLines'] == 'True':
+        if self.useData.setting_bool('MarkOperationalLines'):
             self.tokenizeThread.tokenize(self.text())
 
     def displayTokenLines(self):

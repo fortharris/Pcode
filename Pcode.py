@@ -4,6 +4,7 @@ import logging
 
 from Extensions.qt_bindings import QtCore, QtGui, primary_screen_geometry
 
+from Extensions.settings_utils import to_bool
 from Extensions.UseData import UseData
 from Extensions.Library.Library import Library
 from Extensions.About import About
@@ -143,7 +144,7 @@ class Pcode(QtGui.QWidget):
 
         self.setKeymap()
 
-        if self.useData.settings["firstRun"] == 'True':
+        if to_bool(self.useData.settings.get("firstRun"), True):
             self.showMaximized()
         else:
             self.restoreUiState()
@@ -329,6 +330,7 @@ class Pcode(QtGui.QWidget):
         window = self._activeProjectWindow()
         if window is not None:
             etw = window.editorTabWidget
+            sw = window.bottomStackSwitcher
             commands.extend([
                 ("Save All", window.saveAll),
                 ("Save File", etw.save),
@@ -339,7 +341,23 @@ class Pcode(QtGui.QWidget):
                 ("Find in Files", window.showFindInFilesWidget),
                 ("Go to Line", lambda: window.gotoLineAct.trigger()),
                 ("Configure Project", lambda: window.configureAct.trigger()),
+                ("Panel: Output",
+                 lambda: sw.setCurrentWidget(window.runWidget)),
+                ("Panel: Alerts",
+                 lambda: sw.setCurrentWidget(window.assistantWidget)),
+                ("Panel: Messages",
+                 lambda: sw.setCurrentWidget(window.messagesWidget)),
+                ("Panel: Bookmarks",
+                 lambda: sw.setCurrentWidget(window.bookmarkWidget)),
+                ("Panel: Tasks",
+                 lambda: sw.setCurrentWidget(window.tasksWidget)),
+                ("Git: Refresh", lambda: window.gitPanel.refresh()),
             ])
+        for path in self.useData.OPENED_PROJECTS[:5]:
+            name = os.path.basename(path)
+            commands.append(
+                ("Recent: {0}".format(name),
+                 lambda p=path: self.loadProject(p, True)))
         return commands
 
     def applyTheme(self, name):

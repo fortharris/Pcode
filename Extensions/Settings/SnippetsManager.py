@@ -91,7 +91,11 @@ class SnippetsManager(QtGui.QDialog):
 
         self.snippetViewer = QtGui.QTextEdit()
         self.snippetViewer.setReadOnly(True)
+        self.snippetViewer.setAcceptDrops(False)
         self.mainSplitter.addWidget(self.snippetViewer)
+        self.snippetsListWidget.setAcceptDrops(False)
+        self.snippetViewer.installEventFilter(self)
+        self.snippetsListWidget.installEventFilter(self)
         mainLayout.addWidget(self.mainSplitter)
         self.setLayout(mainLayout)
 
@@ -143,12 +147,23 @@ class SnippetsManager(QtGui.QDialog):
             event.ignore()
 
     def dragMoveEvent(self, event):
-        event.acceptProposedAction()
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def eventFilter(self, obj, event):
+        if event.type() in (QtCore.QEvent.Type.DragEnter,
+                            QtCore.QEvent.Type.DragMove):
+            if event.mimeData().hasText():
+                event.acceptProposedAction()
+                return True
+        if event.type() == QtCore.QEvent.Type.Drop:
+            self.dropEvent(event)
+            return True
+        return QtGui.QDialog.eventFilter(self, obj, event)
 
     def dropEvent(self, event):
-        # FIXME: Dragging only works when dropped anywhere else but the editor.
-        # Have to find a way to get the editor to accept drop actions that
-        # have to do with text
         if event.mimeData().hasText():
             mime = event.mimeData()
             event.setDropAction(QtCore.Qt.CopyAction)

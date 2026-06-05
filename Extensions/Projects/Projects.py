@@ -127,7 +127,8 @@ class CreateProjectThread(QtCore.QThread):
             'Closed': 'True',
             'Icon': '',
             'ShowAllFiles': 'True',
-            'LastCloseSuccessful': 'True'
+            'LastCloseSuccessful': 'True',
+            'DebugWait': 'False',
             }
         for key, value in defaults.items():
             tag = domDocument.createElement("key")
@@ -143,14 +144,8 @@ class CreateProjectThread(QtCore.QThread):
             file.write(domDocument.toString())
 
     def writeDefaultSession(self):
-        dom_document = QtXml.QDomDocument("session")
-
-        session = dom_document.createElement("session")
-        dom_document.appendChild(session)
-
-        with open(os.path.join(self.projectPath, "Data", "session.xml"), "w") as file:
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
+        from Extensions.SessionData import write_empty_session
+        write_empty_session(self.projectPath)
 
     def writeRopeProfile(self):
         dom_document = QtXml.QDomDocument("rope_profile")
@@ -373,7 +368,8 @@ class Projects(QtGui.QWidget):
             QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
             projectPathDict = {
                 "notes": os.path.join(path, "Data", "wpad.txt"),
-                "session": os.path.join(path, "Data", "session.xml"),
+                "session": os.path.join(path, "Data", "session.json"),
+                "session_xml": os.path.join(path, "Data", "session.xml"),
                 "usedata": os.path.join(path, "Data", "usedata.xml"),
                 "windata": os.path.join(path, "Data", "windata.xml"),
                 "projectdata": os.path.join(path, "Data", "projectdata.xml"),

@@ -44,5 +44,5 @@ class BuildStatusWidget(QtGui.QWidget):
         else:
             self.hide()
             self.progressBar.setRange(0, 1)
-            if self.useData.SETTINGS['SoundsEnabled'] == "True":
+            if self.useData.setting_bool('SoundsEnabled'):
                 self.app.beep()

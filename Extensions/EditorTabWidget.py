@@ -7,8 +7,7 @@ import traceback
 import logging
 
 from PyQt6.Qsci import QsciScintilla
-from Extensions.qt_bindings import QtCore, QtGui, QtXml
-
+from Extensions.qt_bindings import QtCore, QtGui
 from Extensions.settings_utils import to_bool
 from Extensions.Diff import DiffWindow
 from Extensions.CodeEditor import CodeEditor
@@ -573,90 +572,53 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.saveSession(True)
 
     def saveSession(self, backup=False):
-        dom_document = QtXml.QDomDocument("session")
-
-        session = dom_document.createElement("session")
-        dom_document.appendChild(session)
-
+        from Extensions.SessionData import save as save_session
+        entries = []
         for i in range(self.count()):
             editor = self.getEditor(i)
-
-            tag = dom_document.createElement("file")
             path = self.getEditorData("filePath", i)
-            if not backup:
-                if path is None:
-                    continue
-            tag.setAttribute("path", path)
-
-            path = str(self.getEditorData("filePath", i))
-            tag.setAttribute("active", str(
-                self.currentEditor == editor))
-
-            locked = editor.isReadOnly()
-            tag.setAttribute("locked", str(locked))
-
-            tag.setAttribute("lines", str(editor.lines()))
-
+            if not backup and path is None:
+                continue
             line, index = editor.getCursorPosition()
-            tag.setAttribute("cursorPosition", str(line) + ',' + str(index))
-
-            firstVisibleLine = editor.firstVisibleLine()
-            tag.setAttribute("firstVisibleLine", str(firstVisibleLine))
-
-            bookmarkLines = editor.getBookmarks()
-            tag.setAttribute("bookmarks",
-                             str(bookmarkLines).replace(', ', '-').strip('[]'))
-
-            folds = editor.contractedFolds()
-            tag.setAttribute("folds",
-                             str(folds).replace(', ', '-').strip('[]'))
-
+            entry = {
+                "path": path,
+                "active": self.currentEditor == editor,
+                "locked": editor.isReadOnly(),
+                "lines": editor.lines(),
+                "cursorPosition": "{0},{1}".format(line, index),
+                "firstVisibleLine": editor.firstVisibleLine(),
+                "bookmarks": str(editor.getBookmarks()).replace(', ', '-').strip('[]'),
+                "folds": str(editor.contractedFolds()).replace(', ', '-').strip('[]'),
+            }
             if backup:
-                key = self.getEditorData("backupKey", i)
-                tag.setAttribute("backupKey", key)
-                tag.setAttribute("baseName", self.tabText(i))
-
-            session.appendChild(tag)
-
-        if backup:
-            savePath = self.projectPathDict["backupfile"]
-        else:
-            savePath = self.projectPathDict["session"]
-        with open(savePath, "w") as file:
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
+                entry["backupKey"] = self.getEditorData("backupKey", i)
+                entry["baseName"] = self.tabText(i)
+            entries.append(entry)
+        save_session(self.projectPathDict, entries, backup=backup)
 
     def restoreSession(self):
-        # TODO: When backup is True and it turns out empty because
-        # it previousely loaded from backup, cleared it's backup
-        # cache and was instantly shut down again, the previous
-        # session must be reloaded.
+        from Extensions.SessionData import load as load_session
         backup = not to_bool(self.projectSettings.get("LastCloseSuccessful"), True)
 
         if backup:
-            loadPath = self.projectPathDict["backupfile"]
+            pass
         else:
             self.clearBackups()
-            loadPath = self.projectPathDict["session"]
 
-        with open(loadPath, "r") as file:
-            dom_document = QtXml.QDomDocument()
-            dom_document.setContent(file.read())
+        entries = load_session(self.projectPathDict, backup=backup)
+        if not entries and backup:
+            entries = load_session(self.projectPathDict, backup=False)
 
-        elements = dom_document.documentElement()
-        node = elements.firstChild()
         activeIndex = 0
         currentIindex = 0
         restoredBackups = 0
-        while node.isNull() is False:
+        for tag in entries:
             try:
-                tag = node.toElement()
                 if backup:
-                    backupKey = tag.attribute("backupKey")
-                    basename = tag.attribute("baseName")
+                    backupKey = tag.get("backupKey", "")
                     backupPath = os.path.join(
                         self.projectPathDict["backupdir"], backupKey)
-                    realPath = tag.attribute("path")
+                    realPath = tag.get("path") or ""
                     if realPath == '':
                         with open(backupPath, 'r') as file:
                             backupText = file.read()
@@ -671,9 +633,7 @@ class EditorTabWidget(QtGui.QTabWidget):
                     else:
                         real_mod_time = os.stat(realPath).st_mtime
                         backup_mod_time = os.stat(backupPath).st_mtime
-                        if real_mod_time > backup_mod_time:
-                            pass
-                        else:
+                        if real_mod_time <= backup_mod_time:
                             with open(backupPath, 'r') as file:
                                 backupText = file.read()
 
@@ -682,50 +642,44 @@ class EditorTabWidget(QtGui.QTabWidget):
 
                             restoredBackups += 1
 
-                        path = tag.attribute("path")
+                        path = realPath
                         loaded = self.loadfile(path, False, currentIindex)
                 else:
-                    path = tag.attribute("path")
+                    path = tag.get("path")
+                    if not path:
+                        continue
                     loaded = self.loadfile(path, False, currentIindex)
                 if loaded is False:
-                    node = node.nextSibling()
                     continue
 
-                locked = tag.attribute("locked")
-                if locked == 'True':
+                if to_bool(tag.get("locked")):
                     self.writeLock()
-                lines = tag.attribute("lines")
-                active = tag.attribute("active")
-                if active == 'True':
+                if to_bool(tag.get("active")):
                     activeIndex = currentIindex
-                cp = tag.attribute("cursorPosition").split(',')
+                cp = str(tag.get("cursorPosition", "0,0")).split(',')
                 line = int(cp[0])
-                index = int(cp[1])
-
-                firstVisibleLine = int(tag.attribute("firstVisibleLine"))
+                firstVisibleLine = int(tag.get("firstVisibleLine", 0))
 
                 editor = self.getEditor()
                 editor.setCursorPosition(line, 0)
                 editor.setFirstVisibleLine(firstVisibleLine)
 
-                m = tag.attribute("bookmarks")
+                m = tag.get("bookmarks") or ""
                 if m != '':
                     bookmarks = list(map(int, m.split('-')))
-                    for line in bookmarks:
-                        editor.toggleBookmark(1, line)
+                    for bline in bookmarks:
+                        editor.toggleBookmark(1, bline)
 
-                folds = tag.attribute("folds")
+                folds = tag.get("folds") or ""
                 if folds != '':
-                    folds = list(map(int, folds.split('-')))
-                    editor.setContractedFolds(folds)
+                    fold_list = list(map(int, folds.split('-')))
+                    editor.setContractedFolds(fold_list)
 
                 currentIindex += 1
-                node = node.nextSibling()
             except Exception:
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 logging.error(repr(traceback.format_exception(exc_type, exc_value,
                              exc_traceback)))
-                node = node.nextSibling()
         if self.count() != 0:
             self.setCurrentIndex(activeIndex)
         if self.count() == 0:

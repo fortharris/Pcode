@@ -166,7 +166,7 @@ class SearchWidget(QtGui.QLabel):
                 "QLineEdit {border-bottom: 1px solid lightgrey;}")
             editor.clearAllIndicators(editor.searchIndicator)
         else:
-            if self.useData.SETTINGS['DynamicSearch'] == 'True':
+            if self.useData.setting_bool('DynamicSearch'):
                 editor.clearAllIndicators(editor.searchIndicator)
                 found = editor.findFirst(text, self.matchRegExp,
                                          self.matchCase, self.matchWholeWord, self.wrapAround, True, 0, 0, True)

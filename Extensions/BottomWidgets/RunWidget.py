@@ -126,6 +126,12 @@ class SetRunParameters(QtGui.QLabel):
         self.useVirtualEnvBox.toggled.connect(self.setDefaultInterpreter)
         mainLayout.addWidget(self.useVirtualEnvBox)
 
+        self.debugWaitBox = QtGui.QCheckBox("Wait for debugger to attach")
+        if to_bool(self.projectSettings.get("DebugWait")):
+            self.debugWaitBox.setChecked(True)
+        self.debugWaitBox.toggled.connect(self.saveArguments)
+        mainLayout.addWidget(self.debugWaitBox)
+
         hbox = QtGui.QHBoxLayout()
         mainLayout.addLayout(hbox)
 
@@ -191,6 +197,8 @@ class SetRunParameters(QtGui.QLabel):
                 self.projectSettings["DefaultInterpreter"] = 'None'
         self.projectSettings["UseVirtualEnv"] = from_bool(
             self.useVirtualEnvBox.isChecked())
+        self.projectSettings["DebugWait"] = from_bool(
+            self.debugWaitBox.isChecked())
 
 
 class OutputLexer(QsciLexerCustom):
@@ -508,7 +516,10 @@ class RunWidget(BaseScintilla):
 
         env = QtCore.QProcessEnvironment().systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
-        debug_args = ["-m", "debugpy", "--listen", "5678", runScript]
+        debug_args = ["-m", "debugpy", "--listen", "5678"]
+        if to_bool(self.projectData.get("DebugWait")):
+            debug_args.append("--wait-for-client")
+        debug_args.append(runScript)
         if run_with_args and args:
             debug_args.append(args)
 

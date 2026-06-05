@@ -5,7 +5,7 @@ import shutil
 from Extensions.qt_bindings import QtCore, QtGui, QtXml
 
 from Extensions.Projects.ProjectManager.ProjectView.ProjectView import IconProvider
-from venv import EnvBuilder
+from Pvenv import EnvBuilder
 
 from Extensions import StyleSheet
 
