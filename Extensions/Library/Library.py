@@ -550,7 +550,7 @@ class Library(QtGui.QMainWindow):
             try:
                 os.remove(path)
                 self.loadLibrary()
-            except:
+            except Exception:
                 message = QtGui.QMessageBox.warning(self, "Remove",
                                                     "Failed to remove item!")
 

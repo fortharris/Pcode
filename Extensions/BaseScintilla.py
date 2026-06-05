@@ -629,7 +629,7 @@ class BaseScintilla(QsciScintilla):
         self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEDOWN)
 
     def increaseIndent(self):
-        if self.hasSelectedText() == False:
+        if not self.hasSelectedText():
             pos = self.getCursorPosition()
             line = pos[0]
             self.indent(line)
@@ -637,7 +637,7 @@ class BaseScintilla(QsciScintilla):
             self.SendScintilla(QsciScintilla.SCI_TAB)
 
     def decreaseIndent(self):
-        if self.hasSelectedText() == False:
+        if not self.hasSelectedText():
             pos = self.getCursorPosition()
             line = pos[0]
             self.unindent(line)

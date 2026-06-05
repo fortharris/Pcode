@@ -171,7 +171,7 @@ class Build(QtGui.QWidget):
         self.durationTime = QtCore.QTime()
 
     def openDir(self):
-        if os.path.exists(self.projectPathDict["builddir"]) == True:
+        if os.path.exists(self.projectPathDict["builddir"]):
             os.startfile(self.projectPathDict["builddir"], 'explore')
         else:
             message = QtGui.QMessageBox.critical(self, "Open",

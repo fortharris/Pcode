@@ -129,7 +129,7 @@ class CopyThread(QtCore.QThread):
                 try:
                     size = os.path.getsize(item)
                     totalSize += size
-                except:
+                except Exception:
                     pass
             else:
                 for root, dirs, files in os.walk(item):
@@ -137,7 +137,7 @@ class CopyThread(QtCore.QThread):
                         try:
                             size = os.path.getsize(os.path.join(root, i))
                             totalSize += size
-                        except:
+                        except Exception:
                             pass
         return totalSize
 
@@ -405,7 +405,7 @@ class ProjectTree(QtGui.QTreeView):
             path = os.path.join(path, dirName.text)
             try:
                 os.mkdir(path)
-            except:
+            except Exception:
                 message = QtGui.QMessageBox.warning(self, "New Directory",
                                                     "Failed to create directory!")
 
