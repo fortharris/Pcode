@@ -16,6 +16,18 @@ def _cx_freeze_version():
         return "n/a"
 
 
+def _pyqt6_version():
+    try:
+        from PyQt6.QtCore import PYQT_VERSION_STR
+        return PYQT_VERSION_STR
+    except Exception:
+        try:
+            import PyQt6
+            return getattr(PyQt6, "__version__", "unknown")
+        except Exception:
+            return "unknown"
+
+
 class About(QtGui.QDialog):
 
     def __init__(self, parent=None):
@@ -66,9 +78,8 @@ class About(QtGui.QDialog):
             ["PyFlakes", pyflakes.__version__, "Florent Xicluna"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["Pep8", pep8.__version__, "Florent Xicluna"]))
-        import PyQt6
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
-            ["PyQt6", PyQt6.__version__, "The Qt Company"]))
+            ["PyQt6", _pyqt6_version(), "The Qt Company"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(
             ["AutoPep8", autopep8.__version__, "Hideo Hattori"]))
         table.addTopLevelItem(QtGui.QTreeWidgetItem(

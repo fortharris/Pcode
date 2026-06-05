@@ -105,6 +105,13 @@ def main():
     exercise_mouse_events(editor, editor_window)
     exercise_command_palette(win)
     exercise_themes(win)
+    exercise_about(win)
+    exercise_assistant(editor_window, etw)
+    exercise_tasks(editor_window, etw)
+    exercise_profiler(editor_window)
+    exercise_diff(etw)
+    exercise_color_scheme(win)
+    exercise_build_profile(editor_window)
 
     print("ALL OK")
 
@@ -393,6 +400,108 @@ def exercise_themes(win):
         win.applyTheme(name)
         assert len(StyleSheet.globalStyle) > 0
     print("STEP themes OK")
+
+
+def exercise_about(win):
+    """Construct the About dialog (external library version table)."""
+    from Extensions.About import About
+    dlg = About(win)
+    dlg.show()
+    app.processEvents()
+    rows = dlg.view.widget(0).topLevelItemCount()
+    dlg.hide()
+    print("STEP about OK, library rows:", rows)
+
+
+def exercise_assistant(editor_window, etw):
+    """Exercise pyflakes + pep8 checker threads on editor source."""
+    assistant = editor_window.assistantWidget
+    editor = etw.getEditor()
+    editor.setText("import os\nx = 1\n")
+
+    assistant.runCheck()
+    assistant.codeCheckerThread.wait(10000)
+    assistant.pep8CheckerThread.wait(10000)
+    for _ in range(10):
+        app.processEvents()
+
+    alerts = assistant.errorView.topLevelItemCount()
+    pep8_items = assistant.pep8View.topLevelItemCount()
+    print("STEP assistant OK, pyflakes alerts:", alerts,
+          "| pep8 items:", pep8_items)
+
+
+def exercise_tasks(editor_window, etw):
+    """Exercise the TODO/FIXME task finder on editor source."""
+    from Extensions.BottomWidgets.TasksWidget import TaskFinderThread
+
+    source = "# TODO: smoke task\n# FIXME: another\npass\n"
+    etw.getEditor().setText(source)
+
+    thread = TaskFinderThread()
+    thread.findTasks(source)
+    finished = thread.wait(5000)
+    print("STEP tasks OK, finished:", finished, "| found:", len(thread.results))
+
+
+def exercise_profiler(editor_window):
+    """Load a cProfile stats file into the profiler tree."""
+    import cProfile
+
+    os.makedirs("temp", exist_ok=True)
+    prof_path = os.path.join("temp", "smoke_profile")
+    cProfile.run("sum(range(50))", prof_path)
+
+    profiler = editor_window.profiler
+    profiler.viewProfile(prof_path)
+    rows = profiler.topLevelItemCount()
+    print("STEP profiler OK, rows:", rows)
+
+
+def exercise_diff(etw):
+    """Exercise unified diff generation in the diff viewer."""
+    from Extensions.Diff import DiffWindow
+
+    class _TextSource(object):
+        def __init__(self, text):
+            self._text = text
+
+        def text(self):
+            return self._text
+
+    before = "alpha\nbeta\n"
+    after = "alpha\ngamma\n"
+    diff = DiffWindow(
+        editor=_TextSource(after),
+        snapShot=_TextSource(before))
+    changed = diff.generateUnifiedDiff()
+    lines = diff.lines()
+    print("STEP diff OK, changed:", changed, "| lines:", lines)
+
+
+def exercise_color_scheme(win):
+    """Open the color-scheme settings tab and load the default Python style."""
+    cs = win.settingsWidget.colorScheme
+    cs.show()
+    app.processEvents()
+    cs.groupChanged()
+    app.processEvents()
+    if cs.schemeNameBox.count() > 0:
+        cs.updateScheme()
+        app.processEvents()
+    cs.hide()
+    print("STEP color-scheme OK, schemes:", cs.schemeNameBox.count())
+
+
+def exercise_build_profile(editor_window):
+    """Load the cx_Freeze build profile for a Desktop Application project."""
+    build = editor_window.projectManager.build
+    if build is None:
+        print("STEP build-profile SKIPPED (no build widget)")
+        return
+    profile = build.buildConfig.load()
+    assert profile.get("name") or profile.get("base")
+    print("STEP build-profile OK, keys:", len(profile))
 
 
 if __name__ == "__main__":
