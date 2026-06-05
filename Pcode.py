@@ -351,7 +351,34 @@ class Pcode(QtGui.QWidget):
                 ("Panel: Tasks",
                  lambda: sw.setCurrentWidget(window.tasksWidget)),
                 ("Git: Refresh", lambda: window.gitPanel.refresh()),
+                ("Git: Stage File", lambda: window.gitPanel.stage_selected()),
+                ("Git: Diff at Cursor", lambda: window.gitPanel.diff_at_cursor()),
             ])
+            keymap_dispatch = {
+                "Find": window.showFinderWidget,
+                "Replace": window.showReplaceWidget,
+                "Go-to-Line": lambda: window.gotoLineAct.trigger(),
+                "Save-File": etw.save,
+                "Save-All": window.saveAll,
+                "Run-Project": window.runProject,
+                "Run-File": window.runFile,
+            }
+            for name, shortcut in self.useData.CUSTOM_SHORTCUTS.get("Ide", {}).items():
+                handler = keymap_dispatch.get(name)
+                if shortcut and handler is not None:
+                    label = "Keymap: {0} ({1})".format(
+                        name.replace("-", " "), shortcut)
+                    commands.append((label, handler))
+        for i in range(self.projectWindowStack.count() - 1):
+            proj_window = self.projectWindowStack.widget(i)
+            if not hasattr(proj_window, "projectPathDict"):
+                continue
+            root = proj_window.projectPathDict["root"]
+            pname = proj_window.projectPathDict.get(
+                "name", os.path.basename(root))
+            commands.append(
+                ("Switch Project: {0}".format(pname),
+                 lambda idx=i: self.projectTitleBox.setCurrentIndex(idx)))
         for path in self.useData.OPENED_PROJECTS[:5]:
             name = os.path.basename(path)
             commands.append(

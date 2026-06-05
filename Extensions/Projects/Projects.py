@@ -61,13 +61,21 @@ class CreateProjectThread(QtCore.QThread):
 
             self.mainScript = os.path.join(self.projectPath, "src",
                                            self.projDataDict["mainscript"])
-            with open(self.mainScript, 'w'):
-                pass
+            main_template = (
+                '"""Main entry point for {name}."""\n\n\n'
+                'def main():\n'
+                '    print("Hello from Pcode")\n\n\n'
+                'if __name__ == "__main__":\n'
+                '    main()\n'
+            ).format(name=self.projDataDict["name"])
+            with open(self.mainScript, 'w', encoding='utf-8') as main_file:
+                main_file.write(main_template)
 
             if self.projDataDict["type"] == "Desktop Application":
                 self.writeBuildProfile()
             self.writeDefaultSession()
             self.writeProjectData()
+            self.writePyproject()
             self.writeRopeProfile()
         except Exception as err:
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -76,44 +84,16 @@ class CreateProjectThread(QtCore.QThread):
             self.error = str(err)
 
     def writeProjectData(self):
-        dom_document = QtXml.QDomDocument("Project")
+        from Extensions.ProjectData import save as save_project_data
+        from Extensions.ProjectManifest import write as write_manifest
 
-        properties = dom_document.createElement("properties")
-        dom_document.appendChild(properties)
-
-        tag = dom_document.createElement("pcode_project")
-
-        tag.setAttribute("Version", "0.1")
-        tag.setAttribute("Name", self.projDataDict["name"])
-        tag.setAttribute("Type", self.projDataDict["type"])
-        tag.setAttribute("MainScript", self.projDataDict["mainscript"])
-
-        properties.appendChild(tag)
-
-        with open(os.path.join(self.projectPath, "project.xml"), "w") as file:
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
-
-        domDocument = QtXml.QDomDocument("projectdata")
-
-        projectdata = domDocument.createElement("projectdata")
-        domDocument.appendChild(projectdata)
-
-        root = domDocument.createElement("shortcuts")
-        projectdata.appendChild(root)
-
-        root = domDocument.createElement("recentfiles")
-        projectdata.appendChild(root)
-
-        root = domDocument.createElement("favourites")
-        projectdata.appendChild(root)
-
-        root = domDocument.createElement("settings")
-        projectdata.appendChild(root)
-
-        s = 0
+        write_manifest(
+            self.projectPath,
+            self.projDataDict["name"],
+            self.projDataDict["type"],
+            self.projDataDict["mainscript"],
+        )
         defaults = {
-
             'ClearOutputWindowOnRun': 'False',
             'LastOpenedPath': '',
             'RunType': 'Run',
@@ -129,19 +109,27 @@ class CreateProjectThread(QtCore.QThread):
             'ShowAllFiles': 'True',
             'LastCloseSuccessful': 'True',
             'DebugWait': 'False',
-            }
-        for key, value in defaults.items():
-            tag = domDocument.createElement("key")
-            root.appendChild(tag)
+        }
+        save_project_data(self.projectPath, {
+            "shortcuts": [],
+            "recentfiles": [],
+            "favourites": [],
+            "launchers": {},
+            "settings": defaults,
+        })
 
-            t = domDocument.createTextNode(key + '=' + value)
-            tag.appendChild(t)
-            s += 1
-
-        path = os.path.join(self.projectPath, "Data", "projectdata.xml")
-        with open(path, "w") as file:
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(domDocument.toString())
+    def writePyproject(self):
+        name = self.projDataDict["name"].replace('"', '\\"')
+        content = (
+            '[project]\n'
+            'name = "{name}"\n'
+            'version = "0.1.0"\n'
+            'requires-python = ">=3.10"\n'
+            'description = "Pcode project"\n'
+        ).format(name=name)
+        with open(os.path.join(self.projectPath, "pyproject.toml"), "w",
+                  encoding="utf-8") as file:
+            file.write(content)
 
     def writeDefaultSession(self):
         from Extensions.SessionData import write_empty_session
@@ -337,31 +325,13 @@ class Projects(QtGui.QWidget):
         self.pcode.close()
 
     def readProject(self, path):
-        # validate project
-        project_file = os.path.join(path, "project.xml")
-        if os.path.exists(project_file) is False:
+        from Extensions.ProjectManifest import read as read_manifest
+
+        json_file = os.path.join(path, "project.json")
+        xml_file = os.path.join(path, "project.xml")
+        if not os.path.isfile(json_file) and not os.path.isfile(xml_file):
             return False
-        dom_document = QtXml.QDomDocument()
-        with open(os.path.join(path, "project.xml"), "r") as file:
-            dom_document.setContent(file.read())
-
-        data = {}
-
-        elements = dom_document.documentElement()
-        node = elements.firstChild()
-        while node.isNull() is False:
-            tag = node.toElement()
-            name = tag.tagName()
-            data["Version"] = tag.attribute("Version")
-            data["Type"] = tag.attribute("Type")
-            data["Name"] = tag.attribute("Name")
-            data["MainScript"] = tag.attribute("MainScript")
-            node = node.nextSibling()
-
-        if name != "pcode_project":
-            return False
-        else:
-            return name, data
+        return read_manifest(path)
 
     def loadProject(self, path, show, new):
         if not self.pcode.showProject(path):
@@ -372,7 +342,7 @@ class Projects(QtGui.QWidget):
                 "session_xml": os.path.join(path, "Data", "session.xml"),
                 "usedata": os.path.join(path, "Data", "usedata.xml"),
                 "windata": os.path.join(path, "Data", "windata.json"),
-                "projectdata": os.path.join(path, "Data", "projectdata.xml"),
+                "projectdata": os.path.join(path, "Data", "projectdata.json"),
                 "snippetsdir": os.path.join(path, "Data", "templates"),
                 "tempdir": os.path.join(path, "temp"),
                 "backupdir": os.path.join(path, "temp", "Backup", "Files"),
@@ -381,7 +351,7 @@ class Projects(QtGui.QWidget):
                 "ropeFolder": os.path.join(path, "Rope"),
                 "buildprofile": os.path.join(path, "Build", "profile.xml"),
                 "ropeprofile": os.path.join(path, "Rope", "profile.xml"),
-                "projectmainfile": os.path.join(path, "project.xml"),
+                "projectmainfile": os.path.join(path, "project.json"),
                 "iconsdir": os.path.join(path, "Resources", "Icons"),
                 "root": path
                 }

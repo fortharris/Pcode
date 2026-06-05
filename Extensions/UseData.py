@@ -42,7 +42,7 @@ def textEncoding(bb):
         if line and line[0] == '#':
 
             # Matches regular expression given in PEP 0263?
-            expression = "coding[:=]\s*([-\w.]+)"
+            expression = r"coding[:=]\s*([-\w.]+)"
             result = re.search(expression, line)
             if result:
 

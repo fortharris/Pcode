@@ -525,8 +525,12 @@ class RunWidget(BaseScintilla):
 
         if run_internal:
             self.currentProcess = fileName
+            wait_note = ""
+            if to_bool(self.projectData.get("DebugWait")):
+                wait_note = " — waiting for debugger on port 5678"
             self.printout(
-                ">>> Debug (debugpy listen 5678): {0}\n".format(fileName), 4)
+                ">>> Debug (debugpy listen 5678{0}): {1}\n".format(
+                    wait_note, fileName), 4)
             self.runProcess.start(pythonPath, debug_args, self.openMode)
             self.runProcess.waitForStarted()
         else:

@@ -18,17 +18,15 @@ class ErrorCheckerThread(QtCore.QThread):
             warnings = flakeChecker(ast.parse(self.source))
             warnings.messages.sort(key=lambda a: a.lineno)
             for warning in warnings.messages:
-                fname = warning.filename
                 lineno = warning.lineno
                 message = warning.message
                 args = warning.message_args
                 messages.append((lineno, message % (args), args))
             self.newAlerts.emit(messages, False)
-        except Exception as err:
-            error_text = err.args[1][3]
+        except SyntaxError as err:
             msg = err.msg.capitalize() + '.'
-            line = err.lineno
-            offset = err.args[1][2]
+            line = err.lineno or 1
+            offset = err.offset or 0
 
             messages.append((1, line, msg, None, offset))
             self.newAlerts.emit(messages, True)
@@ -49,7 +47,6 @@ class Pep8CheckerThread(QtCore.QThread):
             styleGuide = pep8.StyleGuide(reporter=Pep8Report)
             report = styleGuide.check_files([self.tempPath])
             for i in report.all_errors:
-                fname = i[0]
                 lineno = i[1]
                 offset = i[2]
                 code = i[3]
@@ -58,7 +55,7 @@ class Pep8CheckerThread(QtCore.QThread):
                 if code is None:
                     # means the code has been marked to be ignored
                     continue
-                checkList.append((fname, lineno, offset, code, error))
+                checkList.append((i[0], lineno, offset, code, error))
         except Exception:
             logging.error(traceback.format_exc())
         self.newAlerts.emit(checkList)
@@ -135,9 +132,7 @@ class Pep8View(QtGui.QTreeWidget):
         selectedItems = self.selectedItems()
         if len(selectedItems) > 0:
             item = selectedItems[0]
-            fixable = item.data(9, 2)
-            # self.fixAct.setEnabled(fixable)
-            # self.fixAllAct.setEnabled(fixable)
+            # item.data(9, 2) indicates whether autopep8 can fix the issue
             self.contextMenu.exec(event.globalPos())
 
     def fixErrors(self):
@@ -251,7 +246,7 @@ class Assistant(QtGui.QStackedWidget):
         self.alertsCount = 0
 
     def startCodeCheckerTimer(self):
-        self.codeCheckerTimer.start(500)
+        self.codeCheckerTimer.start(800)
 
     def setAssistance(self, index=None):
         if index is None:
@@ -403,6 +398,10 @@ class Assistant(QtGui.QStackedWidget):
 
     def runCheck(self):
         if not self.useData.setting_bool("EnableAssistance"):
+            return
+        if (self.codeCheckerThread.isRunning()
+                or self.pep8CheckerThread.isRunning()):
+            self.codeCheckerTimer.start(800)
             return
         if self.useData.setting_bool("EnableAlerts"):
             self.codeCheckerThread.runCheck(self.editorTabWidget.getSource())

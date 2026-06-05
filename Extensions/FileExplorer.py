@@ -266,7 +266,9 @@ class FileExplorer(QtGui.QTreeView):
             self.shortcutsMenu.addSeparator()
         else:
             self.shortcutsMenu.addAction("No Shortcuts")
-        # TODO findInFiles.updateShortcutsList()
+        find_in_files = getattr(self, 'findInFiles', None)
+        if find_in_files is not None:
+            find_in_files.updateShortcutsList(self.FILE_EXPLORER_SHORTCUTS)
 
     def shortcutActivated(self, action):
         path = action.text()

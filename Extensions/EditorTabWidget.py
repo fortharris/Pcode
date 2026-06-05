@@ -609,81 +609,8 @@ class EditorTabWidget(QtGui.QTabWidget):
         if not entries and backup:
             entries = load_session(self.projectPathDict, backup=False)
 
-        activeIndex = 0
-        currentIindex = 0
-        restoredBackups = 0
-        for tag in entries:
-            try:
-                if backup:
-                    backupKey = tag.get("backupKey", "")
-                    backupPath = os.path.join(
-                        self.projectPathDict["backupdir"], backupKey)
-                    realPath = tag.get("path") or ""
-                    if realPath == '':
-                        with open(backupPath, 'r') as file:
-                            backupText = file.read()
-
-                        subStack = self.newEditor(currentIindex)
-                        editor = subStack.widget(0).widget(0)
-                        editor.setText(backupText)
-                        editor.setModified(False)
-                        editor.setFocus()
-
-                        restoredBackups += 1
-                    else:
-                        real_mod_time = os.stat(realPath).st_mtime
-                        backup_mod_time = os.stat(backupPath).st_mtime
-                        if real_mod_time <= backup_mod_time:
-                            with open(backupPath, 'r') as file:
-                                backupText = file.read()
-
-                            with open(realPath, "w") as file:
-                                file.write(backupText)
-
-                            restoredBackups += 1
-
-                        path = realPath
-                        loaded = self.loadfile(path, False, currentIindex)
-                else:
-                    path = tag.get("path")
-                    if not path:
-                        continue
-                    loaded = self.loadfile(path, False, currentIindex)
-                if loaded is False:
-                    continue
-
-                if to_bool(tag.get("locked")):
-                    self.writeLock()
-                if to_bool(tag.get("active")):
-                    activeIndex = currentIindex
-                cp = str(tag.get("cursorPosition", "0,0")).split(',')
-                line = int(cp[0])
-                firstVisibleLine = int(tag.get("firstVisibleLine", 0))
-
-                editor = self.getEditor()
-                editor.setCursorPosition(line, 0)
-                editor.setFirstVisibleLine(firstVisibleLine)
-
-                m = tag.get("bookmarks") or ""
-                if m != '':
-                    bookmarks = list(map(int, m.split('-')))
-                    for bline in bookmarks:
-                        editor.toggleBookmark(1, bline)
-
-                folds = tag.get("folds") or ""
-                if folds != '':
-                    fold_list = list(map(int, folds.split('-')))
-                    editor.setContractedFolds(fold_list)
-
-                currentIindex += 1
-            except Exception:
-                exc_type, exc_value, exc_traceback = sys.exc_info()
-                logging.error(repr(traceback.format_exception(exc_type, exc_value,
-                             exc_traceback)))
-        if self.count() != 0:
-            self.setCurrentIndex(activeIndex)
-        if self.count() == 0:
-            self._newPythonFile()
+        from Extensions.session_restore import restore_entries
+        restoredBackups = restore_entries(self, entries, backup=backup)
 
         self.clearBackups()
         if restoredBackups > 0:

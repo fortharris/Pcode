@@ -153,12 +153,15 @@ class EditorWindow(QtGui.QWidget):
             os.path.join("Resources", "images", "tree")), "Project")
 
         self.fileExplorer = FileExplorer(
-            self.useData, self.projectData['shortcuts'], self.messagesWidget, self.editorTabWidget)
+            self.useData, self.projectData['shortcuts'], self.messagesWidget,
+            self.editorTabWidget)
         self.fileExplorer.fileActivated.connect(self.editorTabWidget.loadfile)
+        self.fileExplorer.findInFiles = self.findInFiles
+        self.fileExplorer.updateShortcutsActionGroup()
         self.sideBottomTab.addTab(self.fileExplorer, QtGui.QIcon(
             os.path.join("Resources", "images", "tree")), "File System")
 
-        self.gitPanel = GitPanel(self.projectPathDict)
+        self.gitPanel = GitPanel(self.projectPathDict, self.editorTabWidget)
         self.sideBottomTab.addTab(self.gitPanel, QtGui.QIcon(
             os.path.join("Resources", "images", "history")), "Git")
 
@@ -673,15 +676,7 @@ class EditorWindow(QtGui.QWidget):
 
     def saveUiState(self):
         from Extensions.WindowData import capture, save as save_window_data
-        name = self.projectPathDict["root"]
-        save_window_data(name, capture(self))
-        settings = QtCore.QSettings("Clean Code Inc.", "Pcode")
-        settings.beginGroup(name)
-        settings.setValue('hsplitter', self.hSplitter.saveState())
-        settings.setValue('vsplitter', self.vSplitter.saveState())
-        settings.setValue('sidesplitter', self.sideSplitter.saveState())
-        settings.setValue('writepad', self.writePad.geometry())
-        settings.endGroup()
+        save_window_data(self.projectPathDict["root"], capture(self))
 
     def restoreSession(self):
         self.editorTabWidget.restoreSession()

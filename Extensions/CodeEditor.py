@@ -684,11 +684,14 @@ class CodeEditor(BaseScintilla):
             else:
                 self.insert(cmpl[0])
         elif id == 2:
-            # TODO: Insert must check for brackets after inserting functions.
             x = text.split()
             cmpl = x[0]
-            type = x[2].strip(")")
+            line, col = self.getCursorPosition()
             self.insert(cmpl)
+            rest = self.text(line)[col + len(cmpl):]
+            if not rest.lstrip().startswith('('):
+                self.insert('()')
+                self.setCursorPosition(line, col + len(cmpl) + 1)
         elif id == 3:
             cmpl = text.rstrip(os.path.sep)
             self.insert(cmpl)

@@ -199,6 +199,7 @@ class FindInFiles(QtGui.QWidget):
         self.findThread = FinderThread()
         self.editorTabWidget = editorTabWidget
         self.bottomStackSwitcher = bottomStackSwitcher
+        self._explorer_shortcuts = []
 
         mainLayout = QtGui.QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -388,6 +389,11 @@ class FindInFiles(QtGui.QWidget):
             directory = os.path.normpath(directory)
             self.useData.saveLastOpenedDir(directory)
             self.directoryLine.setText(directory)
+
+    def updateShortcutsList(self, shortcuts):
+        self._explorer_shortcuts = list(shortcuts or [])
+        if self._explorer_shortcuts:
+            self.directoryLine.setText(self._explorer_shortcuts[0])
 
     def projectBoxToggled(self, state):
         self.directoryLine.setDisabled(state)
