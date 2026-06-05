@@ -1,47 +1,54 @@
 import os
 import shutil
+
 from PyQt6.Qsci import QsciScintilla
-from Extensions.qt_bindings import QtCore, QtGui
+from PyQt6.QtCore import QDateTime, Qt
+from PyQt6.QtWidgets import (
+    QApplication, QButtonGroup, QCheckBox, QComboBox, QDialog, QFileDialog,
+    QGroupBox, QHBoxLayout, QLabel, QPushButton, QSpinBox,
+    QVBoxLayout,
+)
+
 from Extensions import StyleSheet
 
 
-class GeneralSettings(QtGui.QDialog):
+class GeneralSettings(QDialog):
 
     def __init__(self, useData, mainApp, projectWindowStack, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle("Settings")
         self.useData = useData
         self.mainApp = mainApp
         self.projectWindowStack = projectWindowStack
 
-        mainLayout = QtGui.QHBoxLayout()
+        mainLayout = QHBoxLayout()
         self.setLayout(mainLayout)
 
         # AUTO COMPLETION
-        mainVbox = QtGui.QVBoxLayout()
+        mainVbox = QVBoxLayout()
         mainLayout.addLayout(mainVbox)
 
-        self.autoCompGbox = QtGui.QGroupBox("Auto-Completion")
+        self.autoCompGbox = QGroupBox("Auto-Completion")
         self.autoCompGbox.setFlat(True)
         self.autoCompGbox.setCheckable(True)
         mainVbox.addWidget(self.autoCompGbox)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
         self.autoCompGbox.setLayout(vbox)
 
-        self.autoCompButtonGroup = QtGui.QButtonGroup()
+        self.autoCompButtonGroup = QButtonGroup()
         self.autoCompButtonGroup.setExclusive(True)
 
-        self.autoCompApiBox = QtGui.QCheckBox("Project")
+        self.autoCompApiBox = QCheckBox("Project")
         if (self.useData.SETTINGS["AutoCompletion"] == "Api"):
             self.autoCompApiBox.setChecked(True)
         self.autoCompButtonGroup.addButton(self.autoCompApiBox)
         self.autoCompApiBox.toggled.connect(self.setAutoCompletion)
         vbox.addWidget(self.autoCompApiBox)
 
-        self.autoCompDocBox = QtGui.QCheckBox("Current Module")
+        self.autoCompDocBox = QCheckBox("Current Module")
         if (self.useData.SETTINGS["AutoCompletion"] == "Document"):
             self.autoCompDocBox.setChecked(True)
         self.autoCompButtonGroup.addButton(self.autoCompDocBox)
@@ -56,20 +63,20 @@ class GeneralSettings(QtGui.QDialog):
 
         # SEARCH
 
-        gbox = QtGui.QGroupBox("Search")
+        gbox = QGroupBox("Search")
         gbox.setFlat(True)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
         gbox.setLayout(vbox)
         mainVbox.addWidget(gbox)
 
-        self.dynamicSearchBox = QtGui.QCheckBox("Dynamic Search")
+        self.dynamicSearchBox = QCheckBox("Dynamic Search")
         if self.useData.setting_bool("DynamicSearch"):
             self.dynamicSearchBox.setChecked(True)
         self.dynamicSearchBox.toggled.connect(self.setDynamicSearch)
         vbox.addWidget(self.dynamicSearchBox)
 
-        self.markWordOccurrenceBox = QtGui.QCheckBox("Mark Word Occurrence")
+        self.markWordOccurrenceBox = QCheckBox("Mark Word Occurrence")
         if self.useData.setting_bool("MarkSearchOccurrence"):
             self.markWordOccurrenceBox.setChecked(True)
         self.markWordOccurrenceBox.toggled.connect(
@@ -80,23 +87,23 @@ class GeneralSettings(QtGui.QDialog):
 
         # EDITOR VIEW
 
-        mainVbox = QtGui.QVBoxLayout()
+        mainVbox = QVBoxLayout()
         mainLayout.addLayout(mainVbox)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
 
-        gbox = QtGui.QGroupBox("Editor")
+        gbox = QGroupBox("Editor")
         gbox.setFlat(True)
         gbox.setLayout(vbox)
         mainVbox.addWidget(gbox)
 
-        self.showCalltipsBox = QtGui.QCheckBox("Calltips")
+        self.showCalltipsBox = QCheckBox("Calltips")
         if self.useData.setting_bool("CallTips"):
             self.showCalltipsBox.setChecked(True)
         self.showCalltipsBox.toggled.connect(self.setShowCalltip)
         vbox.addWidget(self.showCalltipsBox)
 
-        self.showWhiteSpacesBox = QtGui.QCheckBox("White Spaces")
+        self.showWhiteSpacesBox = QCheckBox("White Spaces")
         if self.useData.setting_bool("ShowWhiteSpaces"):
             self.showWhiteSpacesBox.setChecked(True)
         self.showWhiteSpacesBox.toggled.connect(self.setShowWhiteSpaces)
@@ -104,7 +111,7 @@ class GeneralSettings(QtGui.QDialog):
 
         # ACTIVE LINE
 
-        activeLineBox = QtGui.QCheckBox("Active Line")
+        activeLineBox = QCheckBox("Active Line")
         if self.useData.setting_bool("ShowCaretLine"):
             activeLineBox.setChecked(True)
         else:
@@ -114,7 +121,7 @@ class GeneralSettings(QtGui.QDialog):
 
         # LINE NUMBERS
 
-        self.showLineNumbersBox = QtGui.QCheckBox("Line Numbers")
+        self.showLineNumbersBox = QCheckBox("Line Numbers")
         if self.useData.setting_bool("ShowLineNumbers"):
             self.showLineNumbersBox.setChecked(True)
         self.showLineNumbersBox.toggled.connect(self.setShowLineNumbers)
@@ -122,7 +129,7 @@ class GeneralSettings(QtGui.QDialog):
 
         # BRACE MATCHING
 
-        self.matchBracesBox = QtGui.QCheckBox("Match Braces")
+        self.matchBracesBox = QCheckBox("Match Braces")
         if self.useData.setting_bool("MatchBraces"):
             self.matchBracesBox.setChecked(True)
         self.matchBracesBox.toggled.connect(self.setMatchBraces)
@@ -130,7 +137,7 @@ class GeneralSettings(QtGui.QDialog):
 
         # FOLDING
 
-        self.foldingBox = QtGui.QCheckBox("Folding")
+        self.foldingBox = QCheckBox("Folding")
         if self.useData.setting_bool("EnableFolding"):
             self.foldingBox.setChecked(True)
         self.foldingBox.toggled.connect(self.setFolding)
@@ -138,7 +145,7 @@ class GeneralSettings(QtGui.QDialog):
 
         # DOC ON HOVER
 
-        self.docOnHoverBox = QtGui.QCheckBox("Doc on hover")
+        self.docOnHoverBox = QCheckBox("Doc on hover")
         if self.useData.setting_bool("DocOnHover"):
             self.docOnHoverBox.setChecked(True)
         self.docOnHoverBox.toggled.connect(self.setDocOnHover)
@@ -146,7 +153,7 @@ class GeneralSettings(QtGui.QDialog):
 
         # MARK OPERATIONAL LINES
 
-        self.markOperationalLinesBox = QtGui.QCheckBox("Mark Operation Lines")
+        self.markOperationalLinesBox = QCheckBox("Mark Operation Lines")
         if self.useData.setting_bool("MarkOperationalLines"):
             self.markOperationalLinesBox.setChecked(True)
         self.markOperationalLinesBox.toggled.connect(
@@ -157,10 +164,10 @@ class GeneralSettings(QtGui.QDialog):
 
         # EDGE LINE ATTRIBUTES
 
-        mainVbox = QtGui.QVBoxLayout()
+        mainVbox = QVBoxLayout()
         mainLayout.addLayout(mainVbox)
 
-        gbox = QtGui.QGroupBox("Edge Line")
+        gbox = QGroupBox("Edge Line")
         gbox.setFlat(True)
         gbox.setCheckable(True)
         mainVbox.addWidget(gbox)
@@ -171,18 +178,18 @@ class GeneralSettings(QtGui.QDialog):
             gbox.setChecked(False)
         gbox.toggled.connect(self.setShowEdgeLine)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
         gbox.setLayout(vbox)
 
-        self.positionBox = QtGui.QSpinBox()
+        self.positionBox = QSpinBox()
         self.positionBox.setRange(1, 200)
         self.positionBox.setValue(int(self.useData.SETTINGS["EdgeColumn"]))
         self.positionBox.valueChanged.connect(self.setEdgeColumn)
         vbox.addWidget(self.positionBox)
 
-        vbox.addWidget(QtGui.QLabel("Edge Mode"))
+        vbox.addWidget(QLabel("Edge Mode"))
 
-        self.edgeModeBox = QtGui.QComboBox()
+        self.edgeModeBox = QComboBox()
         self.edgeModeBox.addItem("Line")
         self.edgeModeBox.addItem("Background")
         self.edgeModeBox.setCurrentIndex(
@@ -193,7 +200,7 @@ class GeneralSettings(QtGui.QDialog):
         
         # LINE WRAP ATTRIBUTES
 
-        gbox = QtGui.QGroupBox("Line Wrap")
+        gbox = QGroupBox("Line Wrap")
         gbox.setFlat(True)
         gbox.setCheckable(True)
         mainVbox.addWidget(gbox)
@@ -204,12 +211,12 @@ class GeneralSettings(QtGui.QDialog):
             gbox.setChecked(False)
         gbox.toggled.connect(self.setWrapEnabled)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
         gbox.setLayout(vbox)
 
-        vbox.addWidget(QtGui.QLabel("Line Wrap Mode"))
+        vbox.addWidget(QLabel("Line Wrap Mode"))
 
-        self.wrapModeBox = QtGui.QComboBox()
+        self.wrapModeBox = QComboBox()
         self.wrapModeBox.addItem("Word")
         self.wrapModeBox.addItem("Character")
         self.wrapModeBox.addItem("Whitespace")
@@ -223,28 +230,28 @@ class GeneralSettings(QtGui.QDialog):
 
         # ASSISTANT
 
-        mainVbox = QtGui.QVBoxLayout()
+        mainVbox = QVBoxLayout()
         mainLayout.addLayout(mainVbox)
 
-        gbox = QtGui.QGroupBox("Assistant")
+        gbox = QGroupBox("Assistant")
         gbox.setFlat(True)
         gbox.setCheckable(True)
         mainVbox.addWidget(gbox)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
         gbox.setLayout(vbox)
 
-        self.assistantButtonGroup = QtGui.QButtonGroup()
+        self.assistantButtonGroup = QButtonGroup()
         self.assistantButtonGroup.setExclusive(True)
 
-        self.enableAlertsBox = QtGui.QCheckBox("Alerts")
+        self.enableAlertsBox = QCheckBox("Alerts")
         if self.useData.setting_bool("EnableAlerts"):
             self.enableAlertsBox.setChecked(True)
         self.assistantButtonGroup.addButton(self.enableAlertsBox)
         self.enableAlertsBox.toggled.connect(self.setAssistant)
         vbox.addWidget(self.enableAlertsBox)
 
-        self.enableStyleGuideBox = QtGui.QCheckBox("Style Guide")
+        self.enableStyleGuideBox = QCheckBox("Style Guide")
         if self.useData.setting_bool("enableStyleGuide"):
             self.enableStyleGuideBox.setChecked(True)
         self.assistantButtonGroup.addButton(self.enableStyleGuideBox)
@@ -261,9 +268,9 @@ class GeneralSettings(QtGui.QDialog):
 
         # MANAGEMENT
 
-        mainVbox.addWidget(QtGui.QLabel("UI"))
+        mainVbox.addWidget(QLabel("UI"))
 
-        self.uiBox = QtGui.QComboBox()
+        self.uiBox = QComboBox()
         self.uiBox.addItem("Custom")
         self.uiBox.addItem("Native")
         if self.useData.SETTINGS["UI"] == 'Native':
@@ -271,9 +278,9 @@ class GeneralSettings(QtGui.QDialog):
         self.uiBox.currentIndexChanged.connect(self.setUI)
         mainVbox.addWidget(self.uiBox)
 
-        mainVbox.addWidget(QtGui.QLabel("Theme"))
+        mainVbox.addWidget(QLabel("Theme"))
 
-        self.themeBox = QtGui.QComboBox()
+        self.themeBox = QComboBox()
         self.themeBox.addItems(["Light", "Dark", "System"])
         currentTheme = self.useData.SETTINGS.get("Theme", "Light")
         themeIndex = self.themeBox.findText(currentTheme)
@@ -282,13 +289,13 @@ class GeneralSettings(QtGui.QDialog):
         self.themeBox.currentIndexChanged.connect(self.setTheme)
         mainVbox.addWidget(self.themeBox)
 
-        self.enableSoundsBox = QtGui.QCheckBox("Enable Sounds")
+        self.enableSoundsBox = QCheckBox("Enable Sounds")
         if self.useData.setting_bool("SoundsEnabled"):
             self.enableSoundsBox.setChecked(True)
         self.enableSoundsBox.toggled.connect(self.setSoundsEnabled)
         mainVbox.addWidget(self.enableSoundsBox)
 
-        self.exportButton = QtGui.QPushButton("Export Settings")
+        self.exportButton = QPushButton("Export Settings")
         self.exportButton.clicked.connect(self.exportSettings)
         mainVbox.addWidget(self.exportButton)
 
@@ -315,23 +322,23 @@ class GeneralSettings(QtGui.QDialog):
                 self.mainApp, self.useData.SETTINGS["Theme"])
 
     def exportSettings(self):
-        options = QtGui.QFileDialog.Options()
+        options = QFileDialog.Options()
         savepath = os.path.join(self.useData.getLastOpenedDir(),
-                                "Pcode_Settings" + '_' + QtCore.QDateTime().currentDateTime().toString().replace(' ', '_').replace(':', '-'))
+                                "Pcode_Settings" + '_' + QDateTime().currentDateTime().toString().replace(' ', '_').replace(':', '-'))
         savepath = os.path.normpath(savepath)
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
+        fileName = QFileDialog.getSaveFileName(self,
                                                      "Choose Folder", savepath,
                                                      "Pcode Settings (*)", options)
         if fileName:
             try:
-                QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+                QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
                 self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
                 shutil.make_archive(fileName, "zip",
                                     self.useData.appPathDict["settingsdir"])
             except Exception as err:
-                QtGui.QApplication.restoreOverrideCursor()
-                QtGui.QMessageBox.warning(self, "Export", str(err))
-            QtGui.QApplication.restoreOverrideCursor()
+                QApplication.restoreOverrideCursor()
+                QMessageBox.warning(self, "Export", str(err))
+            QApplication.restoreOverrideCursor()
 
     def enableAssistance(self, state):
         self.useData.set_setting_bool("EnableAssistance", state)

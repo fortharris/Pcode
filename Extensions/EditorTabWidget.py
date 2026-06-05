@@ -6,7 +6,14 @@ import traceback
 import logging
 
 from PyQt6.Qsci import QsciScintilla
-from Extensions.qt_bindings import QtCore, QtGui
+from PyQt6.QtCore import QFileSystemWatcher, Qt, QTimer, pyqtSignal
+from PyQt6.QtGui import QAction, QActionGroup, QIcon, QShortcut
+from PyQt6.QtPrintSupport import QPrintDialog, QPrinter
+from PyQt6.QtWidgets import (
+    QDialog, QFileDialog, QHBoxLayout, QMenu, QMessageBox,
+    QStackedWidget, QTabWidget, QToolButton, QVBoxLayout,
+)
+
 from Extensions.settings_utils import to_bool
 from Extensions.Diff import DiffWindow
 from Extensions.CodeEditor import CodeEditor
@@ -24,22 +31,22 @@ from Extensions.Projects.ProjectManager.ConfigureProject import ConfigureProject
 from Extensions import StyleSheet
 
 
-class EditorTabWidget(QtGui.QTabWidget):
+class EditorTabWidget(QTabWidget):
 
-    currentEditorTextChanged = QtCore.Signal()
-    bookmarksChanged = QtCore.Signal()
-    updateLinesCount = QtCore.Signal(int)
-    updateRecentFilesList = QtCore.Signal(str)
-    updateWindowTitle = QtCore.Signal(str)
-    updateEncodingLabel = QtCore.Signal(str)
-    cursorPositionChanged = QtCore.Signal()
+    currentEditorTextChanged = pyqtSignal()
+    bookmarksChanged = pyqtSignal()
+    updateLinesCount = pyqtSignal(int)
+    updateRecentFilesList = pyqtSignal(str)
+    updateWindowTitle = pyqtSignal(str)
+    updateEncodingLabel = pyqtSignal(str)
+    cursorPositionChanged = pyqtSignal()
 
     def __init__(
         self, useData, projectPathDict, projectSettings, messagesWidget, colorScheme, busyWidget, bookmarkToolbar,
             app, manageFavourites, externalLauncher, editorWindow, parent=None):
-        QtGui.QTabWidget.__init__(self, parent)
+        QTabWidget.__init__(self, parent)
 
-        self.setElideMode(QtCore.Qt.TextElideMode.ElideRight)
+        self.setElideMode(Qt.TextElideMode.ElideRight)
 
         self.useData = useData
         self.projectPathDict = projectPathDict
@@ -63,7 +70,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         # collision
         self.backupKeyDiferentiator = 0
 
-        self.backupTimer = QtCore.QTimer()
+        self.backupTimer = QTimer()
         self.backupTimer.setSingleShot(False)
         self.backupTimer.setInterval(60000)
         self.backupTimer.timeout.connect(self.createBackup)
@@ -86,14 +93,14 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.viewSwitcher = ViewSwitcher(self)
         self.gotoLineWidget = GotoLineWidget(self)
 
-        self.mainLayout = QtGui.QVBoxLayout()
+        self.mainLayout = QVBoxLayout()
         self.setLayout(self.mainLayout)
         if self.useData.SETTINGS["UI"] == "Custom":
             self.adjustToStyleSheet(True)
         else:
             self.adjustToStyleSheet(False)
 
-        self.topVBox = QtGui.QVBoxLayout()
+        self.topVBox = QVBoxLayout()
         self.mainLayout.addLayout(self.topVBox)
 
         self.mainLayout.addStretch(1)
@@ -105,7 +112,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.addToolWidget(self.viewSwitcher)
         self.addToolWidget(self.gotoLineWidget)
 
-        self.filesWatch = QtCore.QFileSystemWatcher()
+        self.filesWatch = QFileSystemWatcher()
         self.filesWatch.fileChanged.connect(self.fileChanged)
 
         self.createActions()
@@ -116,14 +123,14 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.tabBar.setMovable(True)
         self.tabBar.setTabsClosable(True)
 
-        self.openedTabsMenu = QtGui.QMenu()
+        self.openedTabsMenu = QMenu()
 
-        self.tabSelectButton = QtGui.QToolButton()
+        self.tabSelectButton = QToolButton()
         self.tabSelectButton.setAutoRaise(True)
         self.tabSelectButton.setPopupMode(
-            QtGui.QToolButton.ToolButtonPopupMode.InstantPopup)
+            QToolButton.ToolButtonPopupMode.InstantPopup)
         self.tabSelectButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "tile")))
+            QIcon(os.path.join("Resources", "images", "tile")))
         self.tabSelectButton.setMenu(self.openedTabsMenu)
 
         self.setTabBar(self.tabBar)
@@ -136,7 +143,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.setKeymap()
         self.backupTimer.start()
 
-        self.newFileMenu = QtGui.QMenu("New File")
+        self.newFileMenu = QMenu("New File")
         self.newFileMenu.addAction(self.newPythonFileAct)
         self.newFileMenu.addAction(self.newXmlFileAct)
         self.newFileMenu.addAction(self.newHtmlFileAct)
@@ -152,7 +159,7 @@ class EditorTabWidget(QtGui.QTabWidget):
             self.mainLayout.setContentsMargins(0, 24, 25, 12)
 
     def addToolWidget(self, widget):
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.addWidget(widget)
         self.topVBox.addLayout(hbox)
@@ -161,30 +168,30 @@ class EditorTabWidget(QtGui.QTabWidget):
         widget.hide()
 
     def createActions(self):
-        self.undoAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "undo")),
+        self.undoAct = QAction(
+            QIcon(os.path.join("Resources", "images", "undo")),
             "Undo", self,
             statusTip="Undo last edit action",
             triggered=self.undoAction)
 
-        self.redoAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "redo")),
+        self.redoAct = QAction(
+            QIcon(os.path.join("Resources", "images", "redo")),
             "Redo", self,
             statusTip="Redo last edit action",
             triggered=self.redoAction)
 
-        self.cutAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "cut")),
+        self.cutAct = QAction(
+            QIcon(os.path.join("Resources", "images", "cut")),
             "Cut", self,
             statusTip="Cut selected text", triggered=self.cutItem)
 
-        self.copyAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "copy")),
+        self.copyAct = QAction(
+            QIcon(os.path.join("Resources", "images", "copy")),
             "Copy", self,
             statusTip="Copy selected text", triggered=self.copyItem)
 
-        self.pasteAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "paste")),
+        self.pasteAct = QAction(
+            QIcon(os.path.join("Resources", "images", "paste")),
             "Paste", self,
             statusTip="Paste text from clipboard",
             triggered=self.pasteFromClipboard)
@@ -192,123 +199,123 @@ class EditorTabWidget(QtGui.QTabWidget):
         #----------------------------------------------------------------------
 
         self.indentAct = \
-            QtGui.QAction(
-                QtGui.QIcon(
+            QAction(
+                QIcon(
                     os.path.join("Resources", "images", "increase_indent")),
                 "Indent", self,
                 statusTip="Indent Region",
                 triggered=self.increaseIndent)
 
         self.dedentAct = \
-            QtGui.QAction(
-                QtGui.QIcon(
+            QAction(
+                QIcon(
                     os.path.join("Resources", "images", "decrease_indent")),
                 "Unindent", self,
                 statusTip="Unindent Region",
                 triggered=self.decreaseIndent)
 
         self.writeLockAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "block")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "block")),
                 "Write Lock", self,
                 statusTip="Write Lock",
                           triggered=self.writeLock)
 
         self.findNextBookmarkAct = \
-            QtGui.QAction(
-                QtGui.QIcon(
+            QAction(
+                QIcon(
                     os.path.join("Resources", "images", "Arrow2-down")),
                 "Next Bookmark", self, statusTip="Next Bookmark",
                 triggered=self.findNextBookmark)
 
         self.findPrevBookmarkAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "Arrow2-up")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "Arrow2-up")),
                 "Previous Bookmark", self, statusTip="Previous Bookmark",
                 triggered=self.findPreviousBookmark)
 
         self.removeBookmarksAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "block__")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "block__")),
                 "Remove Bookmarks", self, statusTip="Remove Bookmarks",
                 triggered=self.removeBookmarks)
         #---------------------------------------------------------------------
-        self.newPythonFileAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "new")),
+        self.newPythonFileAct = QAction(
+            QIcon(os.path.join("Resources", "images", "new")),
             "New Python File", self,
             statusTip="Create a new python file",
             triggered=self._newPythonFile)
 
-        self.newXmlFileAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "new")),
+        self.newXmlFileAct = QAction(
+            QIcon(os.path.join("Resources", "images", "new")),
             "Xml", self,
             statusTip="Create a new Xml file",
             triggered=self._newXmlFile)
 
-        self.newHtmlFileAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "new")),
+        self.newHtmlFileAct = QAction(
+            QIcon(os.path.join("Resources", "images", "new")),
             "Html", self,
             statusTip="Create a new Html file",
             triggered=self._newHtmlFile)
 
-        self.newCssFileAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "new")),
+        self.newCssFileAct = QAction(
+            QIcon(os.path.join("Resources", "images", "new")),
             "Css", self,
             statusTip="Create a new Css file",
             triggered=self._newCssFile)
 
         self.openFileAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "open_file")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "open_file")),
                 "Open File...", self,
                 statusTip="Open python file",
                           triggered=self.openFile)
 
-        self.saveAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "save_")),
+        self.saveAct = QAction(
+            QIcon(os.path.join("Resources", "images", "save_")),
             "Save", self,
             statusTip="Save", triggered=self._save)
 
         self.saveAllAct = \
-            QtGui.QAction(
-                QtGui.QIcon(
+            QAction(
+                QIcon(
                     os.path.join("Resources", "images", "disks-black")),
                 "Save All", self,
                 statusTip="Save All",
                           triggered=self.saveAll)
 
-        self.saveAsAct = QtGui.QAction("Save As...", self, statusTip="Save",
+        self.saveAsAct = QAction("Save As...", self, statusTip="Save",
                                        triggered=self.saveAs)
 
-        self.saveCopyAsAct = QtGui.QAction("Save Copy As...",
+        self.saveCopyAsAct = QAction("Save Copy As...",
                                            self, statusTip="Save Copy As",
                                            triggered=self.saveCopyAs)
 
         self.printAct = \
-            QtGui.QAction(
-                QtGui.QIcon(
+            QAction(
+                QIcon(
                     os.path.join("Resources", "images", "_0013_Printer")),
                 "Print", self,
                 statusTip="Print", triggered=self.printCode)
         #----------------------------------------------------------------------
 
         self.vSplitEditorAct = \
-            QtGui.QAction(
-                QtGui.QIcon(
+            QAction(
+                QIcon(
                     os.path.join("Resources", "images", "border-horizontal")),
                 "Split Vertical", self,
                 statusTip="Split Vertical", triggered=self.splitVertical)
 
         self.hSplitEditorAct = \
-            QtGui.QAction(
-                QtGui.QIcon(
+            QAction(
+                QIcon(
                     os.path.join("Resources", "images", "border-vertical")),
                 "Split Horizontal", self,
                 statusTip="Split Horizontal", triggered=self.splitHorizontal)
 
         self.noSplitEditorAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "border")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "border")),
                 "Remove Split", self,
                 statusTip="Remove Split", triggered=self.removeSplit)
 
@@ -365,12 +372,12 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def splitVertical(self):
         splitter = self.currentWidget().widget(0)
-        splitter.setOrientation(QtCore.Qt.Vertical)
+        splitter.setOrientation(Qt.Orientation.Vertical)
         splitter.widget(1).show()
 
     def splitHorizontal(self):
         splitter = self.currentWidget().widget(0)
-        splitter.setOrientation(QtCore.Qt.Horizontal)
+        splitter.setOrientation(Qt.Orientation.Horizontal)
         splitter.widget(1).show()
 
     def removeSplit(self):
@@ -524,13 +531,13 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.setCurrentIndex(action.data())
 
     def updateOpenedTabsMenu(self):
-        self.openedTabsActionGroup = QtGui.QActionGroup(self)
+        self.openedTabsActionGroup = QActionGroup(self)
         self.openedTabsActionGroup.setExclusive(True)
         self.openedTabsActionGroup.triggered.connect(self.makeCurrentTab)
         self.openedTabsMenu.clear()
         for i in range(self.count()):
             name = self.tabText(i)
-            action = QtGui.QAction(name, self)
+            action = QAction(name, self)
             action.setCheckable(True)
             if self.currentIndex() == i:
                 action.setChecked(True)
@@ -581,16 +588,16 @@ class EditorTabWidget(QtGui.QTabWidget):
         if self.focusedEditor().isReadOnly() is False:
             self.focusedEditor().setReadOnly(True)
             self.setTabIcon(self.currentIndex(),
-                            QtGui.QIcon(os.path.join("Resources", "images", "locked_script")))
+                            QIcon(os.path.join("Resources", "images", "locked_script")))
         else:
             self.focusedEditor().setReadOnly(False)
             if self.getEditorData("fileType") == "python":
                 if self.focusedEditor().isModified():
                     self.setTabIcon(self.currentIndex(),
-                                    QtGui.QIcon(os.path.join("Resources", "images", "script_grey")))
+                                    QIcon(os.path.join("Resources", "images", "script_grey")))
                 else:
                     self.setTabIcon(self.currentIndex(),
-                                    QtGui.QIcon(os.path.join("Resources", "images", "script")))
+                                    QIcon(os.path.join("Resources", "images", "script")))
             else:
                 self.setTabIcon(self.currentIndex(),
                                 Global.iconFromPath(self.getEditorData("filePath")))
@@ -604,10 +611,10 @@ class EditorTabWidget(QtGui.QTabWidget):
         editor.findPreviousBookmark()
 
     def removeBookmarks(self):
-        reply = QtGui.QMessageBox.warning(self, "Remove Bookmarks",
+        reply = QMessageBox.warning(self, "Remove Bookmarks",
                                           "Do you really want to remove all bookmarks?",
-                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             pass
         else:
             return
@@ -695,12 +702,12 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def requestSaveMess(self, tabIndex):
         mess = "Save changes to '{0}'?".format(self.tabText(tabIndex))
-        reply = QtGui.QMessageBox.information(self, "Save", mess,
-                                              QtGui.QMessageBox.Save | QtGui.QMessageBox.Discard |
-                                              QtGui.QMessageBox.Cancel)
-        if reply == QtGui.QMessageBox.Save:
+        reply = QMessageBox.information(self, "Save", mess,
+                                              QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard |
+                                              QMessageBox.StandardButton.Cancel)
+        if reply == QMessageBox.StandardButton.Save:
             self.save()
-        elif reply == QtGui.QMessageBox.Discard:
+        elif reply == QMessageBox.StandardButton.Discard:
             if self.count() == 1:
                 self.newFile()
             self.removeTabBackup(tabIndex)
@@ -746,13 +753,13 @@ class EditorTabWidget(QtGui.QTabWidget):
             return False
 
     def saveAs(self, index=None, copyOnly=False):
-        options = QtGui.QFileDialog.Options()
         filter = self.getFilter()
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
-                                                     "Save As", os.path.join(self.useData.getLastOpenedDir(),
-                                                                             self.getTabName()), filter, options)
+        fileName, _ = QFileDialog.getSaveFileName(
+            self, "Save As",
+            os.path.join(self.useData.getLastOpenedDir(), self.getTabName()),
+            filter)
         if fileName:
-            self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
+            self.useData.saveLastOpenedDir(os.path.dirname(fileName))
             try:
                 if index is None:
                     index = self.currentIndex()
@@ -813,20 +820,20 @@ class EditorTabWidget(QtGui.QTabWidget):
 
     def saveErrorMess(self, mess):
 
-        QtGui.QMessageBox.critical(self,
+        QMessageBox.critical(self,
                                              "Save", "Error saving file!\n\n" + mess)
 
     def printCode(self):
         document = self.currentEditor.document()
-        printer = QtGui.QPrinter()
+        printer = QPrinter()
 
-        dlg = QtGui.QPrintDialog(printer, self)
-        if dlg.exec() != QtGui.QDialog.Accepted:
+        dlg = QPrintDialog(printer, self)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
             return
         document.print_(printer)
 
     def openFile(self):
-        fileName = QtGui.QFileDialog.getOpenFileName(self,
+        fileName = QFileDialog.getOpenFileName(self,
                                                      "Select File", self.useData.getLastOpenedDir(
                                                      ),
                                                      "All Files (*);;Console (*.py);;No Console (*.pyw);;Xml (*.xml);;Html (*.html);;Css (*.css)")
@@ -887,7 +894,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         snapShot.setEolMode(mode)
 
         snapShot.setReadOnly(True)
-        subStack = QtGui.QStackedWidget()
+        subStack = QStackedWidget()
         editorSplitter = EditorSplitter(editor, editor2, DATA, self, subStack)
         editor2.setDocument(editor.document())
         subStack.addWidget(editorSplitter)
@@ -900,7 +907,7 @@ class EditorTabWidget(QtGui.QTabWidget):
         subStack.addWidget(diffWindow)
 
         if extension in self.useData.supportedFileTypes:
-            icon = QtGui.QIcon(os.path.join("Resources", "images", "script"))
+            icon = QIcon(os.path.join("Resources", "images", "script"))
         else:
             icon = Global.iconFromPath(filePath)
         if index is None:
@@ -991,56 +998,56 @@ class EditorTabWidget(QtGui.QTabWidget):
         self.tabBar.setKeymap()
         shortcuts = self.useData.CUSTOM_SHORTCUTS
 
-        self.shortSplitVertical = QtGui.QShortcut(
+        self.shortSplitVertical = QShortcut(
             shortcuts["Ide"]["Split-Vertical"], self)
         self.shortSplitVertical.activatedAmbiguously.connect(
             self.splitVertical)
         self.vSplitEditorAct.setShortcut(shortcuts["Ide"]["Split-Vertical"])
 
-        self.shortSplitHorizontal = QtGui.QShortcut(
+        self.shortSplitHorizontal = QShortcut(
             shortcuts["Ide"]["Split-Horizontal"], self)
         self.shortSplitHorizontal.activatedAmbiguously.connect(
             self.splitHorizontal)
         self.hSplitEditorAct.setShortcut(
             shortcuts["Ide"]["Split-Horizontal"])
 
-        self.shortRemoveSplit = QtGui.QShortcut(
+        self.shortRemoveSplit = QShortcut(
             shortcuts["Ide"]["Remove-Split"], self)
         self.shortRemoveSplit.activatedAmbiguously.connect(self.removeSplit)
         self.noSplitEditorAct.setShortcut(shortcuts["Ide"]["Remove-Split"])
 
-        self.shortChangeTab = QtGui.QShortcut(
+        self.shortChangeTab = QShortcut(
             shortcuts["Ide"]["Change-Tab"], self)
         self.shortChangeTab.activated.connect(self.changeTab)
 
-        self.shortReverseTab = QtGui.QShortcut(
+        self.shortReverseTab = QShortcut(
             shortcuts["Ide"]["Change-Tab-Reverse"], self)
         self.shortReverseTab.activated.connect(self.reverseTab)
 
-        self.shortChangeSplitFocus = QtGui.QShortcut(
+        self.shortChangeSplitFocus = QShortcut(
             shortcuts["Ide"]["Change-Split-Focus"], self)
         self.shortChangeSplitFocus.activated.connect(self.changeSplitFocus)
 
-        self.shortNewFile = QtGui.QShortcut(
+        self.shortNewFile = QShortcut(
             shortcuts["Ide"]["New-File"], self)
         self.shortNewFile.activatedAmbiguously.connect(self._newPythonFile)
         self.newPythonFileAct.setShortcut(shortcuts["Ide"]["New-File"])
 
-        self.shortOpenFile = QtGui.QShortcut(
+        self.shortOpenFile = QShortcut(
             shortcuts["Ide"]["Open-File"], self)
         self.shortOpenFile.activatedAmbiguously.connect(self.openFile)
         self.openFileAct.setShortcut(shortcuts["Ide"]["New-File"])
 
-        self.shortSaveFile = QtGui.QShortcut(
+        self.shortSaveFile = QShortcut(
             shortcuts["Ide"]["Save-File"], self)
         self.shortSaveFile.activatedAmbiguously.connect(self._save)
         self.saveAct.setShortcut(shortcuts["Ide"]["Save-File"])
 
-        self.shortSaveAll = QtGui.QShortcut(
+        self.shortSaveAll = QShortcut(
             shortcuts["Ide"]["Save-All"], self)
         self.shortSaveAll.activatedAmbiguously.connect(self.saveAll)
         self.saveAllAct.setShortcut(shortcuts["Ide"]["Save-All"])
 
-        self.shortPrint = QtGui.QShortcut(shortcuts["Ide"]["Print"], self)
+        self.shortPrint = QShortcut(shortcuts["Ide"]["Print"], self)
         self.shortPrint.activatedAmbiguously.connect(self.printCode)
         self.printAct.setShortcut(shortcuts["Ide"]["Print"])

@@ -1,43 +1,49 @@
 import os
-from Extensions.qt_bindings import QtCore, QtGui
+
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (
+    QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox,
+    QPushButton, QSplitter, QTextEdit, QToolButton, QVBoxLayout,
+)
 
 
-class GetName(QtGui.QDialog):
+class GetName(QDialog):
 
     def __init__(self, caption, path, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle(caption)
 
         self.path = path
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         self.setLayout(mainLayout)
-        mainLayout.addWidget(QtGui.QLabel("Name:"))
+        mainLayout.addWidget(QLabel("Name:"))
 
-        self.nameLine = QtGui.QLineEdit()
+        self.nameLine = QLineEdit()
         self.nameLine.selectAll()
         self.nameLine.textChanged.connect(self.enableAcceptButton)
         mainLayout.addWidget(self.nameLine)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        self.statusLabel = QtGui.QLabel()
+        self.statusLabel = QLabel()
         hbox.addWidget(self.statusLabel)
 
-        self.statusLabel = QtGui.QLabel("")
+        self.statusLabel = QLabel("")
         hbox.addWidget(self.statusLabel)
 
         hbox.addStretch(1)
 
-        self.acceptButton = QtGui.QPushButton("Ok")
+        self.acceptButton = QPushButton("Ok")
         self.acceptButton.setDisabled(True)
         self.acceptButton.clicked.connect(self.accept)
         hbox.addWidget(self.acceptButton)
 
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QPushButton("Cancel")
         self.cancelButton.clicked.connect(self.close)
         hbox.addWidget(self.cancelButton)
 
@@ -67,10 +73,10 @@ class GetName(QtGui.QDialog):
         self.close()
 
 
-class SnippetsManager(QtGui.QDialog):
+class SnippetsManager(QDialog):
 
     def __init__(self, path, parent):
-        QtGui.QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent)
 
         self.setWindowTitle("Snippets")
         self.setAcceptDrops(True)
@@ -78,18 +84,18 @@ class SnippetsManager(QtGui.QDialog):
 
         self.path = path
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
 
-        self.mainSplitter = QtGui.QSplitter()
+        self.mainSplitter = QSplitter()
 
-        self.snippetsListWidget = QtGui.QListWidget()
+        self.snippetsListWidget = QListWidget()
         self.snippetsListWidget.setSortingEnabled(True)
         self.snippetsListWidget.itemPressed.connect(self.loadSnippet)
         self.snippetsListWidget.currentItemChanged.connect(self.loadSnippet)
 
         self.mainSplitter.addWidget(self.snippetsListWidget)
 
-        self.snippetViewer = QtGui.QTextEdit()
+        self.snippetViewer = QTextEdit()
         self.snippetViewer.setReadOnly(True)
         self.snippetViewer.setAcceptDrops(False)
         self.mainSplitter.addWidget(self.snippetViewer)
@@ -101,33 +107,33 @@ class SnippetsManager(QtGui.QDialog):
 
         mainLayout.addWidget(self.mainSplitter)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
-        self.addButton = QtGui.QToolButton()
+        self.addButton = QToolButton()
         self.addButton.setAutoRaise(True)
         self.addButton.setToolTip("Add")
-        self.addButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "add")))
+        self.addButton.setIcon(QIcon(os.path.join("Resources", "images", "add")))
         self.addButton.clicked.connect(self.addSnippet)
         hbox.addWidget(self.addButton)
 
-        self.removeButton = QtGui.QToolButton()
+        self.removeButton = QToolButton()
         self.removeButton.setAutoRaise(True)
         self.removeButton.setToolTip("Remove")
-        self.removeButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "minus")))
+        self.removeButton.setIcon(QIcon(os.path.join("Resources", "images", "minus")))
         self.removeButton.clicked.connect(self.removeSnippet)
         hbox.addWidget(self.removeButton)
 
-        self.renameButton = QtGui.QToolButton()
+        self.renameButton = QToolButton()
         self.renameButton.setAutoRaise(True)
         self.renameButton.setToolTip("Rename")
-        self.renameButton.setIcon(QtGui.QIcon(
+        self.renameButton.setIcon(QIcon(
             os.path.join("Resources", "images", "ui-text-field")))
         self.renameButton.clicked.connect(self.renameSnippet)
         hbox.addWidget(self.renameButton)
 
         hbox.addStretch(1)
 
-        self.saveButton = QtGui.QPushButton("Save")
+        self.saveButton = QPushButton("Save")
         self.saveButton.clicked.connect(self.saveSnippet)
         hbox.addWidget(self.saveButton)
 
@@ -153,20 +159,20 @@ class SnippetsManager(QtGui.QDialog):
             event.ignore()
 
     def eventFilter(self, obj, event):
-        if event.type() in (QtCore.QEvent.Type.DragEnter,
-                            QtCore.QEvent.Type.DragMove):
+        if event.type() in (QEvent.Type.DragEnter,
+                            QEvent.Type.DragMove):
             if event.mimeData().hasText():
                 event.acceptProposedAction()
                 return True
-        if event.type() == QtCore.QEvent.Type.Drop:
+        if event.type() == QEvent.Type.Drop:
             self.dropEvent(event)
             return True
-        return QtGui.QDialog.eventFilter(self, obj, event)
+        return QDialog.eventFilter(self, obj, event)
 
     def dropEvent(self, event):
         if event.mimeData().hasText():
             mime = event.mimeData()
-            event.setDropAction(QtCore.Qt.CopyAction)
+            event.setDropAction(Qt.DropAction.CopyAction)
             snippet = GetName("Add Snippet", self.path, self)
             if snippet.accepted:
                 with open(os.path.join(self.path, snippet.name), 'w') as file:
@@ -174,7 +180,7 @@ class SnippetsManager(QtGui.QDialog):
 
                 self.loadSnippetList()
                 found = self.snippetsListWidget.findItems(snippet.name,
-                                                          QtCore.Qt.MatchCaseSensitive)
+                                                          Qt.MatchFlag.MatchCaseSensitive)
                 item = found[0]
                 self.snippetsListWidget.setCurrentItem(item)
         else:
@@ -188,7 +194,7 @@ class SnippetsManager(QtGui.QDialog):
 
             self.loadSnippetList()
             found = self.snippetsListWidget.findItems(snippet.name,
-                                                      QtCore.Qt.MatchCaseSensitive)
+                                                      Qt.MatchFlag.MatchCaseSensitive)
             item = found[0]
             self.snippetsListWidget.setCurrentItem(item)
 
@@ -209,7 +215,7 @@ class SnippetsManager(QtGui.QDialog):
 
             self.loadSnippetList()
             found = self.snippetsListWidget.findItems(new_name,
-                                                      QtCore.Qt.MatchCaseSensitive)
+                                                      Qt.MatchFlag.MatchCaseSensitive)
             item = found[0]
             self.snippetsListWidget.setCurrentItem(item)
 
@@ -217,12 +223,12 @@ class SnippetsManager(QtGui.QDialog):
         name = self.snippetsListWidget.currentItem().text()
 
         mess = 'Remove "{0}" from snippets?'.format(name)
-        reply = QtGui.QMessageBox.warning(self, "Remove", mess,
-                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+        reply = QMessageBox.warning(self, "Remove", mess,
+                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             os.remove(os.path.join(self.path, name))
             self.loadSnippetList()
-        elif reply == QtGui.QMessageBox.No:
+        elif reply == QMessageBox.StandardButton.No:
             pass
 
     def loadSnippetList(self):

@@ -1,43 +1,45 @@
-from Extensions.qt_bindings import QtCore, QtGui
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QAction
+from PyQt6.QtWidgets import QMenu, QTreeWidget, QTreeWidgetItem
 
 
-class ModuleCompletion(QtGui.QTreeWidget):
+class ModuleCompletion(QTreeWidget):
 
     def __init__(self, useData, parent=None):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
 
         self.useData = useData
 
         self.setHeaderLabel("Modules")
         for i, v in self.useData.libraryDict.items():
-            item = QtGui.QTreeWidgetItem(self)
+            item = QTreeWidgetItem(self)
             item.setCheckState(0, False)
             item.setText(0, i)
             item.setCheckState(0, 2)
 
             for sub in v[0]:
-                subItem = QtGui.QTreeWidgetItem(item)
+                subItem = QTreeWidgetItem(item)
                 subItem.setText(0, sub)
 
         self.createActions()
 
     def createActions(self):
-        self.addItemAct = QtGui.QAction(
+        self.addItemAct = QAction(
             "Add Library", self, statusTip="Add Library", triggered=self.addLibrary)
 
         self.removeItemAct = \
-            QtGui.QAction(
+            QAction(
                 "Remove Library", self, statusTip="Remove Library", triggered=self.removeLibrary)
 
         self.addModuleAct = \
-            QtGui.QAction(
+            QAction(
                 "Add Module", self, statusTip="Add Module", triggered=self.addModule)
 
         self.removeModuleAct = \
-            QtGui.QAction(
+            QAction(
                 "Remove Module", self, statusTip="Remove Module", triggered=self.removeModule)
 
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.contextMenu.addAction(self.addItemAct)
         self.contextMenu.addAction(self.removeItemAct)
         self.contextMenu.addSeparator()
@@ -57,9 +59,9 @@ class ModuleCompletion(QtGui.QTreeWidget):
             parent = self.selectedItem
         else:
             parent = self.selectedParent
-        newItem = QtGui.QTreeWidgetItem()
-        newItem.setFlags(QtCore.Qt.ItemIsEditable |
-                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        newItem = QTreeWidgetItem()
+        newItem.setFlags(Qt.ItemFlag.ItemIsEditable |
+                         Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
         parent.insertChild(self.cu, newItem)
         self.editItem(newItem)
 
@@ -76,9 +78,9 @@ class ModuleCompletion(QtGui.QTreeWidget):
             parent = self.selectedItem
         else:
             parent = self.selectedParent
-        newItem = QtGui.QTreeWidgetItem()
-        newItem.setFlags(QtCore.Qt.ItemIsEditable |
-                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        newItem = QTreeWidgetItem()
+        newItem.setFlags(Qt.ItemFlag.ItemIsEditable |
+                         Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
         parent.insertChild(self.cu, newItem)
         self.editItem(newItem)
 

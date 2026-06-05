@@ -6,7 +6,14 @@ import tokenize
 from io import StringIO
 
 from PyQt6.Qsci import QsciScintilla
-from Extensions.qt_bindings import font_metrics_width,  QtCore, QtGui
+from PyQt6.QtCore import QPointF, Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import (
+    QAction, QColor, QFont, QFontMetrics, QIcon, QPixmap, QShortcut,
+    QToolTip,
+)
+from PyQt6.QtWidgets import QHBoxLayout, QMenu, QMessageBox, QVBoxLayout
+
+from Extensions.qt_bindings import font_metrics_width
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions.ZoomWidget import ZoomWidget
@@ -16,7 +23,7 @@ from Extensions import StyleSheet
 from rope.contrib import codeassist
 
 
-class TokenizeThread(QtCore.QThread):
+class TokenizeThread(QThread):
 
     def run(self):
         self.tokenList = []
@@ -36,9 +43,9 @@ class TokenizeThread(QtCore.QThread):
         self.start()
 
 
-class DocThread(QtCore.QThread):
+class DocThread(QThread):
 
-    docAvailable = QtCore.Signal(str, int)
+    docAvailable = pyqtSignal(str, int)
 
     def run(self):
         try:
@@ -56,9 +63,9 @@ class DocThread(QtCore.QThread):
         self.start()
 
 
-class AutoCompletionThread(QtCore.QThread):
+class AutoCompletionThread(QThread):
 
-    completionsAvailable = QtCore.Signal(list)
+    completionsAvailable = pyqtSignal(list)
 
     def run(self):
         completions = self.completions()
@@ -260,7 +267,7 @@ class CodeEditor(BaseScintilla):
 
         self.setMouseTracking(True)
         self.middleMousePressed = False
-        self.mousePosition = QtCore.QPointF()
+        self.mousePosition = QPointF()
 
         self.autoCompletionThread = AutoCompletionThread()
         self.autoCompletionThread.completionsAvailable.connect(self.showCompletions)
@@ -269,7 +276,7 @@ class CodeEditor(BaseScintilla):
         self.docThread.docAvailable.connect(
             self.showDoc)
 
-        self.docThreadTimer = QtCore.QTimer()
+        self.docThreadTimer = QTimer()
         self.docThreadTimer.setSingleShot(True)
         self.docThreadTimer.timeout.connect(self.getDoc)
 
@@ -277,15 +284,15 @@ class CodeEditor(BaseScintilla):
         self.tokenizeThread.finished.connect(
             self.displayTokenLines)
 
-        self.tokenizeTimer = QtCore.QTimer()
+        self.tokenizeTimer = QTimer()
         self.tokenizeTimer.setSingleShot(True)
         self.tokenizeTimer.timeout.connect(self.getOperationTokens)
 
-        self.completionThreadTimer = QtCore.QTimer()
+        self.completionThreadTimer = QTimer()
         self.completionThreadTimer.setSingleShot(True)
         self.completionThreadTimer.timeout.connect(self.startCompletion)
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
@@ -293,7 +300,7 @@ class CodeEditor(BaseScintilla):
 
         #
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.setContentsMargins(0, 0, 20, 0)
         mainLayout.addLayout(hbox)
@@ -303,7 +310,7 @@ class CodeEditor(BaseScintilla):
 
         #
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.setContentsMargins(5, 0, 10, 20)
         mainLayout.addLayout(hbox)
@@ -321,26 +328,26 @@ class CodeEditor(BaseScintilla):
         " Initialises indicators "
         self.syntaxErrorIndicator = self.indicatorDefine(
             QsciScintilla.IndicatorStyle.SquiggleIndicator, 8)
-        self.setIndicatorForegroundColor(QtGui.QColor(
+        self.setIndicatorForegroundColor(QColor(
             "#FF0000"), self.syntaxErrorIndicator)
         self.setIndicatorDrawUnder(True, self.syntaxErrorIndicator)
 
         self.searchIndicator = self.indicatorDefine(
             QsciScintilla.IndicatorStyle.RoundBoxIndicator, 10)
         self.setIndicatorForegroundColor(
-            QtGui.QColor("#FFDB4A"), self.searchIndicator)
+            QColor("#FFDB4A"), self.searchIndicator)
         self.setIndicatorDrawUnder(True, self.searchIndicator)
 
         self.userListActivated.connect(self.insertText)
 
-        self.copyAvailableTimer = QtCore.QTimer()
+        self.copyAvailableTimer = QTimer()
         self.copyAvailableTimer.setSingleShot(True)
         self.copyAvailableTimer.setInterval(0)
         self.copyAvailableTimer.timeout.connect(self.copyActModifier)
 
         self.copyAvailable.connect(self.copyAvailableTimer.start)
 
-        self.textChangedTimer = QtCore.QTimer()
+        self.textChangedTimer = QTimer()
         self.textChangedTimer.setSingleShot(True)
         self.textChangedTimer.setInterval(0)
         self.textChangedTimer.timeout.connect(self.undoActModifier)
@@ -354,12 +361,12 @@ class CodeEditor(BaseScintilla):
         self.marginClicked.connect(self.toggleBookmark)
 
         # define the font to use
-        font = QtGui.QFont("Courier New")
+        font = QFont("Courier New")
         font.setFixedPitch(True)
         font.setPointSize(10)
         # the font metrics here will help
         # building the margin width later
-        self.fontMetrics = QtGui.QFontMetrics(font)
+        self.fontMetrics = QFontMetrics(font)
 
         self.setUtf8(True)
         self.setAutoIndent(True)
@@ -417,26 +424,26 @@ class CodeEditor(BaseScintilla):
         # the background markers will not show until the editor has focus
         self.breakpointMarker = self.markerDefine(
             QsciScintilla.MarkerSymbol.Background)
-        self.setMarkerForegroundColor(QtGui.QColor("#000000"),
+        self.setMarkerForegroundColor(QColor("#000000"),
                                       self.breakpointMarker)
-        self.setMarkerBackgroundColor(QtGui.QColor("#ffe1e1"),
+        self.setMarkerBackgroundColor(QColor("#ffe1e1"),
                                       self.breakpointMarker)
 
-        self.markerDefine(QtGui.QPixmap(
+        self.markerDefine(QPixmap(
             os.path.join("Resources", "images", "ui-button-navigation")), 8)
-        self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 8)
+        self.setMarkerBackgroundColor(QColor("#ee1111"), 8)
 
         self.markerDefine(
-            QtGui.QPixmap(os.path.join("Resources", "images", "err_mark")), 9)
-        self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 9)
+            QPixmap(os.path.join("Resources", "images", "err_mark")), 9)
+        self.setMarkerBackgroundColor(QColor("#ee1111"), 9)
 
         self.markerDefine(
-            QtGui.QPixmap(os.path.join("Resources", "images", "brk_point")), 10)
-        self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 10)
+            QPixmap(os.path.join("Resources", "images", "brk_point")), 10)
+        self.setMarkerBackgroundColor(QColor("#ee1111"), 10)
 
         self.markerDefine(QsciScintilla.MarkerSymbol.VerticalLine, 11)
-        self.setMarkerBackgroundColor(QtGui.QColor("#EEEE11"), 11)
-        self.setMarkerForegroundColor(QtGui.QColor("#EEEE11"), 11)
+        self.setMarkerBackgroundColor(QColor("#EEEE11"), 11)
+        self.setMarkerForegroundColor(QColor("#EEEE11"), 11)
         self.setMarginWidth(3, font_metrics_width(self.fontMetrics, "0"))
 
         mask = (1 << 8) | (1 << 9)
@@ -479,7 +486,7 @@ class CodeEditor(BaseScintilla):
         if self.isListActive():
             return
         if doc is not None:
-            QtGui.QToolTip.showText(self.lastHoverPos, doc, self)
+            QToolTip.showText(self.lastHoverPos, doc, self)
 
     def getDoc(self):
         self.docThread.doc(
@@ -491,7 +498,7 @@ class CodeEditor(BaseScintilla):
 
     def mousePressEvent(self, event):
         button = event.button()
-        if button == QtCore.Qt.MidButton or button == QtCore.Qt.MiddleButton:
+        if button == Qt.MouseButton.MiddleButton or button == Qt.MouseButton.MiddleButton:
             self.middleMousePressed = True
         else:
             self.middleMousePressed = False
@@ -503,7 +510,7 @@ class CodeEditor(BaseScintilla):
             self.lastHoverPos = event.globalPosition().toPoint()
             self.hoverOffset = self.positionFromPoint(event.pos())
 
-            QtGui.QToolTip.hideText()
+            QToolTip.hideText()
             self.startDocTimer()
 
         # resize view if middle mouse button is held down
@@ -528,62 +535,62 @@ class CodeEditor(BaseScintilla):
         super(CodeEditor, self).mouseMoveEvent(event)
 
     def createActions(self):
-        self.cutAct = QtGui.QAction(
+        self.cutAct = QAction(
             "Cut", self,
             statusTip="Cut selected text", triggered=self.cut)
 
-        self.copyAct = QtGui.QAction(
+        self.copyAct = QAction(
             "Copy", self,
             statusTip="Copy selected text", triggered=self.copy)
 
-        self.pasteAct = QtGui.QAction(
+        self.pasteAct = QAction(
             "Paste", self,
             statusTip="Paste text from clipboard",
             triggered=self.paste)
 
         self.selectToMatchingBraceAct = \
-            QtGui.QAction(
+            QAction(
                 "Select to Matching Brace", self,
                 statusTip="Select to Matching Brace",
                           triggered=self.selectToMatchingBrace)
 
         self.snippetsAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "edit2")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "edit2")),
                 "Insert Snippet...", self,
                 statusTip="Insert Snippet...",
                           triggered=self.showSnippets)
 
         self.toggleBookmarkAct = \
-            QtGui.QAction(
+            QAction(
                 "Toggle Bookmark", self,
                 statusTip="Toggle Bookmark",
                 triggered=self._toggleBookmark)
 
         self.toggleBreakpointAct = \
-            QtGui.QAction(
+            QAction(
                 "Toggle Line Breakpoint", self,
                 statusTip="Toggle Line Breakpoint",
                 triggered=self.toggleLineBreakpoint)
 
         self.takeSnapshotAct = \
-            QtGui.QAction("Take Snapshot", self,
+            QAction("Take Snapshot", self,
                           statusTip="Take Snapshot",
                           triggered=self.takeSnapshot)
 
-        self.zoomAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "zoom")),
+        self.zoomAct = QAction(
+            QIcon(os.path.join("Resources", "images", "zoom")),
             "Zoom", self,
             statusTip="Zoom", triggered=self.showZoomWidget)
 
         self.indentationGuideAct = \
-            QtGui.QAction(
+            QAction(
                 "Indentation Guide", self,
                 statusTip="Indentation Guide",
                           triggered=self.showIndentationGuide)
         self.indentationGuideAct.setCheckable(True)
 
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.contextMenu.addAction(self.snippetsAct)
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.cutAct)
@@ -698,10 +705,10 @@ class CodeEditor(BaseScintilla):
         self.moveCursorWordRight()
 
     def takeSnapshot(self):
-        reply = QtGui.QMessageBox.warning(self, "Snapshot",
+        reply = QMessageBox.warning(self, "Snapshot",
                                           "Take a snapshot of the current module state?",
-                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             subStack = self.editorTabWidget.currentWidget()
             subStack.widget(1).setText(self.text())
         else:
@@ -905,42 +912,42 @@ class CodeEditor(BaseScintilla):
         self.copyAct.setShortcut(shortcuts["Editor"]["Copy-Selection"][0])
         self.pasteAct.setShortcut(shortcuts["Editor"]["Paste"][0])
 
-        self.shortSnippets = QtGui.QShortcut(
+        self.shortSnippets = QShortcut(
             shortcuts["Ide"]["Snippets"], self)
         self.shortSnippets.activated.connect(self.showSnippets)
 
-        self.shortIndentationGuide = QtGui.QShortcut(
+        self.shortIndentationGuide = QShortcut(
             shortcuts["Ide"]["Toggle-Indentation-Guide"], self)
         self.shortIndentationGuide.activated.connect(self.showIndentationGuide)
 
-        self.shortShowCompletion = QtGui.QShortcut(
+        self.shortShowCompletion = QShortcut(
             shortcuts["Ide"]["Show-Completion"], self)
         self.shortShowCompletion.activated.connect(self.startCompletion)
 
-        self.shortToggleBreakpoint = QtGui.QShortcut(
+        self.shortToggleBreakpoint = QShortcut(
             shortcuts["Ide"]["Toggle-Breakpoint"], self)
         self.shortToggleBreakpoint.activated.connect(self.toggleLineBreakpoint)
 
-        self.shortNextBookmark = QtGui.QShortcut(
+        self.shortNextBookmark = QShortcut(
             shortcuts["Ide"]["Next-Bookmark"], self)
         self.shortNextBookmark.activated.connect(self.findNextBookmark)
 
-        self.shortPreviousBookmark = QtGui.QShortcut(
+        self.shortPreviousBookmark = QShortcut(
             shortcuts["Ide"]["Previous-Bookmark"], self)
         self.shortPreviousBookmark.activated.connect(self.findPreviousBookmark)
 
-        self.shortComment = QtGui.QShortcut(
+        self.shortComment = QShortcut(
             shortcuts["Ide"]["Comment"], self)
         self.shortComment.activated.connect(self.comment)
 
-        self.shortUncomment = QtGui.QShortcut(
+        self.shortUncomment = QShortcut(
             shortcuts["Ide"]["Uncomment"], self)
         self.shortUncomment.activated.connect(self.unComment)
 
-        self.shortZoomIn = QtGui.QShortcut(
+        self.shortZoomIn = QShortcut(
             shortcuts["Editor"]["Zoom-In"][0], self)
         self.shortZoomIn.activated.connect(self.zoomWidget.zoomIn)
 
-        self.shortZoomOut = QtGui.QShortcut(
+        self.shortZoomOut = QShortcut(
             shortcuts["Editor"]["Zoom-Out"][0], self)
         self.shortZoomOut.activated.connect(self.zoomWidget.zoomOut)

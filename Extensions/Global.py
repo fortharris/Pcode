@@ -1,10 +1,10 @@
-
 import sys
-from Extensions.qt_bindings import QtGui, QtCore
+
+from PyQt6.QtCore import QFileInfo
+from PyQt6.QtGui import QFileIconProvider, QFont
 
 
 def getDefaultFont():
-    # Platform specific fonts
     if sys.platform == 'win32':
         font = 'Lucida Console'
         font_size = 9
@@ -15,12 +15,10 @@ def getDefaultFont():
         font = 'Bitstream Vera Sans Mono'
         font_size = 10
 
-    return QtGui.QFont(font, font_size)
+    return QFont(font, font_size)
 
 
 def iconFromPath(path):
-    fileInfo = QtCore.QFileInfo(path)
-    iconProvider = QtGui.QFileIconProvider()
-    icon = iconProvider.icon(fileInfo)
-
-    return icon
+    fileInfo = QFileInfo(path)
+    iconProvider = QFileIconProvider()
+    return iconProvider.icon(fileInfo)

@@ -13,6 +13,7 @@
 - Peel `Outline`, `TasksWidget`, `MiniMap`, and `Diff` to direct PyQt6 imports
 - Peel `editor_tab_bar`, snapshots, `tab_io`, build/project-manager dialogs, and profiler widgets to PyQt6
 - Peel `Assistant`, `RunWidget`, and `Refactor` to direct PyQt6 imports
+- Peel `EditorTabWidget`, `CodeEditor`, `TextEditor`, `BaseScintilla`, and settings stack to PyQt6
 
 ### Features
 - Command palette (Ctrl+Shift+P) with fuzzy multi-token filter, keymap entries, project switching

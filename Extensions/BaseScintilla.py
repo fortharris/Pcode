@@ -1,12 +1,16 @@
 import re
+
 from PyQt6.Qsci import QsciScintilla, QsciCommand
-from Extensions.qt_bindings import font_metrics_width, QtGui, QtCore
+from PyQt6.QtCore import QPoint, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor
+
+from Extensions.qt_bindings import font_metrics_width
 from Extensions.settings_utils import to_bool
 
 
-class FindOccurenceThread(QtCore.QThread):
+class FindOccurenceThread(QThread):
 
-    markOccurrence = QtCore.Signal(list)
+    markOccurrence = pyqtSignal(list)
 
     def run(self):
         word = re.escape(self.word)
@@ -44,13 +48,13 @@ class BaseScintilla(QsciScintilla):
         self.matchIndicator = self.indicatorDefine(
             QsciScintilla.IndicatorStyle.BoxIndicator, 9)
         self.setIndicatorForegroundColor(
-            QtGui.QColor("#FFCC00"), self.matchIndicator)
+            QColor("#FFCC00"), self.matchIndicator)
         self.setIndicatorDrawUnder(True, self.matchIndicator)
 
         self.findOccurenceThread = FindOccurenceThread()
         self.findOccurenceThread.markOccurrence.connect(self.markOccurence)
 
-        self.occurrencesTimer = QtCore.QTimer()
+        self.occurrencesTimer = QTimer()
         self.occurrencesTimer.setSingleShot(True)
         self.occurrencesTimer.timeout.connect(self.findOccurrences)
 
@@ -722,7 +726,7 @@ class BaseScintilla(QsciScintilla):
 
     def get_absolute_coordinates(self):
         cx, cy = self.coordinates('cursor')
-        qPoint = QtCore.QPoint(cx, cy)
+        qPoint = QPoint(cx, cy)
         point = self.mapToGlobal(qPoint)
         return point
 
