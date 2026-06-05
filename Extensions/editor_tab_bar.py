@@ -3,13 +3,14 @@
 import ctypes
 import os
 
-from Extensions.qt_bindings import QtGui
+from PyQt6.QtGui import QAction, QIcon, QShortcut
+from PyQt6.QtWidgets import QMenu, QMessageBox, QTabBar
 
 
-class EditorTabBar(QtGui.QTabBar):
+class EditorTabBar(QTabBar):
 
     def __init__(self, app, renameFileAct, moduleToPackageAct, parent):
-        QtGui.QTabBar.__init__(self, parent)
+        QTabBar.__init__(self, parent)
 
         self.setExpanding(True)
         self.setDrawBase(False)
@@ -24,7 +25,7 @@ class EditorTabBar(QtGui.QTabBar):
     def setKeymap(self):
         shortcuts = self.editorTabWidget.useData.CUSTOM_SHORTCUTS
 
-        self.shortSplitFileReload = QtGui.QShortcut(
+        self.shortSplitFileReload = QShortcut(
             shortcuts["Ide"]["Reload-File"], self)
         self.shortSplitFileReload.activated.connect(self.reload)
         self.reloadTabAct.setShortcut(shortcuts["Ide"]["Reload-File"])
@@ -51,31 +52,31 @@ class EditorTabBar(QtGui.QTabBar):
         self.menu.exec(event.globalPos())
 
     def createActions(self):
-        self.closeTabAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "cross_")),
+        self.closeTabAct = QAction(
+            QIcon(os.path.join("Resources", "images", "cross_")),
             "Close", self, statusTip="Close Tab", triggered=self.closeTab)
 
-        self.copyPathAct = QtGui.QAction(
+        self.copyPathAct = QAction(
             "Copy File Path", self, statusTip="Copy File Path",
             triggered=self.copyPath)
 
-        self.openFileLocationAct = QtGui.QAction(
+        self.openFileLocationAct = QAction(
             "Open File Location", self, statusTip="Open File Location",
             triggered=self.openFileLocation)
 
-        self.cloneTabAct = QtGui.QAction(
+        self.cloneTabAct = QAction(
             "Clone", self, statusTip="Create a copy of current tab",
             triggered=self.cloneTab)
 
-        self.reloadTabAct = QtGui.QAction(
+        self.reloadTabAct = QAction(
             "Reload", self, statusTip="Reload", triggered=self.reload)
 
-        self.favouritesAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "plus")),
+        self.favouritesAct = QAction(
+            QIcon(os.path.join("Resources", "images", "plus")),
             "Add to Favourites", self, statusTip="Add to Favourites",
             triggered=self.editorTabWidget.addToFavourites)
 
-        self.menu = QtGui.QMenu(self)
+        self.menu = QMenu(self)
         self.menu.addAction(self.closeTabAct)
         self.menu.addSeparator()
         self.menu.addAction(self.cloneTabAct)
@@ -92,12 +93,12 @@ class EditorTabBar(QtGui.QTabBar):
         self.menu.addAction(self.favouritesAct)
 
     def reload(self):
-        reply = QtGui.QMessageBox.warning(
+        reply = QMessageBox.warning(
             self, "Reload", "Do you really want to reload?",
-            QtGui.QMessageBox.StandardButton.Yes
-            | QtGui.QMessageBox.StandardButton.No,
-            QtGui.QMessageBox.StandardButton.No)
-        if reply == QtGui.QMessageBox.StandardButton.Yes:
+            QMessageBox.StandardButton.Yes
+            | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             self.editorTabWidget.reloadModules()
 
     def closeTab(self):

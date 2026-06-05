@@ -1,13 +1,15 @@
+import logging
 import os
 import shutil
-import logging
 import traceback
-from Extensions.qt_bindings import QtCore, QtGui
+
+from PyQt6.QtCore import QThread
+from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
 
 from Extensions.Projects.ProjectManager.ProjectView.ProjectView import ProjectView
 
 
-class ExportThread(QtCore.QThread):
+class ExportThread(QThread):
 
     def run(self):
         self.error = None
@@ -23,13 +25,13 @@ class ExportThread(QtCore.QThread):
         self.start()
 
 
-class ProjectManager(QtGui.QWidget):
+class ProjectManager(QWidget):
 
     def __init__(
         self, editorTabWidget, messagesWidget, projectPathDict, projectSettings,
             useData, app,
             busyWidget, buildStatusWidget, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.busyWidget = busyWidget
         self.editorTabWidget = editorTabWidget
@@ -59,10 +61,11 @@ class ProjectManager(QtGui.QWidget):
 
     def buildProject(self):
         if self.editorTabWidget.errorsInProject():
-            reply = QtGui.QMessageBox.warning(self, "Build",
-                                              "There are errors in your project. Build anyway?",
-                                              QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-            if reply == QtGui.QMessageBox.Yes:
+            reply = QMessageBox.warning(
+                self, "Build",
+                "There are errors in your project. Build anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
                 self.build.build()
             else:
                 return
@@ -80,12 +83,11 @@ class ProjectManager(QtGui.QWidget):
         name = curren_window.projectPathDict["name"]
         path = curren_window.projectPathDict["root"]
 
-        options = QtGui.QFileDialog.Options()
         savepath = os.path.join(self.useData.getLastOpenedDir(), name)
         savepath = os.path.normpath(savepath)
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
-                                                     "Export", savepath,
-                                                     "All files (*)", options)
+        fileName, _ = QFileDialog.getSaveFileName(
+            self, "Export", savepath,
+            "All files (*)")
         if fileName:
             self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
 
@@ -95,5 +97,5 @@ class ProjectManager(QtGui.QWidget):
     def finishExport(self):
         self.busyWidget.showBusy(False)
         if self.exportThread.error is not None:
-            QtGui.QMessageBox.warning(
+            QMessageBox.warning(
                 self, "Export Failed", self.exportThread.error)

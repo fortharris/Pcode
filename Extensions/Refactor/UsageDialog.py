@@ -1,27 +1,30 @@
 import os
-from Extensions.qt_bindings import QtCore, QtGui
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QDialog, QTreeWidget, QVBoxLayout
 
 
-class UsageDialog(QtGui.QDialog):
+class UsageDialog(QDialog):
 
     def __init__(self, editorTabWidget, title, itemsList, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(
+            self, parent,
+            Qt.WindowType.Window | Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle(title)
         self.resize(600, 300)
 
         self.editorTabWidget = editorTabWidget
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
-        self.view = QtGui.QTreeWidget()
+        self.view = QTreeWidget()
         self.view.setHeaderLabels(["#"])
         self.view.setColumnWidth(0, 300)
         self.view.setSortingEnabled(True)
-        self.view.sortByColumn(0, QtCore.Qt.AscendingOrder)
+        self.view.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.view.itemActivated.connect(self.showLine)
         mainLayout.addWidget(self.view)
 

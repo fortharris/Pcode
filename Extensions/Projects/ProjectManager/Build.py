@@ -4,11 +4,13 @@ import traceback
 import logging
 import cx_Freeze
 from cx_Freeze import Freezer
-from Extensions.qt_bindings import QtCore, QtGui
+from PyQt6.QtCore import QThread, QTime
+from PyQt6.QtWidgets import QMessageBox, QWidget
+
 from Extensions.settings_utils import to_bool
 
 
-class BuildThread(QtCore.QThread):
+class BuildThread(QThread):
     def _interpreter_search_paths(self, interpreter):
         """Return existing module-search directories for *interpreter*.
 
@@ -191,10 +193,10 @@ class BuildThread(QtCore.QThread):
         self.start()
 
 
-class Build(QtGui.QWidget):
+class Build(QWidget):
     def __init__(self, busyWidget, messagesWidget, projectPathDict, projectSettings, useData,
                  buildConfig, editorTabWidget, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.useData = useData
         self.projectPathDict = projectPathDict
@@ -209,14 +211,14 @@ class Build(QtGui.QWidget):
         self.buildThread = BuildThread()
         self.buildThread.finished.connect(self.buildFinished)
 
-        self.durationTime = QtCore.QTime()
+        self.durationTime = QTime()
 
     def openDir(self):
         if os.path.exists(self.projectPathDict["builddir"]):
             os.startfile(self.projectPathDict["builddir"], 'explore')
         else:
-            QtGui.QMessageBox.critical(self, "Open",
-                                                 "Build folder is missing!")
+            QMessageBox.critical(self, "Open",
+                                 "Build folder is missing!")
 
     def cancelBuild(self):
         self.buildThread.exit()

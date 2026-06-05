@@ -1,6 +1,7 @@
 import os
 
-from Extensions.qt_bindings import QtGui
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import QMenu
 
 from Extensions.BaseScintilla import BaseScintilla
 
@@ -31,22 +32,22 @@ class CodeSnapshot(BaseScintilla):
         self.contextMenu.exec(event.globalPos())
 
     def createContextMenu(self):
-        self.copyAct = QtGui.QAction(
+        self.copyAct = QAction(
             "Copy", self,
             statusTip="Copy selected text", triggered=self.copy)
 
-        self.selectAllAct = QtGui.QAction("Select All", self,
-                                          statusTip="Select All",
-                                          triggered=self.selectAllText)
+        self.selectAllAct = QAction("Select All", self,
+                                    statusTip="Select All",
+                                    triggered=self.selectAllText)
 
         self.selectToMatchingBraceAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "compose")),
+            QAction(
+                QIcon(os.path.join("Resources", "images", "compose")),
                 "Select to Matching Brace", self,
                 statusTip="Select to Matching Brace",
-                          triggered=self.selectToMatchingBrace)
+                triggered=self.selectToMatchingBrace)
 
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.copyAct)
         self.contextMenu.addAction(self.selectAllAct)

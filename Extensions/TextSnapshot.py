@@ -1,6 +1,7 @@
 import os
 
-from Extensions.qt_bindings import QtGui
+from PyQt6.QtGui import QAction, QIcon, QKeySequence
+from PyQt6.QtWidgets import QMenu
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions import Global
@@ -26,22 +27,22 @@ class TextSnapshot(BaseScintilla):
         self.setLexer(lexer)
 
     def createContextMenu(self):
-        self.copyAct = QtGui.QAction(
-            "Copy", self, shortcut=QtGui.QKeySequence.Copy,
+        self.copyAct = QAction(
+            "Copy", self, shortcut=QKeySequence.StandardKey.Copy,
             statusTip="Copy selected text", triggered=self.copy)
 
-        self.selectAllAct = QtGui.QAction("Select All", self,
-                                          shortcut=QtGui.QKeySequence.SelectAll,
-                                          statusTip="Select All",
-                                          triggered=self.selectAllText)
+        self.selectAllAct = QAction("Select All", self,
+                                    shortcut=QKeySequence.StandardKey.SelectAll,
+                                    statusTip="Select All",
+                                    triggered=self.selectAllText)
 
         self.selectToMatchingBraceAct = \
-            QtGui.QAction(QtGui.QIcon(os.path.join("Resources", "images", "text_select")),
-                          "Select to Matching Brace", self,
-                          statusTip="Select to Matching Brace",
-                          triggered=self.selectToMatchingBrace)
+            QAction(QIcon(os.path.join("Resources", "images", "text_select")),
+                    "Select to Matching Brace", self,
+                    statusTip="Select to Matching Brace",
+                    triggered=self.selectToMatchingBrace)
 
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.contextMenu.addAction(self.copyAct)
         self.contextMenu.addAction(self.selectAllAct)
         self.contextMenu.addAction(self.selectToMatchingBraceAct)

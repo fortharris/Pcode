@@ -11,6 +11,7 @@
 - Build profile JSON (`Build/profile.json`) with XML mirror for compatibility
 - `EditorTabBar` extracted to `Extensions/editor_tab_bar.py`
 - Peel `Outline`, `TasksWidget`, `MiniMap`, and `Diff` to direct PyQt6 imports
+- Peel `editor_tab_bar`, snapshots, `tab_io`, build/project-manager dialogs, and profiler widgets to PyQt6
 
 ### Features
 - Command palette (Ctrl+Shift+P) with fuzzy multi-token filter, keymap entries, project switching
