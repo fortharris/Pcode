@@ -1,15 +1,19 @@
 import sys
-from PyQt6.Qsci import QsciScintilla
-from Extensions.qt_bindings import QtCore, QtGui
 
-class Handle(QtGui.QFrame):
+from PyQt6.Qsci import QsciScintilla
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont, QFontMetrics
+from PyQt6.QtWidgets import QApplication, QFrame
+
+
+class Handle(QFrame):
     def __init__(self, parent):
-        QtGui.QLabel.__init__(self, parent)
+        QFrame.__init__(self, parent)
         
         self.minimap = parent
         self.editor = parent.editor
         self.setMouseTracking(True)
-        self.setCursor(QtCore.Qt.OpenHandCursor)
+        self.setCursor(Qt.CursorShape.OpenHandCursor)
         self.setStyleSheet("""
                         border-top: 1px solid grey; 
                         border-right: none; 
@@ -28,12 +32,12 @@ class Handle(QtGui.QFrame):
         
     def mousePressEvent(self, event):
         self.pressed = True
-        self.setCursor(QtCore.Qt.ClosedHandCursor)
+        self.setCursor(Qt.CursorShape.ClosedHandCursor)
         
     def mouseReleaseEvent(self, event):
         super(Handle, self).mouseReleaseEvent(event)
         self.pressed = False
-        self.setCursor(QtCore.Qt.OpenHandCursor)
+        self.setCursor(Qt.CursorShape.OpenHandCursor)
 
     def mouseMoveEvent(self, event):
         super(Handle, self).mouseMoveEvent(event)
@@ -52,7 +56,7 @@ class Handle(QtGui.QFrame):
             self.minimap.updateEditorScrollPos(relativePos, event.pos())
             
     def updatePosition(self):
-        font_size = QtGui.QFontMetrics(self.minimap.font()).height()
+        font_size = QFontMetrics(self.minimap.font()).height()
         height = self.minimap.lines() * font_size
         self.setFixedHeight(height)
         self.scroll_margins = (height, self.minimap.height() - height)
@@ -66,12 +70,12 @@ class MiniMap(QsciScintilla):
         
         self.editor = editor
         
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.setCursor(QtCore.Qt.PointingHandCursor)
-        self.viewport().setCursor(QtCore.Qt.PointingHandCursor)
+        self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.viewport().setCursor(Qt.CursorShape.PointingHandCursor)
         self.setMarginWidth(1, 0)
-        font = QtGui.QFont()
+        font = QFont()
         font.setPointSize(1)
         self.setFont(font)
         self.setDocument(self.editor.document())
@@ -125,17 +129,17 @@ class MiniMap(QsciScintilla):
         self.editor.wheelEvent(event)
         
     def turnOn(self):
-        self.editor.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.editor.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.editor.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.editor.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.show()
         
     def turnOff(self):
-        self.editor.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
-        self.editor.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAsNeeded)
+        self.editor.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.editor.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.hide()
 
 if __name__ == '__main__':
-    app = QtGui.QApplication(sys.argv)
+    app = QApplication(sys.argv)
 
     main = MiniMap()
     main.show()

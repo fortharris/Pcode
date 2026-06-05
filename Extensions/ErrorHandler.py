@@ -7,33 +7,31 @@ the full traceback and shows a non-fatal dialog so the user (and the log) learn
 what went wrong instead of the window simply disappearing.
 """
 
-import sys
 import logging
+import sys
 import traceback
 
-from Extensions.qt_bindings import QtGui
-
+from PyQt6.QtWidgets import QApplication, QMessageBox
 
 _installed = False
 
 
 def _show_dialog(text, detailed):
-    app = QtGui.QApplication.instance()
+    app = QApplication.instance()
     if app is None:
         return
     try:
-        box = QtGui.QMessageBox()
-        box.setIcon(QtGui.QMessageBox.Icon.Critical)
+        box = QMessageBox()
+        box.setIcon(QMessageBox.Icon.Critical)
         box.setWindowTitle("Pcode - Unexpected Error")
         box.setText("An unexpected error occurred.\n\n" + text)
         box.setInformativeText(
             "The application will keep running, but may be in an "
             "inconsistent state. The full traceback was written to the log.")
         box.setDetailedText(detailed)
-        box.setStandardButtons(QtGui.QMessageBox.StandardButton.Ok)
+        box.setStandardButtons(QMessageBox.StandardButton.Ok)
         box.exec()
     except Exception:
-        # Never let the handler itself crash the process.
         logging.error("Error handler failed to display dialog:\n%s",
                       traceback.format_exc())
 

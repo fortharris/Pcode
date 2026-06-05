@@ -7,7 +7,7 @@ import sys
 import shutil
 import traceback
 import logging
-from Extensions.qt_bindings import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions.EditorWindow.EditorWindow import EditorWindow
 from Extensions.Projects.NewProjectDialog import NewProjectDialog
@@ -140,112 +140,11 @@ class CreateProjectThread(QtCore.QThread):
         save_rope_profile(os.path.join(self.projectPath, "Rope"), default_profile())
 
     def writeBuildProfile(self):
-        dom_document = QtXml.QDomDocument("build_profile")
-
-        main_data = dom_document.createElement("build")
-        dom_document.appendChild(main_data)
-
-        root = dom_document.createElement("name")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("author")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("version")
-        attrib = dom_document.createTextNode('0.1')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("comments")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("description")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("company")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("copyright")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("trademarks")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("product")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("base")
-        attrib = dom_document.createTextNode(self.projDataDict["windowtype"])
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("icon")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("compress")
-        attrib = dom_document.createTextNode("Compress")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("optimize")
-        attrib = dom_document.createTextNode("Optimize")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("copydeps")
-        attrib = dom_document.createTextNode("Copy Dependencies")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("appendscripttoexe")
-        attrib = dom_document.createTextNode("Append Script to Exe")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("appendscripttolibrary")
-        attrib = dom_document.createTextNode("Append Script to Library")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        lists = ["Includes",
-                 "Excludes",
-                 "Constants Modules",
-                 "Packages",
-                 "Replace Paths",
-                 "Bin Includes",
-                 "Bin Excludes",
-                 "Bin Path Includes",
-                 "Bin Path Excludes",
-                 "Zip Includes",
-                 "Include Files",
-                 "Namespace Packages"]
-
-        for i in lists:
-            root = dom_document.createElement(i.replace(' ', '-'))
-            main_data.appendChild(root)
-
-        with open(
-                os.path.join(self.projectPath, "Build", "profile.xml"), "w") as file:
-            file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-            file.write(dom_document.toString())
+        from Extensions.BuildProfile import default_profile, save as save_build_profile
+        build_dir = os.path.join(self.projectPath, "Build")
+        profile = default_profile(self.projDataDict["windowtype"])
+        scalars = {k: v for k, v in profile.items() if k != "lists"}
+        save_build_profile(build_dir, scalars, profile["lists"])
 
     def create(self, data):
         self.projDataDict = data
@@ -302,7 +201,8 @@ class Projects(QtGui.QWidget):
                 "backupfile": os.path.join(path, "temp", "Backup", "bak"),
                 "sourcedir": os.path.join(path, "src"),
                 "ropeFolder": os.path.join(path, "Rope"),
-                "buildprofile": os.path.join(path, "Build", "profile.xml"),
+                "buildprofile": os.path.join(path, "Build", "profile.json"),
+                "buildprofile_xml": os.path.join(path, "Build", "profile.xml"),
                 "ropeprofile": os.path.join(path, "Rope", "profile.json"),
                 "ropeprofile_xml": os.path.join(path, "Rope", "profile.xml"),
                 "projectmainfile": os.path.join(path, "project.json"),

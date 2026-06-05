@@ -1,13 +1,16 @@
 import os
 from operator import itemgetter
 
-from Extensions.qt_bindings import QtCore, QtGui
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QBrush, QColor, QIcon
+from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
+
 from Extensions.Outline.Python import pyclbr
 
 
-class PythonOutlineThread(QtCore.QThread):
+class PythonOutlineThread(QThread):
 
-    updateNavigator = QtCore.Signal(dict)
+    updateNavigator = pyqtSignal(dict)
 
     def run(self):
         outlineDict = pyclbr._readmodule(self.source)
@@ -18,10 +21,10 @@ class PythonOutlineThread(QtCore.QThread):
         self.start()
 
 
-class Outline(QtGui.QTreeWidget):
+class Outline(QTreeWidget):
 
     def __init__(self, useData, editorTabWidget, parent=None):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
 
         self.pythonOutlineThread = PythonOutlineThread()
         self.useData = useData
@@ -30,7 +33,7 @@ class Outline(QtGui.QTreeWidget):
         self.setObjectName("sidebarItem")
         self.setStyleSheet("QTreeView {margin-top: 23px;}")
 
-        self.navigatorTimer = QtCore.QTimer()
+        self.navigatorTimer = QTimer()
         self.navigatorTimer.setSingleShot(True)
         self.navigatorTimer.timeout.connect(self.startOutline)
 
@@ -62,12 +65,12 @@ class Outline(QtGui.QTreeWidget):
         for obj in objs:
             if obj.objectType == "Class":
                 # obj.name, obj.super, obj.lineno
-                classItem = QtGui.QTreeWidgetItem()
+                classItem = QTreeWidgetItem()
                 classItem.setText(0, obj.name)
                 classItem.setIcon(0,
-                                 QtGui.QIcon(os.path.join("Resources", "images", "class")))
+                                 QIcon(os.path.join("Resources", "images", "class")))
                 classItem.setForeground(0,
-                                         QtGui.QBrush(QtGui.QColor("#FF0000")))
+                                         QBrush(QColor("#FF0000")))
                 classItem.setData(0, 3, obj.lineno)
                 self.addTopLevelItem(classItem)
                 classItem.setExpanded(True)
@@ -75,33 +78,33 @@ class Outline(QtGui.QTreeWidget):
                 methods = sorted(obj.methods.items(), key=itemgetter(1))
                 for name, lineno in methods:
                     # obj.name, obj.lineno
-                    functionItem = QtGui.QTreeWidgetItem(classItem)
+                    functionItem = QTreeWidgetItem(classItem)
                     functionItem.setText(0, name)
                     functionItem.setData(0, 3, lineno)
                     functionItem.setIcon(0,
-                                        QtGui.QIcon(os.path.join("Resources", "images", "function")))
+                                        QIcon(os.path.join("Resources", "images", "function")))
                     self.addTopLevelItem(functionItem)
             elif obj.objectType == "Function":
                # obj.name, obj.lineno
-                functionItem = QtGui.QTreeWidgetItem()
+                functionItem = QTreeWidgetItem()
                 functionItem.setText(0, obj.name)
                 functionItem.setData(0, 3, obj.lineno)
                 functionItem.setIcon(0,
-                                    QtGui.QIcon(os.path.join("Resources", "images", "function")))
+                                    QIcon(os.path.join("Resources", "images", "function")))
                 self.addTopLevelItem(functionItem)
             elif obj.objectType == "GlobalVariable":
                # obj.name, obj.lineno
-                globalItem = QtGui.QTreeWidgetItem()
+                globalItem = QTreeWidgetItem()
                 globalItem.setText(0, obj.name)
                 globalItem.setData(0, 3, obj.lineno)
                 globalItem.setIcon(0,
-                                    QtGui.QIcon(os.path.join("Resources", "images", "led")))
+                                    QIcon(os.path.join("Resources", "images", "led")))
                 self.addTopLevelItem(globalItem)
 
         if len(outlineDict) == 0:
-            item = QtGui.QTreeWidgetItem()
+            item = QTreeWidgetItem()
             item.setText(0, "<Empty>")
-            item.setFlags(QtCore.Qt.NoItemFlags)
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
             self.addTopLevelItem(item)
             item.setExpanded(True)
 

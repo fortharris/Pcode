@@ -8,6 +8,9 @@
 - New projects write `project.json`, `Data/projectdata.json`, `Data/session.json`, `Data/windata.json`, and `pyproject.toml`
 - Legacy `project.xml` / `projectdata.xml` / `session.xml` still readable
 - Rope profile JSON (`Rope/profile.json`) with XML mirror for compatibility
+- Build profile JSON (`Build/profile.json`) with XML mirror for compatibility
+- `EditorTabBar` extracted to `Extensions/editor_tab_bar.py`
+- Peel `Outline`, `TasksWidget`, `MiniMap`, and `Diff` to direct PyQt6 imports
 
 ### Features
 - Command palette (Ctrl+Shift+P) with fuzzy multi-token filter, keymap entries, project switching

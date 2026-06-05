@@ -2,7 +2,9 @@ import sys
 import difflib
 
 from PyQt6.Qsci import QsciScintillaBase, QsciLexerCustom
-from Extensions.qt_bindings import QtCore, QtGui
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QColor
+from PyQt6.QtWidgets import QApplication
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions import Global
@@ -27,20 +29,20 @@ class FormatLexer(QsciLexerCustom):
         return self._styles.get(style, '')
 
     def defaultColor(self, style):
-        return QtGui.QColor('#000000')
+        return QColor('#000000')
 
     def defaultPaper(self, style):
         if style == self.Default:
-            return QtGui.QColor('#ffffff')
+            return QColor('#ffffff')
         elif style == self.NewText:
-            return QtGui.QColor('#DDFFDD')
+            return QColor('#DDFFDD')
         elif style == self.DeletedText:
-            return QtGui.QColor('#FFDDDD')
+            return QColor('#FFDDDD')
         elif style == self.ReplacedText:
-            return QtGui.QColor('#BED6ED')
+            return QColor('#BED6ED')
         elif style == self.LineNumber:
-            return QtGui.QColor('#EAF2F5')
-        return QtGui.QColor('#ffffff')
+            return QColor('#EAF2F5')
+        return QColor('#ffffff')
 
     def defaultFont(self, style):
         if style == self.Default:
@@ -107,7 +109,7 @@ class DiffWindow(BaseScintilla):
         if b is None:
             b = self.editor.text().splitlines()
 
-        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         lines = 0
         for line in difflib.unified_diff(a, b, "Deleted", "Added"):
             if line.startswith('+') or line.startswith('>'):
@@ -124,7 +126,7 @@ class DiffWindow(BaseScintilla):
         if lines == 0:
             self.appendText('Nothing has changed.', 0)
 
-        QtGui.QApplication.restoreOverrideCursor()
+        QApplication.restoreOverrideCursor()
 
         return (lines != 0)
 
@@ -134,7 +136,7 @@ class DiffWindow(BaseScintilla):
         a = self.snapShot.text().splitlines()
         b = self.editor.text().splitlines()
 
-        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
         lines = 0
         for line in difflib.context_diff(a, b, "Original", "Current"):
             if line.startswith('+'):
@@ -153,7 +155,7 @@ class DiffWindow(BaseScintilla):
         if lines == 0:
             self.appendText('Nothing has changed.', 0)
 
-        QtGui.QApplication.restoreOverrideCursor()
+        QApplication.restoreOverrideCursor()
 
     def appendText(self, text, styleType):
         start = self.length()

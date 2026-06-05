@@ -2,7 +2,7 @@ import os
 import sys
 import shutil
 
-from Extensions.qt_bindings import QtCore, QtGui, QtXml
+from Extensions.qt_bindings import QtCore, QtGui
 
 from Extensions.Projects.ProjectManager.ProjectView.ProjectView import IconProvider
 from Pvenv import EnvBuilder
@@ -720,142 +720,42 @@ class BuildConfig(QtGui.QWidget):
                     QtGui.QMessageBox.warning(
                         self, "Failed Remove", str(err))
 
+    def _scalars_from_ui(self):
+        return {
+            "name": self.itemLine.text().strip(),
+            "author": self.authorLine.text().strip(),
+            "version": self.versionLine.text().strip(),
+            "comments": self.commentsLine.text().strip(),
+            "description": self.descriptionLine.text().strip(),
+            "company": self.companyLine.text().strip(),
+            "copyright": self.copyrightLine.text().strip(),
+            "trademarks": self.trademarksLine.text().strip(),
+            "product": self.productLine.text().strip(),
+            "base": self.windowTypeBox.currentText(),
+            "icon": self.iconBox.currentText(),
+            "compress": self.compressBox.currentText(),
+            "optimize": self.optimizeBox.currentText(),
+            "copydeps": self.copyDepsBox.currentText(),
+            "appendscripttoexe": self.appendScriptToExeBox.currentText(),
+            "appendscripttolibrary": self.appendScriptToLibraryBox.currentText(),
+        }
+
     def save(self):
-        fileName = self.projectPathDict["buildprofile"]
-
-        dom_document = QtXml.QDomDocument("build_profile")
-
-        main_data = dom_document.createElement("build")
-        dom_document.appendChild(main_data)
-
-        root = dom_document.createElement("name")
-        attrib = dom_document.createTextNode(self.itemLine.text().strip())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("author")
-        attrib = dom_document.createTextNode(self.authorLine.text().strip())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("version")
-        attrib = dom_document.createTextNode(self.versionLine.text().strip())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("comments")
-        attrib = dom_document.createTextNode(self.commentsLine.text().strip())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("description")
-        attrib = dom_document.createTextNode(
-            self.descriptionLine.text().strip())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("company")
-        attrib = dom_document.createTextNode(self.companyLine.text().strip())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("copyright")
-        attrib = dom_document.createTextNode(self.copyrightLine.text().strip())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("trademarks")
-        attrib = dom_document.createTextNode(
-            self.trademarksLine.text().strip())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("product")
-        attrib = dom_document.createTextNode(self.productLine.text().strip())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("base")
-        attrib = dom_document.createTextNode(self.windowTypeBox.currentText())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("icon")
-        attrib = dom_document.createTextNode(self.iconBox.currentText())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("compress")
-        attrib = dom_document.createTextNode(self.compressBox.currentText())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("optimize")
-        attrib = dom_document.createTextNode(self.optimizeBox.currentText())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("copydeps")
-        attrib = dom_document.createTextNode(self.copyDepsBox.currentText())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("appendscripttoexe")
-        attrib = dom_document.createTextNode(
-            self.appendScriptToExeBox.currentText())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("appendscripttolibrary")
-        attrib = dom_document.createTextNode(
-            self.appendScriptToLibraryBox.currentText())
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        for key, value in self.lists.items():
-            root = dom_document.createElement(key.replace(' ', '-'))
-            main_data.appendChild(root)
-            for i in value:
-                tag = dom_document.createElement("item")
-                root.appendChild(tag)
-
-                t = dom_document.createTextNode(i)
-                tag.appendChild(t)
-
+        from Extensions.BuildProfile import save as save_build_profile
+        build_folder = os.path.dirname(self.projectPathDict["buildprofile"])
         try:
-            with open(fileName, "w") as file:
-                file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-                file.write(dom_document.toString())
+            save_build_profile(build_folder, self._scalars_from_ui(), self.lists)
         except Exception:
             QtGui.QMessageBox.warning(
                 self, "Save Profile", "Saving failed!")
 
     def load(self):
+        from Extensions.BuildProfile import load as load_build_profile
+        build_folder = os.path.dirname(self.projectPathDict["buildprofile"])
+        data = load_build_profile(build_folder)
         for key in self.lists:
-            self.lists[key] = []
-        dom_document = QtXml.QDomDocument()
-        with open(self.projectPathDict["buildprofile"], "r") as file:
-            dom_document.setContent(file.read())
-
-        dataDict = {}
-
-        elements = dom_document.documentElement()
-        node = elements.firstChild()
-        while node.isNull() is False:
-            name = node.nodeName()
-            expandedName = name.replace('-', ' ')
-            if expandedName in self.lists:
-                sub_node = node.firstChild()
-                while sub_node.isNull() is False:
-                    sub_prop = sub_node.toElement()
-                    self.lists[expandedName].append(sub_prop.text())
-                    sub_node = sub_node.nextSibling()
-                dataDict[expandedName] = self.lists[expandedName]
-            else:
-                sub_prop = node.toElement()
-                dataDict[name] = sub_prop.text()
-            node = node.nextSibling()
-        return dataDict
+            self.lists[key] = list(data.get(key, []))
+        return data
 
 
 class ConfigureProject(QtGui.QLabel):
