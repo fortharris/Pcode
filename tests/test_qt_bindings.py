@@ -89,6 +89,7 @@ def test_primary_screen_geometry():
     assert geo.width() > 0 and geo.height() > 0
 
 
-def test_font_metrics_width():
+def test_font_metrics_width_reexport():
+    """Shim re-exports font_metrics_width for legacy tooling."""
     fm = QtGui.QFontMetrics(QtGui.QFont())
     assert qb.font_metrics_width(fm, "0000") > 0

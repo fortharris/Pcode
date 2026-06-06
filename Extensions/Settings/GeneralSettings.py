@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import (
 )
 
 from Extensions import StyleSheet
+from Extensions.file_dialog_utils import file_dialog_path
 
 
 class GeneralSettings(QDialog):
@@ -322,13 +323,14 @@ class GeneralSettings(QDialog):
                 self.mainApp, self.useData.SETTINGS["Theme"])
 
     def exportSettings(self):
-        options = QFileDialog.Options()
         savepath = os.path.join(self.useData.getLastOpenedDir(),
                                 "Pcode_Settings" + '_' + QDateTime().currentDateTime().toString().replace(' ', '_').replace(':', '-'))
         savepath = os.path.normpath(savepath)
-        fileName = QFileDialog.getSaveFileName(self,
-                                                     "Choose Folder", savepath,
-                                                     "Pcode Settings (*)", options)
+        fileName = file_dialog_path(QFileDialog.getSaveFileName(
+            self,
+            "Choose Folder", savepath,
+            "Pcode Settings (*)",
+        ))
         if fileName:
             try:
                 QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)

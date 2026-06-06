@@ -7,6 +7,7 @@ from Extensions.Projects.ProjectManager.ProjectView.ProjectView import IconProvi
 from Pvenv import EnvBuilder
 
 from Extensions import StyleSheet
+from Extensions.file_dialog_utils import file_dialog_path
 from PyQt6.QtCore import QDir, Qt
 from PyQt6.QtGui import (
     QIcon, QFileSystemModel, QPalette,
@@ -690,16 +691,17 @@ class BuildConfig(QWidget):
         self.enableAddButton()
 
     def addIcon(self):
-        options = QFileDialog.Options()
         if sys.platform == "win32":
             filter = "Icon Files (*.ico)"
         elif sys.platform == "darwin":
             filter = "Icon Files (*.icns)"
         else:
             filter = "Icon Files (*.png)"
-        filePath = QFileDialog.getOpenFileName(self,
-                                                    "Select Icon", self.useData.getLastOpenedDir(
-                                                    ), filter, options)
+        filePath = file_dialog_path(QFileDialog.getOpenFileName(
+            self,
+            "Select Icon", self.useData.getLastOpenedDir(),
+            filter,
+        ))
         if filePath:
             destPath = os.path.join(self.projectPathDict['iconsdir'],
                                    os.path.basename(filePath))

@@ -9,11 +9,10 @@ from PyQt6.Qsci import QsciScintilla
 from PyQt6.QtCore import QPointF, Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import (
     QAction, QColor, QFont, QFontMetrics, QIcon, QPixmap, QShortcut,
-    QToolTip,
 )
-from PyQt6.QtWidgets import QHBoxLayout, QMenu, QMessageBox, QVBoxLayout
+from PyQt6.QtWidgets import QHBoxLayout, QMenu, QMessageBox, QToolTip, QVBoxLayout
 
-from Extensions.qt_bindings import font_metrics_width
+from Extensions.font_metrics import font_metrics_width
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions.ZoomWidget import ZoomWidget

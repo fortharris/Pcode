@@ -16,15 +16,16 @@ warnings.filterwarnings("ignore")
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from Extensions.qt_bindings import QtWidgets, QtCore  # noqa: E402
+from PyQt6.QtCore import Qt  # noqa: E402
+from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox  # noqa: E402
 
 # Make modal dialogs non-blocking so a stray error path can't hang the test.
-QtWidgets.QMessageBox.warning = staticmethod(lambda *a, **k: None)
-QtWidgets.QMessageBox.critical = staticmethod(lambda *a, **k: None)
-QtWidgets.QMessageBox.information = staticmethod(lambda *a, **k: None)
-QtWidgets.QMessageBox.question = staticmethod(lambda *a, **k: None)
+QMessageBox.warning = staticmethod(lambda *a, **k: None)
+QMessageBox.critical = staticmethod(lambda *a, **k: None)
+QMessageBox.information = staticmethod(lambda *a, **k: None)
+QMessageBox.question = staticmethod(lambda *a, **k: None)
 
-app = QtWidgets.QApplication(sys.argv)
+app = QApplication(sys.argv)
 
 from Pcode import Pcode  # noqa: E402
 from Extensions.Projects.Projects import CreateProjectThread  # noqa: E402
@@ -287,7 +288,7 @@ def exercise_snippets(win):
 
     sm.loadSnippetList()
     found = sm.snippetsListWidget.findItems(
-        snippet_name, QtCore.Qt.MatchFlag.MatchExactly)
+        snippet_name, Qt.MatchFlag.MatchExactly)
     sm.snippetsListWidget.setCurrentItem(found[0])
 
     sm.snippetViewer.setReadOnly(False)
@@ -326,9 +327,9 @@ def exercise_filedialog_enums():
     FileExplorer and FindInFiles; an offscreen window never clicks them, so
     assert the flattened Qt6 enums resolve and combine.
     """
-    fd = QtWidgets.QFileDialog
-    options = fd.DontResolveSymlinks | fd.ShowDirsOnly
-    assert fd.AcceptOpen is not None
+    options = (QFileDialog.Option.DontResolveSymlinks
+               | QFileDialog.Option.ShowDirsOnly)
+    assert QFileDialog.AcceptMode.AcceptOpen is not None
     assert options is not None
     print("STEP filedialog-enums OK")
 
@@ -345,7 +346,6 @@ def exercise_mouse_events(editor, editor_window):
     from PyQt6.QtGui import QMouseEvent
     from PyQt6.QtCore import QPointF, QEvent
 
-    Qt = QtCore.Qt
     pt = QPointF(8.0, 8.0)
 
     def make(kind):

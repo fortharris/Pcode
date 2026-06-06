@@ -7,6 +7,9 @@ QScintilla is imported from PyQt6.Qsci (see requirements.txt).
 
 from PyQt6 import QtCore, QtGui, QtWidgets, QtXml
 
+from Extensions.file_dialog_utils import file_dialog_path, file_dialog_paths  # noqa: F401
+from Extensions.font_metrics import font_metrics_width  # noqa: F401
+
 # Migration used PySide6's Signal; PyQt6 uses pyqtSignal
 QtCore.Signal = QtCore.pyqtSignal
 
@@ -31,39 +34,6 @@ def primary_screen_geometry(app=None):
     if screen is None:
         return QtCore.QRect(0, 0, 1024, 768)
     return screen.availableGeometry()
-
-
-def font_metrics_width(font_metrics, text):
-    """QFontMetrics.width -> horizontalAdvance (Qt 5.11+)."""
-    if hasattr(font_metrics, "horizontalAdvance"):
-        return font_metrics.horizontalAdvance(text)
-    return font_metrics.width(text)
-
-
-def file_dialog_path(result):
-    """Normalize QFileDialog return value (str in PyQt4, tuple in Qt6)."""
-    if result is None:
-        return None
-    if isinstance(result, (tuple, list)):
-        if not result or not result[0]:
-            return None
-        return result[0]
-    if isinstance(result, str) and not result:
-        return None
-    return result
-
-
-def file_dialog_paths(result):
-    """Normalize getOpenFileNames return value."""
-    if result is None:
-        return []
-    if isinstance(result, (tuple, list)):
-        if len(result) >= 1 and isinstance(result[0], (list, tuple)):
-            return [p for p in result[0] if p]
-        if len(result) >= 1 and isinstance(result[0], str):
-            return [result[0]] if result[0] else []
-        return [p for p in result if isinstance(p, str) and p]
-    return [result] if result else []
 
 
 # PyQt4 allowed QFileDialog.Options() and passing it positionally after the

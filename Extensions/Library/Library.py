@@ -4,6 +4,7 @@ import shutil
 from Extensions.Library.LibraryAddDialog import LibraryAddDialog
 from Extensions.Library.AdvancedSearch import AdvancedSearch
 from Extensions.BaseScintilla import BaseScintilla
+from Extensions.file_dialog_utils import file_dialog_path
 from PyQt6.QtCore import QDateTime, Qt
 from PyQt6.QtGui import QAction, QBrush, QColor, QFont, QFontMetrics, QIcon
 from PyQt6.QtWidgets import (
@@ -596,14 +597,15 @@ class Library(QMainWindow):
         self.codeViewer.selectAll()
 
     def export(self):
-        options = QFileDialog.Options()
-        fileName = QFileDialog.getSaveFileName(self,
-                                                     "Export Library",
-                                                     os.path.join(
-                                                         self.useData.getLastOpenedDir(
-                                                         ),
-                                                         "Pcode_Library"'_' + QDateTime().currentDateTime().toString().replace(' ', '_').replace(':', '-') + '.pcdlib'),
-                                                     "Pcode Library (*.pcdlib);", options)
+        fileName = file_dialog_path(QFileDialog.getSaveFileName(
+            self,
+            "Export Library",
+            os.path.join(
+                self.useData.getLastOpenedDir(),
+                "Pcode_Library"'_' + QDateTime().currentDateTime().toString().replace(
+                    ' ', '_').replace(':', '-') + '.pcdlib'),
+            "Pcode Library (*.pcdlib);",
+        ))
         if fileName:
             self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
             try:

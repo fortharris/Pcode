@@ -14,13 +14,13 @@ import pytest
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from Extensions.qt_bindings import QtWidgets  # noqa: E402
+from PyQt6.QtWidgets import QApplication  # noqa: E402
 from Extensions.UseData import UseData  # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)
 def _app():
-    app = QtWidgets.QApplication.instance() or QtWidgets.QApplication([])
+    app = QApplication.instance() or QApplication([])
     yield app
 
 

@@ -16,7 +16,9 @@
 - Peel `EditorTabWidget`, `CodeEditor`, `TextEditor`, `BaseScintilla`, and settings stack to PyQt6
 - Peel `Projects`, `ConfigureProject`, `ProjectView`, `Library`, and persistence modules to PyQt6
 - Peel `EditorWindow`, `FindInFiles`, `FileExplorer`, and `screen_utils` to direct PyQt6 imports
-- `qt_bindings` now only used for `font_metrics_width` (editors) and test/smoke harness
+- `font_metrics_width` and QFileDialog helpers extracted; production code no longer imports `qt_bindings`
+- `qt_bindings` retained as a test-only PyQt4-compat shim (`tests/test_qt_bindings.py`)
+- `test_no_shim_import` guards against hidden shim dependencies in the editor/project path
 
 ### Features
 - Command palette (Ctrl+Shift+P) with fuzzy multi-token filter, keymap entries, project switching

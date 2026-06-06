@@ -129,8 +129,8 @@ class AdvancedSearch(QWidget):
         mainLayout.addLayout(hbox)
 
         frame = QFrame()
-        frame.setFrameShape(QFrame.HLine)
-        frame.setFrameShadow(QFrame.Sunken)
+        frame.setFrameShape(QFrame.Shape.HLine)
+        frame.setFrameShadow(QFrame.Shadow.Sunken)
         mainLayout.addWidget(frame)
 
         hbox = QHBoxLayout()

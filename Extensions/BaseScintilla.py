@@ -4,7 +4,7 @@ from PyQt6.Qsci import QsciScintilla, QsciCommand
 from PyQt6.QtCore import QPoint, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor
 
-from Extensions.qt_bindings import font_metrics_width
+from Extensions.font_metrics import font_metrics_width
 from Extensions.settings_utils import to_bool
 
 

@@ -7,7 +7,7 @@ from PyQt6.QtGui import (
 )
 from PyQt6.QtWidgets import QHBoxLayout, QMenu, QVBoxLayout
 
-from Extensions.qt_bindings import font_metrics_width
+from Extensions.font_metrics import font_metrics_width
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions.ZoomWidget import ZoomWidget

@@ -2,12 +2,11 @@ import os
 
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import (
-    QColor, QDesktopServices, QFont, QFontDatabase, QGraphicsDropShadowEffect,
-    QIcon, QPixmap,
+    QColor, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap,
 )
 from PyQt6.QtWidgets import (
-    QFileDialog, QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
-    QPushButton, QVBoxLayout,
+    QFileDialog, QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QLabel,
+    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout,
 )
 
 from Extensions import StyleSheet

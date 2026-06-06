@@ -9,6 +9,7 @@ import os
 import ctypes
 
 from Extensions import StyleSheet
+from Extensions.file_dialog_utils import file_dialog_path
 
 
 class ManageShortcuts(QLabel):
@@ -102,9 +103,11 @@ class ManageShortcuts(QLabel):
         self.loadShortcuts()
 
     def addShortcut(self):
-        options = QFileDialog.DontResolveSymlinks | QFileDialog.ShowDirsOnly
-        directory = QFileDialog.getExistingDirectory(self,
-                                                           "Select directory", self.useData.getLastOpenedDir(), options)
+        options = (QFileDialog.Option.DontResolveSymlinks
+                   | QFileDialog.Option.ShowDirsOnly)
+        directory = file_dialog_path(QFileDialog.getExistingDirectory(
+            self, "Select directory", self.useData.getLastOpenedDir(),
+            options=options))
         if directory:
             directory = os.path.normpath(directory)
             if directory in self.FILE_EXPLORER_SHORTCUTS:

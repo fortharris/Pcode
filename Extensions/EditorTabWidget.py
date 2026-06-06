@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
     QStackedWidget, QTabWidget, QToolButton, QVBoxLayout,
 )
 
+from Extensions.file_dialog_utils import file_dialog_path
 from Extensions.settings_utils import to_bool
 from Extensions.Diff import DiffWindow
 from Extensions.CodeEditor import CodeEditor
@@ -833,10 +834,11 @@ class EditorTabWidget(QTabWidget):
         document.print_(printer)
 
     def openFile(self):
-        fileName = QFileDialog.getOpenFileName(self,
-                                                     "Select File", self.useData.getLastOpenedDir(
-                                                     ),
-                                                     "All Files (*);;Console (*.py);;No Console (*.pyw);;Xml (*.xml);;Html (*.html);;Css (*.css)")
+        fileName = file_dialog_path(QFileDialog.getOpenFileName(
+            self,
+            "Select File", self.useData.getLastOpenedDir(),
+            "All Files (*);;Console (*.py);;No Console (*.pyw);;Xml (*.xml);;Html (*.html);;Css (*.css)",
+        ))
         if fileName:
             self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
             self.loadfile(os.path.normpath(fileName))

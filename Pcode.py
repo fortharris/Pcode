@@ -1,4 +1,4 @@
-from PyQt6 import QtCore
+from PyQt6.QtCore import QSettings, Qt
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QShortcut
 from PyQt6.QtWidgets import (
     QApplication, QComboBox, QFileDialog, QHBoxLayout, QLabel, QMessageBox,
@@ -99,8 +99,8 @@ class Pcode(QWidget):
         if not logoPix.isNull():
             self.logoLabel.setPixmap(logoPix.scaled(
                 22, 22,
-                QtCore.Qt.AspectRatioMode.KeepAspectRatio,
-                QtCore.Qt.TransformationMode.SmoothTransformation))
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation))
         hbox.addWidget(self.logoLabel)
 
         self.titleLabel = QLabel("Pcode")
@@ -262,7 +262,7 @@ class Pcode(QWidget):
             self.showFullScreen()
 
     def saveUiState(self):
-        settings = QtCore.QSettings("Clean Code Inc.", "Pcode")
+        settings = QSettings("Clean Code Inc.", "Pcode")
         settings.beginGroup("MainWindow")
         settings.setValue("geometry", self.geometry())
         settings.setValue("lsplitter", self.library.mainSplitter.saveState())
@@ -272,7 +272,7 @@ class Pcode(QWidget):
         settings.endGroup()
 
     def restoreUiState(self):
-        settings = QtCore.QSettings("Clean Code Inc.", "Pcode")
+        settings = QSettings("Clean Code Inc.", "Pcode")
         settings.beginGroup("MainWindow")
         if settings.value("windowMaximized", True, type=bool):
             self.showMaximized()

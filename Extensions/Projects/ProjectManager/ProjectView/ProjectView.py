@@ -4,6 +4,7 @@ import shutil
 from Extensions.settings_utils import to_bool
 
 from Extensions import Global
+from Extensions.file_dialog_utils import file_dialog_path, file_dialog_paths
 from Extensions.Projects.ProjectManager.ProjectView.ProgressWidget import ProgressWidget
 from PyQt6.QtCore import QDir, QMimeData, Qt, QThread, QTimer, QUrl, pyqtSignal
 from PyQt6.QtGui import QAction, QBrush, QColor, QFileSystemModel, QIcon, QKeySequence
@@ -433,11 +434,11 @@ class ProjectTree(QTreeView):
                                                     "Package creation failed!")
 
     def addExistingFiles(self):
-        options = QFileDialog.Options()
-        files = QFileDialog.getOpenFileNames(self,
-                                                  "Select Files", QDir.homePath(
-                                                  ),
-            "All Files (*);;Text Files (*.txt)", options)
+        files = file_dialog_paths(QFileDialog.getOpenFileNames(
+            self,
+            "Select Files", QDir.homePath(),
+            "All Files (*);;Text Files (*.txt)",
+        ))
         if files:
             destDir = self.getCurrentDirectory()
             pathList = []
@@ -458,10 +459,10 @@ class ProjectTree(QTreeView):
             self.progressWidget.showBusy(True, "Preparing to copy...")
 
     def addExistingDirectory(self):
-        options = QFileDialog.DontResolveSymlinks | QFileDialog.ShowDirsOnly
-        directory = QFileDialog.getExistingDirectory(self,
-                                                          "Select Directory", QDir.homePath(
-                                                          ), options)
+        options = (QFileDialog.Option.DontResolveSymlinks
+                   | QFileDialog.Option.ShowDirsOnly)
+        directory = file_dialog_path(QFileDialog.getExistingDirectory(
+            self, "Select Directory", QDir.homePath(), options=options))
         if directory:
             destDir = self.getCurrentDirectory()
             destPathName = os.path.join(destDir, os.path.basename(directory))
