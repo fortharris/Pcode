@@ -1,738 +1,538 @@
-globalStyle = """
+"""Theme-aware stylesheets for Pcode.
 
-                 QsciScintilla#editor {
-                         border: none;
-                         border-top: 2px solid #007ACC;
-                 }
+Historically this module exposed a single hard-coded light ``globalStyle`` (and
+a handful of companion style strings) full of duplicated hex colours and
+blurry PNG-backed sub-control arrows. It is now token-based: every style is a
+``string.Template`` filled from a palette, and we ship Light + Dark palettes.
 
-                QToolButton {
-                    background: transparent;
-                    border-radius: 0px;
-                    padding: 1px;
-                    border: none;
-                }
+Backwards compatibility: the module-level names used elsewhere
+(``globalStyle``, ``editorStyle``, ``projectTitleBoxStyle``,
+``bottomSwitcherStyle``, ``mainMenuStyle``, ``toolWidgetStyle``,
+``viewSwitcherStyle``) still exist. They reflect the currently applied theme
+and are refreshed by :func:`apply_theme`, so widgets constructed after a theme
+change pick up the new palette.
+"""
 
-                QToolButton:hover {
-                    background: white;
-                }
+from string import Template
 
-                QToolButton:pressed {
-                    background: #007ACC;
-                }
+# --- Palettes ---------------------------------------------------------------
 
-                QToolButton:checked {
-                    background: #007ACC;
-                }
+LIGHT = {
+    "accent": "#007ACC",
+    "accentText": "#FFFFFF",
+    "accentHover": "#70A7DC",
+    "bg": "#F0F0F0",
+    "panel": "#E6E6E6",
+    "panelAlt": "#FAFAFA",
+    "text": "#000000",
+    "textDim": "#6E6E6E",
+    "border": "#C8C8C8",
+    "hover": "#CCCCCC",
+    "selInactiveBg": "#D0D0D0",
+    "selInactiveText": "#000000",
+    "scrollBg": "#F1F1F1",
+    "scrollHandle": "#B2B8BE",
+    "scrollHandleHover": "#6F767D",
+    "scrollHandlePressed": "#141414",
+    "tooltipBg": "#333333",
+    "tooltipText": "#FFFFFF",
+    "button": "#E4E4E4",
+    "buttonHover": "#EFEFEF",
+    "buttonPressed": "#CFCFCF",
+    "buttonText": "#000000",
+    "inputBg": "#FFFFFF",
+    "menuBg": "#E6E6E6",
+    "menuItemSel": "#007ACC",
+    "menuItemSelText": "#FFFFFF",
+    "dockTitleBg": "#D8D8D8",
+    "dockTitleText": "#000000",
+}
 
-                QToolButton:disabled {
-                    background: transparent;
-                }
+DARK = {
+    "accent": "#0E7AD1",
+    "accentText": "#FFFFFF",
+    "accentHover": "#1F6FB2",
+    "bg": "#2D2D30",
+    "panel": "#252526",
+    "panelAlt": "#333337",
+    "text": "#E8E8E8",
+    "textDim": "#9A9A9A",
+    "border": "#3F3F46",
+    "hover": "#3E3E42",
+    "selInactiveBg": "#3A3D41",
+    "selInactiveText": "#E8E8E8",
+    "scrollBg": "#2D2D30",
+    "scrollHandle": "#555559",
+    "scrollHandleHover": "#6E6E73",
+    "scrollHandlePressed": "#9A9A9F",
+    "tooltipBg": "#1E1E1E",
+    "tooltipText": "#E8E8E8",
+    "button": "#3C3C40",
+    "buttonHover": "#46464B",
+    "buttonPressed": "#2A2A2D",
+    "buttonText": "#E8E8E8",
+    "inputBg": "#1E1E1E",
+    "menuBg": "#252526",
+    "menuItemSel": "#0E7AD1",
+    "menuItemSelText": "#FFFFFF",
+    "dockTitleBg": "#333337",
+    "dockTitleText": "#E8E8E8",
+}
 
-                 QToolButton::menu-button {
-                     color: black;
-                 }
-
-             QGroupBox {
-                 background-color: none;
-                 border: none;
-                 font: bold;
-                 border-radius: 0px;
-                 margin-top: 5ex; /* leave space at the top for the title */
-             }
-
-             QGroupBox::title {
-                 padding-left: 8px;
-                 subcontrol-origin: margin;
-                 subcontrol-position: top left; /* position at the top left */
-                 background-color: none;
-             }
-
-             QComboBox {
-                 color: #003366;
-                 border-top: transparent;
-                 border-right: transparent;
-                 border-left: transparent;
-                 border-bottom: 1px solid #007ACC;
-                 border-radius: 0px;
-                 padding: 2px 2px 2px 3px;
-             }
-
-             QComboBox:disabled {
-                 color: gray;
-             }
-
-             QComboBox:editable {
-                 background: white;
-             }
-
-             QComboBox:!editable, QComboBox::drop-down:editable {
-                  background: lightgrey;
-                  border-radius: 0px;
-             }
-
-             /* QComboBox gets the "on" state when the popup is open */
-             QComboBox:!editable:on, QComboBox::drop-down:editable:on {
-                 background: darkgray;
-             }
-
-             QComboBox:on { /* shift the text when the popup opens */
-             
-             }
-
-             QComboBox::drop-down {
-                 subcontrol-origin: padding;
-                 subcontrol-position: top right;
-                 width: 15px;
-                 border: none;
-             }
-
-             QComboBox::down-arrow {
-                 image: url(Resources/style/images/downarrow.png);
-             }
-
-             QComboBox::down-arrow:on { /* shift the arrow when popup is open */
-                 top: 1px;
-                 left: 0px;
-             }
-
-             QComboBox QAbstractItemView {
-                 border: 1px solid lightgray;
-                 selection-background-color: #2B2BFF;
-             }
-
-             QComboBox QAbstractItemView::item {
-                 min-height: 25px;
-             }
-
-        QTabWidget::pane { /* The tab widget frame */
-             border-top: none;
-        }
-
-        QTabWidget#settingsTab::pane { /* The tab widget frame */
-             border-top: 1px solid #007ACC;
-             position: absolute;
-        }
-
-        QTabWidget::pane#buildTab { /* The tab widget frame */
-             border-top: 2px solid #007ACC;
-        }
-
-        QTabWidget::pane#sideBottomTab { /* The tab widget frame */
-             border-top: 2px solid #007ACC;
-        }
-
-        QTabWidget::tab-bar {
-             left: 0px; /* move to the right by 0px */
-        }
-
-        QTabWidget#sideBottomTab::tab-bar {
-             left: 0px; /* move to the right by 0px */
-        }
-
-        QTabWidget#settingsTab::tab-bar {
-             left: 10px; /* move to the right by 0px */
-        }
-
-        /* Style the tab using the tab sub-control. Note that
-             it reads QTabBar _not_ QTabWidget */
-        QTabBar::tab {
-             background: none;
-             border: none;
-             min-width: 24ex;
-             min-height: 5ex;
-             padding: 2px;
-             padding-left: 5px;
-             padding-right: 5px;
-        }
-
-        QTabBar::tab:hover {
-             background: #70A7DC;
-             color: black;
-        }
-
-        QTabBar::tab:selected{
-             background: #007ACC;
-             color: white;
-        }
-
-        QTabBar::tab:!selected {
-             margin-top: 0px; /* make non-selected tabs look smaller */
-        }
-
-        QTabBar::tab:first {
-             border-left: none;
-         }
-
-        QTabBar::tab:only-one {
-             border-left: none;
-        }
-
-        QTabBar::tear {
-             image: url(Resources/style/images/tear.png);
-        }
-
-        QTabBar::scroller { /* the width of the scroll buttons */
-             width: 20px;
-        }
-
-        QTabBar QToolButton { /* the scroll buttons are tool buttons */
-             border-image: url(Resources/style/images/scrollbutton.png) 2;
-
-        }
-
-        QTabBar QToolButton::right-arrow { /* the arrow mark in the tool buttons */
-             image: url(Resources/style/images/Arrow Right.png);
-        }
-
-        QTabBar QToolButton::left-arrow {
-             image: url(Resources/style/images/Arrow Left.png);
-        }
+PALETTES = {"Light": LIGHT, "Dark": DARK}
 
 
-        QTabBar::close-button {
-             image: url(Resources/style/images/close1.png)
+def resolve_palette(name):
+    """Resolve a theme name (incl. ``System``) to a palette dict."""
+    if name == "System":
+        name = _detect_system_theme()
+    return PALETTES.get(name, LIGHT)
 
-         }
 
-        QTabBar::close-button:hover {
-             image: url(Resources/style/images/close-hover.png)
-        }
+def _detect_system_theme():
+    """Best-effort OS dark-mode detection; falls back to Light."""
+    try:
+        from PyQt6.QtGui import QPalette
+        from PyQt6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app is not None:
+            win = app.palette().color(QPalette.ColorRole.Window)
+            # Perceived luminance; < 0.5 means a dark window background.
+            lum = (0.299 * win.red() + 0.587 * win.green()
+                   + 0.114 * win.blue()) / 255.0
+            return "Dark" if lum < 0.5 else "Light"
+    except Exception:
+        pass
+    return "Light"
 
-        QTabBar::close-button:pressed {
-             image: url(Resources/style/images/close-pressed.png)
-        }
 
-        QToolBar {
+# --- Templates --------------------------------------------------------------
+
+_GLOBAL_TEMPLATE = Template("""
+        QsciScintilla#editor {
             border: none;
-            background-color: transparent;
+            border-top: 2px solid $accent;
         }
 
+        QWidget { color: $text; }
+
+        QToolButton {
+            background: transparent;
+            border-radius: 2px;
+            padding: 1px;
+            border: none;
+        }
+        QToolButton:hover { background: $hover; }
+        QToolButton:pressed { background: $accent; }
+        QToolButton:checked { background: $accent; }
+        QToolButton:disabled { background: transparent; }
+        QToolButton::menu-button { color: $text; }
+
+        QGroupBox {
+            background-color: none;
+            border: none;
+            font: bold;
+            border-radius: 0px;
+            margin-top: 5ex;
+        }
+        QGroupBox::title {
+            padding-left: 8px;
+            subcontrol-origin: margin;
+            subcontrol-position: top left;
+            background-color: none;
+        }
+
+        QComboBox {
+            color: $text;
+            border: none;
+            border-bottom: 1px solid $accent;
+            border-radius: 0px;
+            padding: 2px 2px 2px 3px;
+            background: $inputBg;
+        }
+        QComboBox:disabled { color: $textDim; }
+        QComboBox::drop-down {
+            subcontrol-origin: padding;
+            subcontrol-position: top right;
+            width: 16px;
+            border: none;
+        }
+        QComboBox QAbstractItemView {
+            border: 1px solid $border;
+            background: $panel;
+            color: $text;
+            selection-background-color: $accent;
+            selection-color: $accentText;
+        }
+        QComboBox QAbstractItemView::item { min-height: 24px; }
+
+        QTabWidget::pane { border-top: none; }
+        QTabWidget#settingsTab::pane {
+            border-top: 1px solid $accent;
+            position: absolute;
+        }
+        QTabWidget::pane#buildTab { border-top: 2px solid $accent; }
+        QTabWidget::pane#sideBottomTab { border-top: 2px solid $accent; }
+        QTabWidget::tab-bar { left: 0px; }
+        QTabWidget#sideBottomTab::tab-bar { left: 0px; }
+        QTabWidget#settingsTab::tab-bar { left: 10px; }
+
+        QTabBar { qproperty-drawBase: 0; }
+        QTabBar::tab {
+            background: none;
+            color: $textDim;
+            border: none;
+            min-width: 24ex;
+            min-height: 5ex;
+            padding: 2px 5px;
+        }
+        QTabBar::tab:hover { background: $accentHover; color: $text; }
+        QTabBar::tab:selected { background: $accent; color: $accentText; }
+        QTabBar::tab:!selected { margin-top: 0px; }
+
+        QToolBar { border: none; background-color: transparent; }
         QToolBar QToolButton {
             border: 1px solid transparent;
             background: transparent;
             padding: 1px;
         }
+        QToolBar QToolButton:hover:enabled { background-color: $hover; }
+        QToolBar QToolButton:pressed:enabled { background-color: $accent; }
+        QToolBar QToolButton:disabled { background-color: transparent; }
+        QToolBar QToolButton:checked { background-color: $accent; }
 
-        QToolBar QToolButton:hover:enabled { /* when selected using mouse or keyboard */
-             background-color: white;
-        }
+        QStatusBar { background: transparent; }
+        QStatusBar::item { border-radius: 3px; }
 
-        QToolBar QToolButton:pressed:enabled {
-             background-color: #007ACC;
-        }
-
-        QToolBar QToolButton:disabled {
-             background-color: transparent;
-        }
-
-        QToolBar QToolButton:checked {
-             background-color: #007ACC;
-        }
-
-        QStatusBar {
-             background: transparent;
-        }
-
-        QStatusBar::item {
-             border-radius: 3px;
-        }
-
-
-        QDockWidget {
-             color: white;
-             titlebar-close-icon: url(Resources/style/images/close_black.png);
-             titlebar-normal-icon: url(Resources/style/images/undock.png);
-        }
-
+        QDockWidget { color: $dockTitleText; }
         QDockWidget::title {
-             border: none;
-             text-align: left; /* align the text to the left */
-             background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                               stop:0 #585858, stop:1 #3F3F3F);
-             padding-left: 5px;
+            border: none;
+            text-align: left;
+            background-color: $dockTitleBg;
+            padding-left: 5px;
         }
-
         QDockWidget::close-button, QDockWidget::float-button {
-             border: none;
-             background: transparent;
-             padding: 2px;
-        }
-
-        QDockWidget::close-button:hover, QDockWidget::float-button:hover {
-             background: transparent;
-        }
-
-        QDockWidget::close-button:pressed, QDockWidget::float-button:pressed {
-             padding: 1px -1px -1px 1px;
+            border: none;
+            background: transparent;
+            padding: 2px;
         }
 
         QToolTip {
-             color: white;
-             border: none;
-             opacity: 200;
-             border-radius: 3px;
-             background: #333333;
+            color: $tooltipText;
+            border: none;
+            border-radius: 3px;
+            background: $tooltipBg;
+            padding: 3px;
         }
 
-        QMenuBar {
-             background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                           stop:0 lightgray, stop:1 darkgray);
-        }
-
-        QMenuBar {
-             background-color: #F0F0F0;
-             border-bottom: 1px solid darkgrey;
-        }
-
+        QMenuBar { background-color: $bg; border-bottom: 1px solid $border; }
         QMenuBar::item {
-             spacing: 3px; /* spacing between menu bar items */
-             padding: 3px 8px;
-             background: none;
-             border-radius: 0px;
+            spacing: 3px;
+            padding: 3px 8px;
+            background: none;
+            color: $text;
+            border-radius: 0px;
         }
+        QMenuBar::item:selected { background: $accent; color: $accentText; }
+        QMenuBar::item:pressed { background: $accent; color: $accentText; }
 
-        QMenuBar::item:selected { /* when selected using mouse or keyboard */
-             background: rgba(255, 0, 0, 80);
-        }
-
-        QMenuBar::item:pressed {
-             background: rgba(255, 0, 0, 80);
-        }
-
-        QMenu {
-             background: #E6E6E6;
-             padding: 2px;
-        }
-
-        QMenu::item {
-             padding: 5px 30px 5px 30px;
-             border: none;
-        }
-
+        QMenu { background: $menuBg; color: $text; padding: 2px;
+                border: 1px solid $border; }
+        QMenu::item { padding: 5px 30px; border: none; }
         QMenu::item:selected:enabled {
-             border-color: none;
-             background: #FAFAFA;
+            background: $menuItemSel; color: $menuItemSelText;
         }
+        QMenu::separator { height: 1px; background-color: $border; }
+        QMenu::indicator { width: 13px; height: 13px; }
 
-        QMenu::separator {
-             height: 1px;
-             background-color: lightgrey;
-        }
-
-        QMenu::indicator {
-             width: 13px;
-             height: 13px;
-        }
-
-        QListView {
-             show-decoration-selected: 1; /* make the selection span the entire width of the view */
-        }
-
+        QListView { show-decoration-selected: 1; background: $panel;
+                    color: $text; }
         QListView::item:selected:!active {
-             color: black;
-             border: 1px solid white;
-             background: lightgray;
+            color: $selInactiveText;
+            background: $selInactiveBg;
         }
-
         QListView::item:selected:active {
-             color: white;
-             background: #337BFF;
+            color: $accentText;
+            background: $accent;
         }
 
-         QHeaderView::section {
-             background: none;
-             color: black;
-             padding-left: 2px;
-             border: none;
-             border-bottom: 1px solid lightgray;
-             height: 20px;
-         }
-
-         QHeaderView::section:checked
-         {
-             background-color: red;
-         }
-
-         /* style the sort indicator */
-         QHeaderView::down-arrow {
-             image: url(Resources/style/images/downarrow.png);
-         }
-
-         QHeaderView::up-arrow {
-             image: url(Resources/style/images/uparrow.png);
-         }
-
+        QHeaderView::section {
+            background: $panel;
+            color: $text;
+            padding-left: 4px;
+            border: none;
+            border-bottom: 1px solid $border;
+            height: 20px;
+        }
 
         QTreeView {
-             show-decoration-selected: 1; /* make the selection span the entire width of the view */
-             background: #E6E6E6;
-             border: none;
+            show-decoration-selected: 1;
+            background: $panel;
+            color: $text;
+            border: none;
         }
-
         QTreeView#sidebarItem {
-             border: none;
-             show-decoration-selected: 1; /* make the selection span the entire width of the view */
-             background: #E6E6E6;
+            border: none;
+            show-decoration-selected: 1;
+            background: $panel;
         }
-
         QTreeView::item:selected:!active {
-             font: bold 20px;
-             color: black;
-             background: lightgrey;}
-
+            color: $selInactiveText;
+            background: $selInactiveBg;
+        }
         QTreeView::item:selected:active {
-             font: bold 20px;
-             color: white;
-             background: grey;
+            color: $accentText;
+            background: $accent;
         }
-
-        QTreeView::item:hover {
-             border: none;
-             background: #CCCCCC;
-        }
+        QTreeView::item:hover { border: none; background: $hover; }
 
         QSlider::groove:horizontal {
-             border: 1px inset #999999;
-             height: 8px; /* the groove expands to the size of the slider by default. by giving it a height, it has a fixed size */
-             background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                                                 stop:0 #B3B3B3, stop:1 #FFFFFF);
-             margin: 2px 7px 0 7px;
-             border-radius: 5px;
+            border: 1px solid $border;
+            height: 6px;
+            background: $panelAlt;
+            margin: 2px 7px 0 7px;
+            border-radius: 3px;
         }
-
         QSlider::handle:horizontal {
-             background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                                                 stop:0 #D2D2D2, stop:1 #C3C3C3);
-             border: 1px solid #5c5c5c;
-             width: 18px;
-             margin: -2px 0; /* handle is placed by default on the contents rect of the groove. Expand outside the groove */
-             border-radius: 3px;
+            background: $accent;
+            border: 1px solid $accent;
+            width: 14px;
+            margin: -4px 0;
+            border-radius: 3px;
         }
 
-        QScrollBar:vertical{
-            padding-left: 0px;
-            padding-right: 1px;
-            border-left-width: 1px;
-            background: #f1f1f1;
+        QScrollBar:vertical {
+            padding: 0px;
+            background: $scrollBg;
             width: 12px;
+            margin: 0px;
         }
-
-        QScrollBar:horizontal{
-            padding-top: 0px;
-            padding-bottom: 1px;
-            border-top-width: 1px;
-            border-style:solid;
+        QScrollBar:horizontal {
+            padding: 0px;
             border: none;
-            background: #E7E7E7;
+            background: $scrollBg;
             height: 10px;
+            margin: 0px;
         }
-
-        QScrollBar::handle:vertical{
-            margin-top: 15px;
-            margin-bottom: 15px;
-            background: #B2B8BE;
-            border-radius: 0px;
-            border: 1px solid #FFFFFF;
+        QScrollBar::handle:vertical {
+            margin: 2px;
+            background: $scrollHandle;
+            border-radius: 4px;
             min-height: 30px;
         }
-
-        QScrollBar::handle:horizontal{
-            margin-left: 15px;
-            margin-right: 15px;
-            background: #B2B8BE;
-            border-radius: 0px;
-            border: none;
+        QScrollBar::handle:horizontal {
+            margin: 2px;
+            background: $scrollHandle;
+            border-radius: 4px;
             min-width: 30px;
         }
-
-        QScrollBar::handle:hover{
-            background: #6F767D;
+        QScrollBar::handle:hover { background: $scrollHandleHover; }
+        QScrollBar::handle:pressed { background: $scrollHandlePressed; }
+        QScrollBar::add-line, QScrollBar::sub-line {
+            width: 0px; height: 0px; background: none; border: none;
         }
-
-        QScrollBar::handle:pressed{
-            background: #141414;
-        }
-
-        QScrollBar::add-line:vertical,
-        QScrollBar::sub-line:vertical,
-        QScrollBar::add-page:vertical,
-        QScrollBar::sub-page:vertical,
-        QScrollBar::add-line:horizontal,
-        QScrollBar::sub-line:horizontal,
-        QScrollBar::add-page:horizontal,
-        QScrollBar::sub-page:horizontal{
-            background: none;
-            border: none;
-        }
-        
-        QScrollBar::add-line:vertical:pressed,
-        QScrollBar::sub-line:vertical:pressed,
-        QScrollBar::add-page:vertical:pressed,
-        QScrollBar::sub-page:vertical:pressed,
-        QScrollBar::add-line:horizontal:pressed,
-        QScrollBar::sub-line:horizontal:pressed,
-        QScrollBar::add-page:horizontal:pressed,
-        QScrollBar::sub-page:horizontal:pressed{
-            background: lightgrey;
-            border: none;
-        }
-
-        QScrollBar::up-arrow:vertical {
-          border: none;
-          width: 10px;
-          height: 10px;
-          margin-left: 0px;
-          image: url(Resources/style/images/uparrow.png);
-        }
-
-        QScrollBar::down-arrow:vertical {
-          border: none;
-          width: 10px;
-          height: 10px;
-          margin-left: 0px;
-          image: url(Resources/style/images/downarrow.png);
-        }
-
-        QScrollBar::left-arrow:horizontal {
-          border: none;
-          width: 10px;
-          height: 10px;
-          image: url(Resources/style/images/leftarrow.png);
-        }
-
-        QScrollBar::right-arrow:horizontal {
-          border: none;
-          width: 10px;
-          height: 10px;
-          image: url(Resources/style/images/rightarrow.png);
-        }
+        QScrollBar::add-page, QScrollBar::sub-page { background: none; }
 
         QPushButton {
             min-width: 70px;
+            min-height: 22px;
+            color: $buttonText;
+            background: $button;
+            border-radius: 3px;
+            border: 1px solid $border;
+            padding: 2px 8px;
+        }
+        QPushButton:hover { border: 1px solid $accent; background: $buttonHover; }
+        QPushButton:pressed { background: $buttonPressed; }
+        QPushButton:checked { background: $buttonPressed; border: 1px solid $accent; }
+        QPushButton:disabled { color: $textDim; background: $panel; }
+
+        QSplitter::handle { background: none; }
+        QSplitter::handle:horizontal { width: 5px; background: $panel; }
+        QSplitter::handle:vertical { height: 5px; background: $panel; }
+        QSplitter::handle:hover { background: $accentHover; }
+        QSplitter::handle:pressed { background: $accent; }
+
+        QLineEdit {
+            border: 1px solid $border;
             min-height: 20px;
-            color: black;
-            background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                stop: 0 #F1F1F1, stop: 1 #DFDFDF);
-            border-radius: 2px;
-            border: 1px solid #A8A8A8;
+            border-radius: 3px;
+            padding: 0 4px;
+            background: $inputBg;
+            color: $text;
         }
+        QLineEdit:focus { border: 1px solid $accent; }
+        QLineEdit:disabled { border: 1px solid $border; color: $textDim; }
 
-        QPushButton:hover {
-            border: 1px solid #AAAAAA;
-            background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                stop: 0 #F1F1F1, stop: 1 #F0F0F0);
-        }
+        QCheckBox, QRadioButton, QLabel { color: $text; background: none; }
+        """)
 
-        QPushButton:pressed {
-            background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                stop: 0 #D7D7D7, stop: 1 #BDBDBD);
-            padding-top: 2px;
-            border: 1px solid #A1A1A1;
-        }
-
-        QPushButton:checked {
-            background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
-                stop: 0 #D7D7D7, stop: 1 #BDBDBD);
-            padding-top: 2px;
-            border: 1px solid #A1A1A1;
-        }
-
-        QPushButton:disabled {
-            color: black;
-            background: #FFFFFF;
-        }
-
-         QSplitter::handle {
-             background: none;
-         }
-
-         QSplitter::handle:horizontal {
-             width: 5px;
-             background: #E6E6E6;
-         }
-
-         QSplitter::handle:vertical {
-             height: 5px;
-             background: lightgray;
-         }
-
-         QSplitter::handle:hover {
-             background: lightgray;
-         }
-
-         QSplitter::handle:pressed {
-             background: gray;
-         }
-
-         QLineEdit {
-             border: 1px solid lightgrey;
-             min-height: 20px;
-             border-radius: 0px;
-             padding: 0 4px;
-             background: none;
-         }
-
-         QLineEdit:disabled {
-             border: 1px solid lightgray;
-         }
-
-        """
-
-projectTitleBoxStyle = """
-
+_PROJECT_TITLE_TEMPLATE = Template("""
         QListView {
             border: none;
-            border-top: 1px solid lightgray;
-            show-decoration-selected: 1; /* make the selection span the entire width of the view */
+            border-top: 1px solid $border;
+            background: $panel;
+            color: $text;
+            show-decoration-selected: 1;
         }
-
         QListView::item:selected:!active {
-             color: black;
-             border: none;
-             background: none;
+            color: $text;
+            border: none;
+            background: $selInactiveBg;
         }
-
         QListView::item:selected:active {
-             color: white;
-             border: none;
-             background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #5a91d4, stop: 1 #1a57ad);;
+            color: $accentText;
+            border: none;
+            background: $accent;
         }
+        """)
 
-        """
-
-bottomSwitcherStyle = """
-
+_BOTTOM_SWITCHER_TEMPLATE = Template("""
         QPushButton {
-             min-height: 17px;
-             background: none;
-             border: none;
-             border-radius: 0px;
-             min-width: 13ex;
-             padding: 2px;
-        }
-
-        QPushButton:hover {
-             color: black;
-             background: none;
-        }
-
-        QPushButton:pressed {
+            min-height: 17px;
             background: none;
+            color: $textDim;
+            border: none;
+            border-radius: 0px;
+            min-width: 13ex;
+            padding: 2px;
         }
-
+        QPushButton:hover { color: $text; background: none; }
+        QPushButton:pressed { background: none; }
         QPushButton:checked {
-             color: black;
-             border-left: 1px solid lightgray;
-             border-right: 1px solid lightgray;
+            color: $text;
+            border-left: 1px solid $border;
+            border-right: 1px solid $border;
         }
+        QPushButton:disabled { color: $textDim; background: none; }
+        """)
 
-        QPushButton:disabled {
-            color: black;
-            background: #FFFFFF;
+_EDITOR_TEMPLATE = Template("""
+        QListView {
+            border: 1px solid $border;
+            color: $text;
+            min-width: 500px;
+            min-height: 190px;
+            background: $panel;
+            show-decoration-selected: 1;
         }
-        """
+        QListView::item:selected { color: $accentText; font: bold;
+            border: none; background: $accent; }
+        QListView::item:selected:!active { color: $accentText; font: bold;
+            border: none; background: $accent; }
+        QListView::item:selected:active { color: $accentText;
+            background: $accent; }
+        QListView::item:hover { border-bottom: none; background: $hover; }
+        """)
 
-editorStyle = """
-                 QListView {
-                        border: 1px solid black;
-                        color: lightgrey;
-                        min-width: 500px;
-                        min-height: 190px;
-                        background: #1C1C1C;
-                        show-decoration-selected: 1; /* make the selection span the entire width of the view */
-                 }
+_MAIN_MENU_TEMPLATE = Template("""
+        QPushButton {
+            padding: 2px 6px;
+            color: $textDim;
+            background: transparent;
+            border: none;
+            border-radius: 0px;
+        }
+        QPushButton:hover { color: $text; }
+        QPushButton:checked { color: $text; border-bottom: 2px solid $accent; }
+        """)
 
-                 QListView::item:alternate {
-                        background: #EEEEEE;
-                 }
+_TOOL_WIDGET_TEMPLATE = Template("""
+        QLabel#containerLabel {
+            border-left: 1px solid $accent;
+            border-right: 1px solid $accent;
+            border-bottom: 1px solid $accent;
+            background: $bg;
+        }
+        QLabel#toolWidgetNameLabel { font: 14px; color: $textDim; }
+        """)
 
-                 QListView::item:selected {
-                        color: white;
-                        font: bold;
-                        border: none;
-                        background: #363636;
-                 }
+_VIEW_SWITCHER_TEMPLATE = Template("""
+        QLabel { background: $accentHover; padding: 1px; }
+        QToolButton {
+            min-width: 30px;
+            min-height: 30px;
+            background: $panel;
+            border-radius: 0px;
+            border: none;
+        }
+        QToolButton:hover {
+            background: $panelAlt;
+            border: none;
+            border-bottom: 3px solid $accentHover;
+        }
+        QToolButton:checked { background: $panelAlt; border-bottom: 3px solid $accent; }
+        QToolButton:disabled { background: $panel; }
+        """)
 
-                 QListView::item:selected:!active {
-                        color: white;
-                        font: bold;
-                        border: none;
-                        background: #363636;
-                 }
 
-                 QListView::item:selected:active {
-                        color: white;
-                        background: #575757;
-                 }
+def _build(template, palette):
+    return template.safe_substitute(palette)
 
-                 QListView::item:hover {
-                        border-bottom:  none;
-                 }
-                """
 
-mainMenuStyle = """
+def global_style(name="Light"):
+    return _build(_GLOBAL_TEMPLATE, resolve_palette(name))
 
-                QPushButton {
-                    padding: 2px 6px 2px 6px;
-                    color: grey;
-                    background: transparent;
-                    border: none;
-                    border-radius: 0px;
-                }
 
-                QPushButton:hover {
-                    color: black;
-                }
+def themed(name="Light"):
+    """Return all theme-dependent style strings for the given theme name."""
+    p = resolve_palette(name)
+    return {
+        "globalStyle": _build(_GLOBAL_TEMPLATE, p),
+        "projectTitleBoxStyle": _build(_PROJECT_TITLE_TEMPLATE, p),
+        "bottomSwitcherStyle": _build(_BOTTOM_SWITCHER_TEMPLATE, p),
+        "editorStyle": _build(_EDITOR_TEMPLATE, p),
+        "mainMenuStyle": _build(_MAIN_MENU_TEMPLATE, p),
+        "toolWidgetStyle": _build(_TOOL_WIDGET_TEMPLATE, p),
+        "viewSwitcherStyle": _build(_VIEW_SWITCHER_TEMPLATE, p),
+    }
 
-                QPushButton:pressed {
 
-                }
+def _qpalette(palette):
+    """Build a QPalette from token colours so natively-painted surfaces
+    (window/dialog backgrounds, etc.) match the stylesheet."""
+    from PyQt6.QtGui import QColor, QPalette
+    Role = QPalette.ColorRole
+    qp = QPalette()
+    mapping = {
+        "Window": "bg",
+        "WindowText": "text",
+        "Base": "inputBg",
+        "AlternateBase": "panel",
+        "Text": "text",
+        "Button": "button",
+        "ButtonText": "buttonText",
+        "ToolTipBase": "tooltipBg",
+        "ToolTipText": "tooltipText",
+        "Highlight": "accent",
+        "HighlightedText": "accentText",
+        "PlaceholderText": "textDim",
+        "BrightText": "accentText",
+    }
+    for role_name, token in mapping.items():
+        role = getattr(Role, role_name, None)
+        if role is not None and token in palette:
+            qp.setColor(role, QColor(palette[token]))
+    return qp
 
-                QPushButton:checked {
-                    color: black;
-                }
 
-                """
+def apply_theme(app, name):
+    """Apply ``name`` as the active theme.
 
-toolWidgetStyle = """
+    Refreshes the module-level style strings (so widgets built afterwards use
+    the new palette), sets a matching QPalette, and applies the application
+    stylesheet immediately.
+    """
+    styles = themed(name)
+    globals().update(styles)
+    if app is not None:
+        try:
+            app.setPalette(_qpalette(resolve_palette(name)))
+        except Exception:
+            pass
+        app.setStyleSheet(styles["globalStyle"])
+    return styles
 
-                QLabel#containerLabel { border-left: 1px solid #0099FF;
-                                       border-right: 1px solid #0099FF;
-                                       border-bottom: 1px solid #0099FF;
-                                       background: #F0F0F0;
-                                       }
 
-                QLabel#toolWidgetNameLabel { font: 14px; color: grey;}
-
-                """
-
-viewSwitcherStyle = """
-
-                    QLabel {
-                        background:  rgba(138, 201, 255, 200);
-                        padding: 1px;
-                    }
-
-                    QToolButton {
-                        min-width: 30px;
-                        min-height: 30px;
-                        background: #A3D5FF;
-                        border-radius: 0px;
-                        border: none;
-                    }
-
-                    QToolButton:hover {
-                        background: white;
-                        border: none;
-                        border-bottom: 3px solid #A3D5FF;
-                    }
-
-                    QToolButton:checked {
-                        background: white;
-                        border-bottom: 3px solid #3DA7FF;
-                    }
-
-                    QToolButton:disabled {
-                        background: #FFFFFF;
-                    }
-                """
+# Default module-level names (Light) for import-time compatibility.
+globals().update(themed("Light"))

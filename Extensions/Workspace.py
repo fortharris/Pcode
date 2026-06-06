@@ -1,66 +1,60 @@
-import sys
 import os
+import sys
 import zipfile
-from PyQt4 import QtCore, QtGui
+
+from PyQt6.QtCore import QDir, Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (
+    QApplication, QComboBox, QDialog, QFileDialog, QHBoxLayout, QLabel,
+    QLineEdit, QMessageBox, QPushButton, QVBoxLayout, QWidget,
+)
 
 
-class CreateWorkSpaceThread(QtCore.QThread):
+class CreateWorkSpaceThread(QThread):
 
     def run(self):
         self.errors = None
         try:
-            zip = zipfile.ZipFile(
+            archive = zipfile.ZipFile(
                 os.path.join("Resources", "PcodeProjects.zip"), 'r')
-            zip.extractall(self.path)
+            archive.extractall(self.path)
         except Exception as err:
             self.errors = str(err)
 
     def createWorkspace(self, path):
         self.path = path
-
         self.start()
 
 
-class GetPathLine(QtGui.QWidget):
+class GetPathLine(QWidget):
 
-    textChanged = QtCore.pyqtSignal(str)
+    textChanged = pyqtSignal(str)
 
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
-        mainLayout = QtGui.QHBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout = QHBoxLayout()
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
-        self.destinationLine = QtGui.QLineEdit()
+        self.destinationLine = QLineEdit(self)
         self.destinationLine.textChanged.connect(self.textChanged.emit)
         mainLayout.addWidget(self.destinationLine)
 
-        homePath = QtCore.QDir().homePath()
-
-        # Todo: Workspace must unpack to the platform specific home
-        # directory by default
+        home_path = QDir().homePath()
         if sys.platform == 'win32':
-            path = os.path.join(homePath,
-                                "My Documents", "PcodeProjects")
-        elif sys.platform == 'darwin':
-            path = os.path.join(homePath,
-                                "Documents", "PcodeProjects")
+            path = os.path.join(home_path, "My Documents", "PcodeProjects")
         else:
-            path = os.path.join(homePath,
-                                "My Documents", "PcodeProjects")
-        path = os.path.normpath(path)
-        self.destinationLine.setText(path)
+            path = os.path.join(home_path, "Documents", "PcodeProjects")
+        self.destinationLine.setText(os.path.normpath(path))
 
-        self.browseButton = QtGui.QPushButton('...')
+        self.browseButton = QPushButton('...')
         self.browseButton.clicked.connect(self.browsePath)
         mainLayout.addWidget(self.browseButton)
 
     def browsePath(self):
-        homePath = QtCore.QDir().homePath()
-        directory = QtGui.QFileDialog.getExistingDirectory(
-            self, "Select Folder",
-            homePath)
+        directory = QFileDialog.getExistingDirectory(
+            self, "Select Folder", QDir().homePath())
         if directory:
             self.destinationLine.setText(os.path.normpath(directory))
 
@@ -68,27 +62,26 @@ class GetPathLine(QtGui.QWidget):
         return self.destinationLine.text()
 
 
-class Workspace(QtGui.QDialog):
+class Workspace(QDialog):
 
     def __init__(self, parent=None):
-        QtGui.QDialog.__init__(self, parent,
-                               QtCore.Qt.Window | QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(
+            self, parent,
+            Qt.WindowType.Window | Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle("Workspace")
-        self.setWindowIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "Icon")))
+        self.setWindowIcon(QIcon(os.path.join("Resources", "images", "Icon")))
         self.setFixedSize(500, 130)
 
         self.createWorkSpaceThread = CreateWorkSpaceThread()
         self.createWorkSpaceThread.finished.connect(self.completeWorkspace)
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         self.setLayout(mainLayout)
 
-        mainLayout.addWidget(
-            QtGui.QLabel("Choose the location of your Workspace:"))
+        mainLayout.addWidget(QLabel("Choose the location of your Workspace:"))
 
-        self.choiceBox = QtGui.QComboBox()
+        self.choiceBox = QComboBox()
         self.choiceBox.addItem("Choose an existing one")
         self.choiceBox.addItem("Create new")
         mainLayout.addWidget(self.choiceBox)
@@ -98,28 +91,26 @@ class Workspace(QtGui.QDialog):
 
         mainLayout.addStretch(1)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        self.statusLabel = QtGui.QLabel()
+        self.statusLabel = QLabel()
         hbox.addWidget(self.statusLabel)
-
         hbox.addStretch(1)
 
-        self.okButton = QtGui.QPushButton("Done")
+        self.okButton = QPushButton("Done")
         self.okButton.clicked.connect(self.accept)
         hbox.addWidget(self.okButton)
 
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QPushButton("Cancel")
         self.cancelButton.clicked.connect(self.cancel)
         hbox.addWidget(self.cancelButton)
 
         self.created = False
-
-        self.exec_()
+        self.exec()
 
     def completeWorkspace(self):
-        QtGui.QApplication.restoreOverrideCursor()
+        QApplication.restoreOverrideCursor()
         if self.createWorkSpaceThread.errors is None:
             self.path = os.path.join(
                 self.createWorkSpaceThread.path, "PcodeProjects")
@@ -127,8 +118,10 @@ class Workspace(QtGui.QDialog):
             self.close()
         else:
             self.statusLabel.clear()
-            message = QtGui.QMessageBox.warning(
-                self, "Workspace", "Error creating workspace:\n\n{0}".format(self.createWorkSpaceThread.errors))
+            QMessageBox.warning(
+                self, "Workspace",
+                "Error creating workspace:\n\n{0}".format(
+                    self.createWorkSpaceThread.errors))
             self.okButton.setDisabled(False)
             self.cancelButton.setDisabled(False)
             self.getPathLine.setDisabled(False)
@@ -143,21 +136,18 @@ class Workspace(QtGui.QDialog):
                     self.created = True
                     self.close()
                 else:
-                    message = QtGui.QMessageBox.warning(
+                    QMessageBox.warning(
                         self, "Workspace", "The workspace is not valid!")
-                    return
             else:
                 self.okButton.setDisabled(True)
                 self.cancelButton.setDisabled(True)
                 self.getPathLine.setDisabled(True)
                 self.choiceBox.setDisabled(True)
                 self.statusLabel.setText("Creating workspace...")
-                QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
-
+                QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
                 self.createWorkSpaceThread.createWorkspace(path)
         else:
-            message = QtGui.QMessageBox.warning(
-                self, "Workspace", "Path does not exist.")
+            QMessageBox.warning(self, "Workspace", "Path does not exist.")
 
     def cancel(self):
         self.created = False

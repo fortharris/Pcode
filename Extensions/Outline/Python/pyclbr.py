@@ -160,7 +160,7 @@ def _readmodule(source):
                     # it's a global variable
                     lineno, thisindent = start
                     outlineDict[firstword] = GlobalVariable(firstword, lineno)
-    except:
+    except Exception:
         pass
 
     f.close()

@@ -31,11 +31,26 @@ Pcode seeks to simplify the process of development in python by means of:
    Click on [Release](https://github.com/fortharris/Pcode/releases) to view available downloads.
 
 ### Dependencies:
-1. Python 3 ( for running programs )
-1. PyQt4 ( if you are running from source )
+1. Python 3.10+ ( for running programs )
+1. PyQt6 and PyQt6-QScintilla ( if you are running from source — see [RUN.md](RUN.md) )
 
-Then perhaps:
-* Pywin32 for windows ( for stamping executables if you are running from source )
+The previously-vendored libraries (`rope`, `pyflakes`, `autopep8`, `pycodestyle`,
+`cx_Freeze`) are now installed from PyPI via `requirements.txt`.
+
+### From source & development
+```bash
+pip install -r requirements.txt        # run from source
+pip install -e .                       # optional: install the `pcode` command
+pip install -e .[dev]                  # optional: pytest + ruff for development
+QT_QPA_PLATFORM=offscreen pytest       # unit + smoke tests (headless)
+```
+See [RUN.md](RUN.md) for full setup, the headless smoke test, and troubleshooting.
+
+**PyQt6 branch (`pyside`):** production code uses direct `PyQt6` imports. Legacy
+`Extensions/qt_bindings.py` has been removed. Color scheme / lexer definitions
+under the workspace `stylesdir` remain XML (editor format).
+
+**PR:** https://github.com/fortharris/Pcode/compare/master...pyside?expand=1
 
 ### License:
 * GPL v3

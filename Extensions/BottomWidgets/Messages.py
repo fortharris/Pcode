@@ -1,11 +1,14 @@
 import os
-from PyQt4 import QtGui, QtCore
+
+from PyQt6.QtCore import QDateTime
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 
-class MessagesWidget(QtGui.QTreeWidget):
+class MessagesWidget(QTreeWidget):
 
     def __init__(self, bottomStackSwitcher, vSplitter, parent=None):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
 
         self.bottomStackSwitcher = bottomStackSwitcher
         self.vSplitter = vSplitter
@@ -15,20 +18,20 @@ class MessagesWidget(QtGui.QTreeWidget):
         self.setColumnWidth(1, 40)
 
     def addMessage(self, messType, title, messageList):
-        parentItem = QtGui.QTreeWidgetItem(self)
+        parentItem = QTreeWidgetItem(self)
         if messType == 0:
-            parentItem.setIcon(0, QtGui.QIcon(
+            parentItem.setIcon(0, QIcon(
                 os.path.join("Resources", "images", "security", "attention")))
         elif messType == 1:
-            parentItem.setIcon(0, QtGui.QIcon(
+            parentItem.setIcon(0, QIcon(
                 os.path.join("Resources", "images", "security", "warning")))
         elif messType == 2:
-            parentItem.setIcon(0, QtGui.QIcon(
+            parentItem.setIcon(0, QIcon(
                 os.path.join("Resources", "images", "security", "danger")))
         parentItem.setText(0, title)
-        parentItem.setText(1, QtCore.QDateTime().currentDateTime().toString())
+        parentItem.setText(1, QDateTime.currentDateTime().toString())
         for i in messageList:
-            item = QtGui.QTreeWidgetItem(parentItem)
+            item = QTreeWidgetItem(parentItem)
             item.setFirstColumnSpanned(True)
             item.setText(0, i)
             parentItem.addChild(item)

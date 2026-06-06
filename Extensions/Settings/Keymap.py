@@ -1,12 +1,17 @@
-from PyQt4 import QtCore, QtGui, QtXml
-from PyQt4.Qsci import QsciScintilla
+from PyQt6.Qsci import QsciScintilla
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtGui import QKeySequence
+from PyQt6.QtWidgets import (
+    QDialog, QHBoxLayout, QLineEdit, QMessageBox, QPushButton, QTreeWidget,
+    QTreeWidgetItem, QVBoxLayout,
+)
 
 
-class GetShortcut(QtGui.QDialog):
+class GetShortcut(QDialog):
 
     def __init__(self, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
         self.setWindowTitle("New Shortcut")
 
         self.accepted = False
@@ -14,37 +19,37 @@ class GetShortcut(QtGui.QDialog):
 
         # Keyword modifiers!
         self.keyword_modifiers = (
-            QtCore.Qt.Key_Control, QtCore.Qt.Key_Meta, QtCore.Qt.Key_Shift,
-            QtCore.Qt.Key_Alt, QtCore.Qt.Key_Menu)
+            Qt.Key.Key_Control, Qt.Key.Key_Meta, Qt.Key.Key_Shift,
+            Qt.Key.Key_Alt, Qt.Key.Key_Menu)
 
-        mainLayout = QtGui.QVBoxLayout(self)
+        mainLayout = QVBoxLayout(self)
 
-        self.keyLine = QtGui.QLineEdit()
+        self.keyLine = QLineEdit()
         self.keyLine.setReadOnly(True)
         self.keyLine.installEventFilter(self)
         mainLayout.addWidget(self.keyLine)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        okButton = QtGui.QPushButton("Accept")
+        okButton = QPushButton("Accept")
         okButton.clicked.connect(self.saveShortcut)
         hbox.addWidget(okButton)
 
-        cancelButton = QtGui.QPushButton("Cancel")
+        cancelButton = QPushButton("Cancel")
         cancelButton.clicked.connect(self.close)
         hbox.addWidget(cancelButton)
 
     def saveShortcut(self):
         self.close()
-        self.keysequence = QtGui.QKeySequence(self.keyLine.text())
+        self.keysequence = QKeySequence(self.keyLine.text())
         self.accepted = True
 
     def setShortcut(self, txt):
         self.keyLine.setText(txt)
 
     def eventFilter(self, watched, event):
-        if event.type() == QtCore.QEvent.KeyPress:
+        if event.type() == QEvent.Type.KeyPress:
             self.keyPressEvent(event)
             return True
         return False
@@ -54,27 +59,27 @@ class GetShortcut(QtGui.QDialog):
         if event.key() in self.keyword_modifiers:
             return
 
-        if event.key() == QtCore.Qt.Key_Backtab and event.modifiers() & QtCore.Qt.ShiftModifier:
-            self.keyValue = QtCore.Qt.Key_Tab
+        if event.key() == Qt.Key.Key_Backtab and event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            self.keyValue = Qt.Key.Key_Tab
         else:
             self.keyValue = event.key()
-        if event.modifiers() & QtCore.Qt.ShiftModifier:
-            self.keyValue += QtCore.Qt.SHIFT
-        if event.modifiers() & QtCore.Qt.ControlModifier:
-            self.keyValue += QtCore.Qt.CTRL
-        if event.modifiers() & QtCore.Qt.AltModifier:
-            self.keyValue += QtCore.Qt.ALT
-        if event.modifiers() & QtCore.Qt.MetaModifier:
-            self.keyValue += QtCore.Qt.META
+        if event.modifiers() & Qt.KeyboardModifier.ShiftModifier:
+            self.keyValue += int(Qt.KeyboardModifier.ShiftModifier)
+        if event.modifiers() & Qt.KeyboardModifier.ControlModifier:
+            self.keyValue += int(Qt.KeyboardModifier.ControlModifier)
+        if event.modifiers() & Qt.KeyboardModifier.AltModifier:
+            self.keyValue += int(Qt.KeyboardModifier.AltModifier)
+        if event.modifiers() & Qt.KeyboardModifier.MetaModifier:
+            self.keyValue += int(Qt.KeyboardModifier.MetaModifier)
         # set the keys
-        self.setShortcut(QtGui.QKeySequence(self.keyValue).toString())
+        self.setShortcut(QKeySequence(self.keyValue).toString())
 
 
-class Keymap(QtGui.QDialog):
+class Keymap(QDialog):
 
     def __init__(self, useData, projectWindowStack, parent):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle('Keymap')
         self.resize(500, 400)
@@ -83,27 +88,27 @@ class Keymap(QtGui.QDialog):
         self.useData = useData
         self.projectWindowStack = projectWindowStack
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         self.setLayout(mainLayout)
 
-        self.shortcutsView = QtGui.QTreeWidget()
+        self.shortcutsView = QTreeWidget()
         self.shortcutsView.setHeaderLabels(["Function", "Shortcut"])
         self.shortcutsView.setColumnWidth(0, 450)
         self.shortcutsView.setSortingEnabled(True)
-        self.shortcutsView.sortByColumn(0, QtCore.Qt.AscendingOrder)
+        self.shortcutsView.sortByColumn(0, Qt.SortOrder.AscendingOrder)
         self.shortcutsView.itemDoubleClicked.connect(self.newShortcut)
         mainLayout.addWidget(self.shortcutsView)
 
-        hbox = QtGui.QHBoxLayout()
-        hbox.setMargin(0)
+        hbox = QHBoxLayout()
+        hbox.setContentsMargins(0, 0, 0, 0)
         mainLayout.addLayout(hbox)
 
         hbox.addStretch(1)
-        load_defaults_button = QtGui.QPushButton(self.tr("Default"))
+        load_defaults_button = QPushButton(self.tr("Default"))
         load_defaults_button.clicked.connect(self.setDefaultShortcuts)
         hbox.addWidget(load_defaults_button)
 
-        self.applyButton = QtGui.QPushButton("Apply")
+        self.applyButton = QPushButton("Apply")
         self.applyButton.clicked.connect(self.save)
         hbox.addWidget(self.applyButton)
 
@@ -126,12 +131,12 @@ class Keymap(QtGui.QDialog):
                 item = topLevelItem.child(i)
                 if item.text(1) == keystr:
                     if currentItem != item:
-                        reply = QtGui.QMessageBox.warning(self,
+                        reply = QMessageBox.warning(self,
                                                           'Shortcut',
                                                           "Shortcut already in use by '{0}'\n\nReplace it?".format(
                                                               item.text(0)),
-                                                          QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-                        if reply == QtGui.QMessageBox.Yes:
+                                                          QMessageBox.StandardButton.Yes, QMessageBox.StandardButton.No)
+                        if reply == QMessageBox.StandardButton.Yes:
                             item.setText(1, "")
                             return True
                         else:
@@ -143,8 +148,8 @@ class Keymap(QtGui.QDialog):
         if item.childCount():
             return
         shortcut = GetShortcut(self)
-        shortcut.setShortcut(QtGui.QKeySequence(item.text(1)).toString())
-        shortcut.exec_()
+        shortcut.setShortcut(QKeySequence(item.text(1)).toString())
+        shortcut.exec()
         if shortcut.accepted:
             if self.validateShortcut(shortcut.keysequence):
                 item = self.shortcutsView.currentItem()
@@ -166,32 +171,9 @@ class Keymap(QtGui.QDialog):
         self.saveKeymap()
 
     def saveKeymap(self, path=None):
-        dom_document = QtXml.QDomDocument("keymap")
-
-        keymap = dom_document.createElement("keymap")
-        dom_document.appendChild(keymap)
-
-        for key, value in self.useData.CUSTOM_SHORTCUTS.items():
-            root = dom_document.createElement(key)
-            keymap.appendChild(root)
-
-            for short, func in value.items():
-                tag = dom_document.createElement(short)
-                if key == "Editor":
-                    shortName = func[0]
-                    keyValue = str(func[1])
-                    tag.setAttribute("shortcut", shortName)
-                    tag.setAttribute("value", keyValue)
-                else:
-                    tag.setAttribute("shortcut", func)
-                root.appendChild(tag)
-
-        if path is None:
-            path = self.useData.appPathDict["keymap"]
-        file = open(path, "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        # Persistence is owned by UseData (single consolidated JSON store);
+        # CUSTOM_SHORTCUTS has already been updated in place by bindKeymap().
+        self.useData.saveKeymap()
 
     def bindKeymap(self):
         for i in range(self.projectWindowStack.count() - 1):
@@ -209,22 +191,22 @@ class Keymap(QtGui.QDialog):
         self.shortcutsView.clear()
         keyList = ['Editor', 'Ide']
         for i in keyList:
-            mainItem = QtGui.QTreeWidgetItem(self.shortcutsView)
+            mainItem = QTreeWidgetItem(self.shortcutsView)
             mainItem.setText(0, i)
             if i == "Editor":
                 for function, action in self.useData.CUSTOM_SHORTCUTS[i].items():
-                    item = QtGui.QTreeWidgetItem(
+                    QTreeWidgetItem(
                         mainItem, [function, action[0]])
             else:
                 for function, action in self.useData.CUSTOM_SHORTCUTS[i].items():
-                    item = QtGui.QTreeWidgetItem(mainItem, [function, action])
+                    QTreeWidgetItem(mainItem, [function, action])
             mainItem.setExpanded(True)
 
     def setDefaultShortcuts(self):
-        reply = QtGui.QMessageBox.warning(self, "Default Keymap",
+        reply = QMessageBox.warning(self, "Default Keymap",
                                           "Setting keymap to default will wipe away your current keymap.\n\nProceed?",
-                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             for key, value in self.useData.DEFAULT_SHORTCUTS['Ide'].items():
                 default = self.useData.DEFAULT_SHORTCUTS['Ide'][key]
                 self.useData.CUSTOM_SHORTCUTS['Ide'][key] = default

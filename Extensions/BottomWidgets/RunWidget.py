@@ -2,10 +2,18 @@ import os
 import re
 import sys
 import locale
-from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
+from PyQt6.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
+from PyQt6.QtCore import (
+    QByteArray, QCoreApplication, QIODevice, QProcess, QProcessEnvironment,
+    Qt, pyqtSignal,
+)
+from PyQt6.QtGui import QAction, QColor, QIcon, QPalette
+from PyQt6.QtWidgets import (
+    QCheckBox, QComboBox, QHBoxLayout, QLabel, QMenu, QMessageBox, QSpinBox,
+    QToolButton, QVBoxLayout,
+)
 
-
+from Extensions.settings_utils import to_bool, from_bool
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions.PathLineEdit import PathLineEdit
 from Extensions import Global
@@ -14,14 +22,14 @@ from Extensions import StyleSheet
 default_encoding = locale.getpreferredencoding()
 
 
-class SetRunParameters(QtGui.QLabel):
+class SetRunParameters(QLabel):
 
     def __init__(self, projectSettings, projectPathDict, useData, parent=None):
-        QtGui.QLabel.__init__(self, parent)
+        QLabel.__init__(self, parent)
 
         self.setMinimumSize(400, 220)
 
-        self.setBackgroundRole(QtGui.QPalette.Background)
+        self.setBackgroundRole(QPalette.ColorRole.Window)
         self.setAutoFillBackground(True)
         self.setObjectName("containerLabel")
         self.setStyleSheet(StyleSheet.toolWidgetStyle)
@@ -30,40 +38,43 @@ class SetRunParameters(QtGui.QLabel):
         self.useData = useData
         self.projectPathDict = projectPathDict
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        label = QtGui.QLabel("Run Parameters")
+        label = QLabel("Run Parameters")
         label.setObjectName("toolWidgetNameLabel")
         hbox.addWidget(label)
 
         hbox.addStretch(1)
 
-        self.hideButton = QtGui.QToolButton()
+        self.hideButton = QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "cross_")))
+            QIcon(os.path.join("Resources", "images", "cross_")))
         self.hideButton.clicked.connect(self.hide)
         hbox.addWidget(self.hideButton)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        self.runTypeBox = QtGui.QComboBox()
+        self.runTypeBox = QComboBox()
         self.runTypeBox.addItem("Run")
         self.runTypeBox.addItem("Profiler")
         self.runTypeBox.addItem("Trace")
+        self.runTypeBox.addItem("Debug")
         if self.projectSettings["RunType"] == 'Profiler':
             self.runTypeBox.setCurrentIndex(1)
         elif self.projectSettings["RunType"] == 'Trace':
             self.runTypeBox.setCurrentIndex(2)
+        elif self.projectSettings["RunType"] == 'Debug':
+            self.runTypeBox.setCurrentIndex(3)
         self.runTypeBox.currentIndexChanged.connect(self.saveArguments)
         self.runTypeBox.currentIndexChanged.connect(self.runTypeChanged)
         hbox.addWidget(self.runTypeBox)
 
-        self.traceTypeBox = QtGui.QComboBox()
+        self.traceTypeBox = QComboBox()
         self.traceTypeBox.addItem("Calling relationships")
         self.traceTypeBox.addItem("Functions called")
         self.traceTypeBox.addItem("Times lines are called")
@@ -76,8 +87,8 @@ class SetRunParameters(QtGui.QLabel):
         if self.runTypeBox.currentIndex() != 2:
             self.traceTypeBox.hide()
 
-        self.runWithArgsBox = QtGui.QCheckBox("Arguments:")
-        if self.projectSettings["RunWithArguments"] == 'True':
+        self.runWithArgsBox = QCheckBox("Arguments:")
+        if to_bool(self.projectSettings["RunWithArguments"]):
             self.runWithArgsBox.setChecked(True)
         self.runWithArgsBox.toggled.connect(self.saveArguments)
         mainLayout.addWidget(self.runWithArgsBox)
@@ -87,19 +98,19 @@ class SetRunParameters(QtGui.QLabel):
         self.argumentsLine.textChanged.connect(self.saveArguments)
         mainLayout.addWidget(self.argumentsLine)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
-        self.clearOutputBox = QtGui.QCheckBox("Clear Output Window")
-        if self.projectSettings["ClearOutputWindowOnRun"] == 'True':
+        self.clearOutputBox = QCheckBox("Clear Output Window")
+        if to_bool(self.projectSettings["ClearOutputWindowOnRun"]):
             self.clearOutputBox.setChecked(True)
         self.clearOutputBox.toggled.connect(self.saveArguments)
         hbox.addWidget(self.clearOutputBox)
 
         hbox.addStretch(1)
 
-        hbox.addWidget(QtGui.QLabel("Max Output Size <lines>"))
+        hbox.addWidget(QLabel("Max Output Size <lines>"))
 
-        self.bufferSizeBox = QtGui.QSpinBox()
+        self.bufferSizeBox = QSpinBox()
         self.bufferSizeBox.setMaximum(999)
         self.bufferSizeBox.setMinimumWidth(100)
         self.bufferSizeBox.setValue(int(self.projectSettings['BufferSize']))
@@ -108,29 +119,35 @@ class SetRunParameters(QtGui.QLabel):
 
         mainLayout.addLayout(hbox)
 
-        self.runPointBox = QtGui.QComboBox()
+        self.runPointBox = QComboBox()
         self.runPointBox.addItem("Internal Console")
         self.runPointBox.addItem("External Console")
-        if self.projectSettings["RunInternal"] == 'False':
+        if not to_bool(self.projectSettings["RunInternal"]):
             self.runPointBox.setCurrentIndex(1)
         self.runPointBox.currentIndexChanged.connect(self.saveArguments)
         mainLayout.addWidget(self.runPointBox)
 
-        self.useVirtualEnvBox = QtGui.QCheckBox("Use Virtual Environment")
-        if self.projectSettings["UseVirtualEnv"] == 'True':
+        self.useVirtualEnvBox = QCheckBox("Use Virtual Environment")
+        if to_bool(self.projectSettings["UseVirtualEnv"]):
             self.useVirtualEnvBox.setChecked(True)
         self.useVirtualEnvBox.toggled.connect(self.setDefaultInterpreter)
         mainLayout.addWidget(self.useVirtualEnvBox)
 
-        hbox = QtGui.QHBoxLayout()
+        self.debugWaitBox = QCheckBox("Wait for debugger to attach")
+        if to_bool(self.projectSettings.get("DebugWait")):
+            self.debugWaitBox.setChecked(True)
+        self.debugWaitBox.toggled.connect(self.saveArguments)
+        mainLayout.addWidget(self.debugWaitBox)
+
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        label = QtGui.QLabel("Python Interpreter")
+        label = QLabel("Python Interpreter")
         hbox.addWidget(label)
         
         hbox.addStretch(1)
 
-        self.installedPythonVersionBox = QtGui.QComboBox()
+        self.installedPythonVersionBox = QComboBox()
         self.installedPythonVersionBox.setMinimumWidth(200)
         self.updateInstalledInterpreters()
         self.installedPythonVersionBox.currentIndexChanged.connect(
@@ -146,7 +163,7 @@ class SetRunParameters(QtGui.QLabel):
         if len(self.useData.SETTINGS["InstalledInterpreters"]) > 0:
             for i in self.useData.SETTINGS["InstalledInterpreters"]:
                 self.installedPythonVersionBox.addItem(i)
-                if self.projectSettings["UseVirtualEnv"] == 'False':
+                if not to_bool(self.projectSettings["UseVirtualEnv"]):
                     index = self.installedPythonVersionBox.findText(
                         self.projectSettings["DefaultInterpreter"])
                     if index != -1:
@@ -161,42 +178,34 @@ class SetRunParameters(QtGui.QLabel):
             self.traceTypeBox.hide()
 
     def saveArguments(self):
-        self.projectSettings["RunWithArguments"] = str(
+        self.projectSettings["RunWithArguments"] = from_bool(
             self.runWithArgsBox.isChecked())
         self.projectSettings[
             "RunArguments"] = self.argumentsLine.text().strip()
-        self.projectSettings["ClearOutputWindowOnRun"] = str(
+        self.projectSettings["ClearOutputWindowOnRun"] = from_bool(
             self.clearOutputBox.isChecked())
         self.projectSettings["BufferSize"] = str(self.bufferSizeBox.value())
         self.projectSettings["RunType"] = self.runTypeBox.currentText()
-        self.projectSettings["RunInternal"] = str(
+        self.projectSettings["RunInternal"] = from_bool(
             self.runPointBox.currentIndex() == 0)
         self.projectSettings["TraceType"] = str(
             self.traceTypeBox.currentIndex())
 
     def setDefaultInterpreter(self):
         if self.useVirtualEnvBox.isChecked():
-            # FIXME: Needs to be corrected for each platform
-            if sys.platform == 'win32':
-                self.projectSettings["DefaultInterpreter"] = \
-                    os.path.join(self.projectPathDict["venvdir"],
-                                     "Scripts", "python.exe")
-            elif sys.platform == 'darwin':
-                self.projectSettings["DefaultInterpreter"] = \
-                    os.path.join(self.projectPathDict["venvdir"],
-                                     "Scripts", "python.exe")
-            else:
-                self.projectSettings["DefaultInterpreter"] = \
-                    os.path.join(self.projectPathDict["venvdir"],
-                                     "Scripts", "python.exe")
+            from Extensions.python_paths import venv_python
+            self.projectSettings["DefaultInterpreter"] = venv_python(
+                self.projectPathDict["venvdir"])
         else:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) > 0:
                 self.projectSettings["DefaultInterpreter"] = \
                     self.installedPythonVersionBox.currentText()
             else:
                 self.projectSettings["DefaultInterpreter"] = 'None'
-        self.projectSettings["UseVirtualEnv"] = str(
+        self.projectSettings["UseVirtualEnv"] = from_bool(
             self.useVirtualEnvBox.isChecked())
+        self.projectSettings["DebugWait"] = from_bool(
+            self.debugWaitBox.isChecked())
 
 
 class OutputLexer(QsciLexerCustom):
@@ -219,15 +228,15 @@ class OutputLexer(QsciLexerCustom):
 
     def defaultColor(self, style):
         if style == self.Default:
-            return QtGui.QColor('#ffffff')
+            return QColor('#ffffff')
         elif style == self.ErrorInfo:
-            return QtGui.QColor('#E6DB74')
+            return QColor('#E6DB74')
         elif style == self.OutputInfo:
-            return QtGui.QColor('#FFFFFF')
+            return QColor('#FFFFFF')
         elif style == self.ExitInfo:
-            return QtGui.QColor('#3DA3EF')
+            return QColor('#3DA3EF')
         elif style == self.Start:
-            return QtGui.QColor('#7FE22A')
+            return QColor('#7FE22A')
         return QsciLexerCustom.defaultColor(self, style)
 
     def defaultFont(self, style):
@@ -244,7 +253,7 @@ class OutputLexer(QsciLexerCustom):
         return QsciLexerCustom.defaultFont(self, style)
 
     def defaultPaper(self, style):
-        return QtGui.QColor('#000000')
+        return QColor('#000000')
 
     def defaultEolFill(self, style):
         return True
@@ -271,13 +280,13 @@ class OutputLexer(QsciLexerCustom):
         if not source:
             return
 
-        set_style = self.setStyling
         self.startStyling(start, 0x1f)
 
 
 class RunWidget(BaseScintilla):
 
-    loadProfile = QtCore.pyqtSignal()
+    loadProfile = pyqtSignal()
+    debugStatusChanged = pyqtSignal(str)
 
     def __init__(
         self, bottomStackSwitcher, projectData, useData, editorTabWidget, vSplitter, runProjectAct, stopRunAct,
@@ -301,24 +310,24 @@ class RunWidget(BaseScintilla):
         self.toggleInsertOrOvertype()
 
         self.linkIndicator = self.indicatorDefine(
-            QsciScintilla.INDIC_PLAIN, 8)
-        self.setIndicatorForegroundColor(QtGui.QColor(
+            QsciScintilla.IndicatorStyle.PlainIndicator, 8)
+        self.setIndicatorForegroundColor(QColor(
             "#474747"), self.linkIndicator)
         self.setIndicatorDrawUnder(True, self.linkIndicator)
 
         self.lexer = OutputLexer(self)
         self.setLexer(self.lexer)
         self.setFont(Global.getDefaultFont())
-        self.openMode = QtCore.QIODevice.ReadWrite
+        self.openMode = QIODevice.OpenModeFlag.ReadWrite
         self.currentProcess = None
 
-        self.setCaretForegroundColor(QtGui.QColor("#ffffff"))
+        self.setCaretForegroundColor(QColor("#ffffff"))
         self.setWrapMode(QsciScintilla.WrapWord)
-        self.setSelectionBackgroundColor(QtGui.QColor("#391EE8"))
-        self.setSelectionForegroundColor(QtGui.QColor("#FFFFFF"))
+        self.setSelectionBackgroundColor(QColor("#391EE8"))
+        self.setSelectionForegroundColor(QColor("#FFFFFF"))
 
-        self.runProcess = QtCore.QProcess(self)
-        self.runProcess.error.connect(self.writeProcessError)
+        self.runProcess = QProcess(self)
+        self.runProcess.errorOccurred.connect(self.writeProcessError)
         self.runProcess.stateChanged.connect(self.stateChanged)
         self.runProcess.readyReadStandardOutput.connect(self.writeOutput)
         self.runProcess.readyReadStandardError.connect(self.writeError)
@@ -326,9 +335,9 @@ class RunWidget(BaseScintilla):
         self.runProcess.finished.connect(self.writeExitStatus)
         self.runProcess.finished.connect(self.processEnded)
 
-        self.copyAct = QtGui.QAction("Copy", self,
+        self.copyAct = QAction("Copy", self,
                                      statusTip="Copy", triggered=self.copyText)
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.contextMenu.addAction(self.copyAct)
 
         self.setReadOnly(True)
@@ -342,8 +351,8 @@ class RunWidget(BaseScintilla):
         super(RunWidget, self).leaveEvent(event)
 
     def mouseMoveEvent(self, event):
-        x = event.x()
-        y = event.y()
+        x = int(event.position().x())
+        y = int(event.position().y())
 
         line = self.getHoveredLine(x, y)
         lineText = self.text(line)
@@ -375,7 +384,7 @@ class RunWidget(BaseScintilla):
 
     def insertInput(self, text):
         self.append('\n')
-        data = QtCore.QByteArray()
+        data = QByteArray()
         data.append(bytes(text + '\n', encoding="utf-8"))
         self.runProcess.write(data)
 
@@ -414,7 +423,7 @@ class RunWidget(BaseScintilla):
     def writeExitStatus(self, exitCode, exitStatus):
         self.writeOutput()
         self.writeError()
-        if exitStatus == QtCore.QProcess.NormalExit:
+        if exitStatus == QProcess.ExitStatus.NormalExit:
             self.printout(">>> Exit: {0}\n".format(str(exitCode)), 3)
         else:
             # error will be displayed instead by writeProcessError
@@ -436,6 +445,7 @@ class RunWidget(BaseScintilla):
         self.runFileAct.setEnabled(True)
 
         self.currentProcess = None
+        self.debugStatusChanged.emit("")
         if self.profileMode:
             self.loadProfile.emit()
             self.profileMode = False
@@ -447,7 +457,7 @@ class RunWidget(BaseScintilla):
         self.recolor(start, -1)
         self.SendScintilla(QsciScintillaBase.SCI_SETSTYLING, len(text),
                            styleNum)
-        QtCore.QCoreApplication.processEvents()
+        QCoreApplication.processEvents()
         self.setFirstVisibleLine(self.lines())
         self.blocking_cursor_pos = self.position('eof')
         self.setCursorPosition(self.blocking_cursor_pos[
@@ -455,19 +465,19 @@ class RunWidget(BaseScintilla):
 
     def pythonPath(self):
         if self.projectData["DefaultInterpreter"] == "None":
-            message = QtGui.QMessageBox.critical(
+            QMessageBox.critical(
                 self, "Run", "No Python interpreter to run your code. Please install Python.")
             return None
         else:
             if os.path.exists(self.projectData["DefaultInterpreter"]):
                 if len(self.useData.SETTINGS["InstalledInterpreters"]) == 0:
-                    message = QtGui.QMessageBox.critical(
+                    QMessageBox.critical(
                         self, "Run", "Python must be installed for virtual environment to work.")
                     return None
                 else:
                     return self.projectData["DefaultInterpreter"]
             else:
-                message = QtGui.QMessageBox.critical(
+                QMessageBox.critical(
                     self, "Run", "The current Python interpreter is not available.")
                 return None
 
@@ -475,7 +485,7 @@ class RunWidget(BaseScintilla):
         pythonPath = self.pythonPath()
         if pythonPath is None:
             return
-        env = QtCore.QProcessEnvironment().systemEnvironment()
+        env = QProcessEnvironment.systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
 
         if run_internal:
@@ -500,12 +510,50 @@ class RunWidget(BaseScintilla):
             # has finished or has been terminated in order for debugging to be
             # done
 
+    def runDebug(self, runScript, fileName, run_internal, run_with_args, args):
+        pythonPath = self.pythonPath()
+        if pythonPath is None:
+            return
+        try:
+            import debugpy  # noqa: F401
+        except ImportError:
+            QMessageBox.warning(
+                self, "Debug",
+                "debugpy is not installed.\nInstall with: pip install debugpy")
+            return
+
+        env = QProcessEnvironment.systemEnvironment()
+        self.runProcess.setProcessEnvironment(env)
+        debug_args = ["-m", "debugpy", "--listen", "5678"]
+        if to_bool(self.projectData.get("DebugWait")):
+            debug_args.append("--wait-for-client")
+        debug_args.append(runScript)
+        if run_with_args and args:
+            debug_args.append(args)
+
+        if run_internal:
+            self.currentProcess = fileName
+            wait_note = ""
+            if to_bool(self.projectData.get("DebugWait")):
+                wait_note = " — waiting for debugger on port 5678"
+            self.printout(
+                ">>> Debug (debugpy listen 5678{0}): {1}\n".format(
+                    wait_note, fileName), 4)
+            status = "Debug: listening on :5678"
+            if to_bool(self.projectData.get("DebugWait")):
+                status += " (waiting for attach)"
+            self.debugStatusChanged.emit(status)
+            self.runProcess.start(pythonPath, debug_args, self.openMode)
+            self.runProcess.waitForStarted()
+        else:
+            self.runProcess.startDetached(pythonPath, ["-i"] + debug_args)
+
     def runTrace(self, runScript, fileName, run_internal, run_with_args, args, option):
         pythonPath = self.pythonPath()
         if pythonPath is None:
             return
 
-        env = QtCore.QProcessEnvironment().systemEnvironment()
+        env = QProcessEnvironment.systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
 
         if run_internal:
@@ -536,8 +584,8 @@ class RunWidget(BaseScintilla):
                 # creates a file with same code but showing how many times
                 # each line of code args
                 countfile = os.path.abspath(os.path.join("temp", "count.txt"))
-                file = open(countfile, 'w')
-                file.close()
+                with open(countfile, 'w'):
+                    pass
                 if run_with_args:
                     self.runProcess.start(pythonPath, ['-m', "trace",
                                                        '--count', '--file={0}'.format(countfile), runScript, args], self.openMode)
@@ -603,7 +651,7 @@ class RunWidget(BaseScintilla):
         pythonPath = self.pythonPath()
         if pythonPath is None:
             return
-        env = QtCore.QProcessEnvironment().systemEnvironment()
+        env = QProcessEnvironment.systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
 
         p_args = ['-m', 'cProfile', '-o',
@@ -644,10 +692,11 @@ class RunWidget(BaseScintilla):
 
     def runProject(self):
         if self.editorTabWidget.errorsInProject():
-            reply = QtGui.QMessageBox.warning(self, "Run Project",
-                                              "There are errors in your project. Run anyway?",
-                                              QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-            if reply == QtGui.QMessageBox.Yes:
+            reply = QMessageBox.warning(
+                self, "Run Project",
+                "There are errors in your project. Run anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
                 pass
             else:
                 return
@@ -663,12 +712,12 @@ class RunWidget(BaseScintilla):
             filePath = self.editorTabWidget.projectPathDict["mainscript"]
             fileName = self.editorTabWidget.projectPathDict["name"]
             if os.path.exists(filePath) is not True:
-                message = QtGui.QMessageBox.warning(self, "Run Project",
+                QMessageBox.warning(self, "Run Project",
                                                     "Main script is missing: " + fileName)
                 return
         else:
             if self.editorTabWidget.getSource().strip() == '':
-                message = QtGui.QMessageBox.warning(self, "Run",
+                QMessageBox.warning(self, "Run",
                                                     "Source code must be present!")
                 return
             if rerun is False:
@@ -683,21 +732,17 @@ class RunWidget(BaseScintilla):
         cwd = os.path.dirname(filePath)
         self.runProcess.setWorkingDirectory(cwd)
 
-        if self.projectData["RunInternal"] == "True":
+        if to_bool(self.projectData["RunInternal"]):
             run_internal = True
         else:
             run_internal = False
-        run_with_args = self.projectData["RunWithArguments"]
-        if run_with_args == "True":
-            run_with_args = True
-        else:
-            run_with_args = False
+        run_with_args = to_bool(self.projectData["RunWithArguments"])
         args = self.projectData["RunArguments"]
         bufferSize = int(self.projectData["BufferSize"])
 
         clearOutput = self.projectData["ClearOutputWindowOnRun"]
 
-        if clearOutput == "True":
+        if to_bool(clearOutput):
             self.clear()
         elif self.lines() >= bufferSize:
             self.clear()
@@ -705,21 +750,25 @@ class RunWidget(BaseScintilla):
         if runType == "Run":
             self.runModule(filePath, fileName, run_internal, run_with_args,
                            args)
-        if runType == "Profiler":
+        elif runType == "Profiler":
             self.runProfiler(filePath, fileName, run_internal, run_with_args,
                              args)
         elif runType == "Trace":
             option = int(self.projectData["TraceType"])
             self.runTrace(filePath, fileName, run_internal, run_with_args,
                           args, option)
+        elif runType == "Debug":
+            self.runDebug(filePath, fileName, run_internal, run_with_args,
+                          args)
 
     def stopProcess(self):
         self.runProcess.kill()
         self.currentProcess = None
+        self.debugStatusChanged.emit("")
 
     def contextMenuEvent(self, event):
         if self.isReadOnly():
-            self.contextMenu.exec_(event.globalPos())
+            self.contextMenu.exec(event.globalPos())
         else:
             event.ignore()
 
@@ -731,14 +780,14 @@ class RunWidget(BaseScintilla):
         return line
 
     def mouseDoubleClickEvent(self, event):
-        x = event.x()
-        y = event.y()
+        x = int(event.position().x())
+        y = int(event.position().y())
 
         line = self.getHoveredLine(x, y)
         lineText = self.text(line)
 
         if self.tracebackRe.match(lineText):
-            file_word_index = lineText.find('File')
+            lineText.find('File')
             min_index = lineText.find('"') + 1
             max_index = lineText.find('"', min_index)
             path = lineText[min_index:max_index]
@@ -764,28 +813,28 @@ class RunWidget(BaseScintilla):
         """
         line, index = self.getCursorPosition()
         key = event.key()
-        ctrl = event.modifiers() & QtCore.Qt.ControlModifier
-        alt = event.modifiers() & QtCore.Qt.AltModifier
-        shift_down = event.modifiers() & QtCore.Qt.ShiftModifier
+        ctrl = event.modifiers() & Qt.KeyboardModifier.ControlModifier
+        alt = event.modifiers() & Qt.KeyboardModifier.AltModifier
+        event.modifiers() & Qt.KeyboardModifier.ShiftModifier
         if ctrl:
             pass
         elif alt:
             pass
-        elif key == QtCore.Qt.Key_Backspace:
+        elif key == Qt.Key.Key_Backspace:
             if self.getCursorPosition() == self.blocking_cursor_pos:
                 pass
             else:
                 QsciScintilla.keyPressEvent(self, event)
-        elif key == QtCore.Qt.Key_Left:
+        elif key == Qt.Key.Key_Left:
             if self.getCursorPosition() == self.blocking_cursor_pos:
                 pass
             else:
                 QsciScintilla.keyPressEvent(self, event)
-        elif key == QtCore.Qt.Key_Up:
+        elif key == Qt.Key.Key_Up:
             self.scrollVertical(-1)
-        elif key == QtCore.Qt.Key_Down:
+        elif key == Qt.Key.Key_Down:
             self.scrollVertical(1)
-        elif key == QtCore.Qt.Key_Return:
+        elif key == Qt.Key.Key_Return:
             # get input text
             text = self.getText(
                 self.blocking_cursor_pos, self.position("eof"))

@@ -1,0 +1,15 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      - id: ruff
+        args: [--fix]
+
+  - repo: local
+    hooks:
+      - id: pytest-quick
+        name: pytest (unit, no slow smoke)
+        entry: pytest -m "not slow and not smoke"
+        language: system
+        pass_filenames: false
+        always_run: true

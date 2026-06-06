@@ -1,13 +1,17 @@
 import os
-from PyQt4 import QtGui
+
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (
+    QButtonGroup, QHBoxLayout, QLabel, QToolButton,
+)
 
 from Extensions import StyleSheet
 
 
-class ViewSwitcher(QtGui.QLabel):
+class ViewSwitcher(QLabel):
 
     def __init__(self, parent=None):
-        QtGui.QLabel.__init__(self, parent)
+        QLabel.__init__(self, parent)
 
         self.setMinimumHeight(35)
         self.setMaximumHeight(35)
@@ -16,34 +20,34 @@ class ViewSwitcher(QtGui.QLabel):
 
         self.lastIndex = 0
 
-        self.mainLayout = QtGui.QHBoxLayout()
-        self.mainLayout.setMargin(0)
+        self.mainLayout = QHBoxLayout()
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.setLayout(self.mainLayout)
 
         self.editorTabWidget = parent
         self.editorTabWidget.currentChanged.connect(self.setCurrentView)
 
-        self.buttonGroup = QtGui.QButtonGroup()
+        self.buttonGroup = QButtonGroup()
         self.buttonGroup.setExclusive(True)
         self.buttonGroup.buttonPressed.connect(self.viewChanged)
 
-        self.hideButton = QtGui.QToolButton()
+        self.hideButton = QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "exit")))
+            QIcon(os.path.join("Resources", "images", "exit")))
         self.hideButton.clicked.connect(self.hide)
         self.mainLayout.addWidget(self.hideButton)
 
         self.setStyleSheet(StyleSheet.viewSwitcherStyle)
 
-        self.addButton(QtGui.QIcon(
+        self.addButton(QIcon(
             os.path.join("Resources", "images", "notes_selected")), "Editor")
-        self.addButton(QtGui.QIcon(
+        self.addButton(QIcon(
             os.path.join("Resources", "images", "notes")), "Snapshot")
-        self.addButton(QtGui.QIcon(
+        self.addButton(QIcon(
             os.path.join("Resources", "images", "links_selected")), "Unified Diff")
-        self.addButton(QtGui.QIcon(
+        self.addButton(QIcon(
             os.path.join("Resources", "images", "links")), "Context Diff")
 
     def setCurrentView(self):
@@ -60,7 +64,7 @@ class ViewSwitcher(QtGui.QLabel):
             self.editorTabWidget.getContextDiff().generateContextDiff()
 
     def addButton(self, icon, toolTip):
-        button = QtGui.QToolButton()
+        button = QToolButton()
         button.setToolTip(toolTip)
         button.setCheckable(True)
         button.setIcon(icon)
@@ -77,9 +81,5 @@ class ViewSwitcher(QtGui.QLabel):
         subStack.setCurrentIndex(index)
 
     def setDefault(self):
-        """
-        Shows the active button after initialization
-        """
         button = self.buttonGroup.button(0)
         button.setChecked(True)
-        self.changed.emit(button.text())

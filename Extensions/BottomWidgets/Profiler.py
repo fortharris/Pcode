@@ -1,13 +1,16 @@
-import os
 import locale
+import os
 import pstats
-from PyQt4 import QtCore, QtGui
+
+from PyQt6.QtCore import QDateTime, Qt
+from PyQt6.QtGui import QBrush, QColor, QIcon
+from PyQt6.QtWidgets import QFileDialog, QMessageBox, QTreeWidget, QTreeWidgetItem
 
 
-class Profiler(QtGui.QTreeWidget):
+class Profiler(QTreeWidget):
 
     def __init__(self, useData, bottomStackSwitcher, parent=None):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
 
         self.useData = useData
         self.bottomStackSwitcher = bottomStackSwitcher
@@ -15,7 +18,7 @@ class Profiler(QtGui.QTreeWidget):
         self.setHeaderLabels(["ncalls", "tottime", "percall",
                               "cumtime", "filename", "# line", "function"])
         self.setSortingEnabled(True)
-        self.sortByColumn(4, QtCore.Qt.AscendingOrder)
+        self.sortByColumn(4, Qt.SortOrder.AscendingOrder)
 
     def changeView(self, index):
         self.viewStack.setCurrentIndex(index)
@@ -40,12 +43,11 @@ class Profiler(QtGui.QTreeWidget):
         self.p = pstats.Stats(file)
         self.p.calc_callees()
         self.stats = self.p.stats
-        # self.saveButton.setDisabled(False)
 
         self.clear()
 
         for func, (cc, nc, tt, ct, callers) in self.stats.items():
-            item = QtGui.QTreeWidgetItem()
+            item = QTreeWidgetItem()
             item.setText(0, str(cc))
             item.setText(1, str(nc))
             item.setText(2, str(tt))
@@ -55,10 +57,10 @@ class Profiler(QtGui.QTreeWidget):
             item.setText(5, str(func[1]))
             item.setText(6, str(func[2]))
 
-            child = QtGui.QTreeWidgetItem()
+            child = QTreeWidgetItem()
             for caller, (cc1, nc1, tt1, ct1) in callers.items():
                 child.setIcon(
-                    0, QtGui.QIcon(os.path.join("Resources", "images", "lightning")))
+                    0, QIcon(os.path.join("Resources", "images", "lightning")))
                 child.setText(0, str(cc))
                 child.setText(1, str(nc1))
                 child.setText(2, str(tt1))
@@ -68,37 +70,37 @@ class Profiler(QtGui.QTreeWidget):
                 child.setText(5, str(caller[1]))
                 child.setText(6, caller[2])
             for i in range(7):
-                child.setForeground(i, QtGui.QBrush(QtGui.QColor("#FF0000")))
+                child.setForeground(i, QBrush(QColor("#FF0000")))
             item.addChild(child)
             self.addTopLevelItem(item)
         self.bottomStackSwitcher.setCurrentWidget(self)
 
     def saveProfile(self):
-        options = QtGui.QFileDialog.Options()
-        savepath = os.path.join(self.useData.getLastOpenedDir(),
-                                self.projectWindowStack.currentWidget().projectPathDict["name"] + '_' + QtCore.QDateTime().currentDateTime().toString().replace(' ', '_').replace(':', '-'))
+        savepath = os.path.join(
+            self.useData.getLastOpenedDir(),
+            self.projectWindowStack.currentWidget().projectPathDict["name"]
+            + '_' + QDateTime.currentDateTime().toString().replace(
+                ' ', '_').replace(':', '-'))
         savepath = os.path.normpath(savepath)
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
-                                                     "Save profile", savepath,
-                                                     "Profiles (*.cProfile)", options)
+        fileName, _ = QFileDialog.getSaveFileName(
+            self, "Save profile", savepath,
+            "Profiles (*.cProfile)")
         if fileName:
             try:
                 self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
                 self.p.dump_stats(fileName)
             except Exception as err:
-                message = QtGui.QMessageBox.warning(
+                QMessageBox.warning(
                     self, "Save Profile", str(err))
 
     def openProfile(self):
-        options = QtGui.QFileDialog.Options()
-        fileName = QtGui.QFileDialog.getOpenFileName(self,
-                                                     "Open profile", self.useData.getLastOpenedDir(
-                                                     ),
-                                                     "Profiles (*.cProfile)", options)
+        fileName, _ = QFileDialog.getOpenFileName(
+            self, "Open profile", self.useData.getLastOpenedDir(),
+            "Profiles (*.cProfile)")
         if fileName:
             try:
                 self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
                 self.viewProfile(fileName)
             except Exception as err:
-                message = QtGui.QMessageBox.warning(
+                QMessageBox.warning(
                     self, "Open Profile", str(err))

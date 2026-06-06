@@ -1,26 +1,29 @@
-from PyQt4 import QtCore, QtGui
+from PyQt6.QtCore import Qt, pyqtSignal
+from PyQt6.QtWidgets import (
+    QDialog, QHBoxLayout, QLabel, QProgressBar, QPushButton, QVBoxLayout,
+)
 
 
-class BusyWidget(QtGui.QDialog):
+class BusyWidget(QDialog):
 
-    cancel = QtCore.pyqtSignal()
+    cancel = pyqtSignal()
 
     def __init__(self, app, useData, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.FramelessWindowHint)
-        self.setAttribute(QtCore.Qt.WA_TranslucentBackground, True)
+        QDialog.__init__(self, parent, Qt.WindowType.Window
+                         | Qt.WindowType.FramelessWindowHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground, True)
 
         self.setFixedSize(250, 60)
 
         self.app = app
         self.useData = useData
 
-        mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout = QVBoxLayout()
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         mainLayout.setSpacing(0)
         self.setLayout(mainLayout)
 
-        mainLabel = QtGui.QLabel()
+        mainLabel = QLabel()
         mainLabel.setStyleSheet(
             """background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                                  stop: 0 #343434,
@@ -31,17 +34,17 @@ class BusyWidget(QtGui.QDialog):
                             """)
         mainLayout.addWidget(mainLabel)
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
         mainLabel.setLayout(vbox)
 
-        self.captionLabel = QtGui.QLabel()
-        self.captionLabel.setAlignment(QtCore.Qt.AlignHCenter)
+        self.captionLabel = QLabel()
+        self.captionLabel.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.captionLabel.setStyleSheet(
             "color: white; background: none; border: none;")
         vbox.addWidget(self.captionLabel)
         vbox.addStretch(1)
 
-        self.progressBar = QtGui.QProgressBar()
+        self.progressBar = QProgressBar()
         self.progressBar.setMaximumHeight(15)
         self.progressBar.setStyleSheet(
             """
@@ -67,11 +70,11 @@ class BusyWidget(QtGui.QDialog):
         self.progressBar.setRange(0, 0)
         vbox.addWidget(self.progressBar)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.addStretch(1)
         vbox.addLayout(hbox)
 
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QPushButton("Cancel")
         self.cancelButton.clicked.connect(self.stop)
         self.cancelButton.setStyleSheet("""
                     QPushButton {
@@ -110,9 +113,9 @@ class BusyWidget(QtGui.QDialog):
             else:
                 self.cancelButton.hide()
                 self.setFixedSize(250, 60)
-            self.exec_()
+            self.exec()
         else:
             self.progressBar.setRange(1, 1)
             self.hide()
-            if self.useData.SETTINGS['SoundsEnabled'] == "True":
+            if self.useData.setting_bool('SoundsEnabled'):
                 self.app.beep()

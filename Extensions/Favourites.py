@@ -1,14 +1,19 @@
 import os
-from PyQt4 import QtCore, QtGui
+
+from PyQt6.QtCore import QSize, pyqtSignal
+from PyQt6.QtGui import QAction, QActionGroup, QIcon, QPalette
+from PyQt6.QtWidgets import (
+    QHBoxLayout, QLabel, QListWidget, QListWidgetItem, QMenu, QMessageBox,
+    QPushButton, QToolButton, QVBoxLayout,
+)
 
 from Extensions import StyleSheet
 
 
-class Favourites(QtGui.QLabel):
+class Favourites(QLabel):
 
-    showMe = QtCore.pyqtSignal()
-
-    openFile = QtCore.pyqtSignal(str)
+    showMe = pyqtSignal()
+    openFile = pyqtSignal(str)
 
     def __init__(self, favouritesList, messagesWidget, parent=None):
         super(Favourites, self).__init__(parent)
@@ -17,42 +22,41 @@ class Favourites(QtGui.QLabel):
         self.setObjectName("containerLabel")
         self.setStyleSheet(StyleSheet.toolWidgetStyle)
 
-        self.setBackgroundRole(QtGui.QPalette.Background)
+        self.setBackgroundRole(QPalette.ColorRole.Window)
         self.setAutoFillBackground(True)
 
         self.messagesWidget = messagesWidget
         self.favouritesList = favouritesList
 
-        self.manageFavAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "settings")),
-                          "Manage Favourites", self, statusTip="Manage Favourites",
-                          triggered=self.showMe.emit)
+        self.manageFavAct = QAction(
+            QIcon(os.path.join("Resources", "images", "settings")),
+            "Manage Favourites", self, statusTip="Manage Favourites",
+            triggered=self.showMe.emit)
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        label = QtGui.QLabel("Manage Favourites")
+        label = QLabel("Manage Favourites")
         label.setObjectName("toolWidgetNameLabel")
         hbox.addWidget(label)
 
         hbox.addStretch(1)
 
-        self.hideButton = QtGui.QToolButton()
+        self.hideButton = QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "cross_")))
+            QIcon(os.path.join("Resources", "images", "cross_")))
         self.hideButton.clicked.connect(self.hide)
         hbox.addWidget(self.hideButton)
 
-        self.favouritesListWidget = QtGui.QListWidget()
+        self.favouritesListWidget = QListWidget()
         mainLayout.addWidget(self.favouritesListWidget)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
-        self.removeButton = QtGui.QPushButton("Remove")
+        self.removeButton = QPushButton("Remove")
         self.removeButton.clicked.connect(self.removeFavourite)
         hbox.addWidget(self.removeButton)
 
@@ -62,8 +66,8 @@ class Favourites(QtGui.QLabel):
 
         self.setLayout(mainLayout)
 
-        self.favouritesMenu = QtGui.QMenu("Favourites")
-        self.favouritesMenu.setIcon(QtGui.QIcon(
+        self.favouritesMenu = QMenu("Favourites")
+        self.favouritesMenu.setIcon(QIcon(
             os.path.join("Resources", "images", "bookmarked_url")))
         self.loadFavourites()
 
@@ -86,25 +90,25 @@ class Favourites(QtGui.QLabel):
         self.favouritesMenu.clear()
         self.favouritesListWidget.clear()
         if len(self.favouritesList) > 0:
-            self.favouritesActionGroup = QtGui.QActionGroup(self)
+            self.favouritesActionGroup = QActionGroup(self)
             self.favouritesActionGroup.triggered.connect(
                 self.favouriteActivated)
             for i in self.favouritesList:
-                action = QtGui.QAction(QtGui.QIcon(
+                action = QAction(QIcon(
                     os.path.join("Resources", "images", "star")), i, self)
                 self.favouritesActionGroup.addAction(action)
                 self.favouritesMenu.addAction(action)
 
-                item = QtGui.QListWidgetItem(i.strip())
+                item = QListWidgetItem(i.strip())
                 item.setToolTip(i)
-                item.setSizeHint(QtCore.QSize(20, 20))
+                item.setSizeHint(QSize(20, 20))
                 self.favouritesListWidget.addItem(item)
 
             self.favouritesMenu.addSeparator()
             self.favouritesMenu.addAction(self.manageFavAct)
             self.removeButton.setDisabled(False)
         else:
-            action = QtGui.QAction("No Favourites", self)
+            action = QAction("No Favourites", self)
             self.favouritesMenu.addAction(action)
             self.favouritesMenu.addAction(action)
             self.removeButton.setDisabled(True)
@@ -114,5 +118,4 @@ class Favourites(QtGui.QLabel):
         if os.path.exists(path):
             self.openFile.emit(path)
         else:
-            message = QtGui.QMessageBox.warning(self, "Open",
-                                                "File is no longer available.")
+            QMessageBox.warning(self, "Open", "File is no longer available.")

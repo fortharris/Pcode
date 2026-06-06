@@ -1,6 +1,13 @@
 import os
-from PyQt4 import QtCore, QtGui
-from PyQt4.Qsci import QsciScintilla
+
+from PyQt6.Qsci import QsciScintilla
+from PyQt6.QtCore import QTimer
+from PyQt6.QtGui import (
+    QAction, QColor, QFontMetrics, QIcon, QKeySequence, QPixmap, QShortcut,
+)
+from PyQt6.QtWidgets import QHBoxLayout, QMenu, QVBoxLayout
+
+from Extensions.font_metrics import font_metrics_width
 
 from Extensions.BaseScintilla import BaseScintilla
 from Extensions.ZoomWidget import ZoomWidget
@@ -27,15 +34,15 @@ class TextEditor(BaseScintilla):
         self.setFont(Global.getDefaultFont())
         self.setWrapMode(QsciScintilla.WrapWord)
 
-        mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout = QVBoxLayout()
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
         mainLayout.addStretch(1)
 
         #
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.setContentsMargins(0, 0, 20, 0)
         mainLayout.addLayout(hbox)
@@ -45,7 +52,7 @@ class TextEditor(BaseScintilla):
 
         #
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.addStretch(1)
         hbox.setContentsMargins(5, 0, 20, 20)
         mainLayout.addLayout(hbox)
@@ -65,11 +72,11 @@ class TextEditor(BaseScintilla):
         self.font.setPointSize(10)
         # the font metrics here will help
         # building the margin width later
-        self.fontMetrics = QtGui.QFontMetrics(self.font)
+        self.fontMetrics = QFontMetrics(self.font)
 
         # Line numbers
         # conventionnaly, margin 0 is for line numbers
-        self.setMarginWidth(0, self.fontMetrics.width("0000") + 5)
+        self.setMarginWidth(0, font_metrics_width(self.fontMetrics, "0000") + 5)
 
         self.setUtf8(True)
         self.setAutoIndent(True)
@@ -81,11 +88,11 @@ class TextEditor(BaseScintilla):
         self.setMarginSensitivity(1, True)
 
         # Braces matching
-        if self.useData.SETTINGS["MatchBraces"] == "True":
-            self.setBraceMatching(QsciScintilla.SloppyBraceMatch)
+        if self.useData.setting_bool("MatchBraces"):
+            self.setBraceMatching(QsciScintilla.StrictBraceMatch)
 
         if self.DATA["fileType"] in self.useData.supportedFileTypes:
-            if self.useData.SETTINGS["ShowCaretLine"] == 'True':
+            if self.useData.setting_bool("ShowCaretLine"):
                 self.setCaretLineVisible(True)
 
         self.setAutoCompletionReplaceWord(True)
@@ -97,22 +104,22 @@ class TextEditor(BaseScintilla):
 
         # Margins colors
         # line numbers margin
-        self.setMarginsBackgroundColor(QtGui.QColor("#FFFFFF"))
-        self.setMarginsForegroundColor(QtGui.QColor("#666666"))
+        self.setMarginsBackgroundColor(QColor("#FFFFFF"))
+        self.setMarginsForegroundColor(QColor("#666666"))
 
         # define markers
 
-        self.markerDefine(QtGui.QPixmap(
+        self.markerDefine(QPixmap(
             os.path.join("Resources", "images", "ui-button-navigation")), 8)
-        self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 8)
+        self.setMarkerBackgroundColor(QColor("#ee1111"), 8)
 
         self.markerDefine(
-            QtGui.QPixmap(os.path.join("Resources", "images", "err_mark")), 9)
-        self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 9)
+            QPixmap(os.path.join("Resources", "images", "err_mark")), 9)
+        self.setMarkerBackgroundColor(QColor("#ee1111"), 9)
 
         self.markerDefine(
-            QtGui.QPixmap(os.path.join("Resources", "images", "brk_point")), 10)
-        self.setMarkerBackgroundColor(QtGui.QColor("#ee1111"), 10)
+            QPixmap(os.path.join("Resources", "images", "brk_point")), 10)
+        self.setMarkerBackgroundColor(QColor("#ee1111"), 10)
 
         self.showLineNumbers()
         self.setAutoCompletionSource(QsciScintilla.AcsDocument)
@@ -120,21 +127,21 @@ class TextEditor(BaseScintilla):
         self.setEolMode(QsciScintilla.EolUnix)
 
         self.searchIndicator = self.indicatorDefine(
-            QsciScintilla.INDIC_ROUNDBOX, 10)
+            QsciScintilla.IndicatorStyle.RoundBoxIndicator, 10)
         self.setIndicatorForegroundColor(
-            QtGui.QColor("#FFDB4A"), self.searchIndicator)
+            QColor("#FFDB4A"), self.searchIndicator)
         self.setIndicatorDrawUnder(True, self.searchIndicator)
 
         self.setAutoCompletion()
 
-        self.copyAvailableTimer = QtCore.QTimer()
+        self.copyAvailableTimer = QTimer()
         self.copyAvailableTimer.setSingleShot(True)
         self.copyAvailableTimer.setInterval(0)
         self.copyAvailableTimer.timeout.connect(self.copyActModifier)
 
         self.copyAvailable.connect(self.copyAvailableTimer.start)
 
-        self.textChangedTimer = QtCore.QTimer()
+        self.textChangedTimer = QTimer()
         self.textChangedTimer.setSingleShot(True)
         self.textChangedTimer.setInterval(0)
         self.textChangedTimer.timeout.connect(self.undoActModifier)
@@ -154,43 +161,43 @@ class TextEditor(BaseScintilla):
         self.setLexer(lexer)
 
     def createContextMenu(self):
-        self.cutAct = QtGui.QAction(
-            "Cut", self, shortcut=QtGui.QKeySequence.Cut,
+        self.cutAct = QAction(
+            "Cut", self, shortcut=QKeySequence.StandardKey.Cut,
             statusTip="Cut selected text", triggered=self.cut)
 
-        self.copyAct = QtGui.QAction(
-            "Copy", self, shortcut=QtGui.QKeySequence.Copy,
+        self.copyAct = QAction(
+            "Copy", self, shortcut=QKeySequence.StandardKey.Copy,
             statusTip="Copy selected text", triggered=self.copy)
 
-        self.pasteAct = QtGui.QAction(
-            "Paste", self, shortcut=QtGui.QKeySequence.Paste,
+        self.pasteAct = QAction(
+            "Paste", self, shortcut=QKeySequence.StandardKey.Paste,
             statusTip="Paste text from clipboard",
             triggered=self.paste)
 
-        self.deleteAct = QtGui.QAction(
-            "Delete", self, shortcut=QtGui.QKeySequence.Delete,
+        self.deleteAct = QAction(
+            "Delete", self, shortcut=QKeySequence.StandardKey.Delete,
             statusTip="Delete Selection",
             triggered=self.removeSelectedText)
 
-        self.selectAllAct = QtGui.QAction("Select All", self,
-                                          shortcut=QtGui.QKeySequence.SelectAll,
+        self.selectAllAct = QAction("Select All", self,
+                                          shortcut=QKeySequence.StandardKey.SelectAll,
                                           statusTip="Select All",
                                           triggered=self.selectAllText)
 
         self.selectToMatchingBraceAct = \
-            QtGui.QAction(
-                QtGui.QIcon(
+            QAction(
+                QIcon(
                     os.path.join("Resources", "images", "text_select")),
                 "Select to Matching Brace", self,
                 statusTip="Select to Matching Brace",
                           triggered=self.selectToMatchingBrace)
 
-        self.zoomAct = QtGui.QAction(
-            QtGui.QIcon(os.path.join("Resources", "images", "zoom")),
+        self.zoomAct = QAction(
+            QIcon(os.path.join("Resources", "images", "zoom")),
             "Zoom", self,
             statusTip="Zoom", triggered=self.showZoomWidget)
 
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.contextMenu.addAction(self.cutAct)
         self.contextMenu.addAction(self.copyAct)
         self.contextMenu.addAction(self.pasteAct)
@@ -206,7 +213,7 @@ class TextEditor(BaseScintilla):
         self.viewMenu.addAction(self.zoomAct)
 
     def setAutoCompletion(self):
-        if self.useData.SETTINGS["EnableAutoCompletion"] == "True":
+        if self.useData.setting_bool("EnableAutoCompletion"):
             self.setAutoCompletionSource(QsciScintilla.AcsDocument)
         else:
             self.setAutoCompletionSource(QsciScintilla.AcsNone)
@@ -218,7 +225,7 @@ class TextEditor(BaseScintilla):
         self.cutAct.setEnabled(state)
         self.deleteAct.setEnabled(state)
 
-        self.contextMenu.exec_(event.globalPos())
+        self.contextMenu.exec(event.globalPos())
 
     def undoActModifier(self):
         state = self.isUndoAvailable()
@@ -250,7 +257,7 @@ class TextEditor(BaseScintilla):
         self.ensureLineVisible(lineNum)
 
     def showWhiteSpaces(self):
-        if self.useData.SETTINGS["ShowWhiteSpaces"] == 'True':
+        if self.useData.setting_bool("ShowWhiteSpaces"):
             self.setWhitespaceVisibility(QsciScintilla.WsVisible)
         else:
             self.setWhitespaceVisibility(QsciScintilla.WsInvisible)
@@ -329,18 +336,18 @@ class TextEditor(BaseScintilla):
         self.copyAct.setShortcut(shortcuts["Editor"]["Copy-Selection"][0])
         self.pasteAct.setShortcut(shortcuts["Editor"]["Paste"][0])
 
-        self.shortNextBookmark = QtGui.QShortcut(
+        self.shortNextBookmark = QShortcut(
             shortcuts["Ide"]["Next-Bookmark"], self)
         self.shortNextBookmark.activated.connect(self.findNextBookmark)
 
-        self.shortPreviousBookmark = QtGui.QShortcut(
+        self.shortPreviousBookmark = QShortcut(
             shortcuts["Ide"]["Previous-Bookmark"], self)
         self.shortPreviousBookmark.activated.connect(self.findPreviousBookmark)
 
-        self.shortZoomIn = QtGui.QShortcut(
+        self.shortZoomIn = QShortcut(
             shortcuts["Editor"]["Zoom-In"][0], self)
         self.shortZoomIn.activated.connect(self.zoomWidget.zoomIn)
 
-        self.shortZoomOut = QtGui.QShortcut(
+        self.shortZoomOut = QShortcut(
             shortcuts["Editor"]["Zoom-Out"][0], self)
         self.shortZoomOut.activated.connect(self.zoomWidget.zoomOut)

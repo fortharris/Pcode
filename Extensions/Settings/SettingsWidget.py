@@ -1,4 +1,5 @@
-from PyQt4 import QtCore, QtGui
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QDialog, QTabWidget, QVBoxLayout
 
 from Extensions.Settings.ColorScheme.ColorScheme import ColorScheme
 from Extensions.Settings.Keymap import Keymap
@@ -7,11 +8,11 @@ from Extensions.Settings.GeneralSettings import GeneralSettings
 from Extensions.Settings.ModuleCompletion import ModuleCompletion
 
 
-class SettingsWidget(QtGui.QDialog):
+class SettingsWidget(QDialog):
 
     def __init__(self, useData, mainApp, projectWindowStack, libraryViewer, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle("Settings")
 
@@ -19,11 +20,11 @@ class SettingsWidget(QtGui.QDialog):
         self.libraryViewer = libraryViewer
         self.projectWindowStack = projectWindowStack
 
-        mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout = QVBoxLayout()
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
-        self.settingsTab = QtGui.QTabWidget()
+        self.settingsTab = QTabWidget()
         self.settingsTab.setObjectName("settingsTab")
         mainLayout.addWidget(self.settingsTab)
 

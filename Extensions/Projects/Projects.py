@@ -7,13 +7,15 @@ import sys
 import shutil
 import traceback
 import logging
-from PyQt4 import QtCore, QtGui, QtXml
+
+from PyQt6.QtCore import Qt, QThread
+from PyQt6.QtWidgets import QApplication, QMessageBox, QWidget
 
 from Extensions.EditorWindow.EditorWindow import EditorWindow
 from Extensions.Projects.NewProjectDialog import NewProjectDialog
 
 
-class CreateProjectThread(QtCore.QThread):
+class CreateProjectThread(QThread):
 
     def run(self):
         self.error = False
@@ -24,8 +26,8 @@ class CreateProjectThread(QtCore.QThread):
 
             data = os.path.join(self.projectPath, "Data")
             os.mkdir(data)
-            file = open(os.path.join(data, "wpad.txt"), "w")
-            file.close()
+            with open(os.path.join(data, "wpad.txt"), "w"):
+                pass
 
             ropeFolder = os.path.join(self.projectPath, "Rope")
             os.mkdir(ropeFolder)
@@ -61,13 +63,21 @@ class CreateProjectThread(QtCore.QThread):
 
             self.mainScript = os.path.join(self.projectPath, "src",
                                            self.projDataDict["mainscript"])
-            file = open(self.mainScript, 'w')
-            file.close()
+            main_template = (
+                '"""Main entry point for {name}."""\n\n\n'
+                'def main():\n'
+                '    print("Hello from Pcode")\n\n\n'
+                'if __name__ == "__main__":\n'
+                '    main()\n'
+            ).format(name=self.projDataDict["name"])
+            with open(self.mainScript, 'w', encoding='utf-8') as main_file:
+                main_file.write(main_template)
 
             if self.projDataDict["type"] == "Desktop Application":
                 self.writeBuildProfile()
             self.writeDefaultSession()
             self.writeProjectData()
+            self.writePyproject()
             self.writeRopeProfile()
         except Exception as err:
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -76,45 +86,16 @@ class CreateProjectThread(QtCore.QThread):
             self.error = str(err)
 
     def writeProjectData(self):
-        dom_document = QtXml.QDomDocument("Project")
+        from Extensions.ProjectData import save as save_project_data
+        from Extensions.ProjectManifest import write as write_manifest
 
-        properties = dom_document.createElement("properties")
-        dom_document.appendChild(properties)
-
-        tag = dom_document.createElement("pcode_project")
-
-        tag.setAttribute("Version", "0.1")
-        tag.setAttribute("Name", self.projDataDict["name"])
-        tag.setAttribute("Type", self.projDataDict["type"])
-        tag.setAttribute("MainScript", self.projDataDict["mainscript"])
-
-        properties.appendChild(tag)
-
-        file = open(os.path.join(self.projectPath, "project.xml"), "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
-
-        domDocument = QtXml.QDomDocument("projectdata")
-
-        projectdata = domDocument.createElement("projectdata")
-        domDocument.appendChild(projectdata)
-
-        root = domDocument.createElement("shortcuts")
-        projectdata.appendChild(root)
-
-        root = domDocument.createElement("recentfiles")
-        projectdata.appendChild(root)
-
-        root = domDocument.createElement("favourites")
-        projectdata.appendChild(root)
-
-        root = domDocument.createElement("settings")
-        projectdata.appendChild(root)
-
-        s = 0
+        write_manifest(
+            self.projectPath,
+            self.projDataDict["name"],
+            self.projDataDict["type"],
+            self.projDataDict["mainscript"],
+        )
         defaults = {
-
             'ClearOutputWindowOnRun': 'False',
             'LastOpenedPath': '',
             'RunType': 'Run',
@@ -128,193 +109,44 @@ class CreateProjectThread(QtCore.QThread):
             'Closed': 'True',
             'Icon': '',
             'ShowAllFiles': 'True',
-            'LastCloseSuccessful': 'True'
-            }
-        for key, value in defaults.items():
-            tag = domDocument.createElement("key")
-            root.appendChild(tag)
+            'LastCloseSuccessful': 'True',
+            'DebugWait': 'False',
+        }
+        save_project_data(self.projectPath, {
+            "shortcuts": [],
+            "recentfiles": [],
+            "favourites": [],
+            "launchers": {},
+            "settings": defaults,
+        })
 
-            t = domDocument.createTextNode(key + '=' + value)
-            tag.appendChild(t)
-            s += 1
-
-        path = os.path.join(self.projectPath, "Data", "projectdata.xml")
-        file = open(path, "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(domDocument.toString())
-        file.close()
+    def writePyproject(self):
+        name = self.projDataDict["name"].replace('"', '\\"')
+        content = (
+            '[project]\n'
+            'name = "{name}"\n'
+            'version = "0.1.0"\n'
+            'requires-python = ">=3.10"\n'
+            'description = "Pcode project"\n'
+        ).format(name=name)
+        with open(os.path.join(self.projectPath, "pyproject.toml"), "w",
+                  encoding="utf-8") as file:
+            file.write(content)
 
     def writeDefaultSession(self):
-        dom_document = QtXml.QDomDocument("session")
-
-        session = dom_document.createElement("session")
-        dom_document.appendChild(session)
-
-        file = open(os.path.join(self.projectPath, "Data", "session.xml"), "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        from Extensions.SessionData import write_empty_session
+        write_empty_session(self.projectPath)
 
     def writeRopeProfile(self):
-        dom_document = QtXml.QDomDocument("rope_profile")
-
-        main_data = dom_document.createElement("rope")
-        dom_document.appendChild(main_data)
-
-        root = dom_document.createElement("ignoresyntaxerrors")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("ignorebadimports")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("maxhistoryitems")
-        attrib = dom_document.createTextNode('32')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("Extensions")
-        main_data.appendChild(root)
-
-        defExt = ['*.py', '*.pyw']
-        for i in defExt:
-            tag = dom_document.createElement("item")
-            root.appendChild(tag)
-
-            t = dom_document.createTextNode(i)
-            tag.appendChild(t)
-
-        root = dom_document.createElement("IgnoredResources")
-        main_data.appendChild(root)
-
-        defIgnore = ["*.pyc", "*~", ".ropeproject",
-                     ".hg", ".svn", "_svn", ".git", "__pycache__"]
-        for i in defIgnore:
-            tag = dom_document.createElement("item")
-            root.appendChild(tag)
-
-            t = dom_document.createTextNode(i)
-            tag.appendChild(t)
-
-        root = dom_document.createElement("CustomFolders")
-        main_data.appendChild(root)
-
-        file = open(os.path.join(self.projectPath, "Rope", "profile.xml"), "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        from Extensions.RopeProfile import default_profile, save as save_rope_profile
+        save_rope_profile(os.path.join(self.projectPath, "Rope"), default_profile())
 
     def writeBuildProfile(self):
-        dom_document = QtXml.QDomDocument("build_profile")
-
-        main_data = dom_document.createElement("build")
-        dom_document.appendChild(main_data)
-
-        root = dom_document.createElement("name")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("author")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("version")
-        attrib = dom_document.createTextNode('0.1')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("comments")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("description")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("company")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("copyright")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("trademarks")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("product")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("base")
-        attrib = dom_document.createTextNode(self.projDataDict["windowtype"])
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("icon")
-        attrib = dom_document.createTextNode('')
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("compress")
-        attrib = dom_document.createTextNode("Compress")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("optimize")
-        attrib = dom_document.createTextNode("Optimize")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("copydeps")
-        attrib = dom_document.createTextNode("Copy Dependencies")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("appendscripttoexe")
-        attrib = dom_document.createTextNode("Append Script to Exe")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        root = dom_document.createElement("appendscripttolibrary")
-        attrib = dom_document.createTextNode("Append Script to Library")
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-        lists = ["Includes",
-                 "Excludes",
-                 "Constants Modules",
-                 "Packages",
-                 "Replace Paths",
-                 "Bin Includes",
-                 "Bin Excludes",
-                 "Bin Path Includes",
-                 "Bin Path Excludes",
-                 "Zip Includes",
-                 "Include Files",
-                 "Namespace Packages"]
-
-        for i in lists:
-            root = dom_document.createElement(i.replace(' ', '-'))
-            main_data.appendChild(root)
-
-        file = open(
-            os.path.join(self.projectPath, "Build", "profile.xml"), "w")
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-        file.close()
+        from Extensions.BuildProfile import default_profile, save as save_build_profile
+        build_dir = os.path.join(self.projectPath, "Build")
+        profile = default_profile(self.projDataDict["windowtype"])
+        scalars = {k: v for k, v in profile.items() if k != "lists"}
+        save_build_profile(build_dir, scalars, profile["lists"])
 
     def create(self, data):
         self.projDataDict = data
@@ -322,11 +154,11 @@ class CreateProjectThread(QtCore.QThread):
         self.start()
 
 
-class Projects(QtGui.QWidget):
+class Projects(QWidget):
 
     def __init__(self, useData, busyWidget, library, settingsWidget, app,
                  projectWindowStack, projectTitleBox, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.createProjectThread = CreateProjectThread()
         self.createProjectThread.finished.connect(self.finalizeNewProject)
@@ -347,51 +179,35 @@ class Projects(QtGui.QWidget):
         self.pcode.close()
 
     def readProject(self, path):
-        # validate project
-        project_file = os.path.join(path, "project.xml")
-        if os.path.exists(project_file) is False:
+        from Extensions.ProjectManifest import read as read_manifest
+
+        json_file = os.path.join(path, "project.json")
+        xml_file = os.path.join(path, "project.xml")
+        if not os.path.isfile(json_file) and not os.path.isfile(xml_file):
             return False
-        dom_document = QtXml.QDomDocument()
-        file = open(os.path.join(path, "project.xml"), "r")
-        dom_document.setContent(file.read())
-        file.close()
-
-        data = {}
-
-        elements = dom_document.documentElement()
-        node = elements.firstChild()
-        while node.isNull() is False:
-            tag = node.toElement()
-            name = tag.tagName()
-            data["Version"] = tag.attribute("Version")
-            data["Type"] = tag.attribute("Type")
-            data["Name"] = tag.attribute("Name")
-            data["MainScript"] = tag.attribute("MainScript")
-            node = node.nextSibling()
-
-        if name != "pcode_project":
-            return False
-        else:
-            return name, data
+        return read_manifest(path)
 
     def loadProject(self, path, show, new):
         if not self.pcode.showProject(path):
-            QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
             projectPathDict = {
                 "notes": os.path.join(path, "Data", "wpad.txt"),
-                "session": os.path.join(path, "Data", "session.xml"),
-                "usedata": os.path.join(path, "Data", "usedata.xml"),
-                "windata": os.path.join(path, "Data", "windata.xml"),
-                "projectdata": os.path.join(path, "Data", "projectdata.xml"),
+                "session": os.path.join(path, "Data", "session.json"),
+                "session_xml": os.path.join(path, "Data", "session.xml"),
+                "windata": os.path.join(path, "Data", "windata.json"),
+                "projectdata": os.path.join(path, "Data", "projectdata.json"),
+                "projectdata_xml": os.path.join(path, "Data", "projectdata.xml"),
                 "snippetsdir": os.path.join(path, "Data", "templates"),
                 "tempdir": os.path.join(path, "temp"),
                 "backupdir": os.path.join(path, "temp", "Backup", "Files"),
                 "backupfile": os.path.join(path, "temp", "Backup", "bak"),
                 "sourcedir": os.path.join(path, "src"),
                 "ropeFolder": os.path.join(path, "Rope"),
-                "buildprofile": os.path.join(path, "Build", "profile.xml"),
-                "ropeprofile": os.path.join(path, "Rope", "profile.xml"),
-                "projectmainfile": os.path.join(path, "project.xml"),
+                "buildprofile": os.path.join(path, "Build", "profile.json"),
+                "buildprofile_xml": os.path.join(path, "Build", "profile.xml"),
+                "ropeprofile": os.path.join(path, "Rope", "profile.json"),
+                "ropeprofile_xml": os.path.join(path, "Rope", "profile.xml"),
+                "projectmainfile": os.path.join(path, "project.json"),
                 "iconsdir": os.path.join(path, "Resources", "Icons"),
                 "root": path
                 }
@@ -409,8 +225,8 @@ class Projects(QtGui.QWidget):
             try:
                 project_data = self.readProject(path)
                 if project_data is False:
-                    QtGui.QApplication.restoreOverrideCursor()
-                    message = QtGui.QMessageBox.warning(self, "Open Project",
+                    QApplication.restoreOverrideCursor()
+                    QMessageBox.warning(self, "Open Project",
                                                         "Failed:\n\n" + path)
                     return
                 projectPathDict["name"] = project_data[1]["Name"]
@@ -454,10 +270,10 @@ class Projects(QtGui.QWidget):
                 logging.error(
                     repr(traceback.format_exception(exc_type, exc_value,
                              exc_traceback)))
-                QtGui.QApplication.restoreOverrideCursor()
-                message = QtGui.QMessageBox.warning(self, "Failed Open",
+                QApplication.restoreOverrideCursor()
+                QMessageBox.warning(self, "Failed Open",
                                                     "Problem opening project: \n\n" + str(err))
-            QtGui.QApplication.restoreOverrideCursor()
+            QApplication.restoreOverrideCursor()
 
     def closeProject(self):
         window = self.projectWindowStack.currentWidget()
@@ -474,7 +290,7 @@ class Projects(QtGui.QWidget):
     def finalizeNewProject(self):
         self.busyWidget.showBusy(False)
         if self.createProjectThread.error is not False:
-            message = QtGui.QMessageBox.warning(self, "New Project",
+            QMessageBox.warning(self, "New Project",
                                                 "Failed to create project:\n\n" + self.createProjectThread.error)
         else:
             projectPath = os.path.normpath(

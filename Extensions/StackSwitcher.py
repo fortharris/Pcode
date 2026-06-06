@@ -1,27 +1,30 @@
-from PyQt4 import QtGui, QtCore
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import (
+    QButtonGroup, QHBoxLayout, QPushButton, QWidget,
+)
 
 
-class StackSwitcher(QtGui.QWidget):
+class StackSwitcher(QWidget):
 
-    changed = QtCore.pyqtSignal(str)
+    changed = pyqtSignal(str)
 
     def __init__(self, stack, parent=None):
-        QtGui.QDialog.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.stack = stack
         self.lastIndex = 0
 
-        self.mainLayout = QtGui.QHBoxLayout()
-        self.mainLayout.setMargin(0)
+        self.mainLayout = QHBoxLayout()
+        self.mainLayout.setContentsMargins(0, 0, 0, 0)
         self.mainLayout.setSpacing(0)
         self.setLayout(self.mainLayout)
 
-        self.buttonGroup = QtGui.QButtonGroup()
+        self.buttonGroup = QButtonGroup()
         self.buttonGroup.setExclusive(True)
         self.buttonGroup.buttonPressed.connect(self.setIndex)
 
     def addButton(self, name=None, icon=None, toolTip=None):
-        button = QtGui.QPushButton()
+        button = QPushButton()
         if name is not None:
             button.setText(name)
         if toolTip is not None:
@@ -53,9 +56,14 @@ class StackSwitcher(QtGui.QWidget):
         self.changed.emit(button.text())
 
     def setDefault(self):
-        """
-        Shows the active button after initialization
-        """
         button = self.buttonGroup.button(0)
         button.setChecked(True)
         self.changed.emit(button.text())
+
+    def setButton(self, name):
+        for button in self.buttonGroup.buttons():
+            if button.text() == name:
+                self.setIndex(button)
+                button.setChecked(True)
+                return True
+        return False

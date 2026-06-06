@@ -1,12 +1,15 @@
-import re
 import os
-from PyQt4 import QtCore, QtGui
+import re
+
+from PyQt6.QtCore import QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
 
-class TaskFinderThread(QtCore.QThread):
+class TaskFinderThread(QThread):
 
     TASKS_PATTERN = r"(^|#)[ ]*(TODO|FIXME|XXX|HINT|TIP)( |:)([^#]*)"
-    newTasks = QtCore.pyqtSignal(list)
+    newTasks = pyqtSignal(list)
     results = []
 
     def run(self):
@@ -30,10 +33,10 @@ class TaskFinderThread(QtCore.QThread):
         self.start()
 
 
-class Tasks(QtGui.QTreeWidget):
+class Tasks(QTreeWidget):
 
     def __init__(self, editorTabWidget, bottomStackSwitcher, parent=None):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
 
         self.setColumnCount(4)
         self.setHeaderLabels(["#", "Type", "Line", "Task"])
@@ -48,7 +51,7 @@ class Tasks(QtGui.QTreeWidget):
         self.bottomStackSwitcher = bottomStackSwitcher
         self.taskFinder = TaskFinderThread()
 
-        self.taskFinderTimer = QtCore.QTimer()
+        self.taskFinderTimer = QTimer()
         self.taskFinderTimer.setSingleShot(True)
         self.taskFinderTimer.timeout.connect(self.findTasks)
 
@@ -70,8 +73,8 @@ class Tasks(QtGui.QTreeWidget):
         self.clear()
         self.bottomStackSwitcher.setCount(self, str(len(results)))
         for i in results:
-            item = QtGui.QTreeWidgetItem()
-            item.setIcon(0, QtGui.QIcon(
+            item = QTreeWidgetItem()
+            item.setIcon(0, QIcon(
                 os.path.join("Resources", "images", "Clear Green Button")))
             item.setText(1, i[0])
             item.setText(2, str(i[1]))

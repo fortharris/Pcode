@@ -1,15 +1,22 @@
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QAction, QIcon
+from PyQt6.QtWidgets import (
+    QHBoxLayout, QLabel, QMenu, QStackedWidget, QTreeWidget, QTreeWidgetItem,
+    QWidget,
+)
+
 import os
 import ast
-from PyQt4 import QtCore, QtGui
+import logging
+import traceback
 from pyflakes.checker import Checker as flakeChecker
-from Xtra import pep8
-from Xtra import autopep8
-from Xtra.autopep8 import FixPEP8
+import pycodestyle as pep8
+import autopep8
 
 
-class ErrorCheckerThread(QtCore.QThread):
+class ErrorCheckerThread(QThread):
 
-    newAlerts = QtCore.pyqtSignal(list, bool)
+    newAlerts = pyqtSignal(list, bool)
 
     def run(self):
         messages = []
@@ -17,17 +24,15 @@ class ErrorCheckerThread(QtCore.QThread):
             warnings = flakeChecker(ast.parse(self.source))
             warnings.messages.sort(key=lambda a: a.lineno)
             for warning in warnings.messages:
-                fname = warning.filename
                 lineno = warning.lineno
                 message = warning.message
                 args = warning.message_args
                 messages.append((lineno, message % (args), args))
             self.newAlerts.emit(messages, False)
-        except Exception as err:
-            error_text = err.args[1][3]
+        except SyntaxError as err:
             msg = err.msg.capitalize() + '.'
-            line = err.lineno
-            offset = err.args[1][2]
+            line = err.lineno or 1
+            offset = err.offset or 0
 
             messages.append((1, line, msg, None, offset))
             self.newAlerts.emit(messages, True)
@@ -38,17 +43,16 @@ class ErrorCheckerThread(QtCore.QThread):
         self.start()
 
 
-class Pep8CheckerThread(QtCore.QThread):
+class Pep8CheckerThread(QThread):
 
-    newAlerts = QtCore.pyqtSignal(list)
+    newAlerts = pyqtSignal(list)
 
     def run(self):
         checkList = []
         try:
             styleGuide = pep8.StyleGuide(reporter=Pep8Report)
-            report = styleGuide.check_files([os.path.join("temp", "temp8.py")])
+            report = styleGuide.check_files([self.tempPath])
             for i in report.all_errors:
-                fname = i[0]
                 lineno = i[1]
                 offset = i[2]
                 code = i[3]
@@ -57,12 +61,13 @@ class Pep8CheckerThread(QtCore.QThread):
                 if code is None:
                     # means the code has been marked to be ignored
                     continue
-                checkList.append((fname, lineno, offset, code, error))
-        except:
-            pass
+                checkList.append((i[0], lineno, offset, code, error))
+        except Exception:
+            logging.error(traceback.format_exc())
         self.newAlerts.emit(checkList)
 
-    def runCheck(self):
+    def runCheck(self, tempPath):
+        self.tempPath = tempPath
         self.start()
 
 
@@ -79,46 +84,33 @@ class Pep8Report (pep8.BaseReport):
         err = (self.filename, line_number, offset, code, text)
         self.all_errors.append(err)
 
-class AutoPep8FixerThread(QtCore.QThread):
+class AutoPep8FixerThread(QThread):
 
-    new = QtCore.pyqtSignal()
+    new = pyqtSignal()
 
     def run(self):
         try:
-            class Options(object):
-                def __init__(self):
-                    self.in_place = True
-                    self.pep8_passes = -1
-                    self.list_fixes = None
-                    self.jobs = 0
-                    self.ignore = []
-                    self.verbose = 0
-                    self.diff = None
-                    self.select = []
-                    self.exclude = []
-                    self.aggressive = 2
-                    self.line_range = []
-                    self.recursive = None
-                    self.max_line_length= 79
-                    self.indent_size = 4
-                    self.experimental = False
-
-            options = Options()
-            file = os.path.join("temp", "temp8.py")
-            
+            file = self.tempPath
+            # Build a complete options namespace via autopep8 itself so every
+            # attribute modern autopep8 expects is present (a hand-rolled
+            # object would miss newer fields like hang_closing/global_config).
+            options = autopep8.parse_args(
+                [file, "--in-place", "--aggressive", "--aggressive"],
+                apply_config=False)
             autopep8.fix_file(file, options)
             self.new.emit()
-        except:
-            pass
+        except Exception:
+            logging.error(traceback.format_exc())
 
-    def runFix(self):
+    def runFix(self, tempPath):
+        self.tempPath = tempPath
         self.start()
 
 
-class Pep8View(QtGui.QTreeWidget):
+class Pep8View(QTreeWidget):
 
     def __init__(self, editorTabWidget, parent=None):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
 
         self.editorTabWidget = editorTabWidget
 
@@ -137,76 +129,69 @@ class Pep8View(QtGui.QTreeWidget):
         self.editorTabWidget.busyWidget.showBusy(False)
         
         editor = self.editorTabWidget.getEditor()
-        file = open(os.path.join("temp", "temp8.py"), "r")
-        editor.setText(file.read())
-        file.close()
+        with open(self.editorTabWidget.pep8TempPath, "r") as file:
+            editor.setText(file.read())
         self.editorTabWidget.getEditor().removeBookmarks()
         self.editorTabWidget.enableBookmarkButtons(False)
 
     def contextMenuEvent(self, event):
         selectedItems = self.selectedItems()
         if len(selectedItems) > 0:
-            item = selectedItems[0]
-            fixable = item.data(9, 2)
-            # self.fixAct.setEnabled(fixable)
-            # self.fixAllAct.setEnabled(fixable)
-            self.contextMenu.exec_(event.globalPos())
+            self.contextMenu.exec(event.globalPos())
 
     def fixErrors(self):
         # just in case autopep8 check has not been done already
-        saved = self.editorTabWidget.saveToTemp('pep8')
-        #if saved:
-            #self.pep8CheckerThread.runCheck()
-        self.fixerThread.runFix()
+        self.editorTabWidget.saveToTemp('pep8')
+        self.fixerThread.runFix(self.editorTabWidget.pep8TempPath)
         self.editorTabWidget.busyWidget.showBusy(True,
                                                  "Applying Style Guide... please wait!")
 
     def createActions(self):
-        self.fixAct = QtGui.QAction(
+        self.fixAct = QAction(
             "Fix Selected (Not Ready)", self, statusTip="Fix Selected")
         self.fixAct.setDisabled(True)
 
         self.fixAllAct = \
-            QtGui.QAction(
+            QAction(
                 "Fix All Occurrences (Not Ready)", self, statusTip="Fix All Occurrences")
         self.fixAllAct.setDisabled(True)
 
         self.fixModuleAct = \
-            QtGui.QAction(
+            QAction(
                 "Fix All Issues", self, statusTip="Fix All Issues",
                 triggered=self.fixErrors)
 
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.contextMenu.addAction(self.fixAct)
         self.contextMenu.addAction(self.fixAllAct)
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.fixModuleAct)
 
 
-class NoAssistanceWidget(QtGui.QWidget):
+class NoAssistanceWidget(QWidget):
 
     def __init__(self, parent=None):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
-        mainLayout = QtGui.QHBoxLayout()
+        mainLayout = QHBoxLayout()
         self.setLayout(mainLayout)
 
         mainLayout.addStretch(1)
 
-        label = QtGui.QLabel('No Assistance')
+        label = QLabel('No Assistance')
         label.setScaledContents(True)
         label.setMinimumWidth(200)
         label.setMinimumHeight(25)
-        label.setAlignment(QtCore.Qt.AlignHCenter)
+        label.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         mainLayout.addWidget(label)
 
         mainLayout.addStretch(1)
 
 
-class Assistant(QtGui.QStackedWidget):
+class Assistant(QStackedWidget):
 
     def __init__(self, editorTabWidget, bottomStackSwitcher, parent=None):
-        QtGui.QStackedWidget.__init__(self, parent)
+        QStackedWidget.__init__(self, parent)
 
         self.useData = editorTabWidget.useData
         self.refactor = editorTabWidget.refactor
@@ -220,7 +205,7 @@ class Assistant(QtGui.QStackedWidget):
 
         self.addWidget(NoAssistanceWidget())
 
-        self.errorView = QtGui.QTreeWidget()
+        self.errorView = QTreeWidget()
         self.errorView.setColumnCount(3)
         self.errorView.setHeaderLabels(["", "#", "Alerts"])
         self.errorView.setAutoScroll(True)
@@ -234,7 +219,7 @@ class Assistant(QtGui.QStackedWidget):
         self.pep8View.itemPressed.connect(self.pep8Pressed)
         self.addWidget(self.pep8View)
 
-        self.codeCheckerTimer = QtCore.QTimer()
+        self.codeCheckerTimer = QTimer()
         self.codeCheckerTimer.setSingleShot(True)
         self.codeCheckerTimer.timeout.connect(self.runCheck)
 
@@ -251,25 +236,25 @@ class Assistant(QtGui.QStackedWidget):
         self.pep8CheckerThread = Pep8CheckerThread()
         self.pep8CheckerThread.newAlerts.connect(self.updatePep8View)
 
-        if self.useData.SETTINGS["EnableAssistance"] == "False":
+        if not self.useData.setting_bool("EnableAssistance"):
             self.setCurrentIndex(0)
         else:
-            if self.useData.SETTINGS["EnableAlerts"] == "True":
+            if self.useData.setting_bool("EnableAlerts"):
                 self.setCurrentIndex(1)
-            if self.useData.SETTINGS["enableStyleGuide"] == "True":
+            if self.useData.setting_bool("enableStyleGuide"):
                 self.setCurrentIndex(2)
 
         self.extendedErrorsCount = 0
         self.alertsCount = 0
 
     def startCodeCheckerTimer(self):
-        self.codeCheckerTimer.start(500)
+        self.codeCheckerTimer.start(800)
 
     def setAssistance(self, index=None):
         if index is None:
-            if self.useData.SETTINGS["EnableAlerts"] == "True":
+            if self.useData.setting_bool("EnableAlerts"):
                 self.setCurrentIndex(1)
-            if self.useData.SETTINGS["enableStyleGuide"] == "True":
+            if self.useData.setting_bool("enableStyleGuide"):
                 self.setCurrentIndex(2)
         else:
             self.setCurrentIndex(index)
@@ -278,7 +263,17 @@ class Assistant(QtGui.QStackedWidget):
 
         self.startTimer()
 
+    def _cancel_running_checks(self):
+        self.codeCheckerTimer.stop()
+        if self.codeCheckerThread.isRunning():
+            self.codeCheckerThread.terminate()
+            self.codeCheckerThread.wait(200)
+        if self.pep8CheckerThread.isRunning():
+            self.pep8CheckerThread.terminate()
+            self.pep8CheckerThread.wait(200)
+
     def changeWorkingMode(self):
+        self._cancel_running_checks()
         if self.editorTabWidget.getEditorData("fileType") == "python":
             self.currentCodeIsPython = True
             self.codeCheckerTimer.start()
@@ -325,21 +320,21 @@ class Assistant(QtGui.QStackedWidget):
                 self.editorTabWidget.updateEditorData("errorLine", None)
             self.bottomStackSwitcher.setCount(self, str(len(alertsList)))
             if len(alertsList) == 0:
-                parentItem = QtGui.QTreeWidgetItem()
-                item = QtGui.QTreeWidgetItem()
+                parentItem = QTreeWidgetItem()
+                item = QTreeWidgetItem()
                 item.setText(2, "<No Alerts>")
-                item.setFlags(QtCore.Qt.NoItemFlags)
+                item.setFlags(Qt.ItemFlag.NoItemFlags)
                 parentItem.addChild(item)
                 self.errorView.addTopLevelItem(parentItem)
                 parentItem.setExpanded(True)
 
     def createItem(self, itemType, line, message, args=None, offset=None):
-        item = QtGui.QTreeWidgetItem(itemType)
+        item = QTreeWidgetItem(itemType)
         if itemType == 0:
-            item.setIcon(0, QtGui.QIcon(
+            item.setIcon(0, QIcon(
                 os.path.join("Resources", "images", "alerts", "_0035_Flashlight")))
         elif itemType == 1:
-            item.setIcon(0, QtGui.QIcon(
+            item.setIcon(0, QIcon(
                 os.path.join("Resources", "images", "alerts", "construction")))
         item.setText(1, str(line))
         item.setText(2, message)
@@ -352,13 +347,13 @@ class Assistant(QtGui.QStackedWidget):
         if self.currentCodeIsPython:
             self.pep8View.clear()
             for i in checkList:
-                item = QtGui.QTreeWidgetItem()
+                item = QTreeWidgetItem()
                 if i[3] in self.autopep8SupportDict:
-                    icon = QtGui.QIcon(
+                    icon = QIcon(
                         os.path.join("Resources", "images", "security", "allowed"))
                     item.setData(9, 2, True)
                 else:
-                    icon = QtGui.QIcon(
+                    icon = QIcon(
                         os.path.join("Resources", "images", "security", "requesting"))
                     item.setData(9, 2, False)
                 item.setIcon(0, icon)
@@ -368,10 +363,10 @@ class Assistant(QtGui.QStackedWidget):
                 item.setData(11, 2, i[3])
                 self.pep8View.addTopLevelItem(item)
             if len(checkList) == 0:
-                parentItem = QtGui.QTreeWidgetItem()
-                item = QtGui.QTreeWidgetItem()
+                parentItem = QTreeWidgetItem()
+                item = QTreeWidgetItem()
                 item.setText(2, "<No Issues>")
-                item.setFlags(QtCore.Qt.NoItemFlags)
+                item.setFlags(Qt.ItemFlag.NoItemFlags)
                 parentItem.addChild(item)
                 self.pep8View.addTopLevelItem(parentItem)
                 parentItem.setExpanded(True)
@@ -379,18 +374,34 @@ class Assistant(QtGui.QStackedWidget):
                                               str(len(checkList)))
 
     def alertPressed(self, item):
-        # XXX: Fixme this only works if args is not empty
         lineno = int(item.text(1)) - 1
-        word = item.data(10, 3)
+        args = item.data(10, 3)
+        offset = item.data(10, 2)
         editor = self.editorTabWidget.focusedEditor()
         text = editor.text(lineno)
-        if word is None:
+        if args is None or args == () or args == "":
             editor.showLine(lineno)
+            if offset is not None:
+                try:
+                    col = int(offset)
+                    editor.setSelection(lineno, max(0, col - 1), lineno, col)
+                except (TypeError, ValueError):
+                    pass
         else:
-            word = word[0]
+            word = args[0] if isinstance(args, (tuple, list)) else str(args)
             start = text.find(word)
-            end = start + len(word)
-            editor.setSelection(lineno, start, lineno, end)
+            if start < 0:
+                # Fall back: highlight from message token or whole line
+                parts = item.text(2).split()
+                for token in parts:
+                    start = text.find(token.strip("'\",()"))
+                    if start >= 0:
+                        word = token.strip("'\",()")
+                        break
+            if start >= 0:
+                editor.setSelection(lineno, start, lineno, start + len(word))
+            else:
+                editor.showLine(lineno)
         editor.ensureLineVisible(lineno)
 
     def pep8Pressed(self, item):
@@ -398,11 +409,15 @@ class Assistant(QtGui.QStackedWidget):
         self.editorTabWidget.showLine(lineno)
 
     def runCheck(self):
-        if self.useData.SETTINGS["EnableAssistance"] == "False":
+        if not self.useData.setting_bool("EnableAssistance"):
             return
-        if self.useData.SETTINGS["EnableAlerts"] == "True":
+        if (self.codeCheckerThread.isRunning()
+                or self.pep8CheckerThread.isRunning()):
+            self.codeCheckerTimer.start(800)
+            return
+        if self.useData.setting_bool("EnableAlerts"):
             self.codeCheckerThread.runCheck(self.editorTabWidget.getSource())
-        if self.useData.SETTINGS["enableStyleGuide"] == "True":
+        if self.useData.setting_bool("enableStyleGuide"):
             saved = self.editorTabWidget.saveToTemp('pep8')
             if saved:
-                self.pep8CheckerThread.runCheck()
+                self.pep8CheckerThread.runCheck(self.editorTabWidget.pep8TempPath)

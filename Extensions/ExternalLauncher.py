@@ -1,14 +1,19 @@
 import os
-from PyQt4 import QtCore, QtGui
 
-from Extensions import Global
+from PyQt6.QtCore import QProcess, pyqtSignal
+from PyQt6.QtGui import QAction, QActionGroup, QIcon, QPalette
+from PyQt6.QtWidgets import (
+    QFormLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QMenu, QMessageBox, QPushButton, QToolButton, QVBoxLayout,
+)
+
+from Extensions import Global, StyleSheet
 from Extensions.PathLineEdit import PathLineEdit
-from Extensions import StyleSheet
 
 
-class ExternalLauncher(QtGui.QLabel):
+class ExternalLauncher(QLabel):
 
-    showMe = QtCore.pyqtSignal()
+    showMe = pyqtSignal()
 
     def __init__(self, externalLaunchList, parent=None):
         super(ExternalLauncher, self).__init__(parent)
@@ -19,48 +24,47 @@ class ExternalLauncher(QtGui.QLabel):
         self.setObjectName("containerLabel")
         self.setStyleSheet(StyleSheet.toolWidgetStyle)
 
-        self.setBackgroundRole(QtGui.QPalette.Background)
+        self.setBackgroundRole(QPalette.ColorRole.Window)
         self.setAutoFillBackground(True)
-        self.setObjectName("containerLabel")
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        label = QtGui.QLabel("Manage Launchers")
+        label = QLabel("Manage Launchers")
         label.setObjectName("toolWidgetNameLabel")
         hbox.addWidget(label)
 
         hbox.addStretch(1)
 
-        self.hideButton = QtGui.QToolButton()
+        self.hideButton = QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "cross_")))
+            QIcon(os.path.join("Resources", "images", "cross_")))
         self.hideButton.clicked.connect(self.hide)
         hbox.addWidget(self.hideButton)
 
-        self.listWidget = QtGui.QListWidget()
+        self.listWidget = QListWidget()
         mainLayout.addWidget(self.listWidget)
 
-        formLayout = QtGui.QFormLayout()
+        formLayout = QFormLayout()
         mainLayout.addLayout(formLayout)
 
         self.pathLine = PathLineEdit()
         formLayout.addRow("Path:", self.pathLine)
 
-        self.parametersLine = QtGui.QLineEdit()
+        self.parametersLine = QLineEdit()
         formLayout.addRow("Parameters:", self.parametersLine)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         formLayout.addRow('', hbox)
 
-        self.removeButton = QtGui.QPushButton("Remove")
+        self.removeButton = QPushButton("Remove")
         self.removeButton.clicked.connect(self.removeLauncher)
         hbox.addWidget(self.removeButton)
 
-        self.addButton = QtGui.QPushButton("Add")
+        self.addButton = QPushButton("Add")
         self.addButton.clicked.connect(self.addLauncher)
         hbox.addWidget(self.addButton)
 
@@ -68,13 +72,12 @@ class ExternalLauncher(QtGui.QLabel):
 
         self.setLayout(mainLayout)
 
-        self.manageLauncherAct = \
-            QtGui.QAction(
-                QtGui.QIcon(os.path.join("Resources", "images", "settings")),
-                "Manage Launchers", self, statusTip="Manage Launchers",
-                triggered=self.showMe.emit)
+        self.manageLauncherAct = QAction(
+            QIcon(os.path.join("Resources", "images", "settings")),
+            "Manage Launchers", self, statusTip="Manage Launchers",
+            triggered=self.showMe.emit)
 
-        self.launcherMenu = QtGui.QMenu("Launch External...")
+        self.launcherMenu = QMenu("Launch External...")
         self.loadExternalLaunchers()
 
     def removeLauncher(self):
@@ -91,28 +94,27 @@ class ExternalLauncher(QtGui.QLabel):
                         path] = self.parametersLine.text().strip()
                     self.loadExternalLaunchers()
                 else:
-                    message = QtGui.QMessageBox.warning(
+                    QMessageBox.warning(
                         self, "Add Launcher", "Path already exists in launchers!")
             else:
-                message = QtGui.QMessageBox.warning(
+                QMessageBox.warning(
                     self, "Add Launcher", "Path does not exists!")
         else:
-            message = QtGui.QMessageBox.warning(
+            QMessageBox.warning(
                 self, "Add Launcher", "Path cannot be empty!")
 
     def loadExternalLaunchers(self):
         self.launcherMenu.clear()
         self.listWidget.clear()
         if len(self.externalLaunchList) > 0:
-            self.actionGroup = QtGui.QActionGroup(self)
-            self.actionGroup.triggered.connect(
-                self.launcherActivated)
+            self.actionGroup = QActionGroup(self)
+            self.actionGroup.triggered.connect(self.launcherActivated)
             for path, param in self.externalLaunchList.items():
-                action = QtGui.QAction(Global.iconFromPath(path), path, self)
+                action = QAction(Global.iconFromPath(path), path, self)
                 self.actionGroup.addAction(action)
                 self.launcherMenu.addAction(action)
 
-                item = QtGui.QListWidgetItem(Global.iconFromPath(path), path)
+                item = QListWidgetItem(Global.iconFromPath(path), path)
                 item.setToolTip(path)
                 self.listWidget.addItem(item)
 
@@ -136,8 +138,7 @@ class ExternalLauncher(QtGui.QLabel):
                 if param == '':
                     os.startfile(path)
                 else:
-                    process = QtCore.QProcess(self)
+                    process = QProcess(self)
                     process.startDetached(path, [param])
         else:
-            message = QtGui.QMessageBox.warning(self, "Launch",
-                                                "Path is not available.")
+            QMessageBox.warning(self, "Launch", "Path is not available.")

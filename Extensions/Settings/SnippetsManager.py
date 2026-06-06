@@ -1,43 +1,49 @@
 import os
-from PyQt4 import QtCore, QtGui
+
+from PyQt6.QtCore import QEvent, Qt
+from PyQt6.QtGui import QIcon
+from PyQt6.QtWidgets import (
+    QDialog, QHBoxLayout, QLabel, QLineEdit, QListWidget, QMessageBox,
+    QPushButton, QSplitter, QTextEdit, QToolButton, QVBoxLayout,
+)
 
 
-class GetName(QtGui.QDialog):
+class GetName(QDialog):
 
     def __init__(self, caption, path, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(self, parent, Qt.WindowType.Window |
+                               Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle(caption)
 
         self.path = path
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         self.setLayout(mainLayout)
-        mainLayout.addWidget(QtGui.QLabel("Name:"))
+        mainLayout.addWidget(QLabel("Name:"))
 
-        self.nameLine = QtGui.QLineEdit()
+        self.nameLine = QLineEdit()
         self.nameLine.selectAll()
         self.nameLine.textChanged.connect(self.enableAcceptButton)
         mainLayout.addWidget(self.nameLine)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         mainLayout.addLayout(hbox)
 
-        self.statusLabel = QtGui.QLabel()
+        self.statusLabel = QLabel()
         hbox.addWidget(self.statusLabel)
 
-        self.statusLabel = QtGui.QLabel("")
+        self.statusLabel = QLabel("")
         hbox.addWidget(self.statusLabel)
 
         hbox.addStretch(1)
 
-        self.acceptButton = QtGui.QPushButton("Ok")
+        self.acceptButton = QPushButton("Ok")
         self.acceptButton.setDisabled(True)
         self.acceptButton.clicked.connect(self.accept)
         hbox.addWidget(self.acceptButton)
 
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QPushButton("Cancel")
         self.cancelButton.clicked.connect(self.close)
         hbox.addWidget(self.cancelButton)
 
@@ -46,7 +52,7 @@ class GetName(QtGui.QDialog):
 
         self.accepted = False
 
-        self.exec_()
+        self.exec()
 
     def enableAcceptButton(self):
         text = self.nameLine.text().strip()
@@ -67,10 +73,10 @@ class GetName(QtGui.QDialog):
         self.close()
 
 
-class SnippetsManager(QtGui.QDialog):
+class SnippetsManager(QDialog):
 
     def __init__(self, path, parent):
-        QtGui.QDialog.__init__(self, parent)
+        QDialog.__init__(self, parent)
 
         self.setWindowTitle("Snippets")
         self.setAcceptDrops(True)
@@ -78,52 +84,56 @@ class SnippetsManager(QtGui.QDialog):
 
         self.path = path
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
 
-        self.mainSplitter = QtGui.QSplitter()
+        self.mainSplitter = QSplitter()
 
-        self.snippetsListWidget = QtGui.QListWidget()
+        self.snippetsListWidget = QListWidget()
         self.snippetsListWidget.setSortingEnabled(True)
         self.snippetsListWidget.itemPressed.connect(self.loadSnippet)
         self.snippetsListWidget.currentItemChanged.connect(self.loadSnippet)
 
         self.mainSplitter.addWidget(self.snippetsListWidget)
 
-        self.snippetViewer = QtGui.QTextEdit()
+        self.snippetViewer = QTextEdit()
         self.snippetViewer.setReadOnly(True)
+        self.snippetViewer.setAcceptDrops(False)
         self.mainSplitter.addWidget(self.snippetViewer)
+        self.snippetsListWidget.setAcceptDrops(False)
+        self.snippetViewer.installEventFilter(self)
+        self.snippetsListWidget.installEventFilter(self)
         mainLayout.addWidget(self.mainSplitter)
         self.setLayout(mainLayout)
 
         mainLayout.addWidget(self.mainSplitter)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
-        self.addButton = QtGui.QToolButton()
+        self.addButton = QToolButton()
         self.addButton.setAutoRaise(True)
         self.addButton.setToolTip("Add")
-        self.addButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "add")))
+        self.addButton.setIcon(QIcon(os.path.join("Resources", "images", "add")))
         self.addButton.clicked.connect(self.addSnippet)
         hbox.addWidget(self.addButton)
 
-        self.removeButton = QtGui.QToolButton()
+        self.removeButton = QToolButton()
         self.removeButton.setAutoRaise(True)
         self.removeButton.setToolTip("Remove")
-        self.removeButton.setIcon(QtGui.QIcon(os.path.join("Resources", "images", "minus")))
+        self.removeButton.setIcon(QIcon(os.path.join("Resources", "images", "minus")))
         self.removeButton.clicked.connect(self.removeSnippet)
         hbox.addWidget(self.removeButton)
 
-        self.renameButton = QtGui.QToolButton()
+        self.renameButton = QToolButton()
         self.renameButton.setAutoRaise(True)
         self.renameButton.setToolTip("Rename")
-        self.renameButton.setIcon(QtGui.QIcon(
+        self.renameButton.setIcon(QIcon(
             os.path.join("Resources", "images", "ui-text-field")))
         self.renameButton.clicked.connect(self.renameSnippet)
         hbox.addWidget(self.renameButton)
 
         hbox.addStretch(1)
 
-        self.saveButton = QtGui.QPushButton("Save")
+        self.saveButton = QPushButton("Save")
         self.saveButton.clicked.connect(self.saveSnippet)
         hbox.addWidget(self.saveButton)
 
@@ -138,33 +148,39 @@ class SnippetsManager(QtGui.QDialog):
 
     def dragEnterEvent(self, event):
         if event.mimeData().hasText():
-            if event.source() in self.children():
-                event.setDropAction(QtCore.Qt.CopyAction)
-                event.accept()
-            else:
-                event.acceptProposedAction()
+            event.acceptProposedAction()
         else:
             event.ignore()
 
     def dragMoveEvent(self, event):
-        event.acceptProposedAction()
+        if event.mimeData().hasText():
+            event.acceptProposedAction()
+        else:
+            event.ignore()
+
+    def eventFilter(self, obj, event):
+        if event.type() in (QEvent.Type.DragEnter,
+                            QEvent.Type.DragMove):
+            if event.mimeData().hasText():
+                event.acceptProposedAction()
+                return True
+        if event.type() == QEvent.Type.Drop:
+            self.dropEvent(event)
+            return True
+        return QDialog.eventFilter(self, obj, event)
 
     def dropEvent(self, event):
-        # FIXME: Dragging only works when dropped anywhere else but the editor.
-        # Have to find a way to get the editor to accept drop actions that
-        # have to do with text
         if event.mimeData().hasText():
             mime = event.mimeData()
-            event.setDropAction(QtCore.Qt.CopyAction)
+            event.setDropAction(Qt.DropAction.CopyAction)
             snippet = GetName("Add Snippet", self.path, self)
             if snippet.accepted:
-                file = open(os.path.join(self.path, snippet.name), 'w')
-                file.write(mime.text())
-                file.close()
+                with open(os.path.join(self.path, snippet.name), 'w') as file:
+                    file.write(mime.text())
 
                 self.loadSnippetList()
                 found = self.snippetsListWidget.findItems(snippet.name,
-                                                          QtCore.Qt.MatchCaseSensitive)
+                                                          Qt.MatchFlag.MatchCaseSensitive)
                 item = found[0]
                 self.snippetsListWidget.setCurrentItem(item)
         else:
@@ -173,21 +189,20 @@ class SnippetsManager(QtGui.QDialog):
     def addSnippet(self):
         snippet = GetName("Add Snippet", self.path, self)
         if snippet.accepted:
-            file = open(os.path.join(self.path, snippet.name), 'w')
-            file.close()
+            with open(os.path.join(self.path, snippet.name), 'w'):
+                pass
 
             self.loadSnippetList()
             found = self.snippetsListWidget.findItems(snippet.name,
-                                                      QtCore.Qt.MatchCaseSensitive)
+                                                      Qt.MatchFlag.MatchCaseSensitive)
             item = found[0]
             self.snippetsListWidget.setCurrentItem(item)
 
     def saveSnippet(self):
         name = self.snippetsListWidget.currentItem().text()
         path = os.path.join(self.path, name)
-        file = open(path, 'w')
-        file.write(self.snippetViewer.toPlainText())
-        file.close()
+        with open(path, 'w') as file:
+            file.write(self.snippetViewer.toPlainText())
 
     def renameSnippet(self):
         snippet = GetName("Rename Snippet", self.path, self)
@@ -200,7 +215,7 @@ class SnippetsManager(QtGui.QDialog):
 
             self.loadSnippetList()
             found = self.snippetsListWidget.findItems(new_name,
-                                                      QtCore.Qt.MatchCaseSensitive)
+                                                      Qt.MatchFlag.MatchCaseSensitive)
             item = found[0]
             self.snippetsListWidget.setCurrentItem(item)
 
@@ -208,12 +223,12 @@ class SnippetsManager(QtGui.QDialog):
         name = self.snippetsListWidget.currentItem().text()
 
         mess = 'Remove "{0}" from snippets?'.format(name)
-        reply = QtGui.QMessageBox.warning(self, "Remove", mess,
-                                          QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-        if reply == QtGui.QMessageBox.Yes:
+        reply = QMessageBox.warning(self, "Remove", mess,
+                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply == QMessageBox.StandardButton.Yes:
             os.remove(os.path.join(self.path, name))
             self.loadSnippetList()
-        elif reply == QtGui.QMessageBox.No:
+        elif reply == QMessageBox.StandardButton.No:
             pass
 
     def loadSnippetList(self):
@@ -236,6 +251,5 @@ class SnippetsManager(QtGui.QDialog):
         if currentItem is None:
             return
         key = currentItem.text()
-        file = open(os.path.join(self.path, key), 'r')
-        self.snippetViewer.setText(file.read())
-        file.close()
+        with open(os.path.join(self.path, key), 'r') as file:
+            self.snippetViewer.setText(file.read())

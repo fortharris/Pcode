@@ -1,8 +1,8 @@
 import sys
 
 
-from PyQt4 import QtGui
-from PyQt4.Qsci import QsciLexerHTML
+from PyQt6.Qsci import QsciLexerHTML
+from PyQt6.QtGui import QColor, QFont
 
 # Platform specific fonts
 if sys.platform == 'win32':
@@ -250,20 +250,20 @@ class HtmlLexer(QsciLexerHTML):
 
         for key, attrib in style.items():
             value = propertyID[key]
-            self.setColor(QtGui.QColor(attrib[1]), value)
+            self.setColor(QColor(attrib[1]), value)
             self.setEolFill(True, value)
-            self.setPaper(QtGui.QColor(attrib[5]), value)
+            self.setPaper(QColor(attrib[5]), value)
             if self.lexerPaper[0] == "Plain":
-                self.setPaper(QtGui.QColor(attrib[5]), value)
+                self.setPaper(QColor(attrib[5]), value)
             else:
-                self.setPaper(QtGui.QColor(self.lexerPaper[1]), value)
+                self.setPaper(QColor(self.lexerPaper[1]), value)
 
-            font = QtGui.QFont(attrib[0], attrib[2])
+            font = QFont(attrib[0], attrib[2])
             font.setBold(attrib[3])
             font.setItalic(attrib[4])
             self.setFont(font, value)
 
         if self.lexerPaper[0] == "Plain":
-            self.setDefaultPaper(QtGui.QColor("#ffffff"))
+            self.setDefaultPaper(QColor("#ffffff"))
         else:
-            self.setDefaultPaper(QtGui.QColor(self.lexerPaper[1]))
+            self.setDefaultPaper(QColor(self.lexerPaper[1]))

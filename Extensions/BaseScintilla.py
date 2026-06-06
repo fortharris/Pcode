@@ -1,17 +1,23 @@
 import re
-from PyQt4 import QtGui, QtCore
-from PyQt4.Qsci import QsciScintilla
+
+import Extensions.qscintilla_compat  # noqa: F401 — flat QScintilla enum aliases
+from PyQt6.Qsci import QsciScintilla, QsciCommand
+from PyQt6.QtCore import QPoint, QThread, QTimer, pyqtSignal
+from PyQt6.QtGui import QColor
+
+from Extensions.font_metrics import font_metrics_width
+from Extensions.settings_utils import to_bool
 
 
-class FindOccurenceThread(QtCore.QThread):
+class FindOccurenceThread(QThread):
 
-    markOccurrence = QtCore.pyqtSignal(list)
+    markOccurrence = pyqtSignal(list)
 
     def run(self):
         word = re.escape(self.word)
         if self.wholeWord:
             word = "\\b{0}\\b".format(word)
-        flags = re.UNICODE | re.LOCALE
+        flags = re.UNICODE
         search = re.compile(word, flags)
 
         lineno = 0
@@ -40,15 +46,16 @@ class BaseScintilla(QsciScintilla):
     def enableMarkOccurrence(self, useData):
         self.useData = useData
 
-        self.matchIndicator = self.indicatorDefine(QsciScintilla.INDIC_BOX, 9)
+        self.matchIndicator = self.indicatorDefine(
+            QsciScintilla.IndicatorStyle.BoxIndicator, 9)
         self.setIndicatorForegroundColor(
-            QtGui.QColor("#FFCC00"), self.matchIndicator)
+            QColor("#FFCC00"), self.matchIndicator)
         self.setIndicatorDrawUnder(True, self.matchIndicator)
 
         self.findOccurenceThread = FindOccurenceThread()
         self.findOccurenceThread.markOccurrence.connect(self.markOccurence)
 
-        self.occurrencesTimer = QtCore.QTimer()
+        self.occurrencesTimer = QTimer()
         self.occurrencesTimer.setSingleShot(True)
         self.occurrencesTimer.timeout.connect(self.findOccurrences)
 
@@ -61,7 +68,10 @@ class BaseScintilla(QsciScintilla):
         standardCommands = self.standardCommands()
 
         for i, v in useData.DEFAULT_SHORTCUTS["Editor"].items():
-            command = standardCommands.find(v[1])
+            command_id = v[1]
+            if isinstance(command_id, int):
+                command_id = QsciCommand.Command(command_id)
+            command = standardCommands.find(command_id)
             command.setKey(useData.CUSTOM_SHORTCUTS["Editor"][i][1])
             
     def linesOnScreen(self):
@@ -74,7 +84,7 @@ class BaseScintilla(QsciScintilla):
 
     def findOccurrences(self):
         self.clearAllIndicators(self.matchIndicator)
-        if self.useData.SETTINGS['MarkSearchOccurrence'] == 'True':
+        if to_bool(self.useData.SETTINGS.get('MarkSearchOccurrence')):
             wholeWord = True
             if self.hasSelectedText():
                 lineFrom_, indexFrom_, lineTo_, indexTo_ = self.getSelection()
@@ -625,7 +635,7 @@ class BaseScintilla(QsciScintilla):
         self.SendScintilla(QsciScintilla.SCI_STUTTEREDPAGEDOWN)
 
     def increaseIndent(self):
-        if self.hasSelectedText() == False:
+        if not self.hasSelectedText():
             pos = self.getCursorPosition()
             line = pos[0]
             self.indent(line)
@@ -633,7 +643,7 @@ class BaseScintilla(QsciScintilla):
             self.SendScintilla(QsciScintilla.SCI_TAB)
 
     def decreaseIndent(self):
-        if self.hasSelectedText() == False:
+        if not self.hasSelectedText():
             pos = self.getCursorPosition()
             line = pos[0]
             self.unindent(line)
@@ -647,11 +657,14 @@ class BaseScintilla(QsciScintilla):
         self.SendScintilla(QsciScintilla.SCI_UPPERCASE)
 
     def showLineNumbers(self):
-        if self.useData.SETTINGS["ShowLineNumbers"] == 'True':
+        if self.useData.setting_bool("ShowLineNumbers"):
             # Line numbers
             # conventionnaly, margin 0 is for line numbers
             self.setMarginLineNumbers(0, True)
-            self.setMarginWidth(0, self.fontMetrics.width("0000") + 5)
+            fm = self.fontMetrics
+            if callable(fm):
+                fm = fm()
+            self.setMarginWidth(0, font_metrics_width(fm, "0000") + 5)
         else:
             self.setMarginLineNumbers(0, False)
             self.setMarginWidth(0, 0)
@@ -714,7 +727,7 @@ class BaseScintilla(QsciScintilla):
 
     def get_absolute_coordinates(self):
         cx, cy = self.coordinates('cursor')
-        qPoint = QtCore.QPoint(cx, cy)
+        qPoint = QPoint(cx, cy)
         point = self.mapToGlobal(qPoint)
         return point
 
@@ -726,23 +739,19 @@ class BaseScintilla(QsciScintilla):
         text = self.text(line)
         wc = self.wordCharacters()
         if wc is None:
-            regexp = QtCore.QRegExp('[^\w_]')
+            word_re = re.compile(r'\w+', re.UNICODE)
         else:
-            regexp = QtCore.QRegExp('[^{0}]'.format(re.escape(wc)))
-        start = regexp.lastIndexIn(text, index) + 1
-        end = regexp.indexIn(text, index)
-        if start == end + 1 and index > 0:
-            # we are on a word boundary, try again
-            start = regexp.lastIndexIn(text, index - 1) + 1
-        if start == -1:
-            start = 0
-        if end == -1:
-            end = len(text)
-        if end > start:
-            word = text[start:end]
-        else:
-            word = ''
-        return word
+            word_re = re.compile(r'[{0}]+'.format(re.escape(wc)), re.UNICODE)
+
+        last_before = ''
+        for match in word_re.finditer(text):
+            if match.start() <= index <= match.end():
+                return match.group()
+            if match.end() <= index:
+                last_before = match.group()
+            if match.start() > index:
+                break
+        return last_before
 
     def clearAllIndicators(self, indicator):
         self.clearIndicatorRange(0, 0, self.lines(), 0, indicator)

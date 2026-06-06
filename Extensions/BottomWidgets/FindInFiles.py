@@ -1,16 +1,19 @@
+from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtGui import QAction, QBrush, QColor, QIcon, QPixmap
+from PyQt6.QtWidgets import QApplication, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QLabel, QLineEdit, QMenu, QMessageBox, QPushButton, QToolButton, QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget
+
 import os
 import ctypes
 import re
-from PyQt4 import QtCore, QtGui
 
 from Extensions import Global
 from Extensions.Diff import DiffWindow
 
 
-class FinderThread(QtCore.QThread):
+class FinderThread(QThread):
 
-    listItemAvailable = QtCore.pyqtSignal()
-    currentDir = QtCore.pyqtSignal(str)
+    listItemAvailable = pyqtSignal()
+    currentDir = pyqtSignal(str)
 
     def run(self):
         for dirname, _, files in os.walk(self.directory):
@@ -22,12 +25,13 @@ class FinderThread(QtCore.QThread):
                     break
                 if re.match(self.filterRe, f):
                     file = os.path.join(dirname, f)
-                    parentItem = QtGui.QTreeWidgetItem()
+                    parentItem = QTreeWidgetItem()
                     # read the file and split it into textlines
                     try:
-                        text = open(file, 'r').read()
+                        with open(file, 'r') as fh:
+                            text = fh.read()
                         lines = text.splitlines(True)
-                    except:
+                    except Exception:
                         continue
 
                     # now perform the search and display the lines found
@@ -47,8 +51,8 @@ class FinderThread(QtCore.QThread):
                             parentItem.addChild(childItem)
                     if parentItem.childCount() > 0:
                         parentItem.setText(0, file)
-                        parentItem.setForeground(0, QtGui.QBrush(
-                            QtGui.QColor("#003366")))
+                        parentItem.setForeground(0, QBrush(
+                            QColor("#003366")))
                         self.found.append(parentItem)
                         self.listItemAvailable.emit()
             if self.recursive is False:
@@ -66,7 +70,7 @@ class FinderThread(QtCore.QThread):
         self.start()
 
     def createChild(self, line, text, pos):
-        childItem = QtGui.QTreeWidgetItem()
+        childItem = QTreeWidgetItem()
         childItem.setText(0, line)
         childItem.setText(1, text)
         childItem.setToolTip(1, text)
@@ -78,16 +82,18 @@ class FinderThread(QtCore.QThread):
         self.stop = True
 
 
-class ConfirmReplaceDialog(QtGui.QDialog):
+class ConfirmReplaceDialog(QDialog):
 
     def __init__(self, path, text, replaceText, search, parent=None):
-        QtGui.QDialog.__init__(self, parent, QtCore.Qt.Window |
-                               QtCore.Qt.WindowCloseButtonHint)
+        QDialog.__init__(
+            self, parent,
+            Qt.WindowType.Window
+            | Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle(path)
         self.resize(700, 400)
 
-        mainLayout = QtGui.QVBoxLayout()
+        mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 5)
         self.setLayout(mainLayout)
 
@@ -98,8 +104,10 @@ class ConfirmReplaceDialog(QtGui.QDialog):
         self.replaceText = replaceText
         self.search = search
 
-        a = open(path, 'r').read().splitlines()
-        b = open(path, 'r').read().splitlines()
+        with open(path, 'r') as fh:
+            content = fh.read()
+        a = content.splitlines()
+        b = content.splitlines()
         for i in range(len(b)):
             b[i] = search.sub(replaceText, b[i])
 
@@ -108,48 +116,46 @@ class ConfirmReplaceDialog(QtGui.QDialog):
         if diffExists:
             mainLayout.addWidget(diff)
         else:
-            message = QtGui.QMessageBox.information(
+            QMessageBox.information(
                 self, "Replace", "There is nothing to replace.")
             return
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.addStretch(1)
         mainLayout.addLayout(hbox)
 
-        self.replaceButton = QtGui.QPushButton("Replace")
+        self.replaceButton = QPushButton("Replace")
         self.replaceButton.clicked.connect(self.replace)
         hbox.addWidget(self.replaceButton)
 
-        self.cancelButton = QtGui.QPushButton("Cancel")
+        self.cancelButton = QPushButton("Cancel")
         self.cancelButton.pressed.connect(self.close)
         hbox.addWidget(self.cancelButton)
 
         hbox.addStretch(1)
 
         self.replaced = False
-        self.exec_()
+        self.exec()
 
     def replace(self):
-        QtGui.QApplication.setOverrideCursor(QtCore.Qt.WaitCursor)
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
-        file = open(self.path, 'r')
-        new = self.search.sub(self.replaceText, file.read())
-        file.close()
+        with open(self.path, 'r') as file:
+            new = self.search.sub(self.replaceText, file.read())
 
-        file = open(self.path, 'w')
-        file.write(new)
-        file.close()
+        with open(self.path, 'w') as file:
+            file.write(new)
 
-        QtGui.QApplication.restoreOverrideCursor()
+        QApplication.restoreOverrideCursor()
 
         self.replaced = True
         self.close()
 
 
-class FoundFilesView(QtGui.QTreeWidget):
+class FoundFilesView(QTreeWidget):
 
     def __init__(self, parent):
-        QtGui.QTreeWidget.__init__(self, parent)
+        QTreeWidget.__init__(self, parent)
 
         self.setHeaderHidden(True)
         self.setColumnCount(2)
@@ -173,22 +179,22 @@ class FoundFilesView(QtGui.QTreeWidget):
             item = selected[0]
             if item.parent() is None:
                 self.viewAct.setEnabled(False)
-        self.contextMenu.exec_(event.globalPos())
+        self.contextMenu.exec(event.globalPos())
 
     def createActions(self):
-        self.viewAct = QtGui.QAction(
+        self.viewAct = QAction(
             "View", self, statusTip="View", triggered=self.parent.viewFile)
 
         self.locateAct = \
-            QtGui.QAction(
+            QAction(
                 "Open Containing Folder", self, statusTip="Open Containing Folder", triggered=self.parent.locateFile)
 
-        self.contextMenu = QtGui.QMenu()
+        self.contextMenu = QMenu()
         self.contextMenu.addAction(self.viewAct)
         self.contextMenu.addAction(self.locateAct)
 
 
-class FindInFiles(QtGui.QWidget):
+class FindInFiles(QWidget):
 
     def __init__(self, useData, editorTabWidget, projectPathDict, bottomStackSwitcher):
         super(FindInFiles, self).__init__()
@@ -198,28 +204,29 @@ class FindInFiles(QtGui.QWidget):
         self.findThread = FinderThread()
         self.editorTabWidget = editorTabWidget
         self.bottomStackSwitcher = bottomStackSwitcher
+        self._explorer_shortcuts = []
 
-        mainLayout = QtGui.QVBoxLayout()
-        mainLayout.setMargin(0)
+        mainLayout = QVBoxLayout()
+        mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(mainLayout)
 
-        self.statusWidget = QtGui.QWidget()
+        self.statusWidget = QWidget()
         self.statusWidget.setMaximumHeight(25)
         mainLayout.addWidget(self.statusWidget)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         hbox.setContentsMargins(0, 5, 0, 0)
         self.statusWidget.setLayout(hbox)
 
-        label = QtGui.QLabel()
+        label = QLabel()
         label.setMaximumWidth(25)
         label.setMaximumHeight(25)
         label.setScaledContents(True)
         label.setPixmap(
-            QtGui.QPixmap(os.path.join("Resources", "images", "cascade")))
+            QPixmap(os.path.join("Resources", "images", "cascade")))
         hbox.addWidget(label)
 
-        self.dirLabel = QtGui.QLabel()
+        self.dirLabel = QLabel()
         hbox.addWidget(self.dirLabel)
 
         self.statusWidget.hide()
@@ -230,108 +237,108 @@ class FindInFiles(QtGui.QWidget):
 
         # create finder controls
 
-        self.dashboard = QtGui.QWidget()
+        self.dashboard = QWidget()
 
-        vbox = QtGui.QVBoxLayout()
+        vbox = QVBoxLayout()
         self.dashboard.setLayout(vbox)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         vbox.addLayout(hbox)
 
-        label = QtGui.QLabel("Find:        ")  # extra space is for alignment
+        label = QLabel("Find:        ")  # extra space is for alignment
         label.setMinimumWidth(30)
 
         hbox.addWidget(label)
 
-        self.findtextLine = QtGui.QLineEdit()
+        self.findtextLine = QLineEdit()
         hbox.addWidget(self.findtextLine)
 
-        self.replaceLabel = QtGui.QLabel("Replace With:")
+        self.replaceLabel = QLabel("Replace With:")
         hbox.addWidget(self.replaceLabel)
 
-        self.replaceLine = QtGui.QLineEdit()
+        self.replaceLine = QLineEdit()
         hbox.addWidget(self.replaceLine)
 
         hbox.setStretch(1, 1)
         hbox.setStretch(3, 1)
 
-        hbox.addWidget(QtGui.QLabel("Extensions (*.ext; ...)"))
+        hbox.addWidget(QLabel("Extensions (*.ext; ...)"))
 
-        self.filterEdit = QtGui.QLineEdit()
+        self.filterEdit = QLineEdit()
         self.filterEdit.setText('*')
         self.filterEdit.setMaximumWidth(72)
         hbox.addWidget(self.filterEdit)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
 
-        hbox.addWidget(QtGui.QLabel("Directory:"))
+        hbox.addWidget(QLabel("Directory:"))
 
-        self.directoryLine = QtGui.QLineEdit()
+        self.directoryLine = QLineEdit()
         hbox.addWidget(self.directoryLine)
 
         hbox.setStretch(1, 1)
 
-        self.projectBox = QtGui.QCheckBox(
+        self.projectBox = QCheckBox(
             "Project  ")  # extra space is for alignment
         self.projectBox.toggled.connect(self.projectBoxToggled)
         hbox.addWidget(self.projectBox)
 
-        self.browseButton = QtGui.QPushButton('...')
+        self.browseButton = QPushButton('...')
         self.browseButton.clicked.connect(self.setPath)
         hbox.addWidget(self.browseButton)
 
-        self.stopButton = QtGui.QPushButton("Stop")
+        self.stopButton = QPushButton("Stop")
         self.stopButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "stop")))
+            QIcon(os.path.join("Resources", "images", "stop")))
         self.stopButton.clicked.connect(self.stopFinder)
         self.stopButton.hide()
         hbox.addWidget(self.stopButton)
 
-        self.findButton = QtGui.QPushButton("Find")
+        self.findButton = QPushButton("Find")
         self.findButton.clicked.connect(self.find)
         hbox.addWidget(self.findButton)
 
         vbox.addLayout(hbox)
 
-        hbox = QtGui.QHBoxLayout()
+        hbox = QHBoxLayout()
         vbox.addLayout(hbox)
 
-        self.matchCaseBox = QtGui.QCheckBox("MC")
+        self.matchCaseBox = QCheckBox("MC")
         self.matchCaseBox.setToolTip("Match Case")
         self.matchCaseBox.stateChanged.connect(self.searchOptionsChanged)
         hbox.addWidget(self.matchCaseBox)
 
-        self.matchWholeWordBox = QtGui.QCheckBox("WW")
+        self.matchWholeWordBox = QCheckBox("WW")
         self.matchWholeWordBox.setToolTip("Whole Word")
         self.matchWholeWordBox.stateChanged.connect(self.searchOptionsChanged)
         hbox.addWidget(self.matchWholeWordBox)
 
-        self.regExpBox = QtGui.QCheckBox("RE")
+        self.regExpBox = QCheckBox("RE")
         self.regExpBox.setToolTip("Regular Expression")
         self.regExpBox.stateChanged.connect(self.searchOptionsChanged)
         hbox.addWidget(self.regExpBox)
 
-        self.recursiveBox = QtGui.QCheckBox("Recursive")
+        self.recursiveBox = QCheckBox("Recursive")
         self.recursiveBox.setChecked(True)
         self.recursiveBox.stateChanged.connect(self.searchOptionsChanged)
         hbox.addWidget(self.recursiveBox)
 
-        self.replaceBox = QtGui.QCheckBox("Replace")
+        self.replaceBox = QCheckBox("Replace")
         self.replaceBox.stateChanged.connect(self.toggleReplace)
         hbox.addWidget(self.replaceBox)
 
         hbox.addStretch(1)
 
-        self.hideButton = QtGui.QToolButton()
+        self.hideButton = QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
-            QtGui.QIcon(os.path.join("Resources", "images", "exit")))
+            QIcon(os.path.join("Resources", "images", "exit")))
         self.hideButton.clicked.connect(self.dashboard.hide)
         hbox.addWidget(self.hideButton)
 
         self.searchOptionsChanged()
 
-        self.findtextLine.setFocus(True)
+        self.findtextLine.setFocus()
 
         self.findThread.listItemAvailable.connect(self.updateFilesTable)
         self.findThread.currentDir.connect(self.displayCurrentSearchDir)
@@ -353,13 +360,13 @@ class FindInFiles(QtGui.QWidget):
             return
         path = item.parent().text(0)
         if self.replaceBox.isChecked():
-            name = os.path.basename(
+            os.path.basename(
                 path) + " ( '" + self.text + "' --> '" + self.replaceLine.text() + "' )"
-            replaced = confirmReplaceDialog = ConfirmReplaceDialog(
+            replaced = ConfirmReplaceDialog(
                 path, self.text, self.replaceLine.text(), self.search, self)
             if replaced.replaced:
                 if self.editorTabWidget.alreadyOpened(path):
-                    message = QtGui.QMessageBox.information(
+                    QMessageBox.information(
                         self, "Reload", "This file has changed on disk. You may want to reload it.")
         else:
             line = int(item.text(0)) - 1
@@ -380,13 +387,19 @@ class FindInFiles(QtGui.QWidget):
                                             '/n,/select, ' + path, None, 1)
 
     def setPath(self):
-        options = QtGui.QFileDialog.DontResolveSymlinks | QtGui.QFileDialog.ShowDirsOnly
-        directory = QtGui.QFileDialog.getExistingDirectory(self,
+        options = (QFileDialog.Option.DontResolveSymlinks
+                   | QFileDialog.Option.ShowDirsOnly)
+        directory = QFileDialog.getExistingDirectory(self,
                                                            "Select Folder", self.useData.getLastOpenedDir(), options)
         if directory:
             directory = os.path.normpath(directory)
             self.useData.saveLastOpenedDir(directory)
             self.directoryLine.setText(directory)
+
+    def updateShortcutsList(self, shortcuts):
+        self._explorer_shortcuts = list(shortcuts or [])
+        if self._explorer_shortcuts:
+            self.directoryLine.setText(self._explorer_shortcuts[0])
 
     def projectBoxToggled(self, state):
         self.directoryLine.setDisabled(state)
@@ -413,18 +426,18 @@ class FindInFiles(QtGui.QWidget):
             text = re.escape(self.text)
         if self.matchWholeWord:
             text = "\\b{0}\\b".format(text)
-        flags = re.UNICODE | re.LOCALE
+        flags = re.UNICODE
         if not self.matchCase:
             flags |= re.IGNORECASE
         try:
             self.search = re.compile(text, flags)
         except re.error as err:
-            message = QtGui.QMessageBox.warning(self, "Find-in-Files",
+            QMessageBox.warning(self, "Find-in-Files",
                                                 "Wrong regular expression: {0}!".format(str(err).capitalize()))
             return
         fileFilter = self.filterEdit.text()
         fileFilterList = \
-            ["^{0}$".format(filter.replace(".", "\.").replace("*", ".*"))
+            [r"^{0}$".format(filter.replace(".", r"\.").replace("*", ".*"))
              for filter in fileFilter.split(";")]
         filterRe = re.compile("|".join(fileFilterList))
         if self.projectBox.isChecked():
@@ -432,14 +445,14 @@ class FindInFiles(QtGui.QWidget):
         else:
             dirName = self.directoryLine.text().strip()
             if dirName == '':
-                message = QtGui.QMessageBox.warning(self, "Find-in-Files",
+                QMessageBox.warning(self, "Find-in-Files",
                                                     "Please specify a directory!")
                 return
         if not os.path.exists(dirName):
-            message = QtGui.QMessageBox.warning(self, "Find-in-Files",
+            QMessageBox.warning(self, "Find-in-Files",
                                                 "Path does not exist!")
         if not os.path.isdir(dirName):
-            message = QtGui.QMessageBox.warning(self, "Find-in-Files",
+            QMessageBox.warning(self, "Find-in-Files",
                                                 "Path is not a directory!")
             return
         else:

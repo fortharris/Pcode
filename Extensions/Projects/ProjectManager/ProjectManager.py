@@ -1,12 +1,15 @@
+import logging
 import os
 import shutil
-from PyQt4 import QtCore, QtGui
+import traceback
+
+from PyQt6.QtCore import QThread
+from PyQt6.QtWidgets import QFileDialog, QMessageBox, QWidget
 
 from Extensions.Projects.ProjectManager.ProjectView.ProjectView import ProjectView
-from Extensions.Projects.ProjectManager.Build import Build
 
 
-class ExportThread(QtCore.QThread):
+class ExportThread(QThread):
 
     def run(self):
         self.error = None
@@ -22,13 +25,13 @@ class ExportThread(QtCore.QThread):
         self.start()
 
 
-class ProjectManager(QtGui.QWidget):
+class ProjectManager(QWidget):
 
     def __init__(
         self, editorTabWidget, messagesWidget, projectPathDict, projectSettings,
             useData, app,
             busyWidget, buildStatusWidget, parent):
-        QtGui.QWidget.__init__(self, parent)
+        QWidget.__init__(self, parent)
 
         self.busyWidget = busyWidget
         self.editorTabWidget = editorTabWidget
@@ -39,10 +42,16 @@ class ProjectManager(QtGui.QWidget):
 
         self.configDialog = editorTabWidget.configDialog
 
+        self.build = None
         if projectPathDict["type"] == "Desktop Application":
-            self.build = Build(
-                buildStatusWidget, messagesWidget, projectPathDict, projectSettings, useData,
-                self.configDialog.buildConfig, editorTabWidget, self)
+            try:
+                from Extensions.Projects.ProjectManager.Build import Build
+                self.build = Build(
+                    buildStatusWidget, messagesWidget, projectPathDict, projectSettings, useData,
+                    self.configDialog.buildConfig, editorTabWidget, self)
+            except Exception:
+                logging.error(traceback.format_exc())
+                self.build = None
 
         self.exportThread = ExportThread()
         self.exportThread.finished.connect(self.finishExport)
@@ -52,10 +61,11 @@ class ProjectManager(QtGui.QWidget):
 
     def buildProject(self):
         if self.editorTabWidget.errorsInProject():
-            reply = QtGui.QMessageBox.warning(self, "Build",
-                                              "There are errors in your project. Build anyway?",
-                                              QtGui.QMessageBox.Yes | QtGui.QMessageBox.No)
-            if reply == QtGui.QMessageBox.Yes:
+            reply = QMessageBox.warning(
+                self, "Build",
+                "There are errors in your project. Build anyway?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+            if reply == QMessageBox.StandardButton.Yes:
                 self.build.build()
             else:
                 return
@@ -63,7 +73,7 @@ class ProjectManager(QtGui.QWidget):
             self.build.build()
 
     def configureProject(self):
-        self.configDialog.exec_()
+        self.configDialog.exec()
 
     def openBuild(self):
         self.build.openDir()
@@ -73,12 +83,11 @@ class ProjectManager(QtGui.QWidget):
         name = curren_window.projectPathDict["name"]
         path = curren_window.projectPathDict["root"]
 
-        options = QtGui.QFileDialog.Options()
         savepath = os.path.join(self.useData.getLastOpenedDir(), name)
         savepath = os.path.normpath(savepath)
-        fileName = QtGui.QFileDialog.getSaveFileName(self,
-                                                     "Export", savepath,
-                                                     "All files (*)", options)
+        fileName, _ = QFileDialog.getSaveFileName(
+            self, "Export", savepath,
+            "All files (*)")
         if fileName:
             self.useData.saveLastOpenedDir(os.path.split(fileName)[0])
 
@@ -88,5 +97,5 @@ class ProjectManager(QtGui.QWidget):
     def finishExport(self):
         self.busyWidget.showBusy(False)
         if self.exportThread.error is not None:
-            message = QtGui.QMessageBox.warning(
+            QMessageBox.warning(
                 self, "Export Failed", self.exportThread.error)
