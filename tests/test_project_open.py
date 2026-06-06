@@ -26,6 +26,9 @@ def app():
         instance = QApplication([])
     QMessageBox.warning = staticmethod(lambda *a, **k: None)
     QMessageBox.critical = staticmethod(lambda *a, **k: None)
+    QMessageBox.information = staticmethod(lambda *a, **k: None)
+    from Extensions import ErrorHandler
+    ErrorHandler._show_dialog = lambda *a, **k: None
     return instance
 
 

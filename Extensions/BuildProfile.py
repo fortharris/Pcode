@@ -28,10 +28,6 @@ def _xml_path(build_folder):
     return os.path.join(build_folder, "profile.xml")
 
 
-def _list_key_to_xml(name):
-    return name.replace(" ", "-")
-
-
 def default_profile(window_type="Console"):
     lists = {key: [] for key in LIST_KEYS}
     return {
@@ -119,35 +115,6 @@ def load(build_folder):
     return _to_legacy_dict(scalars, profile["lists"])
 
 
-def _write_xml(build_folder, scalars, lists):
-    dom_document = QDomDocument("build_profile")
-    main_data = dom_document.createElement("build")
-    dom_document.appendChild(main_data)
-
-    for key in SCALAR_KEYS:
-        if key == "version_field":
-            tag_name = "version"
-            value = scalars.get("version_field", "0.1")
-        else:
-            tag_name = key
-            value = scalars.get(key, "")
-        root = dom_document.createElement(tag_name)
-        root.appendChild(dom_document.createTextNode(str(value)))
-        main_data.appendChild(root)
-
-    for key in LIST_KEYS:
-        root = dom_document.createElement(_list_key_to_xml(key))
-        main_data.appendChild(root)
-        for item in lists.get(key, []):
-            tag = dom_document.createElement("item")
-            tag.appendChild(dom_document.createTextNode(item))
-            root.appendChild(tag)
-
-    with open(_xml_path(build_folder), "w", encoding="utf-8") as file:
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-
-
 def save(build_folder, scalars, lists):
     os.makedirs(build_folder, exist_ok=True)
     payload = {"version": 1, "lists": lists}
@@ -159,4 +126,3 @@ def save(build_folder, scalars, lists):
             payload[key] = scalars.get(key, "")
     with open(_json_path(build_folder), "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
-    _write_xml(build_folder, scalars, lists)

@@ -165,8 +165,8 @@ class RopeConfig(QWidget):
 
         frame = QFrame()
         frame.setGeometry(1, 1, 1, 2)
-        frame.setFrameShape(frame.HLine)
-        frame.setFrameShadow(frame.Sunken)
+        frame.setFrameShape(QFrame.Shape.HLine)
+        frame.setFrameShadow(QFrame.Shadow.Sunken)
         mainLayout.addWidget(frame)
 
         self.listSelectorBox = QComboBox()

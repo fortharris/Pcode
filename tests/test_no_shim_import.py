@@ -26,6 +26,7 @@ def test_pcode_imports_without_qt_bindings(app):
 
 
 def test_editor_stack_imports_without_qt_bindings(app):
+    import Extensions.qscintilla_compat  # noqa: F401
     from Extensions.Start import Start  # noqa: F401
     from Extensions.Library.AdvancedSearch import AdvancedSearch  # noqa: F401
     from Extensions.CodeEditor import CodeEditor  # noqa: F401

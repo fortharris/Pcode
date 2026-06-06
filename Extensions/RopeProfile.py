@@ -94,41 +94,6 @@ def load(rope_folder):
     return default_profile()
 
 
-def _write_xml(rope_folder, data):
-    dom_document = QDomDocument("rope_profile")
-    main_data = dom_document.createElement("rope")
-    dom_document.appendChild(main_data)
-
-    for tag_name, key, text in (
-        ("ignoresyntaxerrors", "ignore_syntax_errors", None),
-        ("ignorebadimports", "ignore_bad_imports", None),
-        ("maxhistoryitems", "max_history_items", str),
-    ):
-        root = dom_document.createElement(tag_name)
-        value = data.get(key, "")
-        if text is str:
-            value = str(value)
-        attrib = dom_document.createTextNode(value)
-        root.appendChild(attrib)
-        main_data.appendChild(root)
-
-    for xml_name, key in (
-        ("Extensions", "extensions"),
-        ("IgnoredResources", "ignored_resources"),
-        ("CustomFolders", "custom_folders"),
-    ):
-        root = dom_document.createElement(xml_name)
-        main_data.appendChild(root)
-        for item in data.get(key, []):
-            tag = dom_document.createElement("item")
-            root.appendChild(tag)
-            tag.appendChild(dom_document.createTextNode(item))
-
-    with open(_xml_path(rope_folder), "w", encoding="utf-8") as file:
-        file.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        file.write(dom_document.toString())
-
-
 def save(rope_folder, data):
     os.makedirs(rope_folder, exist_ok=True)
     payload = default_profile()
@@ -136,4 +101,3 @@ def save(rope_folder, data):
     payload["version"] = 1
     with open(_json_path(rope_folder), "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
-    _write_xml(rope_folder, payload)

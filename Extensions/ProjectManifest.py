@@ -73,16 +73,3 @@ def write(project_root, name, project_type, mainscript, version="0.1"):
     }
     with open(_json_path(project_root), "w", encoding="utf-8") as f:
         json.dump(payload, f, indent=2)
-
-    dom_document = QDomDocument("Project")
-    properties = dom_document.createElement("properties")
-    dom_document.appendChild(properties)
-    tag = dom_document.createElement("pcode_project")
-    tag.setAttribute("Version", version)
-    tag.setAttribute("Name", name)
-    tag.setAttribute("Type", project_type)
-    tag.setAttribute("MainScript", mainscript)
-    properties.appendChild(tag)
-    with open(_xml_path(project_root), "w", encoding="utf-8") as f:
-        f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
-        f.write(dom_document.toString())

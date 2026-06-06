@@ -20,11 +20,11 @@ ROPE_XML = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-def test_default_profile_save_creates_json_and_xml(tmp_path):
+def test_default_profile_save_creates_json_only(tmp_path):
     rope_dir = tmp_path / "Rope"
     save(str(rope_dir), default_profile())
     assert (rope_dir / "profile.json").is_file()
-    assert (rope_dir / "profile.xml").is_file()
+    assert not (rope_dir / "profile.xml").exists()
     data = json.loads((rope_dir / "profile.json").read_text(encoding="utf-8"))
     assert data["max_history_items"] == 32
     assert "*.py" in data["extensions"]

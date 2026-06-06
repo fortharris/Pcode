@@ -179,7 +179,7 @@ class IconProvider(QFileIconProvider):
             fname = os.path.normpath(qfileinfo.absoluteFilePath())
             if os.path.isdir(fname):
                 dir = QDir(fname)
-                dirList = dir.entryList(QDir.Files)
+                dirList = dir.entryList(QDir.Filter.Files)
                 if "__init__.py" in dirList:
                     icon = QIcon(
                         os.path.join("Resources", "images", "box"))
@@ -296,15 +296,15 @@ class ProjectTree(QTreeView):
             statusTip="Package", triggered=self.newPackage)
 
         self.copyAct = QAction(
-            "Copy", self, shortcut=QKeySequence.Copy,
+            "Copy", self, shortcut=QKeySequence.StandardKey.Copy,
             statusTip="Copy", triggered=self.copyItem)
 
         self.pasteAct = QAction(
-            "Paste", self, shortcut=QKeySequence.Paste,
+            "Paste", self, shortcut=QKeySequence.StandardKey.Paste,
             statusTip="Paste", triggered=self.pasteItem)
 
         self.deleteAct = QAction(
-            "Delete", self, shortcut=QKeySequence.Delete,
+            "Delete", self, shortcut=QKeySequence.StandardKey.Delete,
             statusTip="Delete Selection", triggered=self.deleteItem)
 
         self.addExistingFilesAct = \

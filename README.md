@@ -42,9 +42,15 @@ The previously-vendored libraries (`rope`, `pyflakes`, `autopep8`, `pycodestyle`
 pip install -r requirements.txt        # run from source
 pip install -e .                       # optional: install the `pcode` command
 pip install -e .[dev]                  # optional: pytest + ruff for development
-QT_QPA_PLATFORM=offscreen pytest       # run the unit tests
+QT_QPA_PLATFORM=offscreen pytest       # unit + smoke tests (headless)
 ```
 See [RUN.md](RUN.md) for full setup, the headless smoke test, and troubleshooting.
+
+**PyQt6 branch (`pyside`):** production code uses direct `PyQt6` imports. Legacy
+`Extensions/qt_bindings.py` has been removed. Color scheme / lexer definitions
+under the workspace `stylesdir` remain XML (editor format).
+
+**PR:** https://github.com/fortharris/Pcode/compare/master...pyside?expand=1
 
 ### License:
 * GPL v3

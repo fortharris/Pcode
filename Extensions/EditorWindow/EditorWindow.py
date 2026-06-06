@@ -143,7 +143,7 @@ class EditorWindow(QWidget):
 
         self.sideSplitter = QSplitter()
         self.sideSplitter.setObjectName("sidebarItem")
-        self.sideSplitter.setOrientation(0)
+        self.sideSplitter.setOrientation(Qt.Orientation.Horizontal)
         self.hSplitter.addWidget(self.sideSplitter)
 
         self.sideSplitter.addWidget(self.outline)

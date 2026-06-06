@@ -1,5 +1,6 @@
 import re
 
+import Extensions.qscintilla_compat  # noqa: F401 — flat QScintilla enum aliases
 from PyQt6.Qsci import QsciScintilla, QsciCommand
 from PyQt6.QtCore import QPoint, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QColor

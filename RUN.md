@@ -64,9 +64,17 @@ and the old `*.xml` config files are migrated automatically on first run.
 | `src/main.py` | Hello-world entry script |
 
 Older projects with `project.xml` / `projectdata.xml` / `session.xml` still open;
-data is migrated to JSON on load where supported. New projects also write
-`Rope/profile.json` (legacy `profile.xml` is still updated for compatibility).
-Build profiles remain XML (`Build/profile.xml`).
+data is migrated to JSON on load. **New saves write JSON only** — XML mirrors
+are no longer updated. Color scheme / lexer style files in `stylesdir` remain
+XML (separate from project persistence).
+
+### PyQt6 migration notes
+
+- All production modules import `PyQt6` directly (no `qt_bindings` shim).
+- Helpers: `Extensions/font_metrics.py`, `Extensions/file_dialog_utils.py`,
+  `Extensions/screen_utils.py`, `Extensions/qscintilla_compat.py`.
+- `tests/test_no_shim_import.py` ensures the app loads without the old shim.
+- One-off migration scripts live in `scripts/archive/` (historical only).
 
 ## Tests
 

@@ -1,11 +1,12 @@
 # PyQt6 is required: Riverbank QScintilla ships only for PyQt5/PyQt6, not PySide6.
-PyQt6>=6.5.0
-PyQt6-QScintilla>=2.14.0
+# Upper bounds avoid surprise CI breaks on major Qt releases.
+PyQt6>=6.5.0,<6.9.0
+PyQt6-QScintilla>=2.14.0,<2.16.0
 
 # De-vendored libraries (previously bundled, now from PyPI).
-rope>=1.11
-pyflakes>=3.1
-autopep8>=2.0
-pycodestyle>=2.11
+rope>=1.11,<2.0
+pyflakes>=3.1,<4.0
+autopep8>=2.0,<3.0
+pycodestyle>=2.11,<3.0
 # Used by the project build/freeze feature.
-cx_Freeze>=6.15
+cx_Freeze>=6.15,<8.0

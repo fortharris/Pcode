@@ -22,13 +22,13 @@ BUILD_XML = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-def test_default_profile_save_creates_json_and_xml(tmp_path):
+def test_default_profile_save_creates_json_only(tmp_path):
     build_dir = tmp_path / "Build"
     profile = default_profile("Win32GUI")
     scalars = {k: v for k, v in profile.items() if k != "lists"}
     save(str(build_dir), scalars, profile["lists"])
     assert (build_dir / "profile.json").is_file()
-    assert (build_dir / "profile.xml").is_file()
+    assert not (build_dir / "profile.xml").exists()
     data = json.loads((build_dir / "profile.json").read_text(encoding="utf-8"))
     assert data["version"] == 1
     assert data["base"] == "Win32GUI"

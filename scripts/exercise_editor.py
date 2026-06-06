@@ -16,6 +16,8 @@ warnings.filterwarnings("ignore")
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import Extensions.qscintilla_compat  # noqa: E402, F401
+
 from PyQt6.QtCore import Qt  # noqa: E402
 from PyQt6.QtWidgets import QApplication, QFileDialog, QMessageBox  # noqa: E402
 
@@ -25,7 +27,14 @@ QMessageBox.critical = staticmethod(lambda *a, **k: None)
 QMessageBox.information = staticmethod(lambda *a, **k: None)
 QMessageBox.question = staticmethod(lambda *a, **k: None)
 
-app = QApplication(sys.argv)
+def _ensure_app():
+    instance = QApplication.instance()
+    if instance is None:
+        return QApplication(sys.argv)
+    return instance
+
+
+app = _ensure_app()
 
 from Pcode import Pcode  # noqa: E402
 from Extensions.Projects.Projects import CreateProjectThread  # noqa: E402

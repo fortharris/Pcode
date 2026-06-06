@@ -162,25 +162,25 @@ class TextEditor(BaseScintilla):
 
     def createContextMenu(self):
         self.cutAct = QAction(
-            "Cut", self, shortcut=QKeySequence.Cut,
+            "Cut", self, shortcut=QKeySequence.StandardKey.Cut,
             statusTip="Cut selected text", triggered=self.cut)
 
         self.copyAct = QAction(
-            "Copy", self, shortcut=QKeySequence.Copy,
+            "Copy", self, shortcut=QKeySequence.StandardKey.Copy,
             statusTip="Copy selected text", triggered=self.copy)
 
         self.pasteAct = QAction(
-            "Paste", self, shortcut=QKeySequence.Paste,
+            "Paste", self, shortcut=QKeySequence.StandardKey.Paste,
             statusTip="Paste text from clipboard",
             triggered=self.paste)
 
         self.deleteAct = QAction(
-            "Delete", self, shortcut=QKeySequence.Delete,
+            "Delete", self, shortcut=QKeySequence.StandardKey.Delete,
             statusTip="Delete Selection",
             triggered=self.removeSelectedText)
 
         self.selectAllAct = QAction("Select All", self,
-                                          shortcut=QKeySequence.SelectAll,
+                                          shortcut=QKeySequence.StandardKey.SelectAll,
                                           statusTip="Select All",
                                           triggered=self.selectAllText)
 

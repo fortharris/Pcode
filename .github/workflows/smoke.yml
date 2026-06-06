@@ -99,3 +99,26 @@ jobs:
 
       - name: Build freeze smoke (slow)
         run: pytest tests/test_smoke.py -m slow
+
+  freeze-smoke-windows:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    env:
+      QT_QPA_PLATFORM: offscreen
+      PCODE_SKIP_BUILD: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-timeout
+
+      - name: Build freeze smoke (slow, Windows)
+        run: pytest tests/test_smoke.py -m slow

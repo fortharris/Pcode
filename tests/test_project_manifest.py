@@ -17,12 +17,11 @@ PROJECT_XML = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 
-def test_write_creates_json_and_xml(tmp_path):
+def test_write_creates_json_only(tmp_path):
     write(str(tmp_path), "Demo", "Console Application", "main.py")
     json_path = tmp_path / "project.json"
-    xml_path = tmp_path / "project.xml"
     assert json_path.is_file()
-    assert xml_path.is_file()
+    assert not (tmp_path / "project.xml").exists()
     data = json.loads(json_path.read_text(encoding="utf-8"))
     assert data["name"] == "Demo"
     assert data["mainscript"] == "main.py"

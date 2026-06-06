@@ -1,3 +1,5 @@
+import Extensions.qscintilla_compat  # noqa: F401 — before any Qsci editor import
+
 from PyQt6.QtCore import QSettings, Qt
 from PyQt6.QtGui import QAction, QIcon, QKeySequence, QPixmap, QShortcut
 from PyQt6.QtWidgets import (
@@ -360,6 +362,7 @@ class Pcode(QWidget):
                  lambda: sw.setCurrentWidget(window.tasksWidget)),
                 ("Git: Refresh", lambda: window.gitPanel.refresh()),
                 ("Git: Stage File", lambda: window.gitPanel.stage_selected()),
+                ("Git: Commit", lambda: window.gitPanel.commit()),
                 ("Git: Diff at Cursor", lambda: window.gitPanel.diff_at_cursor()),
             ])
             keymap_dispatch = {
