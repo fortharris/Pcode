@@ -455,12 +455,34 @@ _MAIN_MENU_TEMPLATE = Template("""
 
 _TOOL_WIDGET_TEMPLATE = Template("""
         QLabel#containerLabel {
+            border-top: none;
             border-left: 1px solid $accent;
             border-right: 1px solid $accent;
             border-bottom: 1px solid $accent;
             background: $bg;
         }
         QLabel#toolWidgetNameLabel { font: 14px; color: $textDim; }
+        QLabel#toolWidgetSectionLabel {
+            font: bold 12px;
+            color: $textDim;
+            padding-top: 4px;
+        }
+        /* Combos inside pull-down sheets: full border, not header underlines. */
+        QLabel#containerLabel QComboBox {
+            border: 1px solid $border;
+            border-radius: 3px;
+            padding: 3px 6px;
+            min-height: 22px;
+            background: $inputBg;
+            color: $text;
+        }
+        QLabel#containerLabel QComboBox:focus {
+            border: 1px solid $accent;
+        }
+        QLabel#containerLabel QComboBox:disabled {
+            color: $textDim;
+            background: $panel;
+        }
         """)
 
 _VIEW_SWITCHER_TEMPLATE = Template("""

@@ -128,6 +128,7 @@ def main():
     exercise_bookmarks(editor_window, etw)
     exercise_git_panel(editor_window)
     exercise_go_to_definition(editor_window, proj_path)
+    exercise_tool_sheet_alignment(editor_window)
 
     print("ALL OK")
 
@@ -652,6 +653,36 @@ def exercise_go_to_definition(editor_window, proj_path):
     for _ in range(10):
         app.processEvents()
     print("STEP go-to-definition OK")
+
+
+def exercise_tool_sheet_alignment(editor_window):
+    """Top pull-down sheets must sit flush under the tab bar (no gray gap)."""
+    etw = editor_window.editorTabWidget
+    etw.show()
+    etw.adjustToStyleSheet(etw.useData.SETTINGS.get("UI") == "Custom")
+    for _ in range(5):
+        app.processEvents()
+
+    sheet = etw.setRunParameters
+    etw.showMe(sheet)
+    for _ in range(5):
+        app.processEvents()
+
+    expected_top = etw._tab_bar_height()
+    top_margin = etw.mainLayout.contentsMargins().top()
+    sheet_top = sheet.geometry().top()
+    assert top_margin == expected_top, (
+        "top margin should equal tab bar height: margin={0} bar={1}".format(
+            top_margin, expected_top))
+    assert abs(sheet_top - top_margin) <= 2, (
+        "tool sheet not flush with tab bar: sheet_top={0} margin={1}".format(
+            sheet_top, top_margin))
+    assert sheet.height() >= sheet.layout().minimumSize().height() - 1, (
+        "tool sheet shorter than layout: height={0} min={1}".format(
+            sheet.height(), sheet.layout().minimumSize().height()))
+    sheet.hide()
+    print("STEP tool-sheet-alignment OK, top_margin:", top_margin,
+          "| sheet_top:", sheet_top, "| height:", sheet.height())
 
 
 if __name__ == "__main__":

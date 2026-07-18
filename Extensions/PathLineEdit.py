@@ -32,6 +32,20 @@ class PathLineEdit(QLineEdit):
         self.dirButton.clicked.connect(self.insertDirPath)
         hbox.addWidget(self.dirButton)
 
+    def sizeHint(self):
+        hint = QLineEdit.sizeHint(self)
+        lay = self.layout()
+        if lay is not None:
+            return hint.expandedTo(lay.sizeHint())
+        return hint
+
+    def minimumSizeHint(self):
+        hint = QLineEdit.minimumSizeHint(self)
+        lay = self.layout()
+        if lay is not None:
+            return hint.expandedTo(lay.minimumSize())
+        return hint
+
     def insertDirPath(self):
         directory = QFileDialog.getExistingDirectory(self, "", QDir.homePath())
         if directory:
