@@ -41,3 +41,7 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+# Local CI reproduction venv / backups
+.ci-test-venv/
+*.bak
+
