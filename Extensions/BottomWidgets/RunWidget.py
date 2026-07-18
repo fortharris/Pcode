@@ -410,14 +410,14 @@ class RunWidget(BaseScintilla):
         line = self.getHoveredLine(x, y)
         lineText = self.text(line)
 
-        l = len(lineText)
-        offset = l - len(lineText.lstrip())
+        line_len = len(lineText)
+        offset = line_len - len(lineText.lstrip())
 
         self.clearAllIndicators(self.linkIndicator)
 
         if self.tracebackRe.match(lineText):
             self.fillIndicatorRange(
-                line, offset, line, (l - 1), self.linkIndicator)
+                line, offset, line, (line_len - 1), self.linkIndicator)
 
         super(RunWidget, self).mouseMoveEvent(event)
 
@@ -577,7 +577,9 @@ class RunWidget(BaseScintilla):
 
         env = QProcessEnvironment.systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
-        debug_args = ["-m", "debugpy", "--listen", "5678"]
+        # Bind to localhost only — avoid exposing a remote-attach surface.
+        listen_addr = "127.0.0.1:5678"
+        debug_args = ["-m", "debugpy", "--listen", listen_addr]
         if to_bool(self.projectData.get("DebugWait")):
             debug_args.append("--wait-for-client")
         debug_args.append(runScript)
@@ -588,11 +590,11 @@ class RunWidget(BaseScintilla):
             self.currentProcess = fileName
             wait_note = ""
             if to_bool(self.projectData.get("DebugWait")):
-                wait_note = " — waiting for debugger on port 5678"
+                wait_note = " — waiting for debugger on " + listen_addr
             self.printout(
-                ">>> Debug (debugpy listen 5678{0}): {1}\n".format(
-                    wait_note, fileName), 4)
-            status = "Debug: listening on :5678"
+                ">>> Debug (debugpy listen {0}{1}): {2}\n".format(
+                    listen_addr, wait_note, fileName), 4)
+            status = "Debug: listening on " + listen_addr + " (localhost only)"
             if to_bool(self.projectData.get("DebugWait")):
                 status += " (waiting for attach)"
             self.debugStatusChanged.emit(status)

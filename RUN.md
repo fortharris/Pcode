@@ -107,16 +107,25 @@ IDE itself). From the repo root:
 Headless validation also runs via smoke (`test_build_freeze`) or GitHub Actions
 **freeze-smoke** / **freeze-smoke-windows** (`workflow_dispatch`).
 
-Release artifacts for the IDE are source installs (`pip install -e .`) plus
-GitHub Releases notes; there is no standalone IDE binary build yet.
+Release artifacts for the IDE are source installs (`pip install -e .` or
+`pip install -r requirements.txt` + `python Pcode.py`) plus GitHub Releases
+notes. **There is no standalone IDE binary / installer yet** — that is
+intentional for 0.2.0. Version is defined in `Extensions/version.py` and
+`pyproject.toml` (keep them equal).
+
+User-facing docs: [docs/USER_GUIDE.md](docs/USER_GUIDE.md).
+
+Legacy workspace/project XML files remain readable and migrate to JSON on load;
+do not remove those readers until a later release cycle.
 
 ### Post-merge
 
 1. Smoke-test the GUI on Windows (open project, edit, run, git).
 2. In GitHub Actions, run **workflow_dispatch** on **CI** and enable
    **freeze-smoke** (and optionally **freeze-smoke-windows**).
-3. Tag a release after merge is verified (version in `pyproject.toml` / README).
-4. Optional: drop legacy XML read paths once JSON-only persistence has shipped.
+3. Tag a release after merge is verified (sync `Extensions/version.py`,
+   `pyproject.toml`, and README).
+4. Capture screenshots into `docs/screens/` when cutting the release.
 
 ## Troubleshooting
 

@@ -24,6 +24,7 @@ class ManageShortcuts(QLabel):
         self.setBackgroundRole(QPalette.ColorRole.Window)
         self.setAutoFillBackground(True)
         self.setObjectName("containerLabel")
+        self.setAccessibleName("File explorer shortcuts")
         self.setStyleSheet(StyleSheet.toolWidgetStyle)
 
         self.useData = useData

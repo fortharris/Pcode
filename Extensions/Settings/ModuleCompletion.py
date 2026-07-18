@@ -66,7 +66,7 @@ class ModuleCompletion(QTreeWidget):
         self.editItem(newItem)
 
     def removeLibrary(self):
-        if self.selectedParent != None:
+        if self.selectedParent is not None:
             itemText = self.selectedItem.text(0)
             parentText = self.selectedParent.text(0)
             self.useData.libraryDict[parentText][0].remove(itemText)
@@ -85,7 +85,7 @@ class ModuleCompletion(QTreeWidget):
         self.editItem(newItem)
 
     def removeModule(self):
-        if self.selectedParent != None:
+        if self.selectedParent is not None:
             itemText = self.selectedItem.text(0)
             parentText = self.selectedParent.text(0)
             self.useData.libraryDict[parentText][0].remove(itemText)

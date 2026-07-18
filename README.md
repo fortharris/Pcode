@@ -30,8 +30,23 @@ Pcode seeks to simplify the process of development in python by means of:
 1. Light/Dark UI themes (Default lexer follows theme tokens)
 1. Etc.
 
-### Download
-   Click on [Release](https://github.com/fortharris/Pcode/releases) to view available downloads.
+### Install (0.2.0)
+
+Pcode 0.2.0 is distributed as **source**. There is no standalone IDE installer yet.
+
+```bash
+pip install -r requirements.txt        # run from source
+python Pcode.py
+
+pip install -e .                       # optional: install the `pcode` command
+pip install -e .[dev]                  # optional: pytest + ruff for development
+QT_QPA_PLATFORM=offscreen pytest       # unit + smoke tests (headless)
+```
+
+See [RUN.md](RUN.md) for virtualenv setup, the headless smoke test, and troubleshooting.
+See [docs/USER_GUIDE.md](docs/USER_GUIDE.md) for a short user guide.
+
+Release notes: [GitHub Releases](https://github.com/fortharris/Pcode/releases).
 
 ### Dependencies:
 1. Python 3.10+ ( for running programs )
@@ -41,13 +56,6 @@ The previously-vendored libraries (`rope`, `pyflakes`, `autopep8`, `pycodestyle`
 `cx_Freeze`) are now installed from PyPI via `requirements.txt`.
 
 ### From source & development
-```bash
-pip install -r requirements.txt        # run from source
-pip install -e .                       # optional: install the `pcode` command
-pip install -e .[dev]                  # optional: pytest + ruff for development
-QT_QPA_PLATFORM=offscreen pytest       # unit + smoke tests (headless)
-```
-See [RUN.md](RUN.md) for full setup, the headless smoke test, and troubleshooting.
 
 **PyQt6 branch (`pyside`):** production code uses direct `PyQt6` imports. Legacy
 `Extensions/qt_bindings.py` has been removed. Color scheme / lexer definitions
@@ -63,6 +71,5 @@ under the workspace `stylesdir` remain XML (editor format).
 Mailing List: [pcode-ide@googlegroups.com](https://groups.google.com/forum/#!forum/pcode-ide)
 
 ### Screenshots
-![Alt text](/docs/screens/1.png "1")
-![Alt text](/docs/screens/2.png "2")
-![Alt text](/docs/screens/3.png "3")
+
+Add GUI captures as `docs/screens/1.png` … `3.png` (see [docs/screens/README.md](docs/screens/README.md)).

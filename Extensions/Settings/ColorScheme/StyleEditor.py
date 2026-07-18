@@ -30,7 +30,7 @@ class StyleEditor(QWidget):
         properties = self.loadDefaultProperties()
         self.propertyListWidget = QListWidget()
         self.propertyListWidget.setSortingEnabled(True)
-        for key, value in properties.items():
+        for key, _value in properties.items():
             if key != "Paper":
                 self.propertyListWidget.addItem(QListWidgetItem(key))
         self.propertyListWidget.itemSelectionChanged.connect(
@@ -239,7 +239,7 @@ class StyleEditor(QWidget):
             self.currentPropertyAttrib[5] = italic
 
     def applyChanges(self, viewWidget, properties=None):
-        if properties == None:
+        if properties is None:
             properties = self.currentProperties
 
         viewWidget.setSelectionBackgroundColor(

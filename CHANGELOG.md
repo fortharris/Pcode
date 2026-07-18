@@ -2,6 +2,15 @@
 
 ## Unreleased (pyside branch)
 
+### Polish (0.2.0 readiness)
+- Central `Extensions/version.py` (`0.2.0`); About dialog stays in sync with `pyproject.toml`
+- User Guide at `docs/USER_GUIDE.md`; Help → User Guide opens it; Check For Updates queries GitHub Releases
+- Git panel I/O moved off the UI thread; toolbar slimmed (Stage / Unstage / Diff / More)
+- Outline explorer uses `ast.parse` (async defs, annotated assigns); rope completion/doc threads coalesce pending work
+- debugpy listens on `127.0.0.1:5678` only; external launchers require absolute paths and split args without a shell
+- Start page refresh; tool-overlay stylesheet cleanup; UI Font Scale setting (75–150%) and accessible names on main chrome
+- README install story clarified (source-only); broader ruff select set; legacy XML **read/migrate** kept for old workspaces
+
 ### Migration
 - **PyQt6 migration complete** for production code — all `Extensions/` modules use direct PyQt6 imports
 - Workspace and project settings migrate from XML to JSON on first load
@@ -30,4 +39,4 @@
 - Manual GUI smoke on Windows (open project, edit, run, git panel)
 - Trigger **CI → freeze-smoke** / **freeze-smoke-windows** via GitHub Actions `workflow_dispatch`
 - Tag a release once merge is verified
-- Optional follow-up: remove legacy XML *read* paths after a release cycle with JSON-only saves
+- Keep legacy XML read/migrate until a later release cycle; then remove readers if desired

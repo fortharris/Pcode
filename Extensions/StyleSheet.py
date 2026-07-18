@@ -455,22 +455,26 @@ _MAIN_MENU_TEMPLATE = Template("""
 
 _TOOL_WIDGET_TEMPLATE = Template("""
         QLabel#containerLabel {
-            border-top: none;
-            border-left: 1px solid $accent;
-            border-right: 1px solid $accent;
-            border-bottom: 1px solid $accent;
-            background: $bg;
+            border-top: 2px solid $accent;
+            border-left: 1px solid $border;
+            border-right: 1px solid $border;
+            border-bottom: 1px solid $border;
+            background: $panelAlt;
         }
-        QLabel#toolWidgetNameLabel { font: 14px; color: $textDim; }
+        QLabel#toolWidgetNameLabel {
+            font: 600 13px;
+            color: $text;
+            letter-spacing: 0.2px;
+        }
         QLabel#toolWidgetSectionLabel {
-            font: bold 12px;
+            font: 12px;
             color: $textDim;
             padding-top: 4px;
         }
         /* Combos inside pull-down sheets: full border, not header underlines. */
         QLabel#containerLabel QComboBox {
             border: 1px solid $border;
-            border-radius: 3px;
+            border-radius: 2px;
             padding: 3px 6px;
             min-height: 22px;
             background: $inputBg;
@@ -482,6 +486,17 @@ _TOOL_WIDGET_TEMPLATE = Template("""
         QLabel#containerLabel QComboBox:disabled {
             color: $textDim;
             background: $panel;
+        }
+        QLabel#containerLabel QPushButton {
+            border: 1px solid $border;
+            border-radius: 2px;
+            padding: 4px 10px;
+            background: $button;
+            color: $buttonText;
+        }
+        QLabel#containerLabel QPushButton:hover {
+            background: $buttonHover;
+            border-color: $accent;
         }
         """)
 
@@ -552,6 +567,26 @@ def _qpalette(palette):
         if role is not None and token in palette:
             qp.setColor(role, QColor(palette[token]))
     return qp
+
+
+_BASE_APP_FONT_SIZE = None
+
+
+def apply_ui_font_scale(app, percent):
+    """Scale the application font for accessibility (75–150%)."""
+    global _BASE_APP_FONT_SIZE
+    if app is None:
+        return
+    font = app.font()
+    if _BASE_APP_FONT_SIZE is None:
+        size = font.pointSize()
+        _BASE_APP_FONT_SIZE = size if size > 0 else 10
+    try:
+        scale = max(75, min(150, int(percent))) / 100.0
+    except (TypeError, ValueError):
+        scale = 1.0
+    font.setPointSize(max(8, int(round(_BASE_APP_FONT_SIZE * scale))))
+    app.setFont(font)
 
 
 def apply_theme(app, name):

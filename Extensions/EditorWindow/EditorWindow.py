@@ -29,6 +29,9 @@ from Extensions import StyleSheet
 from Extensions.EditorWindow.BuildStatusWidget import BuildStatusWidget
 from Extensions.EditorWindow.VerticalSplitter import VerticalSplitter
 from Extensions.BottomWidgets.Profiler import Profiler
+from Extensions.version import (
+    GITHUB_URL, RELEASES_URL, VERSION, check_for_updates,
+)
 
 
 class EditorWindow(QWidget):
@@ -334,7 +337,7 @@ class EditorWindow(QWidget):
 
         self.checkUpdatesAct = QAction("Check For Updates", self,
                                              statusTip="Check For Updates",
-                                             triggered=self.visitHomepage)
+                                             triggered=self.checkForUpdates)
 
         #----------------------------------------------------------------------
         self.runFileAct = QAction(
@@ -429,8 +432,28 @@ class EditorWindow(QWidget):
                 triggered=self.closeProject)
 
     def visitHomepage(self):
-        QDesktopServices().openUrl(QUrl(
-            """https://github.com/fortharris/Pcode"""))
+        QDesktopServices.openUrl(QUrl(GITHUB_URL))
+
+    def checkForUpdates(self):
+        status, latest, message = check_for_updates()
+        if status == "newer":
+            reply = QMessageBox.information(
+                self, "Check For Updates",
+                message + "\n\nOpen the releases page?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes)
+            if reply == QMessageBox.StandardButton.Yes:
+                QDesktopServices.openUrl(QUrl(RELEASES_URL))
+        elif status == "current":
+            QMessageBox.information(self, "Check For Updates", message)
+        else:
+            reply = QMessageBox.warning(
+                self, "Check For Updates",
+                message + "\n\nOpen the project page instead?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes)
+            if reply == QMessageBox.StandardButton.Yes:
+                QDesktopServices.openUrl(QUrl(GITHUB_URL))
 
     def showProjectConfiguration(self):
         self.editorTabWidget.showProjectConfiguration()
@@ -627,8 +650,15 @@ class EditorWindow(QWidget):
             return self.fileUrl(python_doc)
 
     def launchHelp(self):
-        QMessageBox.warning(
-            self, "User Guide", "Not available at the moment")
+        guide = os.path.abspath(os.path.join("docs", "USER_GUIDE.md"))
+        if os.path.isfile(guide):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(guide))
+            return
+        QMessageBox.information(
+            self, "User Guide",
+            "User Guide not found at:\n{0}\n\n"
+            "Pcode {1} — see the README or GitHub for documentation.".format(
+                guide, VERSION))
 
     def launchPythonHelp(self):
         try:
@@ -697,7 +727,7 @@ class EditorWindow(QWidget):
         if len(modified) == 0:
             pass
         else:
-            for i in range(len(modified)):
+            for _i in range(len(modified)):
                 v = modified.pop(-1)
                 self.editorTabWidget.setCurrentIndex(v)
                 mess = 'Save changes to "{0}"?'.format(

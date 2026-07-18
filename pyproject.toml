@@ -76,5 +76,11 @@ extend-exclude = [
 ]
 
 [tool.ruff.lint]
-select = ["E9", "F63", "F7", "F82", "F401", "F841"]
+# Broader than the old E9/F63/F7/F82 set: full pyflakes + common pycodestyle
+# error classes and a few bugbear footguns. Vendored trees stay excluded above.
+select = [
+    "E9", "E4", "E7",
+    "F",
+    "B006", "B007", "B008",
+]
 

@@ -32,7 +32,7 @@ class SelectBox(QDialog):
 
         self.itemBox = QComboBox()
         self.itemBox.addItem()
-        for i in itemsList:
+        if itemsList:
             self.itemBox.addItems(itemsList)
         self.itemBox.currentIndexChanged.connect(self.enableAcceptButton)
         mainLayout.addWidget(self.itemBox)

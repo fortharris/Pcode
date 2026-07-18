@@ -20,6 +20,7 @@ class Favourites(QLabel):
 
         self.setMinimumSize(600, 230)
         self.setObjectName("containerLabel")
+        self.setAccessibleName("Favourites")
         self.setStyleSheet(StyleSheet.toolWidgetStyle)
 
         self.setBackgroundRole(QPalette.ColorRole.Window)

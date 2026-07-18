@@ -243,7 +243,7 @@ class Refactor(QWidget):
         ropeFolder = editorTabWidget.projectPathDict["ropeFolder"]
 
         libraryList = []
-        for i, v in self.useData.libraryDict.items():
+        for _i, v in self.useData.libraryDict.items():
             libraryList.extend(v[0])
         prefs = {
             'ignored_resources': ['*.pyc', '*~', '.ropeproject',

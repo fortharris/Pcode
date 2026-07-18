@@ -290,6 +290,20 @@ class GeneralSettings(QDialog):
         self.themeBox.currentIndexChanged.connect(self.setTheme)
         mainVbox.addWidget(self.themeBox)
 
+        mainVbox.addWidget(QLabel("UI Font Scale"))
+        self.uiScaleBox = QSpinBox()
+        self.uiScaleBox.setAccessibleName("UI font scale percent")
+        self.uiScaleBox.setRange(75, 150)
+        self.uiScaleBox.setSingleStep(5)
+        self.uiScaleBox.setSuffix("%")
+        try:
+            scale = int(self.useData.SETTINGS.get("UIFontScale", "100"))
+        except (TypeError, ValueError):
+            scale = 100
+        self.uiScaleBox.setValue(max(75, min(150, scale)))
+        self.uiScaleBox.valueChanged.connect(self.setUIFontScale)
+        mainVbox.addWidget(self.uiScaleBox)
+
         self.enableSoundsBox = QCheckBox("Enable Sounds")
         if self.useData.setting_bool("SoundsEnabled"):
             self.enableSoundsBox.setChecked(True)
@@ -321,6 +335,10 @@ class GeneralSettings(QDialog):
         if self.useData.SETTINGS["UI"] == "Custom":
             StyleSheet.apply_theme(
                 self.mainApp, self.useData.SETTINGS["Theme"])
+
+    def setUIFontScale(self, value):
+        self.useData.SETTINGS["UIFontScale"] = str(int(value))
+        StyleSheet.apply_ui_font_scale(self.mainApp, value)
 
     def exportSettings(self):
         savepath = os.path.join(self.useData.getLastOpenedDir(),

@@ -954,7 +954,9 @@ class EditorTabWidget(QTabWidget):
 
         return subStack
 
-    def reloadModules(self, pathList=[]):
+    def reloadModules(self, pathList=None):
+        if pathList is None:
+            pathList = []
         index_list = []
         currentIndex = self.currentIndex()
         if len(pathList) == 0:

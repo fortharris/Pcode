@@ -58,7 +58,7 @@ class Profiler(QTreeWidget):
             item.setText(6, str(func[2]))
 
             child = QTreeWidgetItem()
-            for caller, (cc1, nc1, tt1, ct1) in callers.items():
+            for caller, (_cc1, nc1, tt1, ct1) in callers.items():
                 child.setIcon(
                     0, QIcon(os.path.join("Resources", "images", "lightning")))
                 child.setText(0, str(cc))

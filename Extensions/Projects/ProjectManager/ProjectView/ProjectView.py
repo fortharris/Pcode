@@ -141,7 +141,7 @@ class CopyThread(QThread):
                 except Exception:
                     pass
             else:
-                for root, dirs, files in os.walk(item):
+                for root, _dirs, files in os.walk(item):
                     for i in files:
                         try:
                             size = os.path.getsize(os.path.join(root, i))
@@ -585,7 +585,7 @@ class SearchThread(QThread):
     def run(self):
         resultsDict = {}
 
-        for root, dirs, files in os.walk(self.projectDir):
+        for root, _dirs, files in os.walk(self.projectDir):
             for i in files:
                 if not self.filterDisabled:
                     if not i.endswith('.py') or i.endswith('.pyw'):

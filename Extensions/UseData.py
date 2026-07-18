@@ -103,7 +103,7 @@ class FindInstalledPython(QObject):
                     dirName = dirName[1:-1]
                 absName = os.path.abspath(
                     os.path.normpath(os.path.join(dirName, 'python'+ext)))
-                if os.path.isfile(absName) and not absName in found:
+                if os.path.isfile(absName) and absName not in found:
                     found.append(absName)
             
             # Done
@@ -345,6 +345,7 @@ class UseData(QObject):
             "EnableAssistance": "True",
             "UI": "Custom",
             "Theme": "Light",
+            "UIFontScale": "100",
             "SoundsEnabled": "False",
             "EditorStylePython": "Default",
             "EditorStyleXml": "Default",

@@ -68,10 +68,14 @@ class Pcode(QWidget):
 
         if self.useData.SETTINGS["UI"] == "Custom":
             StyleSheet.apply_theme(app, self.useData.SETTINGS.get("Theme", "Light"))
+        StyleSheet.apply_ui_font_scale(
+            app, self.useData.SETTINGS.get("UIFontScale", "100"))
 
         self.projectWindowStack = QStackedWidget()
+        self.projectWindowStack.setAccessibleName("Project windows")
 
         self.projectTitleBox = QComboBox()
+        self.projectTitleBox.setAccessibleName("Open projects")
         self.projectTitleBox.setMinimumWidth(180)
         self.projectTitleBox.setStyleSheet(StyleSheet.projectTitleBoxStyle)
         self.projectTitleBox.setItemDelegate(QStyledItemDelegate())
@@ -97,6 +101,7 @@ class Pcode(QWidget):
         mainLayout.addLayout(hbox)
 
         self.logoLabel = QLabel()
+        self.logoLabel.setAccessibleName("Pcode logo")
         logoPix = QPixmap(os.path.join("Resources", "images", "Icon"))
         if not logoPix.isNull():
             self.logoLabel.setPixmap(logoPix.scaled(
@@ -106,6 +111,7 @@ class Pcode(QWidget):
         hbox.addWidget(self.logoLabel)
 
         self.titleLabel = QLabel("Pcode")
+        self.titleLabel.setAccessibleName("Pcode")
         titleFont = self.titleLabel.font()
         titleFont.setBold(True)
         self.titleLabel.setFont(titleFont)
@@ -135,18 +141,21 @@ class Pcode(QWidget):
         self.settingsButton.setAutoRaise(True)
         self.settingsButton.setDefaultAction(self.settingsAct)
         self.settingsButton.setToolTip("Settings")
+        self.settingsButton.setAccessibleName("Settings")
         hbox.addWidget(self.settingsButton)
 
         self.fullScreenButton = QToolButton()
         self.fullScreenButton.setAutoRaise(True)
         self.fullScreenButton.setDefaultAction(self.showFullScreenAct)
         self.fullScreenButton.setToolTip("Toggle fullscreen")
+        self.fullScreenButton.setAccessibleName("Toggle fullscreen")
         hbox.addWidget(self.fullScreenButton)
 
         self.aboutButton = QToolButton()
         self.aboutButton.setAutoRaise(True)
         self.aboutButton.setDefaultAction(self.aboutAct)
         self.aboutButton.setToolTip("About Pcode")
+        self.aboutButton.setAccessibleName("About Pcode")
         hbox.addWidget(self.aboutButton)
 
         self.commandPalette = CommandPalette(self)

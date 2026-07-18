@@ -1,4 +1,6 @@
+import logging
 import os
+import shlex
 
 from PyQt6.QtCore import QProcess, pyqtSignal
 from PyQt6.QtGui import QAction, QActionGroup, QIcon, QPalette
@@ -11,6 +13,33 @@ from Extensions import Global, StyleSheet
 from Extensions.PathLineEdit import PathLineEdit
 
 
+def _split_params(param):
+    """Split launcher parameters without invoking a shell."""
+    text = (param or "").strip()
+    if not text:
+        return []
+    try:
+        # POSIX rules so quoted args work the same on Windows and Unix.
+        return shlex.split(text, posix=True)
+    except ValueError:
+        return text.split()
+
+
+def _is_safe_launcher_path(path):
+    """Reject empty/relative-sneaky paths; require an existing absolute path."""
+    if not path or not path.strip():
+        return False, "Path cannot be empty."
+    normalized = os.path.normpath(os.path.expanduser(path.strip()))
+    if not os.path.isabs(normalized):
+        return False, "Launcher path must be absolute."
+    if not os.path.exists(normalized):
+        return False, "Path does not exist."
+    # Block obvious shell metacharacters in the executable path itself.
+    if any(ch in normalized for ch in ("|", "&", ";", "`", "$", "\n", "\r")):
+        return False, "Path contains disallowed characters."
+    return True, normalized
+
+
 class ExternalLauncher(QLabel):
 
     showMe = pyqtSignal()
@@ -20,9 +49,10 @@ class ExternalLauncher(QLabel):
 
         self.externalLaunchList = externalLaunchList
 
-        self.setMinimumSize(600, 230)
+        self.setMinimumSize(600, 260)
         self.setObjectName("containerLabel")
         self.setStyleSheet(StyleSheet.toolWidgetStyle)
+        self.setAccessibleName("External launchers")
 
         self.setBackgroundRole(QPalette.ColorRole.Window)
         self.setAutoFillBackground(True)
@@ -40,31 +70,45 @@ class ExternalLauncher(QLabel):
 
         self.hideButton = QToolButton()
         self.hideButton.setAutoRaise(True)
+        self.hideButton.setAccessibleName("Close launchers")
         self.hideButton.setIcon(
             QIcon(os.path.join("Resources", "images", "cross_")))
         self.hideButton.clicked.connect(self.hide)
         hbox.addWidget(self.hideButton)
 
+        trust = QLabel(
+            "Launchers run programs you configure with argument lists "
+            "(not a shell). Only add trusted absolute paths.")
+        trust.setWordWrap(True)
+        trust.setObjectName("toolWidgetSectionLabel")
+        mainLayout.addWidget(trust)
+
         self.listWidget = QListWidget()
+        self.listWidget.setAccessibleName("Launcher list")
         mainLayout.addWidget(self.listWidget)
 
         formLayout = QFormLayout()
         mainLayout.addLayout(formLayout)
 
         self.pathLine = PathLineEdit()
+        self.pathLine.setAccessibleName("Launcher path")
         formLayout.addRow("Path:", self.pathLine)
 
         self.parametersLine = QLineEdit()
+        self.parametersLine.setAccessibleName("Launcher parameters")
+        self.parametersLine.setPlaceholderText('Optional args, e.g. --help "my file"')
         formLayout.addRow("Parameters:", self.parametersLine)
 
         hbox = QHBoxLayout()
         formLayout.addRow('', hbox)
 
         self.removeButton = QPushButton("Remove")
+        self.removeButton.setAccessibleName("Remove launcher")
         self.removeButton.clicked.connect(self.removeLauncher)
         hbox.addWidget(self.removeButton)
 
         self.addButton = QPushButton("Add")
+        self.addButton.setAccessibleName("Add launcher")
         self.addButton.clicked.connect(self.addLauncher)
         hbox.addWidget(self.addButton)
 
@@ -81,27 +125,26 @@ class ExternalLauncher(QLabel):
         self.loadExternalLaunchers()
 
     def removeLauncher(self):
-        path = self.listWidget.currentItem().text()
-        del self.externalLaunchList[path]
+        item = self.listWidget.currentItem()
+        if item is None:
+            return
+        path = item.text()
+        if path in self.externalLaunchList:
+            del self.externalLaunchList[path]
         self.loadExternalLaunchers()
 
     def addLauncher(self):
-        path = self.pathLine.text().strip()
-        if path != '':
-            if os.path.exists(path):
-                if path not in self.externalLaunchList:
-                    self.externalLaunchList[
-                        path] = self.parametersLine.text().strip()
-                    self.loadExternalLaunchers()
-                else:
-                    QMessageBox.warning(
-                        self, "Add Launcher", "Path already exists in launchers!")
-            else:
-                QMessageBox.warning(
-                    self, "Add Launcher", "Path does not exists!")
-        else:
+        ok, result = _is_safe_launcher_path(self.pathLine.text())
+        if not ok:
+            QMessageBox.warning(self, "Add Launcher", result)
+            return
+        path = result
+        if path in self.externalLaunchList:
             QMessageBox.warning(
-                self, "Add Launcher", "Path cannot be empty!")
+                self, "Add Launcher", "Path already exists in launchers!")
+            return
+        self.externalLaunchList[path] = self.parametersLine.text().strip()
+        self.loadExternalLaunchers()
 
     def loadExternalLaunchers(self):
         self.launcherMenu.clear()
@@ -109,7 +152,7 @@ class ExternalLauncher(QLabel):
         if len(self.externalLaunchList) > 0:
             self.actionGroup = QActionGroup(self)
             self.actionGroup.triggered.connect(self.launcherActivated)
-            for path, param in self.externalLaunchList.items():
+            for path, _param in self.externalLaunchList.items():
                 action = QAction(Global.iconFromPath(path), path, self)
                 self.actionGroup.addAction(action)
                 self.launcherMenu.addAction(action)
@@ -130,15 +173,31 @@ class ExternalLauncher(QLabel):
 
     def launcherActivated(self, action):
         path = action.text()
-        param = self.externalLaunchList[path]
-        if os.path.exists(path):
-            if os.path.isdir(path):
+        param = self.externalLaunchList.get(path, "")
+        ok, normalized = _is_safe_launcher_path(path)
+        if not ok:
+            QMessageBox.warning(self, "Launch", normalized)
+            return
+        path = normalized
+        if os.path.isdir(path):
+            try:
                 os.startfile(path)
-            else:
-                if param == '':
-                    os.startfile(path)
-                else:
-                    process = QProcess(self)
-                    process.startDetached(path, [param])
-        else:
-            QMessageBox.warning(self, "Launch", "Path is not available.")
+            except Exception as err:
+                logging.warning("Failed to open directory launcher: %s", err)
+                QMessageBox.warning(self, "Launch", str(err))
+            return
+
+        args = _split_params(param)
+        if not args:
+            try:
+                os.startfile(path)
+            except Exception as err:
+                logging.warning("Failed to start launcher: %s", err)
+                QMessageBox.warning(self, "Launch", str(err))
+            return
+
+        process = QProcess(self)
+        if not process.startDetached(path, args):
+            QMessageBox.warning(
+                self, "Launch",
+                "Failed to start:\n{0}\n{1}".format(path, " ".join(args)))

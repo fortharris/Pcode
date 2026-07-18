@@ -2,24 +2,35 @@ import os
 
 from PyQt6.QtCore import Qt, QUrl
 from PyQt6.QtGui import (
-    QColor, QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap,
+    QDesktopServices, QFont, QFontDatabase, QIcon, QPixmap,
 )
 from PyQt6.QtWidgets import (
-    QFileDialog, QFrame, QGraphicsDropShadowEffect, QHBoxLayout, QLabel,
-    QListWidget, QListWidgetItem, QPushButton, QVBoxLayout,
+    QFileDialog, QFrame, QHBoxLayout, QLabel, QListWidget, QListWidgetItem,
+    QPushButton, QVBoxLayout,
 )
 
 from Extensions import StyleSheet
+from Extensions.version import GITHUB_URL, VERSION
 
 
-def _fixed_font(size):
-    """A monospace font that exists on every platform (no hard-coded family)."""
+def _ui_font(size, bold=False):
+    """Prefer the app UI font; fall back to a fixed font if needed."""
+    app_font = QFont()
     try:
-        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+        from PyQt6.QtWidgets import QApplication
+        app = QApplication.instance()
+        if app is not None:
+            app_font = QFont(app.font())
     except Exception:
-        font = QFont("monospace")
-    font.setPointSize(size)
-    return font
+        pass
+    if app_font.pointSize() <= 0:
+        try:
+            app_font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+        except Exception:
+            app_font = QFont("monospace")
+    app_font.setPointSize(size)
+    app_font.setBold(bold)
+    return app_font
 
 
 class Start(QLabel):
@@ -36,6 +47,7 @@ class Start(QLabel):
         mainLayout.setContentsMargins(0, 0, 0, 0)
         self.setScaledContents(True)
         self.setObjectName("mainlabel")
+        self.setAccessibleName("Start page")
         self.setLayout(mainLayout)
 
         mainLayout.addStretch(1)
@@ -47,9 +59,10 @@ class Start(QLabel):
 
         centerLabel = QLabel()
         centerLabel.setObjectName("centerlabel")
-        centerLabel.setMinimumWidth(500)
-        centerLabel.setMinimumHeight(300)
+        centerLabel.setMinimumWidth(520)
+        centerLabel.setMinimumHeight(320)
         centerLabel.setScaledContents(True)
+        centerLabel.setAccessibleName("Getting started")
         centerLabel.setStyleSheet("""
                             QListView {{
                                  show-decoration-selected: 1;
@@ -58,7 +71,7 @@ class Start(QLabel):
                                  color: {text};
                             }}
 
-                            QListView::item {{ min-height: 20px; }}
+                            QListView::item {{ min-height: 22px; padding: 2px 4px; }}
 
                             QListView::item:hover {{
                                  border: none;
@@ -82,56 +95,60 @@ class Start(QLabel):
 
         vbox.addStretch(2)
 
-        shadowEffect = QGraphicsDropShadowEffect()
-        shadowEffect.setColor(QColor("#000000"))
-        shadowEffect.setXOffset(0)
-        shadowEffect.setYOffset(0)
-        shadowEffect.setBlurRadius(20)
-        centerLabel.setGraphicsEffect(shadowEffect)
-
         centralLayout = QVBoxLayout()
+        centralLayout.setContentsMargins(28, 24, 28, 24)
+        centralLayout.setSpacing(10)
         centerLabel.setLayout(centralLayout)
 
         hbox = QHBoxLayout()
         centralLayout.addLayout(hbox)
 
-        label = QLabel("Getting started...")
-        label.setFont(_fixed_font(20))
-        hbox.addWidget(label)
+        brand = QLabel("Pcode")
+        brand.setFont(_ui_font(28, bold=True))
+        brand.setAccessibleName("Pcode brand")
+        hbox.addWidget(brand)
 
         hbox.addStretch(1)
 
+        version = QLabel(VERSION)
+        version.setFont(_ui_font(11))
+        version.setStyleSheet("color: %s;" % self.palette_["textDim"])
+        hbox.addWidget(version)
+
         label = QLabel()
         label.setScaledContents(True)
-        label.setMaximumWidth(35)
-        label.setMinimumWidth(35)
-        label.setMaximumHeight(35)
-        label.setMinimumHeight(35)
+        label.setMaximumWidth(32)
+        label.setMinimumWidth(32)
+        label.setMaximumHeight(32)
+        label.setMinimumHeight(32)
         label.setPixmap(QPixmap(os.path.join("Resources", "images", "compass")))
         hbox.addWidget(label)
 
         frame = QFrame()
-        frame.setGeometry(1, 1, 1, 1)
         frame.setFrameShape(QFrame.Shape.HLine)
         frame.setFrameShadow(QFrame.Shadow.Plain)
         centralLayout.addWidget(frame)
 
+        headline = QLabel("Open a project to start editing")
+        headline.setFont(_ui_font(14, bold=True))
+        centralLayout.addWidget(headline)
+
         label = QLabel(
-            "For the sake of convenience, most tasks are handled in the "
-            "context of a project. Start editing your files by first "
-            "creating a project or opening an existing one.")
+            "Most tasks run in the context of a project. Create one or open "
+            "an existing folder to edit, run, and manage your Python code.")
         label.setWordWrap(True)
-        label.setFont(_fixed_font(10))
+        label.setFont(_ui_font(10))
         centralLayout.addWidget(label)
 
         centralLayout.addStretch(1)
 
-        label = QLabel("Recent Projects:")
+        label = QLabel("Recent projects")
         label.setStyleSheet(
             "color: %s; font: bold 12px;" % self.palette_["accent"])
         centralLayout.addWidget(label)
 
         self.recentProjectsListWidget = QListWidget()
+        self.recentProjectsListWidget.setAccessibleName("Recent projects")
         if useData.OPENED_PROJECTS:
             for path in useData.OPENED_PROJECTS:
                 item = QListWidgetItem(os.path.basename(path))
@@ -140,7 +157,7 @@ class Start(QLabel):
                 self.recentProjectsListWidget.addItem(item)
         else:
             placeholder = QListWidgetItem(
-                "No recent projects \u2014 create or open one to get started.")
+                "No recent projects — create or open one to get started.")
             placeholder.setFlags(Qt.ItemFlag.NoItemFlags)
             self.recentProjectsListWidget.addItem(placeholder)
         self.recentProjectsListWidget.itemDoubleClicked.connect(
@@ -148,7 +165,6 @@ class Start(QLabel):
         centralLayout.addWidget(self.recentProjectsListWidget)
 
         frame = QFrame()
-        frame.setGeometry(1, 1, 1, 1)
         frame.setFrameShape(QFrame.Shape.HLine)
         frame.setFrameShadow(QFrame.Shadow.Plain)
         centralLayout.addWidget(frame)
@@ -157,18 +173,21 @@ class Start(QLabel):
         centralLayout.addLayout(hbox)
 
         openButton = QPushButton("Open Project")
+        openButton.setAccessibleName("Open project")
         openButton.setIcon(QIcon(os.path.join("Resources", "images", "wooden-box")))
         openButton.clicked.connect(self.openProject)
         hbox.addWidget(openButton)
 
         newButton = QPushButton("New Project")
+        newButton.setAccessibleName("New project")
         newButton.setIcon(QIcon(os.path.join("Resources", "images", "inbox--plus")))
         newButton.clicked.connect(self.createProject)
         hbox.addWidget(newButton)
 
         hbox.addStretch(1)
 
-        homePageButton = QPushButton("Visit Homepage")
+        homePageButton = QPushButton("Homepage")
+        homePageButton.setAccessibleName("Visit homepage")
         homePageButton.setIcon(QIcon(os.path.join("Resources", "images", "Web")))
         homePageButton.clicked.connect(self.visitHomepage)
         hbox.addWidget(homePageButton)
@@ -177,23 +196,33 @@ class Start(QLabel):
 
         p = self.palette_
         style = """
-            QLabel#mainlabel {{ background: {bg}; }}
+            QLabel#mainlabel {{
+                background: qlineargradient(
+                    x1:0, y1:0, x2:1, y2:1,
+                    stop:0 {bg}, stop:1 {panel});
+            }}
 
             QLabel#centerlabel {{
-                border-radius: 4px;
+                border: 1px solid {border};
+                border-top: 3px solid {accent};
                 background: {card};
                 color: {text};
             }}
 
             QLabel#centerlabel QLabel {{ color: {text}; }}
 
-            QPushButton {{ min-width: 105px; }}
-            """.format(bg=p["bg"], card=p["panelAlt"], text=p["text"])
+            QPushButton {{
+                min-width: 110px;
+                padding: 5px 12px;
+            }}
+            """.format(
+            bg=p["bg"], panel=p["panel"], border=p["border"],
+            accent=p["accent"], card=p["panelAlt"], text=p["text"])
 
         self.setStyleSheet(style)
 
     def visitHomepage(self):
-        QDesktopServices.openUrl(QUrl("https://github.com/fortharris/Pcode"))
+        QDesktopServices.openUrl(QUrl(GITHUB_URL))
 
     def createProject(self):
         self.pcode.newProject()

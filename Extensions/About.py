@@ -11,6 +11,8 @@ import pycodestyle as pep8
 import pyflakes
 import rope
 
+from Extensions.version import VERSION
+
 
 def _rope_version():
     return getattr(rope, "VERSION", None) or getattr(rope, "__version__", "unknown")
@@ -44,6 +46,7 @@ class About(QDialog):
             Qt.WindowType.Window | Qt.WindowType.WindowCloseButtonHint)
 
         self.setWindowTitle("About")
+        self.setAccessibleName("About Pcode")
 
         mainLayout = QVBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)
@@ -53,7 +56,7 @@ class About(QDialog):
 
         form = QFormLayout()
         form.setContentsMargins(10, 10, 10, 10)
-        form.addRow("<b>Version</b>", QLabel("0.1.5"))
+        form.addRow("<b>Version</b>", QLabel(VERSION))
         form.addRow("<b>Author</b>", QLabel("Amoatey Harrison"))
         form.addRow("<b>Email</b>", QLabel("fortharris@gmail.com"))
 
@@ -69,6 +72,7 @@ class About(QDialog):
         hbox.addStretch(1)
 
         licenseButton = QPushButton("License")
+        licenseButton.setAccessibleName("Show license")
         licenseButton.setCheckable(True)
         licenseButton.clicked.connect(self.showLicense)
         hbox.addWidget(licenseButton)
@@ -77,6 +81,7 @@ class About(QDialog):
         mainLayout.addWidget(self.view)
 
         table = QTreeWidget()
+        table.setAccessibleName("External libraries")
         table.setMinimumHeight(150)
         table.setIndentation(0)
         table.setHeaderLabels(["Name", "Version", "Author"])
@@ -96,6 +101,7 @@ class About(QDialog):
         self.view.addWidget(table)
 
         self.licenseEdit = QTextEdit()
+        self.licenseEdit.setAccessibleName("License text")
         with open(os.path.join("Resources", "LICENSE"), "r", encoding="utf-8") as file:
             self.licenseEdit.setText(file.read())
 

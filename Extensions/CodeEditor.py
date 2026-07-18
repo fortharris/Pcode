@@ -1,3 +1,4 @@
+import logging
 import os
 import io
 import sys
@@ -27,18 +28,19 @@ class TokenizeThread(QThread):
     def run(self):
         self.tokenList = []
         try:
-            for type, rep, begin, end, expr in \
+            for type, _rep, begin, _end, _expr in \
                     tokenize.generate_tokens(StringIO(self.source).readline):
                 if type == tokenize.OP:
                     line = begin[0]
                     if line not in self.tokenList:
                         self.tokenList.append(line - 1)
         except Exception:
-            pass
+            logging.debug("Tokenize failed", exc_info=True)
 
     def tokenize(self, source):
         self.source = source
-
+        if self.isRunning():
+            return
         self.start()
 
 
@@ -46,31 +48,55 @@ class DocThread(QThread):
 
     docAvailable = pyqtSignal(str, int)
 
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._generation = 0
+        self._pending = False
+
     def run(self):
-        try:
-            doc = codeassist.get_doc(self.ropeProject,
-                                     self.source, self.hoverOffset)
-            self.docAvailable.emit(doc, self.hoverOffset)
-        except Exception:
-            pass
+        while True:
+            generation = self._generation
+            self._pending = False
+            try:
+                doc = codeassist.get_doc(self.ropeProject,
+                                         self.source, self.hoverOffset)
+                if generation == self._generation and doc:
+                    self.docAvailable.emit(doc, self.hoverOffset)
+            except Exception:
+                logging.debug("Hover doc lookup failed", exc_info=True)
+            if not self._pending:
+                break
 
     def doc(self, ropeProject, source, hoverOffset):
         self.ropeProject = ropeProject
         self.source = source
         self.hoverOffset = hoverOffset
-
+        self._generation += 1
+        if self.isRunning():
+            self._pending = True
+            return
         self.start()
 
 
 class AutoCompletionThread(QThread):
 
-    completionsAvailable = pyqtSignal(list)
+    completionsAvailable = pyqtSignal(list, int)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._generation = 0
+        self._pending = False
+        self.completionType = 3
 
     def run(self):
-        completions = self.completions()
-        if completions is None:
-            return
-        self.completionsAvailable.emit(completions)
+        while True:
+            generation = self._generation
+            self._pending = False
+            completions = self.completions()
+            if completions is not None and generation == self._generation:
+                self.completionsAvailable.emit(completions, generation)
+            if not self._pending:
+                break
 
     def rope_completions(self):
         """
@@ -89,7 +115,8 @@ class AutoCompletionThread(QThread):
             else:
                 return []
         except Exception:
-            pass
+            logging.debug("Rope completions failed", exc_info=True)
+            return []
 
     def completions(self):
         self.completionType = 3
@@ -170,6 +197,7 @@ class AutoCompletionThread(QThread):
                 try:
                     folderList = [f for f in zipimporter(path)._files]
                 except Exception:
+                    logging.debug("zipimporter listing failed for %s", path)
                     folderList = []
             else:
                 folderList = []
@@ -202,6 +230,7 @@ class AutoCompletionThread(QThread):
                     tokentype, class_name, start = next(g)[0:3]
                     completionList.append(class_name)
         except Exception:
+            logging.debug("module_classes failed for %s", absolutePath)
             return []
         return completionList
 
@@ -216,10 +245,9 @@ class AutoCompletionThread(QThread):
         absolutePath = os.path.join(
             self.sourcedir, relativePath.replace('.', '//'))
         absolutePath = os.path.normpath(absolutePath)
-        
+
+        completionList = []
         try:
-            completionList = []
-            
             contents = os.listdir(absolutePath)
             for item in contents:
                 path = os.path.join(absolutePath, item)
@@ -228,9 +256,10 @@ class AutoCompletionThread(QThread):
                 else:
                     if '__init__.py' in os.listdir(path):
                         completionList.append(item + os.path.sep)
-            completionList.remove('__init__')
+            if '__init__' in completionList:
+                completionList.remove('__init__')
         except Exception:
-            pass
+            logging.debug("pkg_completions failed for %s", absolutePath)
 
         completionList = list(set(filter(lambda x: x.startswith(pathElements[-1]),
                              completionList)))
@@ -245,7 +274,10 @@ class AutoCompletionThread(QThread):
         self.source = source
         self.lineText = lineText
         self.column = col
-
+        self._generation += 1
+        if self.isRunning():
+            self._pending = True
+            return
         self.start()
 
 
@@ -268,10 +300,10 @@ class CodeEditor(BaseScintilla):
         self.middleMousePressed = False
         self.mousePosition = QPointF()
 
-        self.autoCompletionThread = AutoCompletionThread()
+        self.autoCompletionThread = AutoCompletionThread(self)
         self.autoCompletionThread.completionsAvailable.connect(self.showCompletions)
 
-        self.docThread = DocThread()
+        self.docThread = DocThread(self)
         self.docThread.docAvailable.connect(
             self.showDoc)
 
@@ -659,7 +691,10 @@ class CodeEditor(BaseScintilla):
                     self.refactor.root,
                         ropeProject, offset, self.text(), lineText, col)
 
-    def showCompletions(self, result):
+    def showCompletions(self, result, generation=None):
+        if (generation is not None
+                and generation != self.autoCompletionThread._generation):
+            return
         if len(result) > 0:
             if self.hasFocus():
                 self.showUserList(

@@ -207,14 +207,14 @@ class Keymap(QDialog):
                                           "Setting keymap to default will wipe away your current keymap.\n\nProceed?",
                                           QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
-            for key, value in self.useData.DEFAULT_SHORTCUTS['Ide'].items():
+            for key, _value in self.useData.DEFAULT_SHORTCUTS['Ide'].items():
                 default = self.useData.DEFAULT_SHORTCUTS['Ide'][key]
                 self.useData.CUSTOM_SHORTCUTS['Ide'][key] = default
 
             sc = QsciScintilla()
             standardCommands = sc.standardCommands()
 
-            for key, value in self.useData.DEFAULT_SHORTCUTS['Editor'].items():
+            for key, _value in self.useData.DEFAULT_SHORTCUTS['Editor'].items():
                 default = self.useData.DEFAULT_SHORTCUTS['Editor'][key]
                 command = standardCommands.find(default[1])
                 keyValue = command.key()

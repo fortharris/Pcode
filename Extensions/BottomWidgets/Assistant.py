@@ -419,8 +419,8 @@ class Assistant(QStackedWidget):
                 msg = item.text(2)
 
                 lineText = editor.text(lineno)
-                l = len(lineText)
-                startPos = l - len(lineText.lstrip())
+                line_len = len(lineText)
+                startPos = line_len - len(lineText.lstrip())
 
                 editor.markerAdd(lineno, 9)
                 self.editorTabWidget.updateEditorData("errorLine", lineno)
