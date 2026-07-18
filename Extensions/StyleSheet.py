@@ -575,7 +575,7 @@ _MAIN_MENU_TEMPLATE = Template("""
 
 _TOOL_WIDGET_TEMPLATE = Template("""
         QLabel#containerLabel {
-            border-top: 2px solid $accent;
+            border-top: none;
             border-left: 1px solid $border;
             border-right: 1px solid $border;
             border-bottom: 1px solid $border;
