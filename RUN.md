@@ -60,16 +60,19 @@ and the old `*.xml` config files are migrated automatically on first run.
 
 Older projects with `project.xml` / `projectdata.xml` / `session.xml` still open;
 data is migrated to JSON on load. **New saves write JSON only** — XML mirrors
-are no longer updated. Color scheme / lexer style files in `stylesdir` remain
-XML (separate from project persistence).
+are no longer updated.
 
-### PyQt6 migration notes
+**Color schemes (intentional XML):** lexer/style files under workspace
+`stylesdir` (`Settings/ColorSchemes/{Python,Xml,Html,Css}/*.xml`) stay XML.
+That editor format is independent of project/workspace JSON persistence.
 
-- All production modules import `PyQt6` directly (no `qt_bindings` shim).
+### PyQt6 notes
+
+- All production modules import `PyQt6` directly.
 - Helpers: `Extensions/font_metrics.py`, `Extensions/file_dialog_utils.py`,
   `Extensions/screen_utils.py`, `Extensions/qscintilla_compat.py`.
-- `tests/test_no_shim_import.py` ensures the app loads without the old shim.
-- One-off migration scripts live in `scripts/archive/` (historical only).
+- `tests/test_no_shim_import.py` guards that the app loads without the removed
+  `qt_bindings` shim.
 
 ## Tests
 

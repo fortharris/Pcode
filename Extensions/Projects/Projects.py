@@ -193,10 +193,10 @@ class Projects(QWidget):
             projectPathDict = {
                 "notes": os.path.join(path, "Data", "wpad.txt"),
                 "session": os.path.join(path, "Data", "session.json"),
+                # Legacy session.xml path for SessionData migrate-on-load.
                 "session_xml": os.path.join(path, "Data", "session.xml"),
                 "windata": os.path.join(path, "Data", "windata.json"),
                 "projectdata": os.path.join(path, "Data", "projectdata.json"),
-                "projectdata_xml": os.path.join(path, "Data", "projectdata.xml"),
                 "snippetsdir": os.path.join(path, "Data", "templates"),
                 "tempdir": os.path.join(path, "temp"),
                 "backupdir": os.path.join(path, "temp", "Backup", "Files"),
@@ -204,9 +204,7 @@ class Projects(QWidget):
                 "sourcedir": os.path.join(path, "src"),
                 "ropeFolder": os.path.join(path, "Rope"),
                 "buildprofile": os.path.join(path, "Build", "profile.json"),
-                "buildprofile_xml": os.path.join(path, "Build", "profile.xml"),
                 "ropeprofile": os.path.join(path, "Rope", "profile.json"),
-                "ropeprofile_xml": os.path.join(path, "Rope", "profile.xml"),
                 "projectmainfile": os.path.join(path, "project.json"),
                 "iconsdir": os.path.join(path, "Resources", "Icons"),
                 "root": path
