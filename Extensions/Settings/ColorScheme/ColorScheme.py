@@ -333,6 +333,19 @@ class ColorScheme(QDialog):
         elif reply == QMessageBox.StandardButton.No:
             pass
 
+    def restyleAllEditors(self):
+        """Restyle every open editor (e.g. after UI theme change)."""
+        for i in range(self.projectWindowStack.count() - 1):
+            window = self.projectWindowStack.widget(i)
+            if not hasattr(window, "editorTabWidget"):
+                continue
+            editorTabWidget = window.editorTabWidget
+            for tab in range(editorTabWidget.count()):
+                self.styleEditor(editorTabWidget.getEditor(tab))
+                self.styleEditor(editorTabWidget.getCloneEditor(tab))
+                self.styleEditor(editorTabWidget.getSnapshot(tab))
+        self.styleEditor(self.libraryViewer)
+
     def applyScheme(self):
         schemeType = self.schemeTypeBox.currentText()
         schemeName = self.schemeNameBox.currentText()

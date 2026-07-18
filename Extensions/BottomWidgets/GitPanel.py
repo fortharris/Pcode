@@ -1,11 +1,11 @@
-"""Git status panel with stage/commit and per-file diff."""
+"""Git status panel with branch/log, stage/commit/amend, and per-file diff."""
 
 import os
 import subprocess
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
+    QComboBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
     QPlainTextEdit, QPushButton, QVBoxLayout, QWidget,
 )
 
@@ -17,15 +17,23 @@ class GitPanel(QWidget):
         self.root = project_path_dict.get("sourcedir", "")
         self.editor_tab = editor_tab_widget
         self._changed_files = []
+        self._refreshing_branches = False
 
         layout = QVBoxLayout(self)
         layout.setContentsMargins(4, 4, 4, 4)
 
-        toolbar = QHBoxLayout()
+        branch_row = QHBoxLayout()
+        branch_row.addWidget(QLabel("Branch:"))
+        self.branchBox = QComboBox()
+        self.branchBox.setMinimumWidth(160)
+        self.branchBox.activated.connect(self._checkout_branch)
+        branch_row.addWidget(self.branchBox, 1)
         self.refreshButton = QPushButton("Refresh")
         self.refreshButton.clicked.connect(self.refresh)
-        toolbar.addWidget(self.refreshButton)
+        branch_row.addWidget(self.refreshButton)
+        layout.addLayout(branch_row)
 
+        toolbar = QHBoxLayout()
         self.stageButton = QPushButton("Stage All")
         self.stageButton.clicked.connect(self.stage_all)
         toolbar.addWidget(self.stageButton)
@@ -46,13 +54,23 @@ class GitPanel(QWidget):
         self.openButton.clicked.connect(self.open_selected)
         toolbar.addWidget(self.openButton)
 
+        self.logButton = QPushButton("Log")
+        self.logButton.clicked.connect(self.show_log)
+        toolbar.addWidget(self.logButton)
+
         toolbar.addStretch(1)
         layout.addLayout(toolbar)
 
         self.fileList = QListWidget()
-        self.fileList.setMaximumHeight(120)
+        self.fileList.setMaximumHeight(100)
         self.fileList.itemDoubleClicked.connect(self.open_selected)
         layout.addWidget(self.fileList)
+
+        layout.addWidget(QLabel("Recent commits"))
+        self.logList = QListWidget()
+        self.logList.setMaximumHeight(100)
+        self.logList.itemActivated.connect(self._show_commit)
+        layout.addWidget(self.logList)
 
         commit_row = QHBoxLayout()
         commit_row.addWidget(QLabel("Commit:"))
@@ -62,6 +80,11 @@ class GitPanel(QWidget):
         self.commitButton = QPushButton("Commit")
         self.commitButton.clicked.connect(self.commit)
         commit_row.addWidget(self.commitButton)
+        self.amendButton = QPushButton("Amend")
+        self.amendButton.setToolTip(
+            "Amend the last commit (uses message if set, else --no-edit)")
+        self.amendButton.clicked.connect(self.amend)
+        commit_row.addWidget(self.amendButton)
         layout.addLayout(commit_row)
 
         self.output = QPlainTextEdit()
@@ -87,6 +110,14 @@ class GitPanel(QWidget):
     def _is_repo(self):
         return self.root and os.path.isdir(os.path.join(self.root, ".git"))
 
+    def _set_actions_enabled(self, enabled):
+        for w in (
+            self.stageButton, self.stageFileButton, self.commitButton,
+            self.diffButton, self.unstageButton, self.openButton,
+            self.logButton, self.amendButton, self.branchBox,
+        ):
+            w.setEnabled(enabled)
+
     def _parse_status_files(self, status_text):
         files = []
         for line in status_text.splitlines():
@@ -101,34 +132,97 @@ class GitPanel(QWidget):
             files.append((code, path))
         return files
 
+    def _populate_branches(self, current):
+        self._refreshing_branches = True
+        self.branchBox.clear()
+        code, out = self._run_git("branch", "--format=%(refname:short)")
+        branches = []
+        if code == 0:
+            branches = [b.strip() for b in out.splitlines() if b.strip()]
+        if current and current not in branches and current != "(no output)":
+            branches.insert(0, current)
+        for name in branches:
+            self.branchBox.addItem(name)
+        if current:
+            idx = self.branchBox.findText(current)
+            if idx >= 0:
+                self.branchBox.setCurrentIndex(idx)
+        self._refreshing_branches = False
+
+    def _populate_log(self):
+        self.logList.clear()
+        code, out = self._run_git(
+            "log", "-20", "--oneline", "--decorate")
+        if code != 0:
+            return
+        for line in out.splitlines():
+            if not line.strip() or line == "(no output)":
+                continue
+            item = QListWidgetItem(line)
+            sha = line.split()[0]
+            item.setData(Qt.ItemDataRole.UserRole, sha)
+            self.logList.addItem(item)
+
     def refresh(self):
         if not self._is_repo():
             self.output.setPlainText(
                 "Not a git repository.\n\n"
                 "Initialize with: git init")
-            self.stageButton.setEnabled(False)
-            self.stageFileButton.setEnabled(False)
-            self.commitButton.setEnabled(False)
-            self.diffButton.setEnabled(False)
+            self._set_actions_enabled(False)
             self.fileList.clear()
+            self.logList.clear()
+            self.branchBox.clear()
             return
-        self.stageButton.setEnabled(True)
-        self.stageFileButton.setEnabled(True)
-        self.commitButton.setEnabled(True)
-        self.diffButton.setEnabled(True)
+        self._set_actions_enabled(True)
         code, branch = self._run_git("branch", "--show-current")
+        current = branch if code == 0 else ""
+        self._populate_branches(current)
         _, status = self._run_git("status", "--short", "--branch")
-        _, log = self._run_git("log", "-5", "--oneline", "--decorate")
-        text = "Branch: {0}\n\n=== status ===\n{1}\n\n=== recent commits ===\n{2}".format(
-            branch if code == 0 else "?", status, log)
+        self._populate_log()
+        text = "Branch: {0}\n\n=== status ===\n{1}".format(
+            current or "?", status)
         self.output.setPlainText(text)
 
         self._changed_files = self._parse_status_files(status)
         self.fileList.clear()
-        for code, path in self._changed_files:
-            item = QListWidgetItem("{0} {1}".format(code, path))
+        for file_code, path in self._changed_files:
+            item = QListWidgetItem("{0} {1}".format(file_code, path))
             item.setData(Qt.ItemDataRole.UserRole, path)
             self.fileList.addItem(item)
+
+    def _checkout_branch(self, index):
+        if self._refreshing_branches or not self._is_repo():
+            return
+        name = self.branchBox.itemText(index).strip()
+        if not name:
+            return
+        code, current = self._run_git("branch", "--show-current")
+        if code == 0 and current == name:
+            return
+        code, out = self._run_git("switch", name)
+        if code != 0:
+            code, out = self._run_git("checkout", name)
+        self.output.appendPlainText("\n=== checkout {0} ===\n{1}".format(
+            name, out))
+        self.refresh()
+
+    def show_log(self):
+        if not self._is_repo():
+            return
+        code, out = self._run_git(
+            "log", "-30", "--oneline", "--decorate", "--graph")
+        self.output.appendPlainText("\n=== log ===\n" + out)
+        self._populate_log()
+
+    def _show_commit(self, item):
+        if not self._is_repo() or item is None:
+            return
+        sha = item.data(Qt.ItemDataRole.UserRole)
+        if not sha:
+            return
+        code, out = self._run_git("show", "--stat", sha)
+        self.output.appendPlainText(
+            "\n=== show {0} ===\n{1}".format(sha, out))
 
     def _selected_path(self):
         item = self.fileList.currentItem()
@@ -204,6 +298,19 @@ class GitPanel(QWidget):
             return
         code, out = self._run_git("commit", "-m", message)
         self.output.appendPlainText("\n=== commit ===\n" + out)
+        if code == 0:
+            self.commitLine.clear()
+            self.refresh()
+
+    def amend(self):
+        if not self._is_repo():
+            return
+        message = self.commitLine.text().strip()
+        if message:
+            code, out = self._run_git("commit", "--amend", "-m", message)
+        else:
+            code, out = self._run_git("commit", "--amend", "--no-edit")
+        self.output.appendPlainText("\n=== amend ===\n" + out)
         if code == 0:
             self.commitLine.clear()
             self.refresh()

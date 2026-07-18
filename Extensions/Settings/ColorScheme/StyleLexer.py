@@ -149,13 +149,18 @@ class StyleLexer(QWidget):
     def loadStyle(self, styleName, groupName):
         if styleName == "Default":
             if groupName == "Python":
-                return PythonLexer.defaultStyle()
+                style = PythonLexer.defaultStyle()
             elif groupName == "Css":
-                return CssLexer.defaultStyle()
+                style = CssLexer.defaultStyle()
             elif groupName == "Xml":
-                return XmlLexer.defaultStyle()
+                style = XmlLexer.defaultStyle()
             elif groupName == "Html":
-                return HtmlLexer.defaultStyle()
+                style = HtmlLexer.defaultStyle()
+            else:
+                style = {}
+            # Tie Default lexer colours to the active UI theme tokens.
+            from Extensions import StyleSheet
+            return StyleSheet.theme_overlay_style(style)
         else:
             pass
 

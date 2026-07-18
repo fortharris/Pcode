@@ -14,10 +14,12 @@
 - JSON-only saves for project/build/rope manifests (XML read-only for legacy projects)
 
 ### Features
-- Command palette (Ctrl+Shift+P) with fuzzy multi-token filter, keymap entries, project switching, git actions
-- Git panel: status, stage/unstage per file, commit, diff, open file in editor
+- Command palette (Ctrl+Shift+P): build, rename symbol, close project, recent files, git amend/log
+- Git panel: branch switcher, commit log list, amend, stage/unstage, commit, diff
+- Assistant: progressive check updates, visible Cancel while pyflakes/pep8 run
+- UI theme tokens drive Default lexer colours (paper/text/comment/keyword/string)
+- CLI project freeze: `scripts/freeze_project.py`
 - debugpy debug run type with optional wait-for-client; status bar indicator while listening
-- Assistant debounce and cancellation when switching tabs
 
 ### Infrastructure
 - pytest unit + smoke suites (including `test_no_shim_import`), ruff linting, GitHub Actions CI (Linux + Windows)

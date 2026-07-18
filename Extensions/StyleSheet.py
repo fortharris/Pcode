@@ -46,6 +46,12 @@ LIGHT = {
     "menuItemSelText": "#FFFFFF",
     "dockTitleBg": "#D8D8D8",
     "dockTitleText": "#000000",
+    # Editor / lexer tokens (used when scheme is "Default")
+    "editorPaper": "#FFFFFF",
+    "editorText": "#000000",
+    "editorComment": "#008000",
+    "editorKeyword": "#0000FF",
+    "editorString": "#A31515",
 }
 
 DARK = {
@@ -77,7 +83,17 @@ DARK = {
     "menuItemSelText": "#FFFFFF",
     "dockTitleBg": "#333337",
     "dockTitleText": "#E8E8E8",
+    # Editor / lexer tokens (used when scheme is "Default")
+    "editorPaper": "#1E1E1E",
+    "editorText": "#D4D4D4",
+    "editorComment": "#6A9955",
+    "editorKeyword": "#569CD6",
+    "editorString": "#CE9178",
 }
+
+# Last palette applied by apply_theme (for lexer Default overlays).
+CURRENT_PALETTE = dict(LIGHT)
+CURRENT_THEME = "Light"
 
 PALETTES = {"Light": LIGHT, "Dark": DARK}
 
@@ -523,15 +539,60 @@ def apply_theme(app, name):
     the new palette), sets a matching QPalette, and applies the application
     stylesheet immediately.
     """
+    global CURRENT_PALETTE, CURRENT_THEME
     styles = themed(name)
     globals().update(styles)
+    CURRENT_PALETTE = resolve_palette(name)
+    CURRENT_THEME = name
     if app is not None:
         try:
-            app.setPalette(_qpalette(resolve_palette(name)))
+            app.setPalette(_qpalette(CURRENT_PALETTE))
         except Exception:
             pass
         app.setStyleSheet(styles["globalStyle"])
     return styles
+
+
+def theme_overlay_style(style):
+    """Overlay UI-theme editor tokens onto a lexer Default style dict.
+
+    Mutates a shallow copy of ``style`` so custom XML schemes stay untouched
+    when callers pass them through. Only keys present in both the style and
+    the theme mapping are updated (fg + paper).
+    """
+    palette = CURRENT_PALETTE or LIGHT
+    paper = palette.get("editorPaper", "#FFFFFF")
+    mapping = {
+        "Default": ("editorText", paper),
+        "Identifier": ("editorText", paper),
+        "Operator": ("editorText", paper),
+        "Number": ("editorText", paper),
+        "Comment": ("editorComment", paper),
+        "CommentBlock": ("editorComment", paper),
+        "Keyword": ("editorKeyword", paper),
+        "ClassName": ("editorKeyword", paper),
+        "FunctionMethodName": ("editorKeyword", paper),
+        "DoubleQuotedString": ("editorString", paper),
+        "SingleQuotedString": ("editorString", paper),
+        "TripleSingleQuotedString": ("editorString", paper),
+        "TripleDoubleQuotedString": ("editorString", paper),
+    }
+    out = dict(style)
+    for key, (fg_token, bg) in mapping.items():
+        if key not in out:
+            continue
+        attrib = list(out[key])
+        if len(attrib) < 6:
+            continue
+        attrib[1] = palette.get(fg_token, attrib[1])
+        attrib[5] = bg
+        out[key] = attrib
+    return out
+
+
+def theme_paper():
+    """Return (mode, color) paper tuple for Default lexers under the UI theme."""
+    return ("Plain", CURRENT_PALETTE.get("editorPaper", "#FFFFFF"))
 
 
 # Default module-level names (Light) for import-time compatibility.
