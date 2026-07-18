@@ -5,12 +5,12 @@ import locale
 from PyQt6.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
 from PyQt6.QtCore import (
     QByteArray, QCoreApplication, QIODevice, QProcess, QProcessEnvironment,
-    Qt, pyqtSignal,
+    QSize, Qt, pyqtSignal,
 )
 from PyQt6.QtGui import QAction, QColor, QIcon, QPalette
 from PyQt6.QtWidgets import (
-    QCheckBox, QComboBox, QHBoxLayout, QLabel, QMenu, QMessageBox, QSpinBox,
-    QToolButton, QVBoxLayout,
+    QCheckBox, QComboBox, QHBoxLayout, QLabel, QMenu, QMessageBox,
+    QSizePolicy, QSpinBox, QToolButton, QVBoxLayout, QWidget,
 )
 
 from Extensions.settings_utils import to_bool, from_bool
@@ -27,7 +27,10 @@ class SetRunParameters(QLabel):
     def __init__(self, projectSettings, projectPathDict, useData, parent=None):
         QLabel.__init__(self, parent)
 
-        self.setMinimumSize(400, 220)
+        # QLabel ignores its layout in sizeHint(); height comes from overrides.
+        self.setMinimumWidth(480)
+        self.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Minimum)
 
         self.setBackgroundRole(QPalette.ColorRole.Window)
         self.setAutoFillBackground(True)
@@ -39,25 +42,24 @@ class SetRunParameters(QLabel):
         self.projectPathDict = projectPathDict
 
         mainLayout = QVBoxLayout()
+        mainLayout.setContentsMargins(12, 10, 12, 12)
+        mainLayout.setSpacing(10)
 
-        hbox = QHBoxLayout()
-        mainLayout.addLayout(hbox)
-
-        label = QLabel("Run Parameters")
-        label.setObjectName("toolWidgetNameLabel")
-        hbox.addWidget(label)
-
-        hbox.addStretch(1)
-
+        header = QHBoxLayout()
+        title = QLabel("Run Parameters")
+        title.setObjectName("toolWidgetNameLabel")
+        header.addWidget(title)
+        header.addStretch(1)
         self.hideButton = QToolButton()
         self.hideButton.setAutoRaise(True)
         self.hideButton.setIcon(
             QIcon(os.path.join("Resources", "images", "cross_")))
         self.hideButton.clicked.connect(self.hide)
-        hbox.addWidget(self.hideButton)
+        header.addWidget(self.hideButton)
+        mainLayout.addLayout(header)
 
-        hbox = QHBoxLayout()
-        mainLayout.addLayout(hbox)
+        # --- Run ---
+        mainLayout.addWidget(self._section("Run"))
 
         self.runTypeBox = QComboBox()
         self.runTypeBox.addItem("Run")
@@ -72,7 +74,7 @@ class SetRunParameters(QLabel):
             self.runTypeBox.setCurrentIndex(3)
         self.runTypeBox.currentIndexChanged.connect(self.saveArguments)
         self.runTypeBox.currentIndexChanged.connect(self.runTypeChanged)
-        hbox.addWidget(self.runTypeBox)
+        mainLayout.addLayout(self._labeled_row("Mode", self.runTypeBox))
 
         self.traceTypeBox = QComboBox()
         self.traceTypeBox.addItem("Calling relationships")
@@ -82,42 +84,46 @@ class SetRunParameters(QLabel):
         self.traceTypeBox.setCurrentIndex(int(
             self.projectSettings["TraceType"]))
         self.traceTypeBox.currentIndexChanged.connect(self.saveArguments)
-        hbox.addWidget(self.traceTypeBox)
-
+        mainLayout.addWidget(self.traceTypeBox)
         if self.runTypeBox.currentIndex() != 2:
             self.traceTypeBox.hide()
 
-        self.runWithArgsBox = QCheckBox("Arguments:")
+        self.runWithArgsBox = QCheckBox("Pass arguments")
         if to_bool(self.projectSettings["RunWithArguments"]):
             self.runWithArgsBox.setChecked(True)
-        self.runWithArgsBox.toggled.connect(self.saveArguments)
+        self.runWithArgsBox.toggled.connect(self._argsToggled)
         mainLayout.addWidget(self.runWithArgsBox)
 
+        argsWrap = QWidget()
+        argsWrap.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        argsLayout = QHBoxLayout(argsWrap)
+        argsLayout.setContentsMargins(18, 0, 0, 0)
+        argsLayout.setSpacing(0)
         self.argumentsLine = PathLineEdit()
+        self.argumentsLine.setPlaceholderText("Optional arguments…")
         self.argumentsLine.setText(self.projectSettings["RunArguments"])
         self.argumentsLine.textChanged.connect(self.saveArguments)
-        mainLayout.addWidget(self.argumentsLine)
+        argsLayout.addWidget(self.argumentsLine)
+        mainLayout.addWidget(argsWrap)
+        self.argumentsLine.setEnabled(self.runWithArgsBox.isChecked())
 
-        hbox = QHBoxLayout()
-
-        self.clearOutputBox = QCheckBox("Clear Output Window")
+        self.clearOutputBox = QCheckBox("Clear output")
         if to_bool(self.projectSettings["ClearOutputWindowOnRun"]):
             self.clearOutputBox.setChecked(True)
         self.clearOutputBox.toggled.connect(self.saveArguments)
-        hbox.addWidget(self.clearOutputBox)
-
-        hbox.addStretch(1)
-
-        hbox.addWidget(QLabel("Max Output Size <lines>"))
+        mainLayout.addWidget(self.clearOutputBox)
 
         self.bufferSizeBox = QSpinBox()
         self.bufferSizeBox.setMaximum(999)
-        self.bufferSizeBox.setMinimumWidth(100)
+        self.bufferSizeBox.setMinimumWidth(90)
         self.bufferSizeBox.setValue(int(self.projectSettings['BufferSize']))
         self.bufferSizeBox.valueChanged.connect(self.saveArguments)
-        hbox.addWidget(self.bufferSizeBox)
+        mainLayout.addLayout(
+            self._labeled_row("Max lines", self.bufferSizeBox, stretch=False))
 
-        mainLayout.addLayout(hbox)
+        # --- Console ---
+        mainLayout.addWidget(self._section("Console"))
 
         self.runPointBox = QComboBox()
         self.runPointBox.addItem("Internal Console")
@@ -125,38 +131,82 @@ class SetRunParameters(QLabel):
         if not to_bool(self.projectSettings["RunInternal"]):
             self.runPointBox.setCurrentIndex(1)
         self.runPointBox.currentIndexChanged.connect(self.saveArguments)
-        mainLayout.addWidget(self.runPointBox)
+        mainLayout.addLayout(self._labeled_row("Target", self.runPointBox))
 
-        self.useVirtualEnvBox = QCheckBox("Use Virtual Environment")
+        self.useVirtualEnvBox = QCheckBox("Use virtual environment")
         if to_bool(self.projectSettings["UseVirtualEnv"]):
             self.useVirtualEnvBox.setChecked(True)
         self.useVirtualEnvBox.toggled.connect(self.setDefaultInterpreter)
         mainLayout.addWidget(self.useVirtualEnvBox)
 
-        self.debugWaitBox = QCheckBox("Wait for debugger to attach")
+        self.debugWaitBox = QCheckBox("Wait for debugger")
         if to_bool(self.projectSettings.get("DebugWait")):
             self.debugWaitBox.setChecked(True)
         self.debugWaitBox.toggled.connect(self.saveArguments)
         mainLayout.addWidget(self.debugWaitBox)
 
-        hbox = QHBoxLayout()
-        mainLayout.addLayout(hbox)
-
-        label = QLabel("Python Interpreter")
-        hbox.addWidget(label)
-        
-        hbox.addStretch(1)
-
+        # --- Interpreter ---
+        mainLayout.addWidget(self._section("Interpreter"))
         self.installedPythonVersionBox = QComboBox()
-        self.installedPythonVersionBox.setMinimumWidth(200)
+        self.installedPythonVersionBox.setMinimumWidth(280)
         self.updateInstalledInterpreters()
         self.installedPythonVersionBox.currentIndexChanged.connect(
             self.setDefaultInterpreter)
-        hbox.addWidget(self.installedPythonVersionBox)
+        mainLayout.addLayout(
+            self._labeled_row("Python", self.installedPythonVersionBox))
 
         self.setLayout(mainLayout)
-
         self.setDefaultInterpreter()
+
+    def sizeHint(self):
+        lay = self.layout()
+        if lay is not None:
+            hint = lay.sizeHint()
+            return QSize(max(480, hint.width()), hint.height())
+        return QLabel.sizeHint(self)
+
+    def minimumSizeHint(self):
+        lay = self.layout()
+        if lay is not None:
+            hint = lay.minimumSize()
+            return QSize(max(480, hint.width()), hint.height())
+        return QLabel.minimumSizeHint(self)
+
+    def showEvent(self, event):
+        QLabel.showEvent(self, event)
+        # Parent overlay may have sized us from QLabel's bogus hint; grow now.
+        self.updateGeometry()
+        self.adjustSize()
+
+    def _section(self, text):
+        label = QLabel(text)
+        label.setObjectName("toolWidgetSectionLabel")
+        label.setSizePolicy(
+            QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
+        return label
+
+    def _field_label(self, text):
+        label = QLabel(text)
+        label.setAlignment(
+            Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+        label.setSizePolicy(
+            QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+        return label
+
+    def _labeled_row(self, text, widget, stretch=True):
+        row = QHBoxLayout()
+        row.setSpacing(10)
+        row.addWidget(self._field_label(text))
+        if stretch:
+            row.addWidget(widget, 1)
+        else:
+            row.addWidget(widget)
+            row.addStretch(1)
+        return row
+
+    def _argsToggled(self, checked):
+        self.argumentsLine.setEnabled(checked)
+        self.saveArguments()
 
     def updateInstalledInterpreters(self):
         self.installedPythonVersionBox.clear()
@@ -190,9 +240,13 @@ class SetRunParameters(QLabel):
             self.runPointBox.currentIndex() == 0)
         self.projectSettings["TraceType"] = str(
             self.traceTypeBox.currentIndex())
+        self.projectSettings["DebugWait"] = from_bool(
+            self.debugWaitBox.isChecked())
 
     def setDefaultInterpreter(self):
-        if self.useVirtualEnvBox.isChecked():
+        use_venv = self.useVirtualEnvBox.isChecked()
+        self.installedPythonVersionBox.setEnabled(not use_venv)
+        if use_venv:
             from Extensions.python_paths import venv_python
             self.projectSettings["DefaultInterpreter"] = venv_python(
                 self.projectPathDict["venvdir"])
@@ -202,8 +256,7 @@ class SetRunParameters(QLabel):
                     self.installedPythonVersionBox.currentText()
             else:
                 self.projectSettings["DefaultInterpreter"] = 'None'
-        self.projectSettings["UseVirtualEnv"] = from_bool(
-            self.useVirtualEnvBox.isChecked())
+        self.projectSettings["UseVirtualEnv"] = from_bool(use_venv)
         self.projectSettings["DebugWait"] = from_bool(
             self.debugWaitBox.isChecked())
 

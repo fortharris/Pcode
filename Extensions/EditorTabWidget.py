@@ -95,13 +95,14 @@ class EditorTabWidget(QTabWidget):
         self.gotoLineWidget = GotoLineWidget(self)
 
         self.mainLayout = QVBoxLayout()
+        self.mainLayout.setSpacing(0)
         self.setLayout(self.mainLayout)
-        if self.useData.SETTINGS["UI"] == "Custom":
-            self.adjustToStyleSheet(True)
-        else:
-            self.adjustToStyleSheet(False)
+        self._customUiMargins = self.useData.SETTINGS["UI"] == "Custom"
+        self.adjustToStyleSheet(self._customUiMargins)
 
         self.topVBox = QVBoxLayout()
+        self.topVBox.setContentsMargins(0, 0, 0, 0)
+        self.topVBox.setSpacing(0)
         self.mainLayout.addLayout(self.topVBox)
 
         self.mainLayout.addStretch(1)
@@ -135,6 +136,8 @@ class EditorTabWidget(QTabWidget):
         self.tabSelectButton.setMenu(self.openedTabsMenu)
 
         self.setTabBar(self.tabBar)
+        # Re-measure top margin now that the real tab bar exists.
+        self.adjustToStyleSheet(self._customUiMargins)
         self.setAcceptDrops(True)
         self.setUsesScrollButtons(True)
         self.setCornerWidget(self.tabSelectButton)
@@ -150,17 +153,37 @@ class EditorTabWidget(QTabWidget):
         self.newFileMenu.addAction(self.newHtmlFileAct)
         self.newFileMenu.addAction(self.newCssFileAct)
 
+    def showEvent(self, event):
+        QTabWidget.showEvent(self, event)
+        # Tab bar height can settle after first show; keep sheets flush.
+        self.adjustToStyleSheet(getattr(self, "_customUiMargins", True))
+
     def resizeView(self, hview, vview):
         self.editorWindow.resizeView(hview, vview)
 
+    def _tab_bar_height(self):
+        # Instance attribute ``self.tabBar`` shadows QTabWidget.tabBar().
+        bar = self.__dict__.get("tabBar")
+        if bar is None:
+            bar = QTabWidget.tabBar(self)
+        if bar is None:
+            return 0
+        if bar.height() > 0:
+            return bar.height()
+        return max(0, bar.sizeHint().height())
+
     def adjustToStyleSheet(self, adjust):
+        self._customUiMargins = bool(adjust)
+        top = self._tab_bar_height()
         if adjust:
-            self.mainLayout.setContentsMargins(0, 22, 14, 12)
+            self.mainLayout.setContentsMargins(0, top, 14, 12)
         else:
-            self.mainLayout.setContentsMargins(0, 24, 25, 12)
+            self.mainLayout.setContentsMargins(0, top, 25, 12)
 
     def addToolWidget(self, widget):
         hbox = QHBoxLayout()
+        hbox.setContentsMargins(0, 0, 0, 0)
+        hbox.setSpacing(0)
         hbox.addStretch(1)
         hbox.addWidget(widget)
         self.topVBox.addLayout(hbox)
@@ -559,6 +582,8 @@ class EditorTabWidget(QTabWidget):
         for toolWidget in self.toolWidgetList:
             toolWidget.hide()
         widget.show()
+        widget.updateGeometry()
+        self.topVBox.activate()
 
     def showProjectConfiguration(self):
         self.showMe(self.configDialog)

@@ -174,3 +174,7 @@ def test_git_panel(session):
 
 def test_go_to_definition(session):
     smoke.exercise_go_to_definition(session[1], session[4])
+
+
+def test_tool_sheet_alignment(session):
+    smoke.exercise_tool_sheet_alignment(session[1])
