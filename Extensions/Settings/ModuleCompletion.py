@@ -9,15 +9,22 @@ class ModuleCompletion(QTreeWidget):
         QTreeWidget.__init__(self, parent)
 
         self.useData = useData
+        self.selectedItem = None
+        self.selectedParent = None
 
         self.setHeaderLabel("Modules")
-        for i, v in self.useData.libraryDict.items():
+        for name, value in self.useData.libraryDict.items():
+            try:
+                submodules, use = value[0], value[1]
+            except (TypeError, IndexError, KeyError):
+                continue
             item = QTreeWidgetItem(self)
-            item.setCheckState(0, False)
-            item.setText(0, i)
-            item.setCheckState(0, 2)
+            item.setText(0, name)
+            checked = str(use).lower() in ("true", "1", "yes")
+            item.setCheckState(
+                0, Qt.CheckState.Checked if checked else Qt.CheckState.Unchecked)
 
-            for sub in v[0]:
+            for sub in submodules or []:
                 subItem = QTreeWidgetItem(item)
                 subItem.setText(0, sub)
 
@@ -48,8 +55,25 @@ class ModuleCompletion(QTreeWidget):
 
     def contextMenuEvent(self, event):
         selected = self.selectedItems()
-        self.selectedItem = selected[0]
-        self.selectedParent = self.selectedItem.parent()
+        if selected:
+            self.selectedItem = selected[0]
+            self.selectedParent = self.selectedItem.parent()
+        else:
+            # Right-click on empty area (common when modules list is empty).
+            self.selectedItem = self.itemAt(event.pos())
+            self.selectedParent = (
+                self.selectedItem.parent() if self.selectedItem is not None
+                else None)
+
+        has_item = self.selectedItem is not None
+        is_top = has_item and self.selectedParent is None
+        is_child = has_item and self.selectedParent is not None
+
+        self.removeItemAct.setEnabled(is_top)
+        self.addModuleAct.setEnabled(has_item)
+        self.removeModuleAct.setEnabled(is_child)
+        # Add Library stays enabled even with an empty tree.
+        self.addItemAct.setEnabled(True)
 
         self.contextMenu.exec(event.globalPos())
 
@@ -66,11 +90,14 @@ class ModuleCompletion(QTreeWidget):
         self.editItem(newItem)
 
     def removeLibrary(self):
-        if self.selectedParent is not None:
-            itemText = self.selectedItem.text(0)
-            parentText = self.selectedParent.text(0)
-            self.useData.libraryDict[parentText][0].remove(itemText)
-            self.setItemHidden(self.selectedItem, True)
+        if self.selectedItem is None or self.selectedParent is not None:
+            return
+        name = self.selectedItem.text(0)
+        self.useData.libraryDict.pop(name, None)
+        index = self.indexOfTopLevelItem(self.selectedItem)
+        if index >= 0:
+            self.takeTopLevelItem(index)
+        self.useData.saveModulesForCompletion()
 
     def addModule(self):
         return
@@ -85,8 +112,13 @@ class ModuleCompletion(QTreeWidget):
         self.editItem(newItem)
 
     def removeModule(self):
-        if self.selectedParent is not None:
-            itemText = self.selectedItem.text(0)
-            parentText = self.selectedParent.text(0)
-            self.useData.libraryDict[parentText][0].remove(itemText)
-            self.setItemHidden(self.selectedItem, True)
+        if self.selectedItem is None or self.selectedParent is None:
+            return
+        itemText = self.selectedItem.text(0)
+        parentText = self.selectedParent.text(0)
+        entry = self.useData.libraryDict.get(parentText)
+        if entry and itemText in entry[0]:
+            entry[0].remove(itemText)
+        parent = self.selectedParent
+        parent.removeChild(self.selectedItem)
+        self.useData.saveModulesForCompletion()
