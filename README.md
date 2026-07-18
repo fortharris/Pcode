@@ -25,6 +25,9 @@ Pcode seeks to simplify the process of development in python by means of:
 1. Find-in-Files/Replace
 1. Code Library
 1. Split Editor ( Horizontal and Vertical )
+1. Command palette (Ctrl+Shift+P)
+1. Git panel (status, branch, log, stage/commit/amend)
+1. Light/Dark UI themes (Default lexer follows theme tokens)
 1. Etc.
 
 ### Download
@@ -55,7 +58,7 @@ under the workspace `stylesdir` remain XML (editor format).
 ### License:
 * GPL v3
 
-### Latest version: 0.1.5
+### Latest version: 0.2.0 (PyQt6 / `pyside` branch)
 
 Mailing List: [pcode-ide@googlegroups.com](https://groups.google.com/forum/#!forum/pcode-ide)
 

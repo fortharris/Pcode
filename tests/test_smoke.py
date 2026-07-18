@@ -17,7 +17,7 @@ _spec = importlib.util.spec_from_file_location("exercise_editor", _smoke_path)
 smoke = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(smoke)
 
-pytestmark = pytest.mark.smoke
+pytestmark = [pytest.mark.smoke, pytest.mark.timeout(300)]
 
 
 @pytest.fixture(scope="module")
@@ -47,6 +47,17 @@ def session():
 def test_main_window(session):
     win, *_ = session
     assert win.windowTitle()
+
+
+def test_open_project_creates_editor_tabs(session):
+    """Regression: loadProject must create editor tabs and a diff pane."""
+    _win, editor_window, etw, _editor, _proj_path = session
+    assert editor_window is not None
+    assert etw.count() >= 1
+    from Extensions.Diff import DiffWindow
+
+    diff = etw.getUnifiedDiff()
+    assert isinstance(diff, DiffWindow)
 
 
 def test_save(session):

@@ -1,8 +1,8 @@
 from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import (
-    QHBoxLayout, QLabel, QMenu, QStackedWidget, QTreeWidget, QTreeWidgetItem,
-    QWidget,
+    QHBoxLayout, QLabel, QMenu, QPushButton, QStackedWidget, QTreeWidget,
+    QTreeWidgetItem, QVBoxLayout, QWidget,
 )
 
 import os
@@ -17,19 +17,44 @@ import autopep8
 class ErrorCheckerThread(QThread):
 
     newAlerts = pyqtSignal(list, bool)
+    progress = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._cancelled = False
+
+    def cancel(self):
+        self._cancelled = True
 
     def run(self):
+        self._cancelled = False
         messages = []
         try:
+            self.progress.emit("Checking syntax…")
             warnings = flakeChecker(ast.parse(self.source))
+            if self._cancelled:
+                self.newAlerts.emit([], False)
+                return
             warnings.messages.sort(key=lambda a: a.lineno)
-            for warning in warnings.messages:
+            total = len(warnings.messages)
+            for idx, warning in enumerate(warnings.messages):
+                if self._cancelled:
+                    break
                 lineno = warning.lineno
                 message = warning.message
                 args = warning.message_args
                 messages.append((lineno, message % (args), args))
+                if idx and idx % 25 == 0:
+                    self.progress.emit(
+                        "Alerts: {0}/{1}…".format(idx, total))
+                    self.newAlerts.emit(list(messages), False)
+            if self._cancelled:
+                self.progress.emit("Cancelled")
             self.newAlerts.emit(messages, False)
         except SyntaxError as err:
+            if self._cancelled:
+                self.newAlerts.emit([], False)
+                return
             msg = err.msg.capitalize() + '.'
             line = err.lineno or 1
             offset = err.offset or 0
@@ -39,20 +64,32 @@ class ErrorCheckerThread(QThread):
 
     def runCheck(self, source):
         self.source = source
-
+        self._cancelled = False
         self.start()
 
 
 class Pep8CheckerThread(QThread):
 
     newAlerts = pyqtSignal(list)
+    progress = pyqtSignal(str)
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._cancelled = False
+
+    def cancel(self):
+        self._cancelled = True
 
     def run(self):
+        self._cancelled = False
         checkList = []
         try:
+            self.progress.emit("Checking style guide…")
             styleGuide = pep8.StyleGuide(reporter=Pep8Report)
             report = styleGuide.check_files([self.tempPath])
-            for i in report.all_errors:
+            for idx, i in enumerate(report.all_errors):
+                if self._cancelled:
+                    break
                 lineno = i[1]
                 offset = i[2]
                 code = i[3]
@@ -62,12 +99,19 @@ class Pep8CheckerThread(QThread):
                     # means the code has been marked to be ignored
                     continue
                 checkList.append((i[0], lineno, offset, code, error))
+                if idx and idx % 25 == 0:
+                    self.progress.emit(
+                        "Style issues: {0}…".format(len(checkList)))
+                    self.newAlerts.emit(list(checkList))
         except Exception:
             logging.error(traceback.format_exc())
+        if self._cancelled:
+            self.progress.emit("Cancelled")
         self.newAlerts.emit(checkList)
 
     def runCheck(self, tempPath):
         self.tempPath = tempPath
+        self._cancelled = False
         self.start()
 
 
@@ -203,7 +247,33 @@ class Assistant(QStackedWidget):
         for i in supportedFixes:
             self.autopep8SupportDict[i[0]] = i[1]
 
-        self.addWidget(NoAssistanceWidget())
+        # Outer layout: status/cancel bar above the stacked views.
+        shell = QWidget(self)
+        shellLayout = QVBoxLayout(shell)
+        shellLayout.setContentsMargins(0, 0, 0, 0)
+        shellLayout.setSpacing(2)
+
+        statusRow = QHBoxLayout()
+        self.statusLabel = QLabel("")
+        self.statusLabel.setStyleSheet("color: gray; padding: 2px;")
+        statusRow.addWidget(self.statusLabel, 1)
+        self.cancelButton = QPushButton("Cancel")
+        self.cancelButton.setEnabled(False)
+        self.cancelButton.setMaximumWidth(80)
+        self.cancelButton.clicked.connect(self.cancelChecks)
+        statusRow.addWidget(self.cancelButton)
+        shellLayout.addLayout(statusRow)
+
+        self.views = QStackedWidget()
+        shellLayout.addWidget(self.views, 1)
+
+        # Keep QStackedWidget API: Assistant itself remains a stacked widget
+        # with a single shell page so existing setCurrentIndex callers work
+        # against the inner views via helpers below.
+        self.addWidget(shell)
+        QStackedWidget.setCurrentIndex(self, 0)
+
+        self.views.addWidget(NoAssistanceWidget())
 
         self.errorView = QTreeWidget()
         self.errorView.setColumnCount(3)
@@ -213,11 +283,11 @@ class Assistant(QStackedWidget):
         self.errorView.setColumnWidth(1, 50)
         self.errorView.itemPressed.connect(self.alertPressed)
 
-        self.addWidget(self.errorView)
+        self.views.addWidget(self.errorView)
 
         self.pep8View = Pep8View(editorTabWidget)
         self.pep8View.itemPressed.connect(self.pep8Pressed)
-        self.addWidget(self.pep8View)
+        self.views.addWidget(self.pep8View)
 
         self.codeCheckerTimer = QTimer()
         self.codeCheckerTimer.setSingleShot(True)
@@ -232,20 +302,57 @@ class Assistant(QStackedWidget):
 
         self.codeCheckerThread = ErrorCheckerThread()
         self.codeCheckerThread.newAlerts.connect(self.updateAlertsView)
+        self.codeCheckerThread.progress.connect(self._set_status)
+        self.codeCheckerThread.finished.connect(self._checks_finished)
 
         self.pep8CheckerThread = Pep8CheckerThread()
         self.pep8CheckerThread.newAlerts.connect(self.updatePep8View)
+        self.pep8CheckerThread.progress.connect(self._set_status)
+        self.pep8CheckerThread.finished.connect(self._checks_finished)
 
         if not self.useData.setting_bool("EnableAssistance"):
-            self.setCurrentIndex(0)
+            self.views.setCurrentIndex(0)
         else:
             if self.useData.setting_bool("EnableAlerts"):
-                self.setCurrentIndex(1)
+                self.views.setCurrentIndex(1)
             if self.useData.setting_bool("enableStyleGuide"):
-                self.setCurrentIndex(2)
+                self.views.setCurrentIndex(2)
 
         self.extendedErrorsCount = 0
         self.alertsCount = 0
+
+    def setCurrentIndex(self, index):
+        # Route view switches to the inner stack; shell stays on page 0.
+        if hasattr(self, "views"):
+            self.views.setCurrentIndex(index)
+        else:
+            QStackedWidget.setCurrentIndex(self, index)
+
+    def currentIndex(self):
+        if hasattr(self, "views"):
+            return self.views.currentIndex()
+        return QStackedWidget.currentIndex(self)
+
+    def _set_status(self, text):
+        self.statusLabel.setText(text or "")
+        busy = (self.codeCheckerThread.isRunning()
+                or self.pep8CheckerThread.isRunning())
+        self.cancelButton.setEnabled(busy)
+
+    def _checks_finished(self):
+        if (self.codeCheckerThread.isRunning()
+                or self.pep8CheckerThread.isRunning()):
+            return
+        if self.statusLabel.text() != "Cancelled":
+            self.statusLabel.setText("")
+        self.cancelButton.setEnabled(False)
+
+    def cancelChecks(self):
+        self.codeCheckerTimer.stop()
+        self.codeCheckerThread.cancel()
+        self.pep8CheckerThread.cancel()
+        self.statusLabel.setText("Cancelling…")
+        self.cancelButton.setEnabled(False)
 
     def startCodeCheckerTimer(self):
         self.codeCheckerTimer.start(800)
@@ -265,12 +372,21 @@ class Assistant(QStackedWidget):
 
     def _cancel_running_checks(self):
         self.codeCheckerTimer.stop()
+        self.codeCheckerThread.cancel()
+        self.pep8CheckerThread.cancel()
+        if self.codeCheckerThread.isRunning():
+            self.codeCheckerThread.wait(500)
+        if self.pep8CheckerThread.isRunning():
+            self.pep8CheckerThread.wait(500)
+        # Last resort if a stuck C extension won't yield.
         if self.codeCheckerThread.isRunning():
             self.codeCheckerThread.terminate()
             self.codeCheckerThread.wait(200)
         if self.pep8CheckerThread.isRunning():
             self.pep8CheckerThread.terminate()
             self.pep8CheckerThread.wait(200)
+        self.cancelButton.setEnabled(False)
+        self.statusLabel.setText("")
 
     def changeWorkingMode(self):
         self._cancel_running_checks()
@@ -415,9 +531,15 @@ class Assistant(QStackedWidget):
                 or self.pep8CheckerThread.isRunning()):
             self.codeCheckerTimer.start(800)
             return
+        self.cancelButton.setEnabled(True)
+        self.statusLabel.setText("Checking…")
         if self.useData.setting_bool("EnableAlerts"):
             self.codeCheckerThread.runCheck(self.editorTabWidget.getSource())
         if self.useData.setting_bool("enableStyleGuide"):
             saved = self.editorTabWidget.saveToTemp('pep8')
             if saved:
                 self.pep8CheckerThread.runCheck(self.editorTabWidget.pep8TempPath)
+        if (not self.codeCheckerThread.isRunning()
+                and not self.pep8CheckerThread.isRunning()):
+            self.cancelButton.setEnabled(False)
+            self.statusLabel.setText("")

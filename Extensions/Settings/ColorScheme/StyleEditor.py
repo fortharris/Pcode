@@ -325,7 +325,19 @@ class StyleEditor(QWidget):
     def loadProperties(self, style_name, groupName):
         if style_name == "Default":
             properties = self.loadDefaultProperties()
-
+            # Align Default editor chrome with the active UI theme tokens.
+            from Extensions import StyleSheet
+            p = StyleSheet.CURRENT_PALETTE
+            paper = p.get("editorPaper", "#FFFFFF")
+            text = p.get("editorText", "#000000")
+            panel = p.get("panel", paper)
+            properties["Paper"] = ["Custom", paper]
+            properties["Number Margin"][0] = panel
+            properties["Number Margin"][1] = p.get("textDim", text)
+            properties["Fold Margin"] = [paper, paper]
+            properties["White Spaces"] = [paper, text]
+            properties["Active Line"] = [
+                p.get("hover", paper), text]
             return properties
 
         dom_document = QDomDocument()

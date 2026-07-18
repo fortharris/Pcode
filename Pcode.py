@@ -345,11 +345,13 @@ class Pcode(QWidget):
                 ("Save File", etw.save),
                 ("Run Project", window.runProject),
                 ("Run File", window.runFile),
+                ("Close Project", window.closeProject),
                 ("Find", window.showFinderWidget),
                 ("Replace", window.showReplaceWidget),
                 ("Find in Files", window.showFindInFilesWidget),
                 ("Go to Line", lambda: window.gotoLineAct.trigger()),
                 ("Configure Project", lambda: window.configureAct.trigger()),
+                ("Rename Symbol", etw.refactor.renameAttribute),
                 ("Panel: Output",
                  lambda: sw.setCurrentWidget(window.runWidget)),
                 ("Panel: Alerts",
@@ -363,8 +365,18 @@ class Pcode(QWidget):
                 ("Git: Refresh", lambda: window.gitPanel.refresh()),
                 ("Git: Stage File", lambda: window.gitPanel.stage_selected()),
                 ("Git: Commit", lambda: window.gitPanel.commit()),
+                ("Git: Amend", lambda: window.gitPanel.amend()),
+                ("Git: Log", lambda: window.gitPanel.show_log()),
                 ("Git: Diff at Cursor", lambda: window.gitPanel.diff_at_cursor()),
             ])
+            if window.projectPathDict.get("type") == "Desktop Application":
+                commands.append(("Build Project", window.buildProject))
+            for path in window.projectData.get("recentfiles", [])[:8]:
+                if not path:
+                    continue
+                label = "Recent File: {0}".format(os.path.basename(path))
+                commands.append(
+                    (label, lambda p=path: etw.loadfile(p)))
             keymap_dispatch = {
                 "Find": window.showFinderWidget,
                 "Replace": window.showReplaceWidget,
@@ -413,6 +425,11 @@ class Pcode(QWidget):
         self.useData.SETTINGS["Theme"] = name
         if self.useData.SETTINGS["UI"] == "Custom":
             StyleSheet.apply_theme(self.app, name)
+            # Restyle open editors so Default lexer tokens follow the theme.
+            try:
+                self.settingsWidget.colorScheme.restyleAllEditors()
+            except Exception:
+                pass
 
     def openProjectDialog(self):
         directory = QFileDialog.getExistingDirectory(

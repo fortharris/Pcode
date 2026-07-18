@@ -149,7 +149,6 @@ class FindInstalledPython(QObject):
                     # Get install location and store
                     location = winreg.QueryValue(subkey, '')
                     versionList.append(os.path.normpath(location))
-                    # Close
                     winreg.CloseKey(subkey)
                 except Exception:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -157,9 +156,8 @@ class FindInstalledPython(QObject):
                         repr(traceback.format_exception(exc_type, exc_value,
                                  exc_traceback)))
 
-                # Close keys
-                winreg.CloseKey(key)
-                winreg.CloseKey(base)
+            winreg.CloseKey(key)
+            winreg.CloseKey(base)
         # Query Python versions from file system
         for rootname in ['C:/', 'C:/Program Files', 'C:/Program Files (x86)']:
             if not os.path.isdir(rootname):

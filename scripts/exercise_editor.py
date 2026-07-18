@@ -395,6 +395,12 @@ def exercise_command_palette(win):
     """Build the palette commands, filter them, and run a safe one."""
     palette = win.commandPalette
     commands = win.buildCommands()
+    labels = [c[0] for c in commands]
+    assert any(l.startswith("Build Project") for l in labels)
+    assert "Close Project" in labels
+    assert "Rename Symbol" in labels
+    assert "Git: Amend" in labels
+    assert "Git: Log" in labels
     palette.setCommands(commands)
     palette._refilter("")
     assert palette.listWidget.count() == len(commands)
@@ -434,6 +440,13 @@ def exercise_assistant(editor_window, etw):
     editor = etw.getEditor()
     editor.setText("import os\nx = 1\n")
 
+    assert hasattr(assistant, "cancelButton")
+    assistant.runCheck()
+    # Cancel path is safe to call while checks may still be running.
+    assistant.cancelChecks()
+    assistant.codeCheckerThread.wait(10000)
+    assistant.pep8CheckerThread.wait(10000)
+    # Run a full check after cancel so views still populate for assertions.
     assistant.runCheck()
     assistant.codeCheckerThread.wait(10000)
     assistant.pep8CheckerThread.wait(10000)
@@ -443,7 +456,8 @@ def exercise_assistant(editor_window, etw):
     alerts = assistant.errorView.topLevelItemCount()
     pep8_items = assistant.pep8View.topLevelItemCount()
     print("STEP assistant OK, pyflakes alerts:", alerts,
-          "| pep8 items:", pep8_items)
+          "| pep8 items:", pep8_items,
+          "| cancel:", assistant.cancelButton.text())
 
 
 def exercise_tasks(editor_window, etw):
@@ -609,11 +623,18 @@ def exercise_bookmarks(editor_window, etw):
 
 
 def exercise_git_panel(editor_window):
-    """Refresh the read-only git status panel."""
+    """Refresh git panel and exercise branch/log/amend entry points."""
     panel = editor_window.gitPanel
     panel.refresh()
     text = panel.output.toPlainText()
-    print("STEP git-panel OK, chars:", len(text))
+    # Exercise UI helpers even when the smoke project is not a git repo.
+    panel.show_log()
+    assert hasattr(panel, "amend")
+    assert hasattr(panel, "branchBox")
+    assert hasattr(panel, "logList")
+    print("STEP git-panel OK, chars:", len(text),
+          "| branches:", panel.branchBox.count(),
+          "| log items:", panel.logList.count())
 
 
 def exercise_go_to_definition(editor_window, proj_path):
