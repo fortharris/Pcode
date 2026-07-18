@@ -88,8 +88,19 @@ $env:QT_QPA_PLATFORM = "offscreen"
 Set `PCODE_SKIP_BUILD=1` to skip the cx_Freeze build step in the smoke test (~30s saved).
 
 CI runs unit + smoke tests on every push/PR. The full cx_Freeze freeze smoke runs
-only when you manually trigger the **freeze-smoke** job via GitHub Actions
-`workflow_dispatch`.
+only when you manually trigger the **freeze-smoke** / **freeze-smoke-windows**
+jobs via GitHub Actions `workflow_dispatch`.
+
+CI creates `workspace/PcodeProjects/` before tests so headless runs never block
+on the first-run workspace dialog.
+
+### Post-merge
+
+1. Smoke-test the GUI on Windows (open project, edit, run, git).
+2. In GitHub Actions, run **workflow_dispatch** on **CI** and enable
+   **freeze-smoke** (and optionally **freeze-smoke-windows**).
+3. Tag a release after merge is verified.
+4. Optional: drop legacy XML read paths once JSON-only persistence has shipped.
 
 ## Troubleshooting
 

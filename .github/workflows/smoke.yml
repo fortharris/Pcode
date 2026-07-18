@@ -33,6 +33,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest ruff pytest-timeout
 
+      - name: Prepare test workspace
+        run: python -c "import os; os.makedirs('workspace/PcodeProjects/Projects', exist_ok=True)"
+
       - name: Lint (ruff)
         run: ruff check .
 
@@ -40,7 +43,7 @@ jobs:
         run: pytest -m "not slow and not smoke"
 
       - name: Smoke tests (pytest)
-        run: pytest tests/test_smoke.py -m "not slow"
+        run: pytest tests/test_smoke.py -m "not slow" --timeout=300
 
   test-windows:
     runs-on: windows-latest
@@ -60,6 +63,9 @@ jobs:
           pip install -r requirements.txt
           pip install pytest ruff pytest-timeout
 
+      - name: Prepare test workspace
+        run: python -c "import os; os.makedirs('workspace/PcodeProjects/Projects', exist_ok=True)"
+
       - name: Lint (ruff)
         run: ruff check .
 
@@ -67,7 +73,7 @@ jobs:
         run: pytest -m "not slow and not smoke"
 
       - name: Smoke tests (pytest)
-        run: pytest tests/test_smoke.py -m "not slow"
+        run: pytest tests/test_smoke.py -m "not slow" --timeout=300
 
   freeze-smoke:
     if: github.event_name == 'workflow_dispatch'
