@@ -28,7 +28,8 @@ class SettingsWidget(QDialog):
         self.settingsTab.setObjectName("settingsTab")
         mainLayout.addWidget(self.settingsTab)
 
-        self.generalSettings = GeneralSettings(useData, mainApp, projectWindowStack)
+        self.generalSettings = GeneralSettings(
+            useData, mainApp, projectWindowStack, host=parent)
         self.settingsTab.addTab(self.generalSettings, "General")
 
         self.snippetEditor = SnippetsManager(

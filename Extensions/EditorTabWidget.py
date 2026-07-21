@@ -180,6 +180,32 @@ class EditorTabWidget(QTabWidget):
         else:
             self.mainLayout.setContentsMargins(0, top, 25, 12)
 
+    def refreshChromeStyles(self, custom=True):
+        """Apply or clear tool-overlay and editor chrome stylesheets."""
+        self.manageFavourites.setStyleSheet(
+            StyleSheet.chrome_style("toolWidgetStyle", custom))
+        self.externalLauncher.setStyleSheet(
+            StyleSheet.chrome_style("toolWidgetStyle", custom))
+        self.setRunParameters.setStyleSheet(
+            StyleSheet.chrome_style("toolWidgetStyle", custom))
+        self.viewSwitcher.setStyleSheet(
+            StyleSheet.chrome_style("viewSwitcherStyle", custom))
+        if hasattr(self, "configDialog"):
+            self.configDialog.setStyleSheet(
+                StyleSheet.chrome_style("toolWidgetStyle", custom))
+        for i in range(self.count()):
+            try:
+                editor = self.getEditor(i)
+                if editor is not None:
+                    editor.setStyleSheet(
+                        StyleSheet.chrome_style("editorStyle", custom))
+                clone = self.getCloneEditor(i)
+                if clone is not None:
+                    clone.setStyleSheet(
+                        StyleSheet.chrome_style("editorStyle", custom))
+            except Exception:
+                pass
+
     def addToolWidget(self, widget):
         hbox = QHBoxLayout()
         hbox.setContentsMargins(0, 0, 0, 0)

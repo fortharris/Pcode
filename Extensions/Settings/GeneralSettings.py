@@ -27,12 +27,13 @@ def _section(title):
 class GeneralSettings(QWidget):
     """General preferences page (embedded in the Settings tab widget)."""
 
-    def __init__(self, useData, mainApp, projectWindowStack, parent=None):
+    def __init__(self, useData, mainApp, projectWindowStack, host=None, parent=None):
         QWidget.__init__(self, parent)
 
         self.useData = useData
         self.mainApp = mainApp
         self.projectWindowStack = projectWindowStack
+        self.host = host
         self._filter_sections = []  # (group_widget, searchable_text)
 
         root = QVBoxLayout()
@@ -378,25 +379,32 @@ class GeneralSettings(QWidget):
     # --- setters (behavior unchanged) ---------------------------------------
 
     def setUI(self, index):
-        self.useData.SETTINGS["UI"] = self.uiBox.currentText()
+        mode = self.uiBox.currentText()
+        if self.host is not None and hasattr(self.host, "applyUiMode"):
+            self.host.applyUiMode(mode)
+            return
+        self.useData.SETTINGS["UI"] = mode
         if index == 0:
             StyleSheet.apply_theme(
                 self.mainApp, self.useData.SETTINGS.get("Theme", "Light"))
         else:
-            self.mainApp.setStyleSheet(None)
+            StyleSheet.apply_native(self.mainApp)
         isCustom = (index == 0)
         for i in range(self.projectWindowStack.count() - 1):
-            editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            if isCustom:
-                editorTabWidget.adjustToStyleSheet(True)
-            else:
-                editorTabWidget.adjustToStyleSheet(False)
+            window = self.projectWindowStack.widget(i)
+            if hasattr(window, "refreshChromeStyles"):
+                window.refreshChromeStyles(isCustom)
+            if hasattr(window, "editorTabWidget"):
+                window.editorTabWidget.adjustToStyleSheet(isCustom)
 
     def setTheme(self, index):
-        self.useData.SETTINGS["Theme"] = self.themeBox.currentText()
+        theme = self.themeBox.currentText()
+        if self.host is not None and hasattr(self.host, "applyTheme"):
+            self.host.applyTheme(theme)
+            return
+        self.useData.SETTINGS["Theme"] = theme
         if self.useData.SETTINGS["UI"] == "Custom":
-            StyleSheet.apply_theme(
-                self.mainApp, self.useData.SETTINGS["Theme"])
+            StyleSheet.apply_theme(self.mainApp, theme)
 
     def setUIFontScale(self, value):
         self.useData.SETTINGS["UIFontScale"] = str(int(value))

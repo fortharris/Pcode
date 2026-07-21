@@ -86,7 +86,6 @@ class EditorWindow(QWidget):
 
         self.bottomStackSwitcher = StackSwitcher(self.bottomStack)
         self.bottomStackSwitcher.setAccessibleName("Bottom panels")
-        self.bottomStackSwitcher.setStyleSheet(StyleSheet.bottomSwitcherStyle)
 
         self.messagesWidget = MessagesWidget(
             self.bottomStackSwitcher, self.vSplitter)
@@ -338,6 +337,22 @@ class EditorWindow(QWidget):
             apply_window_data(self, layout)
 
         self.setKeymap()
+        self.refreshChromeStyles(
+            self.useData.SETTINGS.get("UI", "Custom") == "Custom")
+
+    def refreshChromeStyles(self, custom=True):
+        """Apply or clear themed chrome stylesheets for Custom vs Native UI."""
+        self.bottomStackSwitcher.setStyleSheet(
+            StyleSheet.chrome_style("bottomSwitcherStyle", custom))
+        for widget in (
+                self.manageFavourites,
+                self.externalLauncher,
+                getattr(self, "fileExplorer", None)):
+            if widget is not None:
+                widget.setStyleSheet(
+                    StyleSheet.chrome_style("toolWidgetStyle", custom))
+        if hasattr(self, "editorTabWidget"):
+            self.editorTabWidget.refreshChromeStyles(custom)
 
     def resizeView(self, hview, vview):
         hSizes = self.hSplitter.sizes()

@@ -610,6 +610,47 @@ def apply_theme(app, name):
     return styles
 
 
+def apply_native(app):
+    """Drop custom theming so Qt's native style/palette paint the UI.
+
+    Clearing only the stylesheet is not enough: a prior Dark theme leaves a
+    light ``ButtonText`` / ``WindowText`` palette that makes labels (e.g.
+    toolbar \"Menu\") invisible on light native backgrounds.
+    """
+    global CURRENT_PALETTE, CURRENT_THEME
+    CURRENT_THEME = None
+    # Keep Light tokens for Default-lexer overlays while the chrome is native.
+    CURRENT_PALETTE = dict(LIGHT)
+    globals().update(themed("Light"))
+    if app is not None:
+        app.setStyleSheet("")
+        try:
+            style = app.style()
+            if style is not None:
+                app.setPalette(style.standardPalette())
+            else:
+                from PyQt6.QtWidgets import QApplication as _QA
+                app.setPalette(_QA.style().standardPalette())
+        except Exception:
+            pass
+        # Force chrome to repaint with the restored palette.
+        try:
+            for widget in app.allWidgets():
+                widget.style().unpolish(widget)
+                widget.style().polish(widget)
+                widget.update()
+        except Exception:
+            pass
+    return themed("Light")
+
+
+def chrome_style(key, custom=True):
+    """Return a themed chrome stylesheet, or empty string for native UI."""
+    if not custom:
+        return ""
+    return globals().get(key, "")
+
+
 def theme_overlay_style(style):
     """Overlay UI-theme editor tokens onto a lexer Default style dict.
 

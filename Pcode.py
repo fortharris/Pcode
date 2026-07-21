@@ -69,6 +69,8 @@ class Pcode(QWidget):
 
         if self.useData.SETTINGS["UI"] == "Custom":
             StyleSheet.apply_theme(app, self.useData.SETTINGS.get("Theme", "Light"))
+        else:
+            StyleSheet.apply_native(app)
         StyleSheet.apply_ui_font_scale(
             app, self.useData.SETTINGS.get("UIFontScale", "100"))
 
@@ -78,7 +80,6 @@ class Pcode(QWidget):
         self.projectTitleBox = QComboBox()
         self.projectTitleBox.setAccessibleName("Open projects")
         self.projectTitleBox.setMinimumWidth(180)
-        self.projectTitleBox.setStyleSheet(StyleSheet.projectTitleBoxStyle)
         self.projectTitleBox.setItemDelegate(QStyledItemDelegate())
         self.projectTitleBox.currentIndexChanged.connect(self.projectChanged)
         self.projectTitleBox.activated.connect(self.projectChanged)
@@ -125,7 +126,6 @@ class Pcode(QWidget):
         mainLayout.addWidget(self.pagesStack)
 
         self.projectSwitcher = StackSwitcher(self.pagesStack)
-        self.projectSwitcher.setStyleSheet(StyleSheet.mainMenuStyle)
         hbox.addWidget(self.projectSwitcher)
 
         self.addPage(self.projectWindowStack, "EDITOR", QIcon(
@@ -163,6 +163,7 @@ class Pcode(QWidget):
         self.quickOpen = QuickOpen(self)
 
         self.setKeymap()
+        self.refreshChromeStyles()
 
         if self.useData.bootstrap_bool("firstRun", True):
             self.showMaximized()
@@ -458,11 +459,42 @@ class Pcode(QWidget):
         self.useData.SETTINGS["Theme"] = name
         if self.useData.SETTINGS["UI"] == "Custom":
             StyleSheet.apply_theme(self.app, name)
+            self.refreshChromeStyles()
             # Restyle open editors so Default lexer tokens follow the theme.
             try:
                 self.settingsWidget.colorScheme.restyleAllEditors()
             except Exception:
                 pass
+
+    def applyUiMode(self, mode):
+        """Apply Custom or Native chrome. ``mode`` is ``Custom`` or ``Native``."""
+        self.useData.SETTINGS["UI"] = mode
+        if mode == "Custom":
+            StyleSheet.apply_theme(
+                self.app, self.useData.SETTINGS.get("Theme", "Light"))
+        else:
+            StyleSheet.apply_native(self.app)
+        self.refreshChromeStyles()
+        isCustom = (mode == "Custom")
+        for i in range(self.projectWindowStack.count() - 1):
+            window = self.projectWindowStack.widget(i)
+            if hasattr(window, "editorTabWidget"):
+                window.editorTabWidget.adjustToStyleSheet(isCustom)
+
+    def refreshChromeStyles(self):
+        """Apply or clear per-widget chrome stylesheets for the current UI mode."""
+        custom = self.useData.SETTINGS.get("UI", "Custom") == "Custom"
+        self.projectTitleBox.setStyleSheet(
+            StyleSheet.chrome_style("projectTitleBoxStyle", custom))
+        self.projectSwitcher.setStyleSheet(
+            StyleSheet.chrome_style("mainMenuStyle", custom))
+        for i in range(self.projectWindowStack.count()):
+            window = self.projectWindowStack.widget(i)
+            if hasattr(window, "refreshChromeStyles"):
+                window.refreshChromeStyles(custom)
+            elif hasattr(window, "bottomStackSwitcher"):
+                window.bottomStackSwitcher.setStyleSheet(
+                    StyleSheet.chrome_style("bottomSwitcherStyle", custom))
 
     def openProjectDialog(self):
         directory = QFileDialog.getExistingDirectory(
