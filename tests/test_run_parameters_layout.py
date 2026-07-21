@@ -44,12 +44,32 @@ def test_pass_arguments_toggles_field(app):
     assert sheet.projectSettings["RunWithArguments"] in (True, "True")
 
 
-def test_venv_disables_interpreter_combo(app):
+def test_venv_disables_interpreter_combo(app, tmp_path):
+    venv = tmp_path / "Venv"
+    if sys.platform == "win32":
+        (venv / "Scripts").mkdir(parents=True)
+        (venv / "Scripts" / "python.exe").write_text("", encoding="utf-8")
+    else:
+        (venv / "bin").mkdir(parents=True)
+        (venv / "bin" / "python").write_text("", encoding="utf-8")
     use = type("U", (), {"SETTINGS": {"InstalledInterpreters": [sys.executable]}})()
-    sheet = SetRunParameters(_settings(), {"venvdir": "/tmp/venv"}, use)
+    sheet = SetRunParameters(_settings(), {"venvdir": str(venv)}, use)
     assert sheet.installedPythonVersionBox.isEnabled()
     sheet.useVirtualEnvBox.setChecked(True)
+    assert sheet.useVirtualEnvBox.isChecked()
     assert not sheet.installedPythonVersionBox.isEnabled()
+
+
+def test_venv_missing_keeps_checkbox_off(app, monkeypatch):
+    use = type("U", (), {"SETTINGS": {"InstalledInterpreters": [sys.executable]}})()
+    sheet = SetRunParameters(_settings(), {"venvdir": "/tmp/missing-venv"}, use)
+    monkeypatch.setattr(
+        "Extensions.BottomWidgets.RunWidget.QMessageBox.warning",
+        lambda *a, **k: None)
+    sheet.useVirtualEnvBox.setChecked(True)
+    assert not sheet.useVirtualEnvBox.isChecked()
+    assert sheet.installedPythonVersionBox.isEnabled()
+    assert sheet.projectSettings["UseVirtualEnv"] in (False, "False")
 
 
 def test_section_labels_present(app):

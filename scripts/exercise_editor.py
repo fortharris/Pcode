@@ -397,7 +397,7 @@ def exercise_command_palette(win):
     palette = win.commandPalette
     commands = win.buildCommands()
     labels = [c[0] for c in commands]
-    assert any(l.startswith("Build Project") for l in labels)
+    assert any(label.startswith("Build Project") for label in labels)
     assert "Close Project" in labels
     assert "Rename Symbol" in labels
     assert "Git: Amend" in labels

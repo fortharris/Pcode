@@ -293,8 +293,12 @@ class Refactor(QWidget):
 
         self.ropeProject = Project(
             projectroot=self.root, ropefolder=ropeFolder, **prefs)
-        interpreter = (self.useData.SETTINGS.get("DefaultInterpreter")
-                       or sys.executable)
+        interpreter = self.editorTabWidget.projectSettings.get(
+            "DefaultInterpreter")
+        if not interpreter or interpreter == "None" or not os.path.isfile(
+                interpreter):
+            interpreter = (self.useData.SETTINGS.get("DefaultInterpreter")
+                           or sys.executable)
         if interpreter and interpreter != "None" and os.path.isfile(interpreter):
             self.ropeProject.prefs.add('python_path',
                                        os.path.dirname(interpreter))

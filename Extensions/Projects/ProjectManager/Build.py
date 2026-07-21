@@ -8,6 +8,7 @@ from PyQt6.QtCore import QThread, QTime
 from PyQt6.QtWidgets import QMessageBox, QWidget
 
 from Extensions.settings_utils import to_bool
+from Extensions.python_paths import venv_search_paths
 
 
 class BuildThread(QThread):
@@ -102,15 +103,9 @@ class BuildThread(QThread):
                            base=base,
                            icon=iconPath)]
             if to_bool(self.projectSettings["UseVirtualEnv"]):
-                venv_path = self.projectPathDict["venvdir"]
-                path = [p for p in [
-                    self.projectPathDict['sourcedir'],
-                    os.path.join(venv_path, "Scripts"),
-                    os.path.join(venv_path, "bin"),
-                    os.path.join(venv_path, "Lib"),
-                    os.path.join(venv_path, "Lib", "site-packages"),
-                    os.path.join(venv_path, "Include"),
-                ] if os.path.isdir(p)]
+                path = venv_search_paths(
+                    self.projectPathDict["venvdir"],
+                    sourcedir=self.projectPathDict['sourcedir'])
             else:
                 path = self._interpreter_search_paths(
                     self.projectSettings["DefaultInterpreter"])

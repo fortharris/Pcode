@@ -71,7 +71,7 @@ extend-exclude = '''
 line-length = 88
 # Vendored / generated trees are out of scope for linting.
 extend-exclude = [
-    "rope", "cx_Freeze", "Xtra", "pyflakes", "pep8.py", "Resources", "Pvenv",
+    "rope", "cx_Freeze", "Xtra", "pyflakes", "pep8.py", "Resources",
     ".pcode-venv", "workspace",
 ]
 

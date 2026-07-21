@@ -272,10 +272,21 @@ class SetRunParameters(QLabel):
         use_venv = self.useVirtualEnvBox.isChecked()
         self.installedPythonVersionBox.setEnabled(not use_venv)
         if use_venv:
-            from Extensions.python_paths import venv_python
-            self.projectSettings["DefaultInterpreter"] = venv_python(
-                self.projectPathDict["venvdir"])
-        else:
+            from Extensions.python_paths import venv_exists, venv_python
+            venvdir = self.projectPathDict["venvdir"]
+            if not venv_exists(venvdir):
+                self.useVirtualEnvBox.blockSignals(True)
+                self.useVirtualEnvBox.setChecked(False)
+                self.useVirtualEnvBox.blockSignals(False)
+                self.installedPythonVersionBox.setEnabled(True)
+                QMessageBox.warning(
+                    self, "Virtual environment",
+                    "Install a virtual environment in Project Configure first.")
+                use_venv = False
+            else:
+                self.projectSettings["DefaultInterpreter"] = venv_python(
+                    venvdir)
+        if not use_venv:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) > 0:
                 self.projectSettings["DefaultInterpreter"] = \
                     self.installedPythonVersionBox.currentText()
@@ -615,12 +626,7 @@ class RunWidget(BaseScintilla):
             return None
         else:
             if os.path.exists(self.projectData["DefaultInterpreter"]):
-                if len(self.useData.SETTINGS["InstalledInterpreters"]) == 0:
-                    QMessageBox.critical(
-                        self, "Run", "Python must be installed for virtual environment to work.")
-                    return None
-                else:
-                    return self.projectData["DefaultInterpreter"]
+                return self.projectData["DefaultInterpreter"]
             else:
                 QMessageBox.critical(
                     self, "Run", "The current Python interpreter is not available.")

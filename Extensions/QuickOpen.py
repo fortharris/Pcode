@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
 )
 
 _SKIP_DIRS = {
-    ".git", "__pycache__", ".venv", "venv", ".pcode-venv",
+    ".git", "__pycache__", ".venv", "venv", ".pcode-venv", "VirtualEnv",
     "node_modules", ".tox", ".mypy_cache", ".pytest_cache",
     "Rope", "Build",
 }

@@ -7,19 +7,14 @@
 
 **Note:** The editor uses [QScintilla](https://www.riverbankcomputing.com/software/qscintilla/), which only ships official Python bindings for **PyQt6**, not PySide6. This migration uses **PyQt6** + `PyQt6-QScintilla`.
 
-The repo’s top-level `Pvenv/` folder is the app’s virtual-environment builder (renamed from `venv/` to avoid shadowing Python’s stdlib `venv` module). Create `.pcode-venv` from the **parent** directory (see below).
-
 ## Setup
 
-From the repository root (not inside the `venv/` package folder):
+From the repository root:
 
 ```powershell
 cd C:\Users\Harrison\Documents\GitHub\Pcode
 
-# Create virtualenv from parent dir (legacy `Pvenv/` package must not shadow stdlib venv)
-cd ..
-python -m venv Pcode\.pcode-venv
-cd Pcode
+python -m venv .pcode-venv
 
 .\.pcode-venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
@@ -130,5 +125,4 @@ do not remove those readers until a later release cycle.
 ## Troubleshooting
 
 - **`No module named 'PySide6.Qsci'`** — use this branch’s `requirements.txt` (PyQt6-QScintilla), not PySide6 alone.
-- **`python -m venv` fails** — run venv creation from the parent directory (see above).
 - **Build / cx_Freeze** — the build/freeze feature uses modern `cx_Freeze` (installed via `requirements.txt` or the `build` extra).

@@ -20,7 +20,7 @@ pip install -e .
 pcode
 ```
 
-See [RUN.md](../RUN.md) for virtualenv setup, tests, and troubleshooting.
+See [RUN.md](../RUN.md) for developer virtualenv setup, tests, and troubleshooting.
 Release steps: [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 There is no standalone IDE installer yet. Releases ship as source plus notes on
@@ -34,6 +34,23 @@ There is no standalone IDE installer yet. Releases ship as source plus notes on
 3. Run the current file or the project from the toolbar / Run panel.
 4. Use **Ctrl+P** for Quick Open (fuzzy file finder) and **Ctrl+Shift+P** for
    the command palette.
+
+## Project virtual environments
+
+Each project can have its own virtual environment under
+`Resources/VirtualEnv/<Platform>/Venv` (Platform is `Windows`, `Mac`, or
+`Linux`).
+
+1. Open **Project Configure → Virtual Environment**.
+2. **Install** against a detected Python installation (creates the env with
+   pip via `python -m venv --upgrade-deps`).
+3. Use **Upgrade** / **Uninstall** to refresh or remove it; **Open** reveals
+   the folder in the system file manager.
+4. In **Run Parameters**, enable **Use virtual environment** so Run, Debug,
+   Build, and rope analysis use that interpreter.
+
+Packages appear under the venv’s `site-packages` tree in the Configure tab.
+Install packages with the venv’s `python -m pip` from a terminal.
 
 ## Everyday features
 

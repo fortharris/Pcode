@@ -5,6 +5,10 @@
 ### Workflow
 - Run arguments are split with `shlex` (quoted paths work); profiler forwards args too
 - Go-to-Definition runs on a background thread
+- Project venvs are created with the selected base interpreter via
+  `python -m venv` (with pip); Configure / Run / Build / rope share path helpers
+- Enabling **Use virtual environment** requires an installed project venv first
+- Quick Open skips `VirtualEnv` project trees
 - Project venv install/upgrade runs off the UI thread with a progress dialog
 - Quick Open (Ctrl+P) fuzzy file finder; Print default shortcut moved to Ctrl+Alt+P
 - Git panel: Fetch / Pull / Push (async, 120s timeout)

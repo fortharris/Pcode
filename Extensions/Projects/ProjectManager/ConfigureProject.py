@@ -1,16 +1,16 @@
 import os
-import sys
 import shutil
-
+import subprocess
+import sys
 
 from Extensions.Projects.ProjectManager.ProjectView.ProjectView import IconProvider
-from Pvenv import EnvBuilder
+from Extensions.python_paths import venv_create_command, venv_site_packages
 
 from Extensions import StyleSheet
 from Extensions.file_dialog_utils import file_dialog_path
-from PyQt6.QtCore import QDir, Qt, QThread, pyqtSignal
+from PyQt6.QtCore import QDir, Qt, QThread, QUrl, pyqtSignal
 from PyQt6.QtGui import (
-    QIcon, QFileSystemModel, QPalette,
+    QDesktopServices, QIcon, QFileSystemModel, QPalette,
 )
 from PyQt6.QtWidgets import (
     QApplication, QComboBox, QDialog, QFileDialog, QFormLayout,
@@ -35,8 +35,17 @@ class VenvWorker(QThread):
 
     def run(self):
         try:
-            builder = EnvBuilder(self.python_path, upgrade=self.upgrade)
-            builder.create(self.venvdir)
+            args = venv_create_command(
+                self.python_path, self.venvdir, upgrade=self.upgrade)
+            completed = subprocess.run(
+                args, check=False, capture_output=True, text=True)
+            if completed.returncode != 0:
+                detail = (completed.stderr or completed.stdout or "").strip()
+                if not detail:
+                    detail = "venv exited with code {0}".format(
+                        completed.returncode)
+                self.failed.emit(detail)
+                return
             self.succeeded.emit()
         except Exception as err:
             self.failed.emit(str(err))
@@ -289,10 +298,9 @@ class VenvSetup(QWidget):
         self.treeView.setColumnWidth(0, 300)
         mainLayout.addWidget(self.treeView)
 
-        self.packagesPath = os.path.join(
-            self.projectPathDict["venvdir"], "Lib", "site-packages")
+        self._refresh_packages_path()
         if os.path.exists(self.projectPathDict["venvdir"]):
-            self.currentVersionLabel.setText(self.setVesionFromVenv())
+            self.currentVersionLabel.setText(self.setVersionFromVenv())
             self.treeView.setRootIndex(
                 self.treeView.model().index(self.packagesPath))
 
@@ -311,11 +319,15 @@ class VenvSetup(QWidget):
         self.uninstallVenvButton.clicked.connect(self.uninstall)
         hbox.addWidget(self.uninstallVenvButton)
 
-    def openVenv(self):
-        if os.path.exists(self.projectPathDict["venvdir"]):
-            os.startfile(self.projectPathDict["venvdir"])
+    def _refresh_packages_path(self):
+        self.packagesPath = venv_site_packages(self.projectPathDict["venvdir"])
 
-    def setVesionFromVenv(self):
+    def openVenv(self):
+        venvdir = self.projectPathDict["venvdir"]
+        if os.path.exists(venvdir):
+            QDesktopServices.openUrl(QUrl.fromLocalFile(venvdir))
+
+    def setVersionFromVenv(self):
         path = os.path.join(self.projectPathDict["venvdir"], 'pyvenv.cfg')
         tempList = []
         with open(path, 'r') as file:
@@ -369,10 +381,10 @@ class VenvSetup(QWidget):
             return
         if not os.path.exists(self.projectPathDict["venvdir"]):
             QMessageBox.information(
-                self, "Install", "No virtual environment to upgrade.")
+                self, "Upgrade", "No virtual environment to upgrade.")
             return
-        reply = QMessageBox.warning(self, "Install",
-                                         "This will upgrade the current the virtual environment.\n\nProceed?",
+        reply = QMessageBox.warning(self, "Upgrade",
+                                         "This will upgrade the current virtual environment.\n\nProceed?",
                                          QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
         if reply == QMessageBox.StandardButton.Yes:
             if len(self.useData.SETTINGS["InstalledInterpreters"]) == 0:
@@ -423,10 +435,11 @@ class VenvSetup(QWidget):
             QMessageBox.warning(
                 self, "Failed {0}".format(title), error or "Unknown error")
             return
+        self._refresh_packages_path()
         self.treeView.setModel(self.newFileSystemModel())
         self.treeView.setRootIndex(
             self.treeView.model().index(self.packagesPath))
-        self.currentVersionLabel.setText(self.setVesionFromVenv())
+        self.currentVersionLabel.setText(self.setVersionFromVenv())
         QMessageBox.information(
             self, title,
             "{0} virtual environment completed.".format(title))
