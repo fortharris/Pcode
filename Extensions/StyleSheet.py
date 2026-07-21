@@ -266,13 +266,25 @@ _GLOBAL_TEMPLATE = Template("""
             background: none;
             color: $textDim;
             border: none;
-            min-width: 24ex;
-            min-height: 5ex;
-            padding: 2px 5px;
+            border-bottom: 2px solid transparent;
+            min-width: 12ex;
+            min-height: 4ex;
+            padding: 3px 10px;
         }
-        QTabBar::tab:hover { background: $accentHover; color: $text; }
-        QTabBar::tab:selected { background: $accent; color: $accentText; }
+        QTabBar::tab:hover { background: $hover; color: $text; }
+        QTabBar::tab:selected {
+            background: $panelAlt;
+            color: $text;
+            border-bottom: 2px solid $accent;
+        }
         QTabBar::tab:!selected { margin-top: 0px; }
+
+        /* Editor tabs: slightly quieter than settings/side tabs. */
+        QTabBar#editorTabBar::tab:selected {
+            background: transparent;
+            color: $text;
+            border-bottom: 2px solid $accent;
+        }
 
         QToolBar { border: none; background-color: transparent; }
         QToolBar QToolButton {
@@ -285,8 +297,16 @@ _GLOBAL_TEMPLATE = Template("""
         QToolBar QToolButton:disabled { background-color: transparent; }
         QToolBar QToolButton:checked { background-color: $accent; }
 
-        QStatusBar { background: transparent; }
-        QStatusBar::item { border-radius: 3px; }
+        QStatusBar {
+            background: transparent;
+            color: $textDim;
+            border-top: 1px solid $border;
+        }
+        QStatusBar::item { border: none; }
+        QStatusBar QLabel, QStatusBar QToolButton {
+            color: $textDim;
+            padding: 0 4px;
+        }
 
         QDockWidget { color: $dockTitleText; }
         QDockWidget::title {
@@ -473,20 +493,20 @@ _PROJECT_TITLE_TEMPLATE = Template("""
 
 _BOTTOM_SWITCHER_TEMPLATE = Template("""
         QPushButton {
-            min-height: 17px;
+            min-height: 18px;
             background: none;
             color: $textDim;
             border: none;
             border-radius: 0px;
-            min-width: 13ex;
-            padding: 2px;
+            min-width: 28px;
+            padding: 2px 6px;
         }
-        QPushButton:hover { color: $text; background: none; }
+        QPushButton:hover { color: $text; background: $hover; }
         QPushButton:pressed { background: none; }
         QPushButton:checked {
             color: $text;
-            border-left: 1px solid $border;
-            border-right: 1px solid $border;
+            border-bottom: 2px solid $accent;
+            background: transparent;
         }
         QPushButton:disabled { color: $textDim; background: none; }
         """)
@@ -511,14 +531,20 @@ _EDITOR_TEMPLATE = Template("""
 
 _MAIN_MENU_TEMPLATE = Template("""
         QPushButton {
-            padding: 2px 6px;
+            padding: 4px 8px;
             color: $textDim;
             background: transparent;
             border: none;
-            border-radius: 0px;
+            border-radius: 2px;
+            min-width: 28px;
         }
-        QPushButton:hover { color: $text; }
-        QPushButton:checked { color: $text; border-bottom: 2px solid $accent; }
+        QPushButton:hover { color: $text; background: $hover; }
+        QPushButton:checked {
+            color: $text;
+            border-bottom: 2px solid $accent;
+            border-radius: 0px;
+            background: transparent;
+        }
         """)
 
 _TOOL_WIDGET_TEMPLATE = Template("""

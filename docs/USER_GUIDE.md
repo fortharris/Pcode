@@ -51,6 +51,7 @@ There is no standalone IDE installer yet. Releases ship as source plus notes on
 | Freeze | Desktop Application projects → Build (cx_Freeze) |
 | Themes | Settings → Theme (Light / Dark / System) |
 | UI style | Settings → UI style: **Custom** (uses Theme) or **System** (OS light/dark + Pcode chrome) |
+| Layout | Sidebar on the left; outline collapsed by default; thin toolbar with **⋯** overflow |
 | UI scale | Settings → UI Font Scale (accessibility) |
 | Print | Default shortcut **Ctrl+Alt+P** |
 

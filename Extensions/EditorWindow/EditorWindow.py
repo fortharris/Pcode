@@ -26,6 +26,7 @@ from Extensions.BottomWidgets.RunWidget import RunWidget
 from Extensions.BottomWidgets.Messages import MessagesWidget
 from Extensions.StackSwitcher import StackSwitcher
 from Extensions import StyleSheet
+from Extensions.Icons import tinted_icon
 from Extensions.EditorWindow.BuildStatusWidget import BuildStatusWidget
 from Extensions.EditorWindow.VerticalSplitter import VerticalSplitter
 from Extensions.BottomWidgets.Profiler import Profiler
@@ -82,10 +83,12 @@ class EditorWindow(QWidget):
         self.bottomStack = QStackedWidget()
         self.vSplitter.addWidget(self.bottomStack)
 
-        self.hSplitter.addWidget(widget)
+        # Sidebar is built below and inserted at index 0 (left of editor).
+        self._editorColumn = widget
 
         self.bottomStackSwitcher = StackSwitcher(self.bottomStack)
         self.bottomStackSwitcher.setAccessibleName("Bottom panels")
+        self.bottomStackSwitcher.setObjectName("bottomStackSwitcher")
 
         self.messagesWidget = MessagesWidget(
             self.bottomStackSwitcher, self.vSplitter)
@@ -149,7 +152,11 @@ class EditorWindow(QWidget):
         self.sideSplitter = QSplitter()
         self.sideSplitter.setObjectName("sidebarItem")
         self.sideSplitter.setOrientation(Qt.Orientation.Horizontal)
+        # Sidebar on the left; editor takes the remaining space.
         self.hSplitter.addWidget(self.sideSplitter)
+        self.hSplitter.addWidget(self._editorColumn)
+        self.hSplitter.setStretchFactor(0, 0)
+        self.hSplitter.setStretchFactor(1, 1)
 
         self.sideSplitter.addWidget(self.outline)
 
@@ -229,7 +236,8 @@ class EditorWindow(QWidget):
         self.linesLabel.setMinimumWidth(50)
         self.statusbar.addPermanentWidget(self.linesLabel)
         #*** encoding
-        self.encodingLabel = QLabel("Coding: utf-8")
+        self.encodingLabel = QLabel("utf-8")
+        self.encodingLabel.setToolTip("File encoding")
         self.statusbar.addPermanentWidget(self.encodingLabel)
         self.debugStatusLabel = QLabel()
         self.debugStatusLabel.setAccessibleName("Debug status")
@@ -272,39 +280,34 @@ class EditorWindow(QWidget):
         self.debugStepOutButton.hide()
         self.statusbar.addPermanentWidget(self.debugStepOutButton)
 
-        #*** uptime
+        #*** uptime (tooltip only — keeps the footer quiet)
         self.uptimeLabel = QLabel()
         self.uptimeLabel.setText("Uptime: 0min")
-        self.statusbar.addPermanentWidget(self.uptimeLabel)
+        self.uptimeLabel.hide()
+        self.statusbar.setToolTip("Uptime: 0min")
 
         self.runWidget = RunWidget(
             self.bottomStackSwitcher, self.projectData[
                 "settings"], self.useData,
             self.editorTabWidget, self.vSplitter,
             self.runProjectAct, self.stopRunAct, self.runFileAct)
-        self.addBottomWidget(self.runWidget,
-                             QIcon(os.path.join("Resources", "images", "graphic-design")),  "Output")
+        self.addBottomWidget(self.runWidget, tinted_icon("graphic-design"), "Output")
 
         self.assistantWidget = Assistant(
             self.editorTabWidget, self.bottomStackSwitcher)
-        self.addBottomWidget(self.assistantWidget,
-                             QIcon(os.path.join("Resources", "images", "flag")), "Alerts")
+        self.addBottomWidget(self.assistantWidget, tinted_icon("flag"), "Alerts")
 
         self.bookmarkWidget = BookmarkWidget(
             self.editorTabWidget, self.bottomStackSwitcher)
-        self.addBottomWidget(self.bookmarkWidget,
-                             QIcon(os.path.join("Resources", "images", "tag")), "Bookmarks")
+        self.addBottomWidget(self.bookmarkWidget, tinted_icon("tag"), "Bookmarks")
 
         self.tasksWidget = Tasks(self.editorTabWidget, self.bottomStackSwitcher)
-        self.addBottomWidget(self.tasksWidget,
-                             QIcon(os.path.join("Resources", "images", "issue")), "Tasks")
+        self.addBottomWidget(self.tasksWidget, tinted_icon("issue"), "Tasks")
 
-        self.addBottomWidget(self.messagesWidget,
-                             QIcon(os.path.join("Resources", "images", "speech_bubble")), "Messages")
+        self.addBottomWidget(self.messagesWidget, tinted_icon("speech_bubble"), "Messages")
 
         self.profiler = Profiler(self.useData, self.bottomStackSwitcher)
-        self.addBottomWidget(self.profiler,
-                             QIcon(os.path.join("Resources", "images", "settings")), "Profiler")
+        self.addBottomWidget(self.profiler, tinted_icon("settings"), "Profiler")
         self.runWidget.loadProfile.connect(
             self.profiler.viewProfile)
         self.runWidget.debugStatusChanged.connect(
@@ -312,18 +315,20 @@ class EditorWindow(QWidget):
         self.runWidget.debugSessionActive.connect(self._setDebugControlsVisible)
         self.runWidget.debugStoppedAt.connect(self._onDebugStoppedAt)
 
-        self.addBottomWidget(self.findInFiles,
-                             QIcon(os.path.join("Resources", "images", "attibutes")), "Find-in-Files")
+        self.addBottomWidget(self.findInFiles, tinted_icon("attibutes"), "Find-in-Files")
 
         self.bottomStackSwitcher.setDefault()
 
         hbox = QHBoxLayout()
-        hbox.setContentsMargins(0, 0, 0, 0)
+        hbox.setContentsMargins(4, 0, 4, 0)
         hbox.setSpacing(0)
         hbox.addWidget(self.bottomStackSwitcher)
         hbox.addStretch(1)
         hbox.addWidget(self.statusbar)
-        mainLayout.addLayout(hbox)
+        footer = QWidget()
+        footer.setObjectName("editorFooter")
+        footer.setLayout(hbox)
+        mainLayout.addWidget(footer)
 
         self.uptime = 0
         self.uptimeTimer = QTimer()
@@ -331,17 +336,22 @@ class EditorWindow(QWidget):
         self.uptimeTimer.timeout.connect(self.updateUptime)
         self.uptimeTimer.start()
 
-        from Extensions.WindowData import load as load_window_data, apply as apply_window_data
+        from Extensions.WindowData import (
+            load as load_window_data, apply as apply_window_data,
+            apply_defaults as apply_layout_defaults,
+        )
         layout = load_window_data(projectPathDict["root"])
         if layout:
             apply_window_data(self, layout)
+        else:
+            apply_layout_defaults(self)
 
         self.setKeymap()
         self.refreshChromeStyles(
             StyleSheet.uses_themed_chrome(self.useData.SETTINGS))
 
     def refreshChromeStyles(self, custom=True):
-        """Apply or clear themed chrome stylesheets for Custom vs Native UI."""
+        """Apply or clear themed chrome stylesheets for Custom vs System UI."""
         self.bottomStackSwitcher.setStyleSheet(
             StyleSheet.chrome_style("bottomSwitcherStyle", custom))
         for widget in (
@@ -353,14 +363,17 @@ class EditorWindow(QWidget):
                     StyleSheet.chrome_style("toolWidgetStyle", custom))
         if hasattr(self, "editorTabWidget"):
             self.editorTabWidget.refreshChromeStyles(custom)
+        if hasattr(self, "runProjectAct"):
+            self.refreshToolbarIcons()
 
     def resizeView(self, hview, vview):
+        # hSplitter: [0]=sidebar, [1]=editor
         hSizes = self.hSplitter.sizes()
         vSizes = self.vSplitter.sizes()
         if hview == 1:
-            self.hSplitter.setSizes([hSizes[0] + 2, hSizes[1] - 2])
-        elif hview == -1:
             self.hSplitter.setSizes([hSizes[0] - 2, hSizes[1] + 2])
+        elif hview == -1:
+            self.hSplitter.setSizes([hSizes[0] + 2, hSizes[1] - 2])
 
         if vview == 1:
             self.vSplitter.setSizes([vSizes[0] + 2, vSizes[1] - 2])
@@ -458,6 +471,12 @@ class EditorWindow(QWidget):
                 "Writepad", self, statusTip="Writepad",
                 triggered=self.showWritePad)
 
+        self.toggleOutlineAct = QAction(
+            QIcon(os.path.join("Resources", "images", "tree")),
+            "Toggle Outline", self,
+            statusTip="Show or hide the code outline",
+            triggered=self.toggleOutline)
+
         self.buildAct = \
             QAction(
                 "Build", self,
@@ -528,7 +547,19 @@ class EditorWindow(QWidget):
         self.projects.closeProject()
 
     def updateEncodingLabel(self, text):
-        self.encodingLabel.setText(text)
+        # Accept "Coding: utf-8" or bare encoding names.
+        label = text.replace("Coding:", "").strip() if text else "utf-8"
+        self.encodingLabel.setText(label)
+        self.encodingLabel.setToolTip("File encoding: {0}".format(label))
+
+    def toggleOutline(self):
+        sizes = self.sideSplitter.sizes()
+        total = sum(sizes) or 240
+        if sizes and sizes[0] > 8:
+            self.sideSplitter.setSizes([0, total])
+        else:
+            outline = max(160, total // 3)
+            self.sideSplitter.setSizes([outline, max(80, total - outline)])
 
     def showGotoLineWidget(self):
         self.editorTabWidget.showGotoLineWidget()
@@ -538,6 +569,9 @@ class EditorWindow(QWidget):
 
     def addBottomWidget(self, widget, icon, name):
         self.bottomStack.addWidget(widget)
+        # Prefer monochrome chrome icons when a path/name was given as QIcon
+        # from a PNG; re-tint from the file path stored on the icon is hard,
+        # so callers pass QIcon — we wrap common panels via tinted names below.
         self.bottomStackSwitcher.addButton(toolTip=name, icon=icon)
 
     def showWritePad(self):
@@ -556,58 +590,113 @@ class EditorWindow(QWidget):
         self.findInFiles.dashboard.show()
 
     def createToolbars(self):
+        self.refreshToolbarIcons()
 
         self.editorMenuButton = QToolButton()
-        self.editorMenuButton.setText("Menu")
-        self.editorMenuButton.setToolButtonStyle(
-            Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.editorMenuButton.setToolTip("Menu")
+        self.editorMenuButton.setAccessibleName("Menu")
         self.editorMenuButton.setAutoRaise(True)
         self.editorMenuButton.setPopupMode(
             QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.editorMenuButton.setIcon(QIcon(
-            os.path.join("Resources", "images", "Dashboard")))
+        self.editorMenuButton.setIcon(tinted_icon("Dashboard"))
         self.editorMenuButton.setMenu(self.mainMenu)
 
+        # Primary actions only — everything else lives in More / Menu / palette.
         self.standardToolbar.addWidget(self.editorMenuButton)
         self.standardToolbar.addAction(self.editorTabWidget.openFileAct)
         self.standardToolbar.addAction(self.editorTabWidget.newPythonFileAct)
         self.standardToolbar.addSeparator()
         self.standardToolbar.addAction(self.editorTabWidget.saveAct)
-        self.standardToolbar.addAction(self.editorTabWidget.saveAllAct)
         self.standardToolbar.addAction(self.editorTabWidget.undoAct)
         self.editorTabWidget.undoAct.setDisabled(True)
         self.standardToolbar.addAction(self.editorTabWidget.redoAct)
         self.editorTabWidget.redoAct.setDisabled(True)
         self.standardToolbar.addSeparator()
-        self.standardToolbar.addAction(self.editorTabWidget.cutAct)
-        self.editorTabWidget.cutAct.setDisabled(True)
-        self.standardToolbar.addAction(self.editorTabWidget.copyAct)
-        self.editorTabWidget.copyAct.setDisabled(True)
-        self.standardToolbar.addAction(self.editorTabWidget.pasteAct)
-        self.standardToolbar.addSeparator()
-        self.standardToolbar.addAction(self.editorTabWidget.dedentAct)
-        self.standardToolbar.addAction(self.editorTabWidget.indentAct)
-
-        self.standardToolbar.addSeparator()
-        self.standardToolbar.addAction(self.runFileAct)
         self.standardToolbar.addAction(self.runProjectAct)
         self.standardToolbar.addAction(self.stopRunAct)
         self.stopRunAct.setVisible(False)
-        self.standardToolbar.addAction(self.runParamAct)
-        self.standardToolbar.addSeparator()
         self.standardToolbar.addAction(self.finderAct)
-        self.standardToolbar.addAction(self.replaceAct)
-        self.standardToolbar.addAction(self.findInFilesAct)
-        self.standardToolbar.addSeparator()
-        self.standardToolbar.addAction(self.addToLibraryAct)
-        self.standardToolbar.addAction(self.writePadAct)
 
+        self.moreMenu = QMenu("More", self)
+        self.moreMenu.addAction(self.editorTabWidget.saveAllAct)
+        self.moreMenu.addSeparator()
+        self.moreMenu.addAction(self.editorTabWidget.cutAct)
+        self.editorTabWidget.cutAct.setDisabled(True)
+        self.moreMenu.addAction(self.editorTabWidget.copyAct)
+        self.editorTabWidget.copyAct.setDisabled(True)
+        self.moreMenu.addAction(self.editorTabWidget.pasteAct)
+        self.moreMenu.addSeparator()
+        self.moreMenu.addAction(self.editorTabWidget.dedentAct)
+        self.moreMenu.addAction(self.editorTabWidget.indentAct)
+        self.moreMenu.addSeparator()
+        self.moreMenu.addAction(self.runFileAct)
+        self.moreMenu.addAction(self.runParamAct)
+        self.moreMenu.addSeparator()
+        self.moreMenu.addAction(self.replaceAct)
+        self.moreMenu.addAction(self.findInFilesAct)
+        self.moreMenu.addSeparator()
+        self.moreMenu.addAction(self.editorTabWidget.findNextBookmarkAct)
+        self.moreMenu.addAction(self.editorTabWidget.findPrevBookmarkAct)
+        self.moreMenu.addAction(self.editorTabWidget.removeBookmarksAct)
+        self.moreMenu.addSeparator()
+        self.moreMenu.addAction(self.toggleOutlineAct)
+        self.moreMenu.addAction(self.addToLibraryAct)
+        self.moreMenu.addAction(self.writePadAct)
+
+        self.moreButton = QToolButton()
+        self.moreButton.setToolTip("More actions")
+        self.moreButton.setAccessibleName("More actions")
+        self.moreButton.setAutoRaise(True)
+        self.moreButton.setPopupMode(
+            QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.moreButton.setText("⋯")
+        self.moreButton.setMenu(self.moreMenu)
+        self.standardToolbar.addSeparator()
+        self.standardToolbar.addWidget(self.moreButton)
+
+        # Keep bookmark toolbar for enable/disable wiring; not shown in chrome.
         self.bookmarkToolbar.addAction(
             self.editorTabWidget.findNextBookmarkAct)
         self.bookmarkToolbar.addAction(
             self.editorTabWidget.findPrevBookmarkAct)
         self.bookmarkToolbar.addAction(self.editorTabWidget.removeBookmarksAct)
-        self.standardToolbar.addWidget(self.bookmarkToolbar)
+        self.bookmarkToolbar.hide()
+
+    def refreshToolbarIcons(self):
+        """Apply monochrome-tinted icons to chrome actions for the active theme."""
+        etw = self.editorTabWidget
+        icon_map = [
+            (etw.openFileAct, "open_file"),
+            (etw.newPythonFileAct, "new"),
+            (etw.saveAct, "save_"),
+            (etw.saveAllAct, "disks-black"),
+            (etw.undoAct, "undo"),
+            (etw.redoAct, "redo"),
+            (etw.cutAct, "cut"),
+            (etw.copyAct, "copy"),
+            (etw.pasteAct, "paste"),
+            (etw.indentAct, "increase_indent"),
+            (etw.dedentAct, "decrease_indent"),
+            (etw.findNextBookmarkAct, "Arrow2-down"),
+            (etw.findPrevBookmarkAct, "Arrow2-up"),
+            (self.runFileAct, "rerun"),
+            (self.runProjectAct, "run"),
+            (self.stopRunAct, "Stop"),
+            (self.runParamAct, "shell"),
+            (self.finderAct, "scope"),
+            (self.replaceAct, "edit-replace"),
+            (self.findInFilesAct, "find_in_files"),
+            (self.addToLibraryAct, "add"),
+            (self.writePadAct, "pencil"),
+            (self.toggleOutlineAct, "tree"),
+        ]
+        for action, name in icon_map:
+            try:
+                action.setIcon(tinted_icon(name))
+            except Exception:
+                pass
+        if hasattr(self, "editorMenuButton"):
+            self.editorMenuButton.setIcon(tinted_icon("Dashboard"))
 
     def recentFileActivated(self, action):
         path = action.text().split('  ', 1)[1]
@@ -667,7 +756,9 @@ class EditorWindow(QWidget):
             new_time = h + m
         else:
             new_time = str(self.uptime) + "min"
-        self.uptimeLabel.setText("Uptime: " + new_time)
+        tip = "Uptime: " + new_time
+        self.uptimeLabel.setText(tip)
+        self.statusbar.setToolTip(tip)
 
     def saveAll(self):
         self.editorTabWidget.saveAll()

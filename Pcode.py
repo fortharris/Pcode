@@ -80,7 +80,8 @@ class Pcode(QWidget):
 
         self.projectTitleBox = QComboBox()
         self.projectTitleBox.setAccessibleName("Open projects")
-        self.projectTitleBox.setMinimumWidth(180)
+        self.projectTitleBox.setMinimumWidth(160)
+        self.projectTitleBox.setMaximumWidth(280)
         self.projectTitleBox.setItemDelegate(QStyledItemDelegate())
         self.projectTitleBox.currentIndexChanged.connect(self.projectChanged)
         self.projectTitleBox.activated.connect(self.projectChanged)
@@ -100,7 +101,8 @@ class Pcode(QWidget):
         self.createActions()
 
         hbox = QHBoxLayout()
-        hbox.setContentsMargins(5, 3, 5, 3)
+        hbox.setContentsMargins(8, 4, 8, 4)
+        hbox.setSpacing(6)
         mainLayout.addLayout(hbox)
 
         self.logoLabel = QLabel()
@@ -108,7 +110,7 @@ class Pcode(QWidget):
         logoPix = QPixmap(os.path.join("Resources", "images", "Icon"))
         if not logoPix.isNull():
             self.logoLabel.setPixmap(logoPix.scaled(
-                22, 22,
+                20, 20,
                 Qt.AspectRatioMode.KeepAspectRatio,
                 Qt.TransformationMode.SmoothTransformation))
         hbox.addWidget(self.logoLabel)
@@ -118,8 +120,10 @@ class Pcode(QWidget):
         titleFont = self.titleLabel.font()
         titleFont.setBold(True)
         self.titleLabel.setFont(titleFont)
-        self.titleLabel.setContentsMargins(4, 0, 8, 0)
+        self.titleLabel.setContentsMargins(2, 0, 10, 0)
         hbox.addWidget(self.titleLabel)
+
+        hbox.addWidget(self.projectTitleBox)
 
         hbox.addStretch(1)
 
@@ -127,17 +131,17 @@ class Pcode(QWidget):
         mainLayout.addWidget(self.pagesStack)
 
         self.projectSwitcher = StackSwitcher(self.pagesStack)
+        self.projectSwitcher.setObjectName("pageSwitcher")
         hbox.addWidget(self.projectSwitcher)
 
         self.addPage(self.projectWindowStack, "EDITOR", QIcon(
-            os.path.join("Resources", "images", "hire-me")))
+            os.path.join("Resources", "images", "hire-me")),
+            toolTip="Editor", showText=False)
 
         self.addPage(self.library, "LIBRARY", QIcon(
-            os.path.join("Resources", "images", "library")))
+            os.path.join("Resources", "images", "library")),
+            toolTip="Library", showText=False)
         self.projectSwitcher.setDefault()
-
-        hbox.addWidget(self.projectTitleBox)
-        hbox.setSpacing(5)
 
         self.settingsButton = QToolButton()
         self.settingsButton.setAutoRaise(True)
@@ -194,8 +198,9 @@ class Pcode(QWidget):
             "Settings", self,
             statusTip="Settings", triggered=self.showSettings)
 
-    def addPage(self, pageWidget, name, iconPath):
-        self.projectSwitcher.addButton(name=name, icon=iconPath)
+    def addPage(self, pageWidget, name, iconPath, toolTip=None, showText=True):
+        self.projectSwitcher.addButton(
+            name=name, icon=iconPath, toolTip=toolTip or name, showText=showText)
         self.pagesStack.addWidget(pageWidget)
 
     def loadProject(self, path, show=False, new=False):
@@ -377,6 +382,7 @@ class Pcode(QWidget):
                 ("Find", window.showFinderWidget),
                 ("Replace", window.showReplaceWidget),
                 ("Find in Files", window.showFindInFilesWidget),
+                ("Toggle Outline", window.toggleOutline),
                 ("Go to Line", lambda: window.gotoLineAct.trigger()),
                 ("Go to Definition", etw.refactor.findDefinition),
                 ("Configure Project", lambda: window.configureAct.trigger()),
@@ -494,6 +500,18 @@ class Pcode(QWidget):
             StyleSheet.chrome_style("projectTitleBoxStyle", custom))
         self.projectSwitcher.setStyleSheet(
             StyleSheet.chrome_style("mainMenuStyle", custom))
+        # Quiet monochrome icons for top-bar page switcher + utilities.
+        try:
+            from Extensions.Icons import tinted_icon
+            for button, name in zip(
+                    self.projectSwitcher.buttonGroup.buttons(),
+                    ("hire-me", "library")):
+                button.setIcon(tinted_icon(name))
+            self.settingsButton.setIcon(tinted_icon("config"))
+            self.fullScreenButton.setIcon(tinted_icon("Fullscreen"))
+            self.aboutButton.setIcon(tinted_icon("properties"))
+        except Exception:
+            pass
         for i in range(self.projectWindowStack.count()):
             window = self.projectWindowStack.widget(i)
             if hasattr(window, "refreshChromeStyles"):

@@ -3,6 +3,7 @@
 import ctypes
 import os
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon, QShortcut
 from PyQt6.QtWidgets import QMenu, QMessageBox, QTabBar
 
@@ -12,8 +13,10 @@ class EditorTabBar(QTabBar):
     def __init__(self, app, renameFileAct, moduleToPackageAct, parent):
         QTabBar.__init__(self, parent)
 
-        self.setExpanding(True)
+        self.setExpanding(False)
         self.setDrawBase(False)
+        self.setObjectName("editorTabBar")
+        self.setElideMode(Qt.TextElideMode.ElideRight)
 
         self.editorTabWidget = parent
         self.app = app
