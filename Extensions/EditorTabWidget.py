@@ -753,7 +753,13 @@ class EditorTabWidget(QTabWidget):
             try:
                 from Extensions.tab_io import write_editor_to_path
                 editor = self.getEditor(index)
-                if write_editor_to_path(editor, savePath):
+                encoding = self.getEditorData("codingFormat", index) or "utf-8"
+                ok, used = write_editor_to_path(editor, savePath, encoding)
+                if ok:
+                    if used != encoding:
+                        self.updateEditorData("codingFormat", used, index)
+                        self.updateEncodingLabel.emit(
+                            "Coding: {0}".format(used))
                     return True
                 self.saveErrorMess("Failed to write file.")
                 return False
@@ -791,9 +797,15 @@ class EditorTabWidget(QTabWidget):
                     index = self.currentIndex()
                 fileName = os.path.normpath(fileName)
                 editor = self.getEditor(index)
-                with open(fileName, "w") as file:
-                    file.write(editor.text())
-                editor.setModified(False)
+                encoding = self.getEditorData("codingFormat", index) or "utf-8"
+                from Extensions.tab_io import write_editor_to_path
+                ok, used = write_editor_to_path(editor, fileName, encoding)
+                if not ok:
+                    self.saveErrorMess("Failed to write file.")
+                    return False
+                if used != encoding:
+                    self.updateEditorData("codingFormat", used)
+                    self.updateEncodingLabel.emit("Coding: {0}".format(used))
                 self.updateTabName(index)
                 if not copyOnly:
                     self.updateEditorData("filePath", fileName)

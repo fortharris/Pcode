@@ -190,7 +190,7 @@ class UseData(QObject):
                 "Open-File": "Ctrl+O",
                 "Save-File": "Ctrl+S",
                 "Save-All": "Ctrl+Shift+S",
-                "Print": "Ctrl+P",
+                "Print": "Ctrl+Alt+P",
                 "Run-File": "F4",
                 "Run-Project": "F5",
                 "Build": "Ctrl+Shift+B",

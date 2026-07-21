@@ -24,6 +24,7 @@ from Extensions import StyleSheet
 from Extensions.Start import Start
 from Extensions.StackSwitcher import StackSwitcher
 from Extensions.CommandPalette import CommandPalette
+from Extensions.QuickOpen import QuickOpen, index_project_files
 
 
 class Pcode(QWidget):
@@ -159,6 +160,7 @@ class Pcode(QWidget):
         hbox.addWidget(self.aboutButton)
 
         self.commandPalette = CommandPalette(self)
+        self.quickOpen = QuickOpen(self)
 
         self.setKeymap()
 
@@ -322,9 +324,22 @@ class Pcode(QWidget):
             QKeySequence("Ctrl+Shift+P"), self)
         self.shortCommandPalette.activated.connect(self.showCommandPalette)
 
+        self.shortQuickOpen = QShortcut(
+            QKeySequence("Ctrl+P"), self)
+        self.shortQuickOpen.activated.connect(self.showQuickOpen)
+
     def showCommandPalette(self):
         self.commandPalette.setCommands(self.buildCommands())
         self.commandPalette.launch()
+
+    def showQuickOpen(self):
+        window = self._activeProjectWindow()
+        if window is None:
+            return
+        root = window.projectPathDict.get("sourcedir") or ""
+        files = index_project_files(root)
+        etw = window.editorTabWidget
+        self.quickOpen.launch(files, etw.loadfile)
 
     def _activeProjectWindow(self):
         window = self.projectWindowStack.currentWidget()
@@ -350,6 +365,7 @@ class Pcode(QWidget):
             etw = window.editorTabWidget
             sw = window.bottomStackSwitcher
             commands.extend([
+                ("Quick Open\u2026", self.showQuickOpen),
                 ("Save All", window.saveAll),
                 ("Save File", etw.save),
                 ("Run Project", window.runProject),
@@ -359,6 +375,7 @@ class Pcode(QWidget):
                 ("Replace", window.showReplaceWidget),
                 ("Find in Files", window.showFindInFilesWidget),
                 ("Go to Line", lambda: window.gotoLineAct.trigger()),
+                ("Go to Definition", etw.refactor.findDefinition),
                 ("Configure Project", lambda: window.configureAct.trigger()),
                 ("Rename Symbol", etw.refactor.renameAttribute),
                 ("Panel: Output",
@@ -375,8 +392,15 @@ class Pcode(QWidget):
                 ("Git: Stage File", lambda: window.gitPanel.stage_selected()),
                 ("Git: Commit", lambda: window.gitPanel.commit()),
                 ("Git: Amend", lambda: window.gitPanel.amend()),
+                ("Git: Fetch", lambda: window.gitPanel.fetch()),
+                ("Git: Pull", lambda: window.gitPanel.pull()),
+                ("Git: Push", lambda: window.gitPanel.push()),
                 ("Git: Log", lambda: window.gitPanel.show_log()),
                 ("Git: Diff at Cursor", lambda: window.gitPanel.diff_at_cursor()),
+                ("Debug: Continue", window.debugContinue),
+                ("Debug: Step Over", window.debugStepOver),
+                ("Debug: Step Into", window.debugStepInto),
+                ("Debug: Step Out", window.debugStepOut),
             ])
             if window.projectPathDict.get("type") == "Desktop Application":
                 commands.append(("Build Project", window.buildProject))

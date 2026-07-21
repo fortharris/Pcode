@@ -120,11 +120,11 @@ do not remove those readers until a later release cycle.
 
 ### Post-merge
 
-1. Smoke-test the GUI on Windows (open project, edit, run, git).
+1. Smoke-test the GUI on Windows (open project, edit, run, git, Quick Open).
 2. In GitHub Actions, run **workflow_dispatch** on **CI** and enable
    **freeze-smoke** (and optionally **freeze-smoke-windows**).
-3. Tag a release after merge is verified (sync `Extensions/version.py`,
-   `pyproject.toml`, and README).
+3. Follow [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) to tag and
+   publish (sync `Extensions/version.py`, `pyproject.toml`, and README).
 4. Capture screenshots into `docs/screens/` when cutting the release.
 
 ## Troubleshooting

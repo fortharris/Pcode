@@ -10,6 +10,7 @@ class MessagesWidget(QTreeWidget):
     def __init__(self, bottomStackSwitcher, vSplitter, parent=None):
         QTreeWidget.__init__(self, parent)
 
+        self.setAccessibleName("Messages")
         self.bottomStackSwitcher = bottomStackSwitcher
         self.vSplitter = vSplitter
 

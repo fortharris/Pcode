@@ -21,6 +21,7 @@ pcode
 ```
 
 See [RUN.md](../RUN.md) for virtualenv setup, tests, and troubleshooting.
+Release steps: [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 There is no standalone IDE installer yet. Releases ship as source plus notes on
 [GitHub Releases](https://github.com/fortharris/Pcode/releases).
@@ -31,21 +32,26 @@ There is no standalone IDE installer yet. Releases ship as source plus notes on
 2. Edit files in the Editor page. Use the Outline sidebar to jump to classes
    and functions.
 3. Run the current file or the project from the toolbar / Run panel.
-4. Use **Ctrl+Shift+P** for the command palette (themes, git, build, etc.).
+4. Use **Ctrl+P** for Quick Open (fuzzy file finder) and **Ctrl+Shift+P** for
+   the command palette.
 
 ## Everyday features
 
 | Feature | How |
 |---------|-----|
-| Find / Replace | Editor find bar; Find-in-Files in the bottom panel |
+| Quick Open | **Ctrl+P** — fuzzy find a file in the project |
+| Find / Replace | Editor find bar (Case / Word / Regex / Wrap); Find-in-Files |
 | Completions | Rope-based project completions (Settings → Auto-Completion) |
+| Go to Definition | Refactor menu / palette (background rope lookup) |
 | Rename / refactor | Rope actions from the editor or palette |
-| Lint / PEP8 | Assistant bottom panel (pyflakes + autopep8) |
-| Git | Git bottom panel: status, branch, stage, commit, amend, diff |
-| Debug | Run type **Debug** uses debugpy on `127.0.0.1:5678` |
+| Lint / PEP8 | Assistant bottom panel; context menu **Fix All Issues** |
+| Git | Status, branch, stage, commit, amend, fetch, pull, push, diff |
+| Run args | Quoted tokens supported, e.g. `--flag "my file"` |
+| Debug | Run type **Debug** attaches via DAP; margin click / **Alt+B** sets breakpoints; **F5/F10/F11** continue/step |
 | Freeze | Desktop Application projects → Build (cx_Freeze) |
 | Themes | Settings → Theme (Light / Dark / System) |
 | UI scale | Settings → UI Font Scale (accessibility) |
+| Print | Default shortcut **Ctrl+Alt+P** |
 
 ## Projects and data
 
@@ -55,11 +61,17 @@ Each project stores:
 - `Data/projectdata.json` — favourites, recent files, run settings
 - `Data/session.json` — open tabs and editor state
 
+Files save with the detected encoding when possible; if that fails, Pcode falls
+back to UTF-8 and updates the status bar coding label.
+
 Legacy `*.xml` project files still open and migrate to JSON on load.
 
 ## Security notes
 
-- **Debug** listens only on localhost (`127.0.0.1:5678`) for debugger attach.
+- **Debug** listens only on localhost (`127.0.0.1:5678`). In **Internal Console**
+  mode, Pcode attaches as a DAP client, applies editor breakpoints, and offers
+  Continue / Step Over / Into / Out. External Console mode still starts debugpy
+  for attach from another tool.
 - **External launchers** run programs you configure. Prefer absolute paths to
   trusted tools; parameters are passed as argument lists (not a shell).
 

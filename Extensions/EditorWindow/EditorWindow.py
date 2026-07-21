@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QDir, QProcess, Qt, QTimer, QUrl
-from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices, QIcon, QShortcut
+from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices, QIcon, QKeySequence, QShortcut
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QMenu, QMessageBox, QSplitter, QStackedWidget, QStatusBar, QTabWidget, QToolBar, QToolButton, QVBoxLayout, QWidget
 
 import os
@@ -58,6 +58,7 @@ class EditorWindow(QWidget):
         self.setLayout(mainLayout)
 
         self.standardToolbar = QToolBar("Standard")
+        self.standardToolbar.setAccessibleName("Standard toolbar")
         self.standardToolbar.setMovable(False)
         self.standardToolbar.setContextMenuPolicy(Qt.ContextMenuPolicy.PreventContextMenu)
         self.standardToolbar.setMaximumHeight(26)
@@ -84,6 +85,7 @@ class EditorWindow(QWidget):
         self.hSplitter.addWidget(widget)
 
         self.bottomStackSwitcher = StackSwitcher(self.bottomStack)
+        self.bottomStackSwitcher.setAccessibleName("Bottom panels")
         self.bottomStackSwitcher.setStyleSheet(StyleSheet.bottomSwitcherStyle)
 
         self.messagesWidget = MessagesWidget(
@@ -102,6 +104,7 @@ class EditorWindow(QWidget):
                                  "notes"], self.projectPathDict["name"], self)
 
         self.bookmarkToolbar = QToolBar("Bookmarks")
+        self.bookmarkToolbar.setAccessibleName("Bookmarks toolbar")
         self.bookmarkToolbar.setMovable(False)
         self.bookmarkToolbar.setFloatable(False)
         self.bookmarkToolbar.setContextMenuPolicy(Qt.ContextMenuPolicy.PreventContextMenu)
@@ -230,8 +233,45 @@ class EditorWindow(QWidget):
         self.encodingLabel = QLabel("Coding: utf-8")
         self.statusbar.addPermanentWidget(self.encodingLabel)
         self.debugStatusLabel = QLabel()
+        self.debugStatusLabel.setAccessibleName("Debug status")
         self.debugStatusLabel.setStyleSheet("color: #c06000; font-weight: bold;")
         self.statusbar.addPermanentWidget(self.debugStatusLabel)
+
+        self.debugContinueButton = QToolButton()
+        self.debugContinueButton.setText("Continue")
+        self.debugContinueButton.setToolTip("Continue (F5)")
+        self.debugContinueButton.setAccessibleName("Debug continue")
+        self.debugContinueButton.setAutoRaise(True)
+        self.debugContinueButton.clicked.connect(self.debugContinue)
+        self.debugContinueButton.hide()
+        self.statusbar.addPermanentWidget(self.debugContinueButton)
+
+        self.debugStepOverButton = QToolButton()
+        self.debugStepOverButton.setText("Over")
+        self.debugStepOverButton.setToolTip("Step Over (F10)")
+        self.debugStepOverButton.setAccessibleName("Debug step over")
+        self.debugStepOverButton.setAutoRaise(True)
+        self.debugStepOverButton.clicked.connect(self.debugStepOver)
+        self.debugStepOverButton.hide()
+        self.statusbar.addPermanentWidget(self.debugStepOverButton)
+
+        self.debugStepIntoButton = QToolButton()
+        self.debugStepIntoButton.setText("Into")
+        self.debugStepIntoButton.setToolTip("Step Into (F11)")
+        self.debugStepIntoButton.setAccessibleName("Debug step into")
+        self.debugStepIntoButton.setAutoRaise(True)
+        self.debugStepIntoButton.clicked.connect(self.debugStepInto)
+        self.debugStepIntoButton.hide()
+        self.statusbar.addPermanentWidget(self.debugStepIntoButton)
+
+        self.debugStepOutButton = QToolButton()
+        self.debugStepOutButton.setText("Out")
+        self.debugStepOutButton.setToolTip("Step Out (Shift+F11)")
+        self.debugStepOutButton.setAccessibleName("Debug step out")
+        self.debugStepOutButton.setAutoRaise(True)
+        self.debugStepOutButton.clicked.connect(self.debugStepOut)
+        self.debugStepOutButton.hide()
+        self.statusbar.addPermanentWidget(self.debugStepOutButton)
 
         #*** uptime
         self.uptimeLabel = QLabel()
@@ -270,6 +310,8 @@ class EditorWindow(QWidget):
             self.profiler.viewProfile)
         self.runWidget.debugStatusChanged.connect(
             self.debugStatusLabel.setText)
+        self.runWidget.debugSessionActive.connect(self._setDebugControlsVisible)
+        self.runWidget.debugStoppedAt.connect(self._onDebugStoppedAt)
 
         self.addBottomWidget(self.findInFiles,
                              QIcon(os.path.join("Resources", "images", "attibutes")), "Find-in-Files")
@@ -685,6 +727,49 @@ class EditorWindow(QWidget):
     def stopProcess(self):
         self.runWidget.stopProcess()
 
+    def _setDebugControlsVisible(self, visible):
+        for button in (
+            self.debugContinueButton, self.debugStepOverButton,
+            self.debugStepIntoButton, self.debugStepOutButton,
+        ):
+            button.setVisible(bool(visible))
+
+    def _onDebugStoppedAt(self, path, line):
+        """Navigate to DAP stopped location (line is 1-based)."""
+        if path:
+            try:
+                same = False
+                current = self.editorTabWidget.getEditorData("filePath")
+                if current:
+                    same = (os.path.normcase(os.path.abspath(current))
+                            == os.path.normcase(os.path.abspath(path)))
+                if not same and os.path.isfile(path):
+                    self.editorTabWidget.loadfile(path)
+            except Exception:
+                if os.path.isfile(path):
+                    self.editorTabWidget.loadfile(path)
+        editor = self.editorTabWidget.focusedEditor()
+        if editor is None:
+            return
+        line0 = max(0, int(line) - 1)
+        if hasattr(editor, "showDebugStoppedLine"):
+            editor.showDebugStoppedLine(line0)
+        else:
+            editor.setCursorPosition(line0, 0)
+            editor.ensureLineVisible(line0)
+
+    def debugContinue(self):
+        self.runWidget.debugContinue()
+
+    def debugStepOver(self):
+        self.runWidget.debugStepOver()
+
+    def debugStepInto(self):
+        self.runWidget.debugStepInto()
+
+    def debugStepOut(self):
+        self.runWidget.debugStepOut()
+
     def showPythonInterpreter(self):
         process = QProcess()
         process.startDetached(self.useData.SETTINGS["DefaultInterpreter"])
@@ -803,3 +888,12 @@ class EditorWindow(QWidget):
             self.launchPythonHelp)
         self.pythonManualsAct.setShortcut(
             shortcuts["Ide"]["Python-Manuals"])
+
+        self.shortDebugContinue = QShortcut(QKeySequence("F5"), self)
+        self.shortDebugContinue.activated.connect(self.debugContinue)
+        self.shortDebugStepOver = QShortcut(QKeySequence("F10"), self)
+        self.shortDebugStepOver.activated.connect(self.debugStepOver)
+        self.shortDebugStepInto = QShortcut(QKeySequence("F11"), self)
+        self.shortDebugStepInto.activated.connect(self.debugStepInto)
+        self.shortDebugStepOut = QShortcut(QKeySequence("Shift+F11"), self)
+        self.shortDebugStepOut.activated.connect(self.debugStepOut)

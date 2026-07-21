@@ -1,8 +1,21 @@
 # Changelog
 
-## Unreleased (pyside branch)
+## Unreleased
 
-### Polish (0.2.0 readiness)
+### Workflow
+- Run arguments are split with `shlex` (quoted paths work); profiler forwards args too
+- Go-to-Definition runs on a background thread
+- Project venv install/upgrade runs off the UI thread with a progress dialog
+- Quick Open (Ctrl+P) fuzzy file finder; Print default shortcut moved to Ctrl+Alt+P
+- Git panel: Fetch / Pull / Push (async, 120s timeout)
+- Encoding-aware save (honors `codingFormat`, falls back to UTF-8)
+- Search find options relabeled (Case / Word / Regex / Wrap); broader accessible names
+- Assistant context menu: removed unfinished “Fix Selected/All Occurrences” stubs
+- **Thin DAP debugger**: Debug run attaches to debugpy, applies margin/Alt+B breakpoints, Continue/Step controls (F5/F10/F11)
+
+## 0.2.0
+
+### Polish
 - Central `Extensions/version.py` (`0.2.0`); About dialog stays in sync with `pyproject.toml`
 - User Guide at `docs/USER_GUIDE.md`; Help → User Guide opens it; Check For Updates queries GitHub Releases
 - Git panel I/O moved off the UI thread; toolbar slimmed (Stage / Unstage / Diff / More)
@@ -10,6 +23,7 @@
 - debugpy listens on `127.0.0.1:5678` only; external launchers require absolute paths and split args without a shell
 - Start page refresh; tool-overlay stylesheet cleanup; UI Font Scale setting (75–150%) and accessible names on main chrome
 - README install story clarified (source-only); broader ruff select set; legacy XML **read/migrate** kept for old workspaces
+- Release checklist: `docs/RELEASE_CHECKLIST.md`
 
 ### Migration
 - **PyQt6 migration complete** for production code — all `Extensions/` modules use direct PyQt6 imports
@@ -34,9 +48,3 @@
 - pytest unit + smoke suites (including `test_no_shim_import`), ruff linting, GitHub Actions CI (Linux + Windows)
 - cx_Freeze freeze smoke on `workflow_dispatch` (Linux and Windows)
 - CI prepares `workspace/PcodeProjects/` before tests to avoid blocking on the workspace dialog
-
-### Post-merge checklist
-- Manual GUI smoke on Windows (open project, edit, run, git panel)
-- Trigger **CI → freeze-smoke** / **freeze-smoke-windows** via GitHub Actions `workflow_dispatch`
-- Tag a release once merge is verified
-- Keep legacy XML read/migrate until a later release cycle; then remove readers if desired

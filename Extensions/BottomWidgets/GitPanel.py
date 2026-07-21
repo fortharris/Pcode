@@ -9,15 +9,16 @@ import subprocess
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QMenu, QPlainTextEdit, QPushButton, QToolButton, QVBoxLayout, QWidget,
+    QMenu, QMessageBox, QPlainTextEdit, QPushButton, QToolButton, QVBoxLayout,
+    QWidget,
 )
 
 
-def _run_git(root, *args):
+def _run_git(root, *args, timeout=30):
     try:
         proc = subprocess.run(
             ["git", "-C", root] + list(args),
-            capture_output=True, text=True, timeout=30,
+            capture_output=True, text=True, timeout=timeout,
             creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         out = (proc.stdout or "") + (proc.stderr or "")
         return proc.returncode, out.strip() or "(no output)"
@@ -37,24 +38,29 @@ class GitWorker(QThread):
         self._root = ""
         self._commands = []
         self._request_id = ""
+        self._timeout = 30
 
-    def run_batch(self, request_id, root, commands):
+    def run_batch(self, request_id, root, commands, timeout=30):
         """Queue work. If already running, the caller should wait or skip."""
         self._request_id = request_id
         self._root = root
         self._commands = list(commands)
+        self._timeout = timeout
         self.start()
 
     def run(self):
         results = {}
         for tag, args in self._commands:
             if tag == "checkout" and len(args) == 1:
-                code, out = _run_git(self._root, "switch", args[0])
+                code, out = _run_git(
+                    self._root, "switch", args[0], timeout=self._timeout)
                 if code != 0:
-                    code, out = _run_git(self._root, "checkout", args[0])
+                    code, out = _run_git(
+                        self._root, "checkout", args[0], timeout=self._timeout)
                 results[tag] = (code, out)
             else:
-                results[tag] = _run_git(self._root, *args)
+                results[tag] = _run_git(
+                    self._root, *args, timeout=self._timeout)
         self.batchFinished.emit(self._request_id, results)
 
 
@@ -119,6 +125,10 @@ class GitPanel(QWidget):
         more_menu = QMenu(self.moreButton)
         more_menu.addAction("Open File", self.open_selected)
         more_menu.addAction("Full Log", self.show_log)
+        more_menu.addSeparator()
+        more_menu.addAction("Fetch", self.fetch)
+        more_menu.addAction("Pull", self.pull)
+        more_menu.addAction("Push", self.push)
         self.moreButton.setMenu(more_menu)
         toolbar.addWidget(self.moreButton)
 
@@ -197,7 +207,7 @@ class GitPanel(QWidget):
             files.append((code, path))
         return files
 
-    def _start_batch(self, kind, commands, follow_refresh=False):
+    def _start_batch(self, kind, commands, follow_refresh=False, timeout=30):
         if not self.root:
             return
         if self.worker.isRunning():
@@ -209,7 +219,7 @@ class GitPanel(QWidget):
         self._current_kind = kind
         self._follow_refresh = follow_refresh
         self._set_busy(True)
-        self.worker.run_batch(request_id, self.root, commands)
+        self.worker.run_batch(request_id, self.root, commands, timeout=timeout)
 
     def _on_batch_finished(self, request_id, results):
         kind = request_id.split(":", 1)[0]
@@ -459,3 +469,31 @@ class GitPanel(QWidget):
         else:
             commands = [("amend", ("commit", "--amend", "--no-edit"))]
         self._start_batch("action", commands)
+
+    def fetch(self):
+        if not self._is_repo():
+            return
+        self._start_batch("action", [
+            ("fetch", ("fetch", "--all", "--prune")),
+        ], timeout=120)
+
+    def pull(self):
+        if not self._is_repo():
+            return
+        self._start_batch("action", [
+            ("pull", ("pull", "--ff-only")),
+        ], timeout=120)
+
+    def push(self):
+        if not self._is_repo():
+            return
+        reply = QMessageBox.question(
+            self, "Git Push",
+            "Push the current branch to its remote?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No)
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        self._start_batch("action", [
+            ("push", ("push",)),
+        ], timeout=120)

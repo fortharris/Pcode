@@ -8,17 +8,38 @@ from Pvenv import EnvBuilder
 
 from Extensions import StyleSheet
 from Extensions.file_dialog_utils import file_dialog_path
-from PyQt6.QtCore import QDir, Qt
+from PyQt6.QtCore import QDir, Qt, QThread, pyqtSignal
 from PyQt6.QtGui import (
     QIcon, QFileSystemModel, QPalette,
 )
 from PyQt6.QtWidgets import (
-    QComboBox, QDialog, QFileDialog, QFormLayout,
+    QApplication, QComboBox, QDialog, QFileDialog, QFormLayout,
     QFrame, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QMessageBox,
+    QMessageBox, QProgressDialog,
     QPushButton, QSpinBox, QTabWidget, QToolButton, QTreeView, QVBoxLayout,
     QWidget,
 )
+
+
+class VenvWorker(QThread):
+    """Create or upgrade a project virtualenv off the UI thread."""
+
+    succeeded = pyqtSignal()
+    failed = pyqtSignal(str)
+
+    def __init__(self, python_path, venvdir, upgrade=False, parent=None):
+        super().__init__(parent)
+        self.python_path = python_path
+        self.venvdir = venvdir
+        self.upgrade = upgrade
+
+    def run(self):
+        try:
+            builder = EnvBuilder(self.python_path, upgrade=self.upgrade)
+            builder.create(self.venvdir)
+            self.succeeded.emit()
+        except Exception as err:
+            self.failed.emit(str(err))
 
 class SelectBox(QDialog):
 
@@ -316,6 +337,8 @@ class VenvSetup(QWidget):
         return fileSystemModel
 
     def install(self):
+        if getattr(self, "_venv_busy", False):
+            return
         if os.path.exists(self.projectPathDict["venvdir"]):
             QMessageBox.information(
                 self, "Install", "Virtual environment already installed.")
@@ -337,23 +360,13 @@ class VenvSetup(QWidget):
                     pythonPath = pythonPath.item
                 else:
                     return
-            try:
-                builder = EnvBuilder(pythonPath)
-                builder.create(self.projectPathDict["venvdir"])
-                self.treeView.setModel(self.newFileSystemModel())
-                self.treeView.setRootIndex(
-                    self.treeView.model().index(self.packagesPath))
-                self.currentVersionLabel.setText(self.setVesionFromVenv())
-
-                QMessageBox.information(
-                    self, "Install", "Install virtual environment completed.")
-            except Exception as err:
-                QMessageBox.warning(
-                    self, "Failed Install", str(err))
+            self._start_venv_job(pythonPath, upgrade=False)
         else:
             return
 
     def upgrade(self):
+        if getattr(self, "_venv_busy", False):
+            return
         if not os.path.exists(self.projectPathDict["venvdir"]):
             QMessageBox.information(
                 self, "Install", "No virtual environment to upgrade.")
@@ -375,20 +388,48 @@ class VenvSetup(QWidget):
                     pythonPath = pythonPath.item
                 else:
                     return
-            try:
-                builder = EnvBuilder(pythonPath, upgrade=True)
-                builder.create(self.projectPathDict["venvdir"])
-                self.treeView.setModel(self.newFileSystemModel())
-                self.treeView.setRootIndex(
-                    self.treeView.model().index(self.packagesPath))
-                self.currentVersionLabel.setText(self.setVesionFromVenv())
-                QMessageBox.information(
-                    self, "Upgrade", "Upgrade virtual environment completed.")
-            except Exception as err:
-                QMessageBox.warning(
-                    self, "Failed Upgrade", str(err))
+            self._start_venv_job(pythonPath, upgrade=True)
         else:
             return
+
+    def _start_venv_job(self, pythonPath, upgrade=False):
+        self._venv_busy = True
+        title = "Upgrade" if upgrade else "Install"
+        self._venv_progress = QProgressDialog(
+            "{0} virtual environment…".format(title),
+            None, 0, 0, self)
+        self._venv_progress.setWindowTitle(title)
+        self._venv_progress.setWindowModality(Qt.WindowModality.WindowModal)
+        self._venv_progress.setMinimumDuration(0)
+        self._venv_progress.setCancelButton(None)
+        self._venv_progress.show()
+        QApplication.processEvents()
+
+        self._venv_worker = VenvWorker(
+            pythonPath, self.projectPathDict["venvdir"], upgrade=upgrade, parent=self)
+        self._venv_worker.succeeded.connect(
+            lambda: self._venv_finished(True, upgrade, ""))
+        self._venv_worker.failed.connect(
+            lambda err: self._venv_finished(False, upgrade, err))
+        self._venv_worker.start()
+
+    def _venv_finished(self, ok, upgrade, error):
+        self._venv_busy = False
+        if getattr(self, "_venv_progress", None) is not None:
+            self._venv_progress.close()
+            self._venv_progress = None
+        title = "Upgrade" if upgrade else "Install"
+        if not ok:
+            QMessageBox.warning(
+                self, "Failed {0}".format(title), error or "Unknown error")
+            return
+        self.treeView.setModel(self.newFileSystemModel())
+        self.treeView.setRootIndex(
+            self.treeView.model().index(self.packagesPath))
+        self.currentVersionLabel.setText(self.setVesionFromVenv())
+        QMessageBox.information(
+            self, title,
+            "{0} virtual environment completed.".format(title))
 
     def uninstall(self):
         if not os.path.exists(self.projectPathDict["venvdir"]):

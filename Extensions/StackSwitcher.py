@@ -29,6 +29,9 @@ class StackSwitcher(QWidget):
             button.setText(name)
         if toolTip is not None:
             button.setToolTip(toolTip)
+            button.setAccessibleName(toolTip)
+        elif name is not None:
+            button.setAccessibleName(name)
         button.setCheckable(True)
         if icon is not None:
             button.setIcon(icon)

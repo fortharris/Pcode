@@ -9,18 +9,31 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 
-def write_editor_to_path(editor, path):
-    """Write editor text to path. Returns True on success."""
+def write_editor_to_path(editor, path, encoding=None):
+    """Write editor text to path.
+
+    Returns ``(ok, used_encoding)`` where ``ok`` is True on success.
+    Falls back to utf-8 if the requested encoding cannot encode the text.
+    """
+    requested = encoding or "utf-8"
+    used = requested
     try:
-        with open(path, "w", encoding="utf-8") as file:
-            file.write(editor.text())
+        try:
+            with open(path, "w", encoding=requested) as file:
+                file.write(editor.text())
+        except (UnicodeEncodeError, LookupError):
+            used = "utf-8"
+            with open(path, "w", encoding=used) as file:
+                file.write(editor.text())
+            logging.warning(
+                "Could not encode %s as %s; saved as utf-8", path, requested)
         editor.setModified(False)
-        return True
+        return True, used
     except Exception:
         exc_type, exc_value, exc_traceback = sys.exc_info()
         logging.error(repr(traceback.format_exception(
             exc_type, exc_value, exc_traceback)))
-        return False
+        return False, requested
 
 
 def open_file_in_tab(editor_tab, file_path, show_error=True, index=None):

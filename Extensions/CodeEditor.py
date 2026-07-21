@@ -389,7 +389,7 @@ class CodeEditor(BaseScintilla):
         self.textChanged.connect(self.startCompletionTimer)
 
         self.linesChanged.connect(self.updateLineCount)
-        self.marginClicked.connect(self.toggleBookmark)
+        self.marginClicked.connect(self.onMarginClicked)
 
         # define the font to use
         font = QFont("Courier New")
@@ -453,12 +453,17 @@ class CodeEditor(BaseScintilla):
 
         # define markers
         # the background markers will not show until the editor has focus
-        self.breakpointMarker = self.markerDefine(
-            QsciScintilla.MarkerSymbol.Background)
-        self.setMarkerForegroundColor(QColor("#000000"),
-                                      self.breakpointMarker)
-        self.setMarkerBackgroundColor(QColor("#ffe1e1"),
-                                      self.breakpointMarker)
+        self.breakpointMarker = 10
+        self.markerDefine(
+            QPixmap(os.path.join("Resources", "images", "brk_point")),
+            self.breakpointMarker)
+        self.setMarkerBackgroundColor(QColor("#ee1111"), self.breakpointMarker)
+
+        self.debugCurrentMarker = 12
+        self.markerDefine(
+            QsciScintilla.MarkerSymbol.RightArrow, self.debugCurrentMarker)
+        self.setMarkerBackgroundColor(QColor("#FFCC00"), self.debugCurrentMarker)
+        self.setMarkerForegroundColor(QColor("#AA6600"), self.debugCurrentMarker)
 
         self.markerDefine(QPixmap(
             os.path.join("Resources", "images", "ui-button-navigation")), 8)
@@ -468,16 +473,13 @@ class CodeEditor(BaseScintilla):
             QPixmap(os.path.join("Resources", "images", "err_mark")), 9)
         self.setMarkerBackgroundColor(QColor("#ee1111"), 9)
 
-        self.markerDefine(
-            QPixmap(os.path.join("Resources", "images", "brk_point")), 10)
-        self.setMarkerBackgroundColor(QColor("#ee1111"), 10)
-
         self.markerDefine(QsciScintilla.MarkerSymbol.VerticalLine, 11)
         self.setMarkerBackgroundColor(QColor("#EEEE11"), 11)
         self.setMarkerForegroundColor(QColor("#EEEE11"), 11)
         self.setMarginWidth(3, font_metrics_width(self.fontMetrics, "0"))
 
-        mask = (1 << 8) | (1 << 9)
+        mask = (1 << 8) | (1 << 9) | (1 << self.breakpointMarker) | (
+            1 << self.debugCurrentMarker)
         self.setMarginMarkerMask(1, mask)
         self.setMarginSensitivity(1, True)
         mask = (1 << 11)
@@ -629,7 +631,7 @@ class CodeEditor(BaseScintilla):
         self.contextMenu.addAction(self.pasteAct)
         self.contextMenu.addAction(self.selectToMatchingBraceAct)
         self.contextMenu.addAction(self.toggleBookmarkAct)
-#        self.contextMenu.addAction(self.toggleBreakpointAct)
+        self.contextMenu.addAction(self.toggleBreakpointAct)
 
         self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.refactor.findDefAct)
@@ -748,13 +750,46 @@ class CodeEditor(BaseScintilla):
         else:
             return
 
+    def onMarginClicked(self, nmargin, nline, modifiers=None):
+        if modifiers and (modifiers & Qt.KeyboardModifier.ControlModifier):
+            self.toggleBookmark(nmargin, nline, modifiers)
+            return
+        mask = 1 << self.breakpointMarker
+        if self.markersAtLine(nline) & mask:
+            self.markerDelete(nline, self.breakpointMarker)
+        else:
+            self.markerAdd(nline, self.breakpointMarker)
+
     def toggleLineBreakpoint(self):
         line, index = self.getCursorPosition()
-        if self.markersAtLine(line) != 0:
+        mask = 1 << self.breakpointMarker
+        if self.markersAtLine(line) & mask:
             self.markerDelete(line, self.breakpointMarker)
         else:
             self.markerAdd(line, self.breakpointMarker)
-        self.ensureLineVisible(line - 1)
+        self.ensureLineVisible(line)
+
+    def getBreakpointLines(self):
+        """Return 0-based line numbers that have a breakpoint marker."""
+        mask = 1 << self.breakpointMarker
+        lines = []
+        for line in range(self.lines()):
+            if self.markersAtLine(line) & mask:
+                lines.append(line)
+        return lines
+
+    def showDebugStoppedLine(self, line0):
+        """Highlight the current debug stop line (0-based)."""
+        self.clearDebugStoppedLine()
+        if line0 < 0:
+            return
+        self.markerAdd(line0, self.debugCurrentMarker)
+        self.setCursorPosition(line0, 0)
+        self.ensureLineVisible(line0)
+
+    def clearDebugStoppedLine(self):
+        if hasattr(self, "debugCurrentMarker"):
+            self.markerDeleteAll(self.debugCurrentMarker)
 
     def updateLexer(self, lexer):
         self.lexer = lexer

@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import locale
+import shlex
 from PyQt6.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
 from PyQt6.QtCore import (
     QByteArray, QCoreApplication, QIODevice, QProcess, QProcessEnvironment,
@@ -18,8 +19,27 @@ from Extensions.BaseScintilla import BaseScintilla
 from Extensions.PathLineEdit import PathLineEdit
 from Extensions import Global
 from Extensions import StyleSheet
+from Extensions.Debug import DapClient, collect_breakpoints
 
 default_encoding = locale.getpreferredencoding()
+
+
+def split_run_arguments(args):
+    """Split run arguments into argv tokens (no shell)."""
+    text = (args or "").strip()
+    if not text:
+        return []
+    try:
+        return shlex.split(text, posix=True)
+    except ValueError:
+        return text.split()
+
+
+def script_argv(runScript, run_with_args, args):
+    argv = [runScript]
+    if run_with_args:
+        argv.extend(split_run_arguments(args))
+    return argv
 
 
 class SetRunParameters(QLabel):
@@ -101,7 +121,9 @@ class SetRunParameters(QLabel):
         argsLayout.setContentsMargins(18, 0, 0, 0)
         argsLayout.setSpacing(0)
         self.argumentsLine = PathLineEdit()
-        self.argumentsLine.setPlaceholderText("Optional arguments…")
+        self.argumentsLine.setPlaceholderText(
+            'Optional args, e.g. --flag "my file"')
+        self.argumentsLine.setAccessibleName("Run arguments")
         self.argumentsLine.setText(self.projectSettings["RunArguments"])
         self.argumentsLine.textChanged.connect(self.saveArguments)
         argsLayout.addWidget(self.argumentsLine)
@@ -139,7 +161,10 @@ class SetRunParameters(QLabel):
         self.useVirtualEnvBox.toggled.connect(self.setDefaultInterpreter)
         mainLayout.addWidget(self.useVirtualEnvBox)
 
-        self.debugWaitBox = QCheckBox("Wait for debugger")
+        self.debugWaitBox = QCheckBox("Pause at start (wait for DAP)")
+        self.debugWaitBox.setToolTip(
+            "When checked, the script waits until Pcode's debugger attaches "
+            "and breakpoints are applied (recommended).")
         if to_bool(self.projectSettings.get("DebugWait")):
             self.debugWaitBox.setChecked(True)
         self.debugWaitBox.toggled.connect(self.saveArguments)
@@ -340,12 +365,15 @@ class RunWidget(BaseScintilla):
 
     loadProfile = pyqtSignal()
     debugStatusChanged = pyqtSignal(str)
+    debugSessionActive = pyqtSignal(bool)
+    debugStoppedAt = pyqtSignal(str, int)  # path, 1-based line
 
     def __init__(
         self, bottomStackSwitcher, projectData, useData, editorTabWidget, vSplitter, runProjectAct, stopRunAct,
             runFileAct, parent=None):
         BaseScintilla.__init__(self, parent)
 
+        self.setAccessibleName("Run output")
         self.projectData = projectData
         self.runProjectAct = runProjectAct
         self.stopRunAct = stopRunAct
@@ -357,6 +385,15 @@ class RunWidget(BaseScintilla):
         self.useData = useData
 
         self.profileMode = False
+        self._dap_mode = False
+        self.dap = DapClient(self)
+        self.dap.statusChanged.connect(self.debugStatusChanged.emit)
+        self.dap.stopped.connect(self._on_dap_stopped)
+        self.dap.continued.connect(self._on_dap_continued)
+        self.dap.terminated.connect(self._on_dap_terminated)
+        self.dap.failed.connect(self._on_dap_failed)
+        self.dap.ready.connect(self._on_dap_ready)
+
         self.tracebackRe = re.compile(r'(\s)*File "(.*?)", line \d.+')
 
         self.setMarginWidth(1, 0)
@@ -498,10 +535,65 @@ class RunWidget(BaseScintilla):
         self.runFileAct.setEnabled(True)
 
         self.currentProcess = None
+        self._end_dap_session()
         self.debugStatusChanged.emit("")
         if self.profileMode:
             self.loadProfile.emit()
             self.profileMode = False
+
+    def _end_dap_session(self):
+        if self._dap_mode or self.dap.is_active:
+            self.dap.stop()
+        self._dap_mode = False
+        self.debugSessionActive.emit(False)
+        self._clear_debug_markers()
+
+    def _clear_debug_markers(self):
+        etw = self.editorTabWidget
+        if etw is None:
+            return
+        for i in range(etw.count()):
+            editor = etw.getEditor(i)
+            if hasattr(editor, "clearDebugStoppedLine"):
+                editor.clearDebugStoppedLine()
+
+    def _on_dap_ready(self):
+        self.debugSessionActive.emit(True)
+        self.printout(">>> Debugger attached; breakpoints applied.\n", 4)
+
+    def _on_dap_stopped(self, path, line):
+        self.debugStoppedAt.emit(path, line)
+        self.debugSessionActive.emit(True)
+
+    def _on_dap_continued(self):
+        self._clear_debug_markers()
+
+    def _on_dap_terminated(self):
+        self._clear_debug_markers()
+        self.debugSessionActive.emit(False)
+        self._dap_mode = False
+
+    def _on_dap_failed(self, message):
+        self.printout(">>> Debugger error: {0}\n".format(message), 1)
+        self.debugStatusChanged.emit("Debug: error")
+        self.debugSessionActive.emit(False)
+        # Avoid leaving a --wait-for-client process hung forever.
+        if self.runProcess.state() != QProcess.ProcessState.NotRunning:
+            self.runProcess.kill()
+        self._dap_mode = False
+        self._clear_debug_markers()
+
+    def debugContinue(self):
+        self.dap.continue_()
+
+    def debugStepOver(self):
+        self.dap.step_over()
+
+    def debugStepInto(self):
+        self.dap.step_into()
+
+    def debugStepOut(self):
+        self.dap.step_out()
 
     def printout(self, text, styleNum):
         start = self.length()
@@ -540,28 +632,20 @@ class RunWidget(BaseScintilla):
             return
         env = QProcessEnvironment.systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
+        argv = script_argv(runScript, run_with_args, args)
 
         if run_internal:
             self.currentProcess = fileName
             if run_with_args:
                 self.printout(">>> Running: {0} <arguments={1}>\n".format(
                     self.currentProcess, args), 4)
-                self.runProcess.start(pythonPath, [
-                                      runScript, args], self.openMode)
             else:
                 self.printout(">>> Running: {0} <arguments=None>\n".format(
                     self.currentProcess), 4)
-                self.runProcess.start(pythonPath, [runScript], self.openMode)
+            self.runProcess.start(pythonPath, argv, self.openMode)
             self.runProcess.waitForStarted()
         else:
-            if run_with_args:
-                self.runProcess.startDetached(
-                    pythonPath, ["-i", runScript, args])
-            else:
-                self.runProcess.startDetached(pythonPath, ["-i", runScript])
-            # -i ensures that the shell program remains even after the source program
-            # has finished or has been terminated in order for debugging to be
-            # done
+            self.runProcess.startDetached(pythonPath, ["-i"] + argv)
 
     def runDebug(self, runScript, fileName, run_internal, run_with_args, args):
         pythonPath = self.pythonPath()
@@ -578,30 +662,35 @@ class RunWidget(BaseScintilla):
         env = QProcessEnvironment.systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
         # Bind to localhost only — avoid exposing a remote-attach surface.
-        listen_addr = "127.0.0.1:5678"
+        listen_host = "127.0.0.1"
+        listen_port = 5678
+        listen_addr = "{0}:{1}".format(listen_host, listen_port)
+        # Built-in DAP always waits so breakpoints can be applied before run.
+        use_dap = bool(run_internal)
         debug_args = ["-m", "debugpy", "--listen", listen_addr]
-        if to_bool(self.projectData.get("DebugWait")):
+        if use_dap or to_bool(self.projectData.get("DebugWait")):
             debug_args.append("--wait-for-client")
-        debug_args.append(runScript)
-        if run_with_args and args:
-            debug_args.append(args)
+        debug_args.extend(script_argv(runScript, run_with_args, args))
 
+        breakpoints = collect_breakpoints(self.editorTabWidget)
         if run_internal:
             self.currentProcess = fileName
-            wait_note = ""
-            if to_bool(self.projectData.get("DebugWait")):
-                wait_note = " — waiting for debugger on " + listen_addr
+            bp_count = sum(len(v) for v in breakpoints.values())
             self.printout(
-                ">>> Debug (debugpy listen {0}{1}): {2}\n".format(
-                    listen_addr, wait_note, fileName), 4)
-            status = "Debug: listening on " + listen_addr + " (localhost only)"
-            if to_bool(self.projectData.get("DebugWait")):
-                status += " (waiting for attach)"
-            self.debugStatusChanged.emit(status)
+                ">>> Debug (DAP {0}, {1} breakpoint(s)): {2}\n".format(
+                    listen_addr, bp_count, fileName), 4)
+            self.debugStatusChanged.emit(
+                "Debug: starting on " + listen_addr)
+            self._dap_mode = use_dap
             self.runProcess.start(pythonPath, debug_args, self.openMode)
             self.runProcess.waitForStarted()
+            if use_dap:
+                self.dap.start(listen_host, listen_port, breakpoints)
         else:
             self.runProcess.startDetached(pythonPath, ["-i"] + debug_args)
+            self.printout(
+                ">>> Debug (external attach {0}): started detached\n".format(
+                    listen_addr), 4)
 
     def runTrace(self, runScript, fileName, run_internal, run_with_args, args, option):
         pythonPath = self.pythonPath()
@@ -610,7 +699,24 @@ class RunWidget(BaseScintilla):
 
         env = QProcessEnvironment.systemEnvironment()
         self.runProcess.setProcessEnvironment(env)
+        script = script_argv(runScript, run_with_args, args)
 
+        if option == 0:
+            trace_flags = ['--trackcalls']
+        elif option == 1:
+            trace_flags = ['--listfuncs']
+        elif option == 2:
+            countfile = os.path.abspath(os.path.join("temp", "count.txt"))
+            with open(countfile, 'w'):
+                pass
+            if run_internal:
+                trace_flags = ['--count', '--file={0}'.format(countfile)]
+            else:
+                trace_flags = ['--count']
+        else:
+            trace_flags = ['--timing', '--trace']
+
+        argv = ['-m', 'trace'] + trace_flags + script
         if run_internal:
             self.currentProcess = fileName
             if run_with_args:
@@ -619,88 +725,9 @@ class RunWidget(BaseScintilla):
             else:
                 self.printout(">>> Trace Execution: {0} <arguments=None>\n".format(
                     self.currentProcess), 4)
-            if option == 0:
-                # calling relationships
-                if run_with_args:
-                    self.runProcess.start(pythonPath, ['-m', "trace",
-                                                       '--trackcalls', runScript, args], self.openMode)
-                else:
-                    self.runProcess.start(pythonPath, ['-m', "trace",
-                                                       '--trackcalls', runScript], self.openMode)
-            elif option == 1:
-                # functions called
-                if run_with_args:
-                    self.runProcess.start(pythonPath, ['-m', "trace",
-                                                       '--listfuncs', runScript, args], self.openMode)
-                else:
-                    self.runProcess.start(pythonPath, ['-m', "trace",
-                                                       '--listfuncs', runScript], self.openMode)
-            elif option == 2:
-                # creates a file with same code but showing how many times
-                # each line of code args
-                countfile = os.path.abspath(os.path.join("temp", "count.txt"))
-                with open(countfile, 'w'):
-                    pass
-                if run_with_args:
-                    self.runProcess.start(pythonPath, ['-m', "trace",
-                                                       '--count', '--file={0}'.format(countfile), runScript, args], self.openMode)
-                else:
-                    self.runProcess.start(pythonPath, ['-m', "trace",
-                                                       '--count', '--file={0}'.format(countfile), runScript], self.openMode)
-            elif option == 3:
-                # show in real time what lines of code are currently being
-                # executed
-                if run_with_args:
-                    self.runProcess.start(
-                        pythonPath, ['-m', "trace", '--timing',
-                                     '--trace', runScript, args], self.openMode)
-                else:
-                    self.runProcess.start(
-                        pythonPath, ['-m', "trace", '--timing',
-                                     '--trace', runScript], self.openMode)
+            self.runProcess.start(pythonPath, argv, self.openMode)
         else:
-            if option == 0:
-                # calling relationships
-                if run_with_args:
-                    self.runProcess.startDetached(
-                        pythonPath, ['-i', '-m', "trace",
-                                                 '--trackcalls', runScript, args], self.openMode)
-                else:
-                    self.runProcess.startDetached(
-                        pythonPath, ['-i', '-m', "trace",
-                                                 '--trackcalls', runScript])
-            elif option == 1:
-                # functions called
-                if run_with_args:
-                    self.runProcess.startDetached(
-                        pythonPath, ['-i', '-m', "trace",
-                                                 '--listfuncs', runScript, args])
-                else:
-                    self.runProcess.startDetached(
-                        pythonPath, ['-i', '-m', "trace",
-                                                 '--listfuncs', runScript])
-            elif option == 2:
-                # creates a file with same code but showing how many times each
-                # line of code runs
-                if run_with_args:
-                    self.runProcess.startDetached(
-                        pythonPath, ['-i', '-m', "trace",
-                                                 '--count', runScript, args])
-                else:
-                    self.runProcess.startDetached(
-                        pythonPath, ['-i', '-m', "trace",
-                                                 '--count', runScript])
-            elif option == 3:
-                # show in real time what lines of code are currently being
-                # executed
-                if run_with_args:
-                    self.runProcess.startDetached(
-                        pythonPath, ['-i', '-m', "trace",
-                                                 '--timing', '--trace', runScript, args])
-                else:
-                    self.runProcess.startDetached(
-                        pythonPath, ['-i', '-m', "trace",
-                                                 '--timing', '--trace', runScript])
+            self.runProcess.startDetached(pythonPath, ['-i'] + argv)
 
     def runProfiler(self, runScript, fileName, run_internal, run_with_args, args):
         pythonPath = self.pythonPath()
@@ -715,9 +742,10 @@ class RunWidget(BaseScintilla):
             # On Windows, one has to replace backslashes by slashes to avoid
             # confusion with escape characters (otherwise, for example, '\t'
             # will be interpreted as a tabulation):
-            p_args.append(os.path.normpath(runScript).replace(os.sep, '/'))
+            script_path = os.path.normpath(runScript).replace(os.sep, '/')
         else:
-            p_args.append(runScript)
+            script_path = runScript
+        p_args.extend(script_argv(script_path, run_with_args, args))
 
         self.profileMode = True
         if run_internal:
@@ -731,11 +759,7 @@ class RunWidget(BaseScintilla):
             self.runProcess.start(pythonPath, p_args)
             self.runProcess.waitForStarted()
         else:
-            p_args.insert(0, "-i")
-            self.runProcess.startDetached(pythonPath, p_args)
-            # -i ensures that the shell program remains even after the source program
-            # has finished or has been terminated in order for debugging to be
-            # done
+            self.runProcess.startDetached(pythonPath, ["-i"] + p_args)
 
     def reRunFile(self):
         self.run(False, True)
@@ -817,6 +841,7 @@ class RunWidget(BaseScintilla):
                           args)
 
     def stopProcess(self):
+        self._end_dap_session()
         self.runProcess.kill()
         self.currentProcess = None
         self.debugStatusChanged.emit("")

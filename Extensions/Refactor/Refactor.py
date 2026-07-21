@@ -119,6 +119,31 @@ class FindUsageThread(QThread):
         self.start()
 
 
+class FindDefinitionThread(QThread):
+
+    def run(self):
+        self.error = None
+        self.result = None
+        try:
+            resource = self.ropeProject.get_file(self.path)
+            self.result = find_definition(
+                self.ropeProject, self.source, self.offset, resource)
+        except Exception as err:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            logging.error(repr(traceback.format_exception(
+                exc_type, exc_value, exc_traceback)))
+            self.error = str(err)
+
+    def find(self, path, ropeProject, offset, source):
+        self.path = path
+        self.ropeProject = ropeProject
+        self.offset = offset
+        self.source = source
+        if self.isRunning():
+            return
+        self.start()
+
+
 class RenameThread(QThread):
 
     def run(self):
@@ -285,6 +310,9 @@ class Refactor(QWidget):
         self.findThread = FindUsageThread()
         self.findThread.finished.connect(self.findOccurrencesFinished)
 
+        self.findDefThread = FindDefinitionThread()
+        self.findDefThread.finished.connect(self.findDefinitionFinished)
+
         self.renameThread = RenameThread()
         self.renameThread.finished.connect(self.renameFinished)
 
@@ -429,37 +457,45 @@ class Refactor(QWidget):
 
     def findDefinition(self):
         saved = self.editorTabWidget.saveProject()
-        if saved:
-            offset = self.getOffset()
-            path = self.editorTabWidget.getEditorData("filePath")
-            project = self.getProject()
-            resource = project.get_file(path)
-            try:
-                result = find_definition(project,
-                                         self.editorTabWidget.getSource(), offset, resource)
-                if result is None:
-                    self.editorTabWidget.showNotification(
-                        "No definition found.")
-                else:
-                    start, end = result.region
-                    offset = result.offset
-                    line = result.lineno
-                    result_path = result.resource.path
-                    sourcePath = self.editorTabWidget.projectPathDict[
-                        "sourcedir"]
-                    if not os.path.isabs(result_path):
-                        result_path = os.path.join(sourcePath, result_path)
-                    if os.path.samefile(result_path, path):
-                        pass
-                    else:
-                        self.editorTabWidget.loadfile(result_path)
-                    editor = self.editorTabWidget.focusedEditor()
-                    start = editor.lineIndexFromPosition(start)
-                    end = editor.lineIndexFromPosition(end)
-                    editor.setSelection(start[0], start[1], end[0], end[1])
-                    editor.ensureLineVisible(line - 1)
-            except Exception as err:
-                self.editorTabWidget.showNotification(str(err))
+        if not saved:
+            return
+        if self.findDefThread.isRunning():
+            return
+        offset = self.getOffset()
+        path = self.editorTabWidget.getEditorData("filePath")
+        project = self.getProject()
+        source = self.editorTabWidget.getSource()
+        self.findDefThread.find(path, project, offset, source)
+        self.busyWidget.showBusy(True, "Finding definition... please wait!")
+
+    def findDefinitionFinished(self):
+        self.busyWidget.showBusy(False)
+        if self.findDefThread.error is not None:
+            self.editorTabWidget.showNotification(self.findDefThread.error)
+            return
+        result = self.findDefThread.result
+        if result is None:
+            self.editorTabWidget.showNotification("No definition found.")
+            return
+        start, end = result.region
+        line = result.lineno
+        result_path = result.resource.path
+        path = self.findDefThread.path
+        sourcePath = self.editorTabWidget.projectPathDict["sourcedir"]
+        if not os.path.isabs(result_path):
+            result_path = os.path.join(sourcePath, result_path)
+        try:
+            same = os.path.samefile(result_path, path)
+        except OSError:
+            same = (os.path.normcase(os.path.abspath(result_path))
+                    == os.path.normcase(os.path.abspath(path)))
+        if not same:
+            self.editorTabWidget.loadfile(result_path)
+        editor = self.editorTabWidget.focusedEditor()
+        start = editor.lineIndexFromPosition(start)
+        end = editor.lineIndexFromPosition(end)
+        editor.setSelection(start[0], start[1], end[0], end[1])
+        editor.ensureLineVisible(line - 1)
 
     def moduleToPackage(self):
         path = self.editorTabWidget.getEditorData("filePath")

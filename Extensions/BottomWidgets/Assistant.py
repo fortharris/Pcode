@@ -191,26 +191,13 @@ class Pep8View(QTreeWidget):
                                                  "Applying Style Guide... please wait!")
 
     def createActions(self):
-        self.fixAct = QAction(
-            "Fix Selected (Not Ready)", self, statusTip="Fix Selected")
-        self.fixAct.setDisabled(True)
-
-        self.fixAllAct = \
-            QAction(
-                "Fix All Occurrences (Not Ready)", self, statusTip="Fix All Occurrences")
-        self.fixAllAct.setDisabled(True)
-
         self.fixModuleAct = \
             QAction(
                 "Fix All Issues", self, statusTip="Fix All Issues",
                 triggered=self.fixErrors)
 
         self.contextMenu = QMenu()
-        self.contextMenu.addAction(self.fixAct)
-        self.contextMenu.addAction(self.fixAllAct)
-        self.contextMenu.addSeparator()
         self.contextMenu.addAction(self.fixModuleAct)
-
 
 class NoAssistanceWidget(QWidget):
 
@@ -255,6 +242,7 @@ class Assistant(QStackedWidget):
 
         statusRow = QHBoxLayout()
         self.statusLabel = QLabel("")
+        self.statusLabel.setAccessibleName("Assistant status")
         self.statusLabel.setStyleSheet("color: gray; padding: 2px;")
         statusRow.addWidget(self.statusLabel, 1)
         self.cancelButton = QPushButton("Cancel")

@@ -679,6 +679,7 @@ class ProjectView(QWidget):
     def __init__(self, editorTabWidget, root, app, projectSettings, parent=None):
         QWidget.__init__(self, parent)
 
+        self.setAccessibleName("Project files")
         self.refactor = editorTabWidget.refactor
         self.root = root
 

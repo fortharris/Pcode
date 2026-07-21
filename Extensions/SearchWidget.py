@@ -39,12 +39,14 @@ class SearchWidget(QLabel):
         hbox.addWidget(QLabel("Find:"))
 
         self.findLine = QLineEdit()
+        self.findLine.setAccessibleName("Find text")
         self.findLine.textEdited.connect(self.find)
         self.previousWordLength = 0
         hbox.addWidget(self.findLine)
 
         self.findDownButton = QToolButton()
         self.findDownButton.setAutoRaise(True)
+        self.findDownButton.setAccessibleName("Find next")
         self.findDownButton.setIconSize(QSize(20, 20))
         self.findDownButton.setDefaultAction(
             QAction(
@@ -54,6 +56,7 @@ class SearchWidget(QLabel):
 
         self.findUpButton = QToolButton()
         self.findUpButton.setAutoRaise(True)
+        self.findUpButton.setAccessibleName("Find previous")
         self.findUpButton.setIconSize(QSize(20, 20))
         self.findUpButton.setDefaultAction(
             QAction(
@@ -61,23 +64,27 @@ class SearchWidget(QLabel):
                 "Find Previous", self, triggered=self.findPrevious))
         hbox.addWidget(self.findUpButton)
 
-        self.matchCaseBox = QCheckBox("MC")
+        self.matchCaseBox = QCheckBox("Case")
         self.matchCaseBox.setToolTip("Match Case")
+        self.matchCaseBox.setAccessibleName("Match case")
         self.matchCaseBox.stateChanged.connect(self.updateFindOptions)
         hbox.addWidget(self.matchCaseBox)
 
-        self.matchWholeWordBox = QCheckBox("WW")
+        self.matchWholeWordBox = QCheckBox("Word")
         self.matchWholeWordBox.setToolTip("Whole Word")
+        self.matchWholeWordBox.setAccessibleName("Match whole word")
         self.matchWholeWordBox.stateChanged.connect(self.updateFindOptions)
         hbox.addWidget(self.matchWholeWordBox)
 
-        self.matchRegExpBox = QCheckBox("RE")
+        self.matchRegExpBox = QCheckBox("Regex")
         self.matchRegExpBox.setToolTip("Regular Expression")
+        self.matchRegExpBox.setAccessibleName("Regular expression")
         self.matchRegExpBox.stateChanged.connect(self.updateFindOptions)
         hbox.addWidget(self.matchRegExpBox)
 
-        self.wrapAroundBox = QCheckBox("WA")
+        self.wrapAroundBox = QCheckBox("Wrap")
         self.wrapAroundBox.setToolTip("Wrap Around")
+        self.wrapAroundBox.setAccessibleName("Wrap around")
         self.wrapAroundBox.stateChanged.connect(self.updateFindOptions)
         hbox.addWidget(self.wrapAroundBox)
 
