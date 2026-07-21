@@ -30,3 +30,10 @@ def test_normalize_and_json_roundtrip():
     out = app_settings_for_json(settings)
     assert out["EnableAlerts"] is True
     assert out["Theme"] == "Dark"
+
+
+def test_normalize_migrates_native_ui_to_system():
+    settings = {"UI": "Native", "Theme": "Dark"}
+    normalize_app_settings(settings)
+    assert settings["UI"] == "System"
+    assert settings["Theme"] == "Dark"

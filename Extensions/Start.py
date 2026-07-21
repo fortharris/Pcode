@@ -41,7 +41,7 @@ class Start(QLabel):
         self.pcode = parent
         self.useData = useData
         self.palette_ = StyleSheet.resolve_palette(
-            useData.SETTINGS.get("Theme", "Light"))
+            StyleSheet.active_theme_name(useData.SETTINGS))
 
         mainLayout = QHBoxLayout()
         mainLayout.setContentsMargins(0, 0, 0, 0)

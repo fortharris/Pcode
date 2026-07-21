@@ -97,7 +97,7 @@ class EditorTabWidget(QTabWidget):
         self.mainLayout = QVBoxLayout()
         self.mainLayout.setSpacing(0)
         self.setLayout(self.mainLayout)
-        self._customUiMargins = self.useData.SETTINGS["UI"] == "Custom"
+        self._customUiMargins = StyleSheet.uses_themed_chrome(self.useData.SETTINGS)
         self.adjustToStyleSheet(self._customUiMargins)
 
         self.topVBox = QVBoxLayout()

@@ -657,9 +657,11 @@ def exercise_go_to_definition(editor_window, proj_path):
 
 def exercise_tool_sheet_alignment(editor_window):
     """Top pull-down sheets must sit flush under the tab bar (no gray gap)."""
+    from Extensions import StyleSheet
     etw = editor_window.editorTabWidget
     etw.show()
-    etw.adjustToStyleSheet(etw.useData.SETTINGS.get("UI") == "Custom")
+    etw.adjustToStyleSheet(
+        StyleSheet.uses_themed_chrome(etw.useData.SETTINGS))
     for _ in range(5):
         app.processEvents()
 

@@ -105,18 +105,86 @@ def resolve_palette(name):
     return PALETTES.get(name, LIGHT)
 
 
+def active_theme_name(settings):
+    """Theme name to apply for the current UI mode.
+
+    ``UI == System`` always follows the OS. Otherwise use the Theme setting
+    (which may itself be ``System``).
+    """
+    if not settings:
+        return "Light"
+    if settings.get("UI") == "System":
+        return "System"
+    # Legacy Native was a stripped chrome mode; treat it like System.
+    if settings.get("UI") == "Native":
+        return "System"
+    return settings.get("Theme", "Light") or "Light"
+
+
+def uses_themed_chrome(settings=None, ui=None):
+    """Whether Pcode chrome stylesheets should be applied.
+
+    Custom and System keep themed chrome. Only the legacy Native mode
+    stripped stylesheets (and is migrated away on load).
+    """
+    mode = ui
+    if mode is None and settings is not None:
+        mode = settings.get("UI", "Custom")
+    return mode != "Native"
+
+
 def _detect_system_theme():
-    """Best-effort OS dark-mode detection; falls back to Light."""
+    """Best-effort OS dark-mode detection; falls back to Light.
+
+    Prefers ``QStyleHints.colorScheme`` (Qt 6.5+), then the Windows
+    ``AppsUseLightTheme`` registry value, then palette luminance.
+    """
     try:
-        from PyQt6.QtGui import QPalette
-        from PyQt6.QtWidgets import QApplication
-        app = QApplication.instance()
+        from PyQt6.QtCore import Qt
+        from PyQt6.QtGui import QGuiApplication
+        hints = QGuiApplication.styleHints()
+        if hints is not None:
+            scheme = hints.colorScheme()
+            if scheme == Qt.ColorScheme.Dark:
+                return "Dark"
+            if scheme == Qt.ColorScheme.Light:
+                return "Light"
+    except Exception:
+        pass
+    try:
+        import sys
+        if sys.platform == "win32":
+            import winreg
+            with winreg.OpenKey(
+                    winreg.HKEY_CURRENT_USER,
+                    r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+            ) as key:
+                value, _ = winreg.QueryValueEx(key, "AppsUseLightTheme")
+            return "Light" if int(value) else "Dark"
+    except Exception:
+        pass
+    try:
+        from PyQt6.QtGui import QGuiApplication, QPalette
+        app = QGuiApplication.instance()
+        # Use a fresh default palette — not the app palette we may have
+        # overwritten with a themed Dark/Light QPalette.
+        win = QPalette().color(QPalette.ColorRole.Window)
+        text = QPalette().color(QPalette.ColorRole.WindowText)
         if app is not None:
-            win = app.palette().color(QPalette.ColorRole.Window)
-            # Perceived luminance; < 0.5 means a dark window background.
-            lum = (0.299 * win.red() + 0.587 * win.green()
-                   + 0.114 * win.blue()) / 255.0
-            return "Dark" if lum < 0.5 else "Light"
+            # Prefer style-hints-backed standard palette when available.
+            try:
+                style = app.style()
+                if style is not None:
+                    sp = style.standardPalette()
+                    win = sp.color(QPalette.ColorRole.Window)
+                    text = sp.color(QPalette.ColorRole.WindowText)
+            except Exception:
+                pass
+        if text.lightness() > win.lightness():
+            return "Dark"
+        lum = (0.299 * win.red() + 0.587 * win.green()
+               + 0.114 * win.blue()) / 255.0
+        return "Dark" if lum < 0.5 else "Light"
     except Exception:
         pass
     return "Light"
@@ -594,7 +662,7 @@ def apply_theme(app, name):
 
     Refreshes the module-level style strings (so widgets built afterwards use
     the new palette), sets a matching QPalette, and applies the application
-    stylesheet immediately.
+    stylesheet immediately. ``name`` may be ``System`` (resolved to Light/Dark).
     """
     global CURRENT_PALETTE, CURRENT_THEME
     styles = themed(name)
@@ -610,42 +678,22 @@ def apply_theme(app, name):
     return styles
 
 
-def apply_native(app):
-    """Drop custom theming so Qt's native style/palette paint the UI.
+def apply_system(app):
+    """Apply Pcode chrome themed to the current OS light/dark preference."""
+    return apply_theme(app, "System")
 
-    Clearing only the stylesheet is not enough: a prior Dark theme leaves a
-    light ``ButtonText`` / ``WindowText`` palette that makes labels (e.g.
-    toolbar \"Menu\") invisible on light native backgrounds.
+
+def apply_native(app):
+    """Deprecated alias for :func:`apply_system`.
+
+    Earlier Native mode stripped stylesheets; System keeps themed chrome and
+    follows the OS. Call sites should prefer ``apply_system`` / ``apply_theme``.
     """
-    global CURRENT_PALETTE, CURRENT_THEME
-    CURRENT_THEME = None
-    # Keep Light tokens for Default-lexer overlays while the chrome is native.
-    CURRENT_PALETTE = dict(LIGHT)
-    globals().update(themed("Light"))
-    if app is not None:
-        app.setStyleSheet("")
-        try:
-            style = app.style()
-            if style is not None:
-                app.setPalette(style.standardPalette())
-            else:
-                from PyQt6.QtWidgets import QApplication as _QA
-                app.setPalette(_QA.style().standardPalette())
-        except Exception:
-            pass
-        # Force chrome to repaint with the restored palette.
-        try:
-            for widget in app.allWidgets():
-                widget.style().unpolish(widget)
-                widget.style().polish(widget)
-                widget.update()
-        except Exception:
-            pass
-    return themed("Light")
+    return apply_system(app)
 
 
 def chrome_style(key, custom=True):
-    """Return a themed chrome stylesheet, or empty string for native UI."""
+    """Return a themed chrome stylesheet, or empty string when chrome is off."""
     if not custom:
         return ""
     return globals().get(key, "")

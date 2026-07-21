@@ -338,7 +338,7 @@ class EditorWindow(QWidget):
 
         self.setKeymap()
         self.refreshChromeStyles(
-            self.useData.SETTINGS.get("UI", "Custom") == "Custom")
+            StyleSheet.uses_themed_chrome(self.useData.SETTINGS))
 
     def refreshChromeStyles(self, custom=True):
         """Apply or clear themed chrome stylesheets for Custom vs Native UI."""

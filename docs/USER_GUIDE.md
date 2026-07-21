@@ -50,6 +50,7 @@ There is no standalone IDE installer yet. Releases ship as source plus notes on
 | Debug | Run type **Debug** attaches via DAP; margin click / **Alt+B** sets breakpoints; **F5/F10/F11** continue/step |
 | Freeze | Desktop Application projects → Build (cx_Freeze) |
 | Themes | Settings → Theme (Light / Dark / System) |
+| UI style | Settings → UI style: **Custom** (uses Theme) or **System** (OS light/dark + Pcode chrome) |
 | UI scale | Settings → UI Font Scale (accessibility) |
 | Print | Default shortcut **Ctrl+Alt+P** |
 

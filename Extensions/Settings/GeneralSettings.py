@@ -240,11 +240,12 @@ class GeneralSettings(QWidget):
         self.uiBox = QComboBox()
         self.uiBox.setAccessibleName("UI style")
         self.uiBox.addItem("Custom")
-        self.uiBox.addItem("Native")
-        if self.useData.SETTINGS["UI"] == "Native":
+        self.uiBox.addItem("System")
+        if self.useData.SETTINGS.get("UI") in ("System", "Native"):
             self.uiBox.setCurrentIndex(1)
         self.uiBox.currentIndexChanged.connect(self.setUI)
         form.addRow("UI style", self.uiBox)
+        self._sync_theme_enabled(self.uiBox.currentText() == "Custom")
 
         self.uiScaleBox = QSpinBox()
         self.uiScaleBox.setAccessibleName("UI font scale percent")
@@ -267,7 +268,7 @@ class GeneralSettings(QWidget):
 
         self._register_section(
             gbox, "appearance", "theme", "ui", "font", "scale", "sounds",
-            "light", "dark", "native", "custom")
+            "light", "dark", "system", "custom")
 
     def _build_assistant_section(self, parent_layout):
         gbox, layout = _section("Assistant")
@@ -376,26 +377,28 @@ class GeneralSettings(QWidget):
     def _sync_wrap_enabled(self, enabled):
         self.wrapModeBox.setEnabled(enabled)
 
+    def _sync_theme_enabled(self, enabled):
+        """Theme picker only applies in Custom UI; System follows the OS."""
+        self.themeBox.setEnabled(enabled)
+
     # --- setters (behavior unchanged) ---------------------------------------
 
     def setUI(self, index):
         mode = self.uiBox.currentText()
+        self._sync_theme_enabled(mode == "Custom")
         if self.host is not None and hasattr(self.host, "applyUiMode"):
             self.host.applyUiMode(mode)
             return
         self.useData.SETTINGS["UI"] = mode
-        if index == 0:
-            StyleSheet.apply_theme(
-                self.mainApp, self.useData.SETTINGS.get("Theme", "Light"))
-        else:
-            StyleSheet.apply_native(self.mainApp)
-        isCustom = (index == 0)
+        StyleSheet.apply_theme(
+            self.mainApp, StyleSheet.active_theme_name(self.useData.SETTINGS))
+        uses_chrome = StyleSheet.uses_themed_chrome(self.useData.SETTINGS)
         for i in range(self.projectWindowStack.count() - 1):
             window = self.projectWindowStack.widget(i)
             if hasattr(window, "refreshChromeStyles"):
-                window.refreshChromeStyles(isCustom)
+                window.refreshChromeStyles(uses_chrome)
             if hasattr(window, "editorTabWidget"):
-                window.editorTabWidget.adjustToStyleSheet(isCustom)
+                window.editorTabWidget.adjustToStyleSheet(uses_chrome)
 
     def setTheme(self, index):
         theme = self.themeBox.currentText()
@@ -403,7 +406,7 @@ class GeneralSettings(QWidget):
             self.host.applyTheme(theme)
             return
         self.useData.SETTINGS["Theme"] = theme
-        if self.useData.SETTINGS["UI"] == "Custom":
+        if self.useData.SETTINGS.get("UI", "Custom") == "Custom":
             StyleSheet.apply_theme(self.mainApp, theme)
 
     def setUIFontScale(self, value):

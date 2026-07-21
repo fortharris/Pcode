@@ -28,7 +28,7 @@ Pcode seeks to simplify the process of development in python by means of:
 1. Command palette (Ctrl+Shift+P)
 1. Quick Open file finder (Ctrl+P)
 1. Git panel (status, branch, log, stage/commit/amend, fetch/pull/push)
-1. Light/Dark UI themes (Default lexer follows theme tokens)
+1. Light/Dark/System UI themes (System follows OS; Default lexer follows theme tokens)
 1. Etc.
 
 ### Install (0.2.0)

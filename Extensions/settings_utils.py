@@ -34,6 +34,9 @@ def normalize_app_settings(settings):
     for key in APP_BOOL_KEYS:
         if key in settings:
             settings[key] = to_bool(settings[key])
+    # Legacy Native UI stripped chrome; System keeps themed chrome + OS colors.
+    if settings.get("UI") == "Native":
+        settings["UI"] = "System"
     return settings
 
 

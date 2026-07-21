@@ -67,10 +67,11 @@ class Pcode(QWidget):
         self.library = Library(self.useData)
         self.busyWidget = BusyWidget(app, self.useData, self)
 
-        if self.useData.SETTINGS["UI"] == "Custom":
-            StyleSheet.apply_theme(app, self.useData.SETTINGS.get("Theme", "Light"))
+        if self.useData.SETTINGS.get("UI") == "System":
+            StyleSheet.apply_system(app)
         else:
-            StyleSheet.apply_native(app)
+            StyleSheet.apply_theme(
+                app, StyleSheet.active_theme_name(self.useData.SETTINGS))
         StyleSheet.apply_ui_font_scale(
             app, self.useData.SETTINGS.get("UIFontScale", "100"))
 
@@ -164,6 +165,7 @@ class Pcode(QWidget):
 
         self.setKeymap()
         self.refreshChromeStyles()
+        self._connectSystemThemeWatcher()
 
         if self.useData.bootstrap_bool("firstRun", True):
             self.showMaximized()
@@ -457,33 +459,37 @@ class Pcode(QWidget):
 
     def applyTheme(self, name):
         self.useData.SETTINGS["Theme"] = name
-        if self.useData.SETTINGS["UI"] == "Custom":
-            StyleSheet.apply_theme(self.app, name)
-            self.refreshChromeStyles()
-            # Restyle open editors so Default lexer tokens follow the theme.
-            try:
-                self.settingsWidget.colorScheme.restyleAllEditors()
-            except Exception:
-                pass
+        # Theme picker only drives chrome when UI is Custom (incl. Theme=System).
+        if self.useData.SETTINGS.get("UI", "Custom") != "Custom":
+            return
+        StyleSheet.apply_theme(self.app, name)
+        self.refreshChromeStyles()
+        try:
+            self.settingsWidget.colorScheme.restyleAllEditors()
+        except Exception:
+            pass
 
     def applyUiMode(self, mode):
-        """Apply Custom or Native chrome. ``mode`` is ``Custom`` or ``Native``."""
+        """Apply Custom or System chrome. ``mode`` is ``Custom`` or ``System``."""
+        if mode == "Native":
+            mode = "System"
         self.useData.SETTINGS["UI"] = mode
-        if mode == "Custom":
-            StyleSheet.apply_theme(
-                self.app, self.useData.SETTINGS.get("Theme", "Light"))
-        else:
-            StyleSheet.apply_native(self.app)
+        StyleSheet.apply_theme(
+            self.app, StyleSheet.active_theme_name(self.useData.SETTINGS))
         self.refreshChromeStyles()
-        isCustom = (mode == "Custom")
+        uses_chrome = StyleSheet.uses_themed_chrome(self.useData.SETTINGS)
         for i in range(self.projectWindowStack.count() - 1):
             window = self.projectWindowStack.widget(i)
             if hasattr(window, "editorTabWidget"):
-                window.editorTabWidget.adjustToStyleSheet(isCustom)
+                window.editorTabWidget.adjustToStyleSheet(uses_chrome)
+        try:
+            self.settingsWidget.colorScheme.restyleAllEditors()
+        except Exception:
+            pass
 
     def refreshChromeStyles(self):
         """Apply or clear per-widget chrome stylesheets for the current UI mode."""
-        custom = self.useData.SETTINGS.get("UI", "Custom") == "Custom"
+        custom = StyleSheet.uses_themed_chrome(self.useData.SETTINGS)
         self.projectTitleBox.setStyleSheet(
             StyleSheet.chrome_style("projectTitleBoxStyle", custom))
         self.projectSwitcher.setStyleSheet(
@@ -495,6 +501,34 @@ class Pcode(QWidget):
             elif hasattr(window, "bottomStackSwitcher"):
                 window.bottomStackSwitcher.setStyleSheet(
                     StyleSheet.chrome_style("bottomSwitcherStyle", custom))
+
+    def _connectSystemThemeWatcher(self):
+        """Re-apply System theme when the OS light/dark preference changes."""
+        try:
+            hints = self.app.styleHints()
+            if hints is None:
+                return
+            hints.colorSchemeChanged.connect(self._onSystemColorSchemeChanged)
+        except Exception:
+            pass
+
+    def _onSystemColorSchemeChanged(self, _scheme=None):
+        follows_system = (
+            self.useData.SETTINGS.get("UI") == "System"
+            or (
+                self.useData.SETTINGS.get("UI", "Custom") == "Custom"
+                and self.useData.SETTINGS.get("Theme") == "System"
+            )
+        )
+        if not follows_system:
+            return
+        StyleSheet.apply_theme(
+            self.app, StyleSheet.active_theme_name(self.useData.SETTINGS))
+        self.refreshChromeStyles()
+        try:
+            self.settingsWidget.colorScheme.restyleAllEditors()
+        except Exception:
+            pass
 
     def openProjectDialog(self):
         directory = QFileDialog.getExistingDirectory(
