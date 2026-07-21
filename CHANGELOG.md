@@ -12,6 +12,7 @@
 - Search find options relabeled (Case / Word / Regex / Wrap); broader accessible names
 - Assistant context menu: removed unfinished “Fix Selected/All Occurrences” stubs
 - **Thin DAP debugger**: Debug run attaches to debugpy, applies margin/Alt+B breakpoints, Continue/Step controls (F5/F10/F11)
+- General Settings UX: two-column layout, Appearance first, radios for completion, filter box, clearer labels
 
 ## 0.2.0
 

@@ -4,293 +4,247 @@ import shutil
 from PyQt6.Qsci import QsciScintilla
 from PyQt6.QtCore import QDateTime, Qt
 from PyQt6.QtWidgets import (
-    QApplication, QButtonGroup, QCheckBox, QComboBox, QDialog, QFileDialog,
-    QGroupBox, QHBoxLayout, QLabel, QMessageBox, QPushButton, QSpinBox,
-    QVBoxLayout,
+    QApplication, QCheckBox, QComboBox, QFileDialog, QFormLayout, QGroupBox,
+    QHBoxLayout, QLabel, QLineEdit, QMessageBox, QPushButton, QRadioButton,
+    QSpinBox, QVBoxLayout, QWidget,
 )
 
 from Extensions import StyleSheet
 from Extensions.file_dialog_utils import file_dialog_path
 
 
-class GeneralSettings(QDialog):
+def _section(title):
+    """Plain (non-checkable) group box with consistent flat styling."""
+    box = QGroupBox(title)
+    box.setFlat(True)
+    layout = QVBoxLayout()
+    layout.setContentsMargins(8, 8, 8, 8)
+    layout.setSpacing(6)
+    box.setLayout(layout)
+    return box, layout
+
+
+class GeneralSettings(QWidget):
+    """General preferences page (embedded in the Settings tab widget)."""
 
     def __init__(self, useData, mainApp, projectWindowStack, parent=None):
-        QDialog.__init__(self, parent, Qt.WindowType.Window |
-                               Qt.WindowType.WindowCloseButtonHint)
+        QWidget.__init__(self, parent)
 
-        self.setWindowTitle("Settings")
         self.useData = useData
         self.mainApp = mainApp
         self.projectWindowStack = projectWindowStack
+        self._filter_sections = []  # (group_widget, searchable_text)
 
-        mainLayout = QHBoxLayout()
-        self.setLayout(mainLayout)
+        root = QVBoxLayout()
+        root.setContentsMargins(12, 12, 12, 12)
+        root.setSpacing(10)
+        self.setLayout(root)
 
-        # AUTO COMPLETION
-        mainVbox = QVBoxLayout()
-        mainLayout.addLayout(mainVbox)
+        # --- Filter ---------------------------------------------------------
+        filter_row = QHBoxLayout()
+        filter_label = QLabel("Filter:")
+        filter_label.setAccessibleName("Settings filter label")
+        filter_row.addWidget(filter_label)
+        self.filterLine = QLineEdit()
+        self.filterLine.setPlaceholderText("Filter settings\u2026")
+        self.filterLine.setClearButtonEnabled(True)
+        self.filterLine.setAccessibleName("Filter settings")
+        self.filterLine.textChanged.connect(self._apply_filter)
+        filter_row.addWidget(self.filterLine, 1)
+        root.addLayout(filter_row)
 
-        self.autoCompGbox = QGroupBox("Auto-Completion")
-        self.autoCompGbox.setFlat(True)
-        self.autoCompGbox.setCheckable(True)
-        mainVbox.addWidget(self.autoCompGbox)
+        columns = QHBoxLayout()
+        columns.setSpacing(16)
+        root.addLayout(columns, 1)
 
-        vbox = QVBoxLayout()
-        self.autoCompGbox.setLayout(vbox)
+        left = QVBoxLayout()
+        left.setSpacing(10)
+        right = QVBoxLayout()
+        right.setSpacing(10)
+        columns.addLayout(left, 1)
+        columns.addLayout(right, 1)
 
-        self.autoCompButtonGroup = QButtonGroup()
-        self.autoCompButtonGroup.setExclusive(True)
+        # ===================== LEFT: Editor / Search / Completion ==========
+        self._build_editor_section(left)
+        self._build_search_section(left)
+        self._build_completion_section(left)
+        left.addStretch(1)
 
-        self.autoCompApiBox = QCheckBox("Project")
-        if (self.useData.SETTINGS["AutoCompletion"] == "Api"):
-            self.autoCompApiBox.setChecked(True)
-        self.autoCompButtonGroup.addButton(self.autoCompApiBox)
-        self.autoCompApiBox.toggled.connect(self.setAutoCompletion)
-        vbox.addWidget(self.autoCompApiBox)
+        # ===================== RIGHT: Appearance first =====================
+        self._build_appearance_section(right)
+        self._build_assistant_section(right)
+        self._build_edge_section(right)
+        self._build_wrap_section(right)
+        right.addStretch(1)
 
-        self.autoCompDocBox = QCheckBox("Current Module")
-        if (self.useData.SETTINGS["AutoCompletion"] == "Document"):
-            self.autoCompDocBox.setChecked(True)
-        self.autoCompButtonGroup.addButton(self.autoCompDocBox)
-        self.autoCompDocBox.toggled.connect(self.setAutoCompletion)
-        vbox.addWidget(self.autoCompDocBox)
+        # Demoted secondary action
+        export_row = QHBoxLayout()
+        export_row.addStretch(1)
+        self.exportButton = QPushButton("Export settings\u2026")
+        self.exportButton.setFlat(True)
+        self.exportButton.setAccessibleName("Export settings")
+        self.exportButton.setToolTip("Export workspace settings as a zip archive")
+        self.exportButton.clicked.connect(self.exportSettings)
+        export_row.addWidget(self.exportButton)
+        root.addLayout(export_row)
 
-        if self.useData.setting_bool("EnableAutoCompletion"):
-            self.autoCompGbox.setChecked(True)
-        else:
-            self.autoCompGbox.setChecked(False)
-        self.autoCompGbox.toggled.connect(self.enableAutoCompletion)
+        # Apply initial enable/disable for parent toggles
+        self._sync_completion_enabled(self.enableAutoCompletionBox.isChecked())
+        self._sync_assistant_enabled(self.enableAssistanceBox.isChecked())
+        self._sync_edge_enabled(self.showEdgeLineBox.isChecked())
+        self._sync_wrap_enabled(self.enableWrapBox.isChecked())
 
-        # SEARCH
+    def _register_section(self, widget, *texts):
+        blob = " ".join(t.lower() for t in texts if t)
+        self._filter_sections.append((widget, blob))
 
-        gbox = QGroupBox("Search")
-        gbox.setFlat(True)
+    def _apply_filter(self, text):
+        query = (text or "").strip().lower()
+        for widget, blob in self._filter_sections:
+            widget.setVisible(not query or query in blob)
 
-        vbox = QVBoxLayout()
-        gbox.setLayout(vbox)
-        mainVbox.addWidget(gbox)
+    # --- sections -----------------------------------------------------------
 
-        self.dynamicSearchBox = QCheckBox("Dynamic Search")
-        if self.useData.setting_bool("DynamicSearch"):
-            self.dynamicSearchBox.setChecked(True)
-        self.dynamicSearchBox.toggled.connect(self.setDynamicSearch)
-        vbox.addWidget(self.dynamicSearchBox)
+    def _build_editor_section(self, parent_layout):
+        gbox, layout = _section("Editor")
+        parent_layout.addWidget(gbox)
 
-        self.markWordOccurrenceBox = QCheckBox("Mark Word Occurrence")
-        if self.useData.setting_bool("MarkSearchOccurrence"):
-            self.markWordOccurrenceBox.setChecked(True)
-        self.markWordOccurrenceBox.toggled.connect(
-            self.setMarkSearchOccurrence)
-        vbox.addWidget(self.markWordOccurrenceBox)
+        display = QLabel("Display")
+        display.setStyleSheet("font-weight: 600; color: gray;")
+        layout.addWidget(display)
 
-        vbox.addStretch(1)
-
-        # EDITOR VIEW
-
-        mainVbox = QVBoxLayout()
-        mainLayout.addLayout(mainVbox)
-
-        vbox = QVBoxLayout()
-
-        gbox = QGroupBox("Editor")
-        gbox.setFlat(True)
-        gbox.setLayout(vbox)
-        mainVbox.addWidget(gbox)
-
-        self.showCalltipsBox = QCheckBox("Calltips")
-        if self.useData.setting_bool("CallTips"):
-            self.showCalltipsBox.setChecked(True)
-        self.showCalltipsBox.toggled.connect(self.setShowCalltip)
-        vbox.addWidget(self.showCalltipsBox)
-
-        self.showWhiteSpacesBox = QCheckBox("White Spaces")
-        if self.useData.setting_bool("ShowWhiteSpaces"):
-            self.showWhiteSpacesBox.setChecked(True)
-        self.showWhiteSpacesBox.toggled.connect(self.setShowWhiteSpaces)
-        vbox.addWidget(self.showWhiteSpacesBox)
-
-        # ACTIVE LINE
-
-        activeLineBox = QCheckBox("Active Line")
-        if self.useData.setting_bool("ShowCaretLine"):
-            activeLineBox.setChecked(True)
-        else:
-            activeLineBox.setChecked(False)
-        activeLineBox.toggled.connect(self.setShowCaretLine)
-        vbox.addWidget(activeLineBox)
-
-        # LINE NUMBERS
-
-        self.showLineNumbersBox = QCheckBox("Line Numbers")
-        if self.useData.setting_bool("ShowLineNumbers"):
-            self.showLineNumbersBox.setChecked(True)
+        self.showLineNumbersBox = QCheckBox("Line numbers")
+        self.showLineNumbersBox.setChecked(
+            self.useData.setting_bool("ShowLineNumbers"))
         self.showLineNumbersBox.toggled.connect(self.setShowLineNumbers)
-        vbox.addWidget(self.showLineNumbersBox)
+        layout.addWidget(self.showLineNumbersBox)
 
-        # BRACE MATCHING
+        self.showWhiteSpacesBox = QCheckBox("White spaces")
+        self.showWhiteSpacesBox.setChecked(
+            self.useData.setting_bool("ShowWhiteSpaces"))
+        self.showWhiteSpacesBox.toggled.connect(self.setShowWhiteSpaces)
+        layout.addWidget(self.showWhiteSpacesBox)
 
-        self.matchBracesBox = QCheckBox("Match Braces")
-        if self.useData.setting_bool("MatchBraces"):
-            self.matchBracesBox.setChecked(True)
-        self.matchBracesBox.toggled.connect(self.setMatchBraces)
-        vbox.addWidget(self.matchBracesBox)
+        self.activeLineBox = QCheckBox("Highlight active line")
+        self.activeLineBox.setChecked(
+            self.useData.setting_bool("ShowCaretLine"))
+        self.activeLineBox.toggled.connect(self.setShowCaretLine)
+        layout.addWidget(self.activeLineBox)
 
-        # FOLDING
-
-        self.foldingBox = QCheckBox("Folding")
-        if self.useData.setting_bool("EnableFolding"):
-            self.foldingBox.setChecked(True)
-        self.foldingBox.toggled.connect(self.setFolding)
-        vbox.addWidget(self.foldingBox)
-
-        # DOC ON HOVER
-
-        self.docOnHoverBox = QCheckBox("Doc on hover")
-        if self.useData.setting_bool("DocOnHover"):
-            self.docOnHoverBox.setChecked(True)
-        self.docOnHoverBox.toggled.connect(self.setDocOnHover)
-        vbox.addWidget(self.docOnHoverBox)
-
-        # MARK OPERATIONAL LINES
-
-        self.markOperationalLinesBox = QCheckBox("Mark Operation Lines")
-        if self.useData.setting_bool("MarkOperationalLines"):
-            self.markOperationalLinesBox.setChecked(True)
+        self.markOperationalLinesBox = QCheckBox("Mark operator lines")
+        self.markOperationalLinesBox.setToolTip(
+            "Highlight lines that contain operators")
+        self.markOperationalLinesBox.setChecked(
+            self.useData.setting_bool("MarkOperationalLines"))
         self.markOperationalLinesBox.toggled.connect(
             self.setMarkOperationalLines)
-        vbox.addWidget(self.markOperationalLinesBox)
+        layout.addWidget(self.markOperationalLinesBox)
 
-        vbox.addStretch(1)
+        behavior = QLabel("Behavior")
+        behavior.setStyleSheet("font-weight: 600; color: gray; padding-top: 4px;")
+        layout.addWidget(behavior)
 
-        # EDGE LINE ATTRIBUTES
+        self.matchBracesBox = QCheckBox("Match braces")
+        self.matchBracesBox.setChecked(
+            self.useData.setting_bool("MatchBraces"))
+        self.matchBracesBox.toggled.connect(self.setMatchBraces)
+        layout.addWidget(self.matchBracesBox)
 
-        mainVbox = QVBoxLayout()
-        mainLayout.addLayout(mainVbox)
+        self.foldingBox = QCheckBox("Code folding")
+        self.foldingBox.setChecked(
+            self.useData.setting_bool("EnableFolding"))
+        self.foldingBox.toggled.connect(self.setFolding)
+        layout.addWidget(self.foldingBox)
 
-        gbox = QGroupBox("Edge Line")
-        gbox.setFlat(True)
-        gbox.setCheckable(True)
-        mainVbox.addWidget(gbox)
+        self.showCalltipsBox = QCheckBox("Calltips")
+        self.showCalltipsBox.setChecked(
+            self.useData.setting_bool("CallTips"))
+        self.showCalltipsBox.toggled.connect(self.setShowCalltip)
+        layout.addWidget(self.showCalltipsBox)
 
-        if self.useData.setting_bool("ShowEdgeLine"):
-            gbox.setChecked(True)
+        self.docOnHoverBox = QCheckBox("Documentation on hover")
+        self.docOnHoverBox.setChecked(
+            self.useData.setting_bool("DocOnHover"))
+        self.docOnHoverBox.toggled.connect(self.setDocOnHover)
+        layout.addWidget(self.docOnHoverBox)
+
+        self._register_section(
+            gbox, "editor", "line numbers", "white spaces", "active line",
+            "operator", "braces", "folding", "calltips", "documentation",
+            "hover", "display", "behavior")
+
+    def _build_search_section(self, parent_layout):
+        gbox, layout = _section("Search")
+        parent_layout.addWidget(gbox)
+
+        self.dynamicSearchBox = QCheckBox("Dynamic search")
+        self.dynamicSearchBox.setChecked(
+            self.useData.setting_bool("DynamicSearch"))
+        self.dynamicSearchBox.toggled.connect(self.setDynamicSearch)
+        layout.addWidget(self.dynamicSearchBox)
+
+        self.markWordOccurrenceBox = QCheckBox("Mark word occurrences")
+        self.markWordOccurrenceBox.setChecked(
+            self.useData.setting_bool("MarkSearchOccurrence"))
+        self.markWordOccurrenceBox.toggled.connect(
+            self.setMarkSearchOccurrence)
+        layout.addWidget(self.markWordOccurrenceBox)
+
+        self._register_section(
+            gbox, "search", "dynamic", "word", "occurrence", "mark")
+
+    def _build_completion_section(self, parent_layout):
+        gbox, layout = _section("Auto-Completion")
+        parent_layout.addWidget(gbox)
+
+        self.enableAutoCompletionBox = QCheckBox("Enable auto-completion")
+        self.enableAutoCompletionBox.setChecked(
+            self.useData.setting_bool("EnableAutoCompletion"))
+        self.enableAutoCompletionBox.toggled.connect(self.enableAutoCompletion)
+        layout.addWidget(self.enableAutoCompletionBox)
+
+        self.autoCompApiBox = QRadioButton("Project (rope)")
+        self.autoCompDocBox = QRadioButton("Current module")
+        if self.useData.SETTINGS["AutoCompletion"] == "Document":
+            self.autoCompDocBox.setChecked(True)
         else:
-            gbox.setChecked(False)
-        gbox.toggled.connect(self.setShowEdgeLine)
+            self.autoCompApiBox.setChecked(True)
+        self.autoCompApiBox.toggled.connect(self.setAutoCompletion)
+        self.autoCompDocBox.toggled.connect(self.setAutoCompletion)
+        layout.addWidget(self.autoCompApiBox)
+        layout.addWidget(self.autoCompDocBox)
 
-        vbox = QVBoxLayout()
-        gbox.setLayout(vbox)
+        self._register_section(
+            gbox, "auto", "completion", "project", "module", "rope")
 
-        self.positionBox = QSpinBox()
-        self.positionBox.setRange(1, 200)
-        self.positionBox.setValue(int(self.useData.SETTINGS["EdgeColumn"]))
-        self.positionBox.valueChanged.connect(self.setEdgeColumn)
-        vbox.addWidget(self.positionBox)
+    def _build_appearance_section(self, parent_layout):
+        gbox, layout = _section("Appearance")
+        parent_layout.addWidget(gbox)
 
-        vbox.addWidget(QLabel("Edge Mode"))
-
-        self.edgeModeBox = QComboBox()
-        self.edgeModeBox.addItem("Line")
-        self.edgeModeBox.addItem("Background")
-        self.edgeModeBox.setCurrentIndex(
-            self.edgeModeBox.findText(self.useData.SETTINGS['EdgeMode']))
-        self.edgeModeBox.activated.connect(self.setEdgeMode)
-        self.edgeModeBox.currentIndexChanged.connect(self.setEdgeMode)
-        vbox.addWidget(self.edgeModeBox)
-        
-        # LINE WRAP ATTRIBUTES
-
-        gbox = QGroupBox("Line Wrap")
-        gbox.setFlat(True)
-        gbox.setCheckable(True)
-        mainVbox.addWidget(gbox)
-
-        if self.useData.setting_bool("LineWrap"):
-            gbox.setChecked(True)
-        else:
-            gbox.setChecked(False)
-        gbox.toggled.connect(self.setWrapEnabled)
-
-        vbox = QVBoxLayout()
-        gbox.setLayout(vbox)
-
-        vbox.addWidget(QLabel("Line Wrap Mode"))
-
-        self.wrapModeBox = QComboBox()
-        self.wrapModeBox.addItem("Word")
-        self.wrapModeBox.addItem("Character")
-        self.wrapModeBox.addItem("Whitespace")
-        self.wrapModeBox.setCurrentIndex(
-            self.wrapModeBox.findText(self.useData.SETTINGS['WrapMode']))
-        self.wrapModeBox.activated.connect(self.setWrapMode)
-        self.wrapModeBox.currentIndexChanged.connect(self.setWrapMode)
-        vbox.addWidget(self.wrapModeBox)
-
-        mainVbox.addStretch(1)
-
-        # ASSISTANT
-
-        mainVbox = QVBoxLayout()
-        mainLayout.addLayout(mainVbox)
-
-        gbox = QGroupBox("Assistant")
-        gbox.setFlat(True)
-        gbox.setCheckable(True)
-        mainVbox.addWidget(gbox)
-
-        vbox = QVBoxLayout()
-        gbox.setLayout(vbox)
-
-        self.assistantButtonGroup = QButtonGroup()
-        self.assistantButtonGroup.setExclusive(True)
-
-        self.enableAlertsBox = QCheckBox("Alerts")
-        if self.useData.setting_bool("EnableAlerts"):
-            self.enableAlertsBox.setChecked(True)
-        self.assistantButtonGroup.addButton(self.enableAlertsBox)
-        self.enableAlertsBox.toggled.connect(self.setAssistant)
-        vbox.addWidget(self.enableAlertsBox)
-
-        self.enableStyleGuideBox = QCheckBox("Style Guide")
-        if self.useData.setting_bool("enableStyleGuide"):
-            self.enableStyleGuideBox.setChecked(True)
-        self.assistantButtonGroup.addButton(self.enableStyleGuideBox)
-        self.enableStyleGuideBox.toggled.connect(self.enableStyleGuide)
-        vbox.addWidget(self.enableStyleGuideBox)
-
-        if self.useData.setting_bool("EnableAssistance"):
-            gbox.setChecked(True)
-        else:
-            gbox.setChecked(False)
-        gbox.toggled.connect(self.enableAssistance)
-
-        vbox.addStretch(1)
-
-        # MANAGEMENT
-
-        mainVbox.addWidget(QLabel("UI"))
-
-        self.uiBox = QComboBox()
-        self.uiBox.addItem("Custom")
-        self.uiBox.addItem("Native")
-        if self.useData.SETTINGS["UI"] == 'Native':
-            self.uiBox.setCurrentIndex(1)
-        self.uiBox.currentIndexChanged.connect(self.setUI)
-        mainVbox.addWidget(self.uiBox)
-
-        mainVbox.addWidget(QLabel("Theme"))
+        form = QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(6)
+        layout.addLayout(form)
 
         self.themeBox = QComboBox()
+        self.themeBox.setAccessibleName("Theme")
         self.themeBox.addItems(["Light", "Dark", "System"])
         currentTheme = self.useData.SETTINGS.get("Theme", "Light")
         themeIndex = self.themeBox.findText(currentTheme)
         if themeIndex != -1:
             self.themeBox.setCurrentIndex(themeIndex)
         self.themeBox.currentIndexChanged.connect(self.setTheme)
-        mainVbox.addWidget(self.themeBox)
+        form.addRow("Theme", self.themeBox)
 
-        mainVbox.addWidget(QLabel("UI Font Scale"))
+        self.uiBox = QComboBox()
+        self.uiBox.setAccessibleName("UI style")
+        self.uiBox.addItem("Custom")
+        self.uiBox.addItem("Native")
+        if self.useData.SETTINGS["UI"] == "Native":
+            self.uiBox.setCurrentIndex(1)
+        self.uiBox.currentIndexChanged.connect(self.setUI)
+        form.addRow("UI style", self.uiBox)
+
         self.uiScaleBox = QSpinBox()
         self.uiScaleBox.setAccessibleName("UI font scale percent")
         self.uiScaleBox.setRange(75, 150)
@@ -302,17 +256,126 @@ class GeneralSettings(QDialog):
             scale = 100
         self.uiScaleBox.setValue(max(75, min(150, scale)))
         self.uiScaleBox.valueChanged.connect(self.setUIFontScale)
-        mainVbox.addWidget(self.uiScaleBox)
+        form.addRow("Font scale", self.uiScaleBox)
 
-        self.enableSoundsBox = QCheckBox("Enable Sounds")
-        if self.useData.setting_bool("SoundsEnabled"):
-            self.enableSoundsBox.setChecked(True)
+        self.enableSoundsBox = QCheckBox("Enable sounds")
+        self.enableSoundsBox.setChecked(
+            self.useData.setting_bool("SoundsEnabled"))
         self.enableSoundsBox.toggled.connect(self.setSoundsEnabled)
-        mainVbox.addWidget(self.enableSoundsBox)
+        layout.addWidget(self.enableSoundsBox)
 
-        self.exportButton = QPushButton("Export Settings")
-        self.exportButton.clicked.connect(self.exportSettings)
-        mainVbox.addWidget(self.exportButton)
+        self._register_section(
+            gbox, "appearance", "theme", "ui", "font", "scale", "sounds",
+            "light", "dark", "native", "custom")
+
+    def _build_assistant_section(self, parent_layout):
+        gbox, layout = _section("Assistant")
+        parent_layout.addWidget(gbox)
+
+        self.enableAssistanceBox = QCheckBox("Enable assistant")
+        self.enableAssistanceBox.setChecked(
+            self.useData.setting_bool("EnableAssistance"))
+        self.enableAssistanceBox.toggled.connect(self.enableAssistance)
+        layout.addWidget(self.enableAssistanceBox)
+
+        # Independent toggles (both can run; not exclusive).
+        self.enableAlertsBox = QCheckBox("Syntax alerts (pyflakes)")
+        self.enableAlertsBox.setChecked(
+            self.useData.setting_bool("EnableAlerts"))
+        self.enableAlertsBox.toggled.connect(self.setAssistant)
+        layout.addWidget(self.enableAlertsBox)
+
+        self.enableStyleGuideBox = QCheckBox("Style guide (PEP 8)")
+        self.enableStyleGuideBox.setChecked(
+            self.useData.setting_bool("enableStyleGuide"))
+        self.enableStyleGuideBox.toggled.connect(self.enableStyleGuide)
+        layout.addWidget(self.enableStyleGuideBox)
+
+        self._register_section(
+            gbox, "assistant", "alerts", "style", "pep8", "pyflakes", "syntax")
+
+    def _build_edge_section(self, parent_layout):
+        gbox, layout = _section("Edge Line")
+        parent_layout.addWidget(gbox)
+
+        self.showEdgeLineBox = QCheckBox("Show edge line")
+        self.showEdgeLineBox.setChecked(
+            self.useData.setting_bool("ShowEdgeLine"))
+        self.showEdgeLineBox.toggled.connect(self.setShowEdgeLine)
+        layout.addWidget(self.showEdgeLineBox)
+
+        form = QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(6)
+        layout.addLayout(form)
+
+        self.positionBox = QSpinBox()
+        self.positionBox.setAccessibleName("Edge column")
+        self.positionBox.setRange(1, 200)
+        self.positionBox.setValue(int(self.useData.SETTINGS["EdgeColumn"]))
+        self.positionBox.valueChanged.connect(self.setEdgeColumn)
+        form.addRow("Column", self.positionBox)
+
+        self.edgeModeBox = QComboBox()
+        self.edgeModeBox.setAccessibleName("Edge mode")
+        self.edgeModeBox.addItem("Line")
+        self.edgeModeBox.addItem("Background")
+        self.edgeModeBox.setCurrentIndex(
+            self.edgeModeBox.findText(self.useData.SETTINGS["EdgeMode"]))
+        self.edgeModeBox.activated.connect(self.setEdgeMode)
+        self.edgeModeBox.currentIndexChanged.connect(self.setEdgeMode)
+        form.addRow("Mode", self.edgeModeBox)
+
+        self._register_section(
+            gbox, "edge", "line", "column", "mode", "background")
+
+    def _build_wrap_section(self, parent_layout):
+        gbox, layout = _section("Line Wrap")
+        parent_layout.addWidget(gbox)
+
+        self.enableWrapBox = QCheckBox("Enable line wrap")
+        self.enableWrapBox.setChecked(
+            self.useData.setting_bool("LineWrap"))
+        self.enableWrapBox.toggled.connect(self.setWrapEnabled)
+        layout.addWidget(self.enableWrapBox)
+
+        form = QFormLayout()
+        form.setContentsMargins(0, 0, 0, 0)
+        form.setSpacing(6)
+        layout.addLayout(form)
+
+        self.wrapModeBox = QComboBox()
+        self.wrapModeBox.setAccessibleName("Line wrap mode")
+        self.wrapModeBox.addItem("Word")
+        self.wrapModeBox.addItem("Character")
+        self.wrapModeBox.addItem("Whitespace")
+        self.wrapModeBox.setCurrentIndex(
+            self.wrapModeBox.findText(self.useData.SETTINGS["WrapMode"]))
+        self.wrapModeBox.activated.connect(self.setWrapMode)
+        self.wrapModeBox.currentIndexChanged.connect(self.setWrapMode)
+        form.addRow("Wrap mode", self.wrapModeBox)
+
+        self._register_section(
+            gbox, "line", "wrap", "word", "character", "whitespace")
+
+    # --- enable/disable children --------------------------------------------
+
+    def _sync_completion_enabled(self, enabled):
+        self.autoCompApiBox.setEnabled(enabled)
+        self.autoCompDocBox.setEnabled(enabled)
+
+    def _sync_assistant_enabled(self, enabled):
+        self.enableAlertsBox.setEnabled(enabled)
+        self.enableStyleGuideBox.setEnabled(enabled)
+
+    def _sync_edge_enabled(self, enabled):
+        self.positionBox.setEnabled(enabled)
+        self.edgeModeBox.setEnabled(enabled)
+
+    def _sync_wrap_enabled(self, enabled):
+        self.wrapModeBox.setEnabled(enabled)
+
+    # --- setters (behavior unchanged) ---------------------------------------
 
     def setUI(self, index):
         self.useData.SETTINGS["UI"] = self.uiBox.currentText()
@@ -331,7 +394,6 @@ class GeneralSettings(QDialog):
 
     def setTheme(self, index):
         self.useData.SETTINGS["Theme"] = self.themeBox.currentText()
-        # Theme only affects the custom UI; native uses the OS style.
         if self.useData.SETTINGS["UI"] == "Custom":
             StyleSheet.apply_theme(
                 self.mainApp, self.useData.SETTINGS["Theme"])
@@ -341,12 +403,14 @@ class GeneralSettings(QDialog):
         StyleSheet.apply_ui_font_scale(self.mainApp, value)
 
     def exportSettings(self):
-        savepath = os.path.join(self.useData.getLastOpenedDir(),
-                                "Pcode_Settings" + '_' + QDateTime().currentDateTime().toString().replace(' ', '_').replace(':', '-'))
+        savepath = os.path.join(
+            self.useData.getLastOpenedDir(),
+            "Pcode_Settings" + '_' + QDateTime().currentDateTime().toString(
+            ).replace(' ', '_').replace(':', '-'))
         savepath = os.path.normpath(savepath)
         fileName = file_dialog_path(QFileDialog.getSaveFileName(
             self,
-            "Choose Folder", savepath,
+            "Export Settings", savepath,
             "Pcode Settings (*)",
         ))
         if fileName:
@@ -362,6 +426,7 @@ class GeneralSettings(QDialog):
 
     def enableAssistance(self, state):
         self.useData.set_setting_bool("EnableAssistance", state)
+        self._sync_assistant_enabled(state)
         for i in range(self.projectWindowStack.count() - 1):
             alertsWidget = self.projectWindowStack.widget(i).assistantWidget
             if state:
@@ -377,11 +442,10 @@ class GeneralSettings(QDialog):
             if state is False:
                 editorTabWidget = self.projectWindowStack.widget(
                     i).editorTabWidget
-                for i in range(editorTabWidget.count()):
-                    editor = editorTabWidget.getEditor(i)
+                for j in range(editorTabWidget.count()):
+                    editor = editorTabWidget.getEditor(j)
                     if editor.DATA["fileType"] == "python":
-                        editor2 = editorTabWidget.getCloneEditor(i)
-
+                        editor2 = editorTabWidget.getCloneEditor(j)
                         editor.clearErrorMarkerAndIndicator()
                         editor2.clearErrorMarkerAndIndicator()
 
@@ -395,10 +459,10 @@ class GeneralSettings(QDialog):
         self.useData.SETTINGS['EdgeMode'] = self.edgeModeBox.currentText()
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
                 if editor.DATA["fileType"] == "python":
-                    editor2 = editorTabWidget.getCloneEditor(i)
+                    editor2 = editorTabWidget.getCloneEditor(j)
                     if self.edgeModeBox.currentText() == "Line":
                         editor.setEdgeMode(QsciScintilla.EdgeLine)
                         editor2.setEdgeMode(QsciScintilla.EdgeLine)
@@ -410,36 +474,37 @@ class GeneralSettings(QDialog):
         self.useData.SETTINGS['EdgeColumn'] = str(value)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
                 if editor.DATA["fileType"] == "python":
-                    editor2 = editorTabWidget.getCloneEditor(i)
+                    editor2 = editorTabWidget.getCloneEditor(j)
                     editor.setEdgeColumn(value)
                     editor2.setEdgeColumn(value)
-                    
+
     def setWrapEnabled(self, state):
         self.useData.set_setting_bool("LineWrap", state)
+        self._sync_wrap_enabled(state)
         if state:
             self.setWrapMode()
         else:
             for i in range(self.projectWindowStack.count() - 1):
-                editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-                for i in range(editorTabWidget.count()):
-                    editor = editorTabWidget.getEditor(i)
+                editorTabWidget = self.projectWindowStack.widget(
+                    i).editorTabWidget
+                for j in range(editorTabWidget.count()):
+                    editor = editorTabWidget.getEditor(j)
                     if editor.DATA["fileType"] == "python":
-                        editor2 = editorTabWidget.getCloneEditor(i)
-                        
+                        editor2 = editorTabWidget.getCloneEditor(j)
                         editor.setWrapMode(QsciScintilla.WrapNone)
                         editor2.setWrapMode(QsciScintilla.WrapNone)
-                            
+
     def setWrapMode(self):
         self.useData.SETTINGS['WrapMode'] = self.wrapModeBox.currentText()
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
                 if editor.DATA["fileType"] == "python":
-                    editor2 = editorTabWidget.getCloneEditor(i)
+                    editor2 = editorTabWidget.getCloneEditor(j)
                     if self.wrapModeBox.currentText() == "Word":
                         editor.setWrapMode(QsciScintilla.WrapWord)
                         editor2.setWrapMode(QsciScintilla.WrapWord)
@@ -457,10 +522,10 @@ class GeneralSettings(QDialog):
         self.useData.set_setting_bool("ShowCaretLine", state)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
                 if editor.DATA["fileType"] in self.useData.supportedFileTypes:
-                    editor2 = editorTabWidget.getCloneEditor(i)
+                    editor2 = editorTabWidget.getCloneEditor(j)
                     editor.setCaretLineVisible(state)
                     editor2.setCaretLineVisible(state)
 
@@ -471,9 +536,9 @@ class GeneralSettings(QDialog):
         self.useData.set_setting_bool("ShowLineNumbers", state)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
-                editor2 = editorTabWidget.getCloneEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
+                editor2 = editorTabWidget.getCloneEditor(j)
                 editor.showLineNumbers()
                 editor2.showLineNumbers()
 
@@ -481,9 +546,9 @@ class GeneralSettings(QDialog):
         self.useData.set_setting_bool("MatchBraces", state)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
-                editor2 = editorTabWidget.getCloneEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
+                editor2 = editorTabWidget.getCloneEditor(j)
                 if state:
                     editor.setBraceMatching(QsciScintilla.StrictBraceMatch)
                     editor2.setBraceMatching(
@@ -496,10 +561,10 @@ class GeneralSettings(QDialog):
         self.useData.set_setting_bool("EnableFolding", state)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
                 if editor.DATA["fileType"] == "python":
-                    editor2 = editorTabWidget.getCloneEditor(i)
+                    editor2 = editorTabWidget.getCloneEditor(j)
                     if state:
                         editor.setFolding(QsciScintilla.BoxedTreeFoldStyle, 2)
                         editor2.setFolding(QsciScintilla.BoxedTreeFoldStyle, 2)
@@ -511,20 +576,21 @@ class GeneralSettings(QDialog):
         self.useData.set_setting_bool("ShowWhiteSpaces", state)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
                 if editor.DATA["fileType"] == "python":
-                    editor2 = editorTabWidget.getCloneEditor(i)
+                    editor2 = editorTabWidget.getCloneEditor(j)
                     editor.showWhiteSpaces()
                     editor2.showWhiteSpaces()
 
     def enableAutoCompletion(self, state):
         self.useData.set_setting_bool("EnableAutoCompletion", state)
+        self._sync_completion_enabled(state)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editorTabWidget.getEditor(i).setAutoCompletion()
-                editorTabWidget.getCloneEditor(i).setAutoCompletion()
+            for j in range(editorTabWidget.count()):
+                editorTabWidget.getEditor(j).setAutoCompletion()
+                editorTabWidget.getCloneEditor(j).setAutoCompletion()
 
     def setAutoCompletion(self):
         if self.autoCompDocBox.isChecked():
@@ -533,10 +599,10 @@ class GeneralSettings(QDialog):
             self.useData.SETTINGS["AutoCompletion"] = "Api"
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
                 editor.setAutoCompletion()
-                editor2 = editorTabWidget.getCloneEditor(i)
+                editor2 = editorTabWidget.getCloneEditor(j)
                 editor2.setAutoCompletion()
 
     def setDynamicSearch(self, state):
@@ -546,26 +612,30 @@ class GeneralSettings(QDialog):
         self.useData.set_setting_bool("MarkSearchOccurrence", state)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
-                snapshot = editorTabWidget.getSnapshot(i)
-
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
+                snapshot = editorTabWidget.getSnapshot(j)
                 editor.clearMatchIndicators()
                 snapshot.clearMatchIndicators()
 
     def setShowEdgeLine(self, state):
         self.useData.set_setting_bool("ShowEdgeLine", state)
+        self._sync_edge_enabled(state)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
                 if editor.DATA["fileType"] == "python":
-                    editor2 = editorTabWidget.getCloneEditor(i)
+                    editor2 = editorTabWidget.getCloneEditor(j)
                     editor.showWhiteSpaces()
                     editor2.showWhiteSpaces()
                     if state:
-                        editor.setEdgeMode(QsciScintilla.EdgeLine)
-                        editor2.setEdgeMode(QsciScintilla.EdgeLine)
+                        if self.edgeModeBox.currentText() == "Background":
+                            editor.setEdgeMode(QsciScintilla.EdgeBackground)
+                            editor2.setEdgeMode(QsciScintilla.EdgeBackground)
+                        else:
+                            editor.setEdgeMode(QsciScintilla.EdgeLine)
+                            editor2.setEdgeMode(QsciScintilla.EdgeLine)
                     else:
                         editor.setEdgeMode(QsciScintilla.EdgeNone)
                         editor2.setEdgeMode(QsciScintilla.EdgeNone)
@@ -577,10 +647,10 @@ class GeneralSettings(QDialog):
         self.useData.set_setting_bool("MarkOperationalLines", state)
         for i in range(self.projectWindowStack.count() - 1):
             editorTabWidget = self.projectWindowStack.widget(i).editorTabWidget
-            for i in range(editorTabWidget.count()):
-                editor = editorTabWidget.getEditor(i)
+            for j in range(editorTabWidget.count()):
+                editor = editorTabWidget.getEditor(j)
                 if editor.DATA["fileType"] == "python":
-                    editor2 = editorTabWidget.getCloneEditor(i)
+                    editor2 = editorTabWidget.getCloneEditor(j)
                     editor.setMarkOperationalLines()
                     editor2.setMarkOperationalLines()
 
