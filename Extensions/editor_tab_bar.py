@@ -1,11 +1,12 @@
 """Tab bar context menu and shortcuts for EditorTabWidget."""
 
-import ctypes
 import os
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon, QShortcut
 from PyQt6.QtWidgets import QMenu, QMessageBox, QTabBar
+
+from Extensions.file_dialog_utils import reveal_in_file_manager
 
 
 class EditorTabBar(QTabBar):
@@ -114,8 +115,10 @@ class EditorTabBar(QTabBar):
 
     def openFileLocation(self):
         filePath = self.editorTabWidget.getEditorData('filePath')
-        ctypes.windll.shell32.ShellExecuteW(
-            None, 'open', 'explorer.exe', '/n,/select, ' + filePath, None, 1)
+        if not reveal_in_file_manager(filePath):
+            QMessageBox.warning(
+                self, "Reveal",
+                "Could not open the file location.")
 
     def cloneTab(self):
         index = self.currentIndex()

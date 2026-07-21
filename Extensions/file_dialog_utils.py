@@ -1,5 +1,45 @@
 """Normalize PyQt6 QFileDialog return values (tuple in Qt6, str in PyQt4)."""
 
+import os
+import subprocess
+import sys
+
+
+def reveal_in_file_manager(path):
+    """Reveal a file or folder in the system file manager (cross-platform)."""
+    if not path:
+        return False
+    path = os.path.normpath(path)
+    try:
+        if sys.platform == "win32":
+            if os.path.isdir(path):
+                os.startfile(path)  # noqa: S606 — intentional shell open
+            elif os.path.isfile(path):
+                subprocess.Popen(
+                    ["explorer", "/n,/select,", path],
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            else:
+                parent = os.path.dirname(path)
+                if os.path.isdir(parent):
+                    os.startfile(parent)  # noqa: S606
+                else:
+                    return False
+            return True
+        if sys.platform == "darwin":
+            if os.path.isfile(path):
+                subprocess.Popen(["open", "-R", path])
+            else:
+                subprocess.Popen(["open", path])
+            return True
+        # Linux / other Unix
+        target = path if os.path.exists(path) else os.path.dirname(path)
+        if not target:
+            return False
+        subprocess.Popen(["xdg-open", target])
+        return True
+    except Exception:
+        return False
+
 
 def file_dialog_path(result):
     """Return a single path from getOpenFileName / getSaveFileName / getExistingDirectory."""

@@ -12,6 +12,12 @@ from PyQt6.QtWidgets import (
 from PyQt6.QtXml import QDomDocument
 
 from Extensions.Settings.ColorScheme.ColorChooser import ColorChooser
+from Extensions import StyleSheet
+
+
+def _header_style():
+    bg = StyleSheet.CURRENT_PALETTE.get("panelHeader", "#D8D8D8")
+    return "background: {0}; padding: 2px;".format(bg)
 
 
 class StyleEditor(QWidget):
@@ -41,7 +47,7 @@ class StyleEditor(QWidget):
         mainLayout.addLayout(vbox)
 
         label = QLabel("Background")
-        label.setStyleSheet("background: lightgrey; padding: 2px;")
+        label.setStyleSheet(_header_style())
         vbox.addWidget(label)
 
         self.backgroundColorChooser = ColorChooser()
@@ -49,7 +55,7 @@ class StyleEditor(QWidget):
         vbox.addWidget(self.backgroundColorChooser)
 
         label = QLabel("Foreground")
-        label.setStyleSheet("background: lightgrey; padding: 2px;")
+        label.setStyleSheet(_header_style())
         vbox.addWidget(label)
 
         self.foregroundColorChooser = ColorChooser()
@@ -75,7 +81,7 @@ class StyleEditor(QWidget):
         self.extra_settings_stack.addWidget(stackWidget)
 
         label = QLabel("Highlight Text")
-        label.setStyleSheet("background: lightgrey; padding: 2px;")
+        label.setStyleSheet(_header_style())
         stackBox.addWidget(label)
 
         hbox = QHBoxLayout()
@@ -95,7 +101,7 @@ class StyleEditor(QWidget):
         self.extra_settings_stack.addWidget(stackWidget)
 
         label = QLabel("Margin Font")
-        label.setStyleSheet("background: lightgrey; padding: 2px;")
+        label.setStyleSheet(_header_style())
         stackBox.addWidget(label)
 
         self.fontButton = QPushButton("Font")
@@ -108,7 +114,7 @@ class StyleEditor(QWidget):
         self.paperBG = QButtonGroup()
 
         label = QLabel("Paper")
-        label.setStyleSheet("background: lightgrey; padding: 2px;")
+        label.setStyleSheet(_header_style())
         vbox.addWidget(label)
 
         hbox = QHBoxLayout()

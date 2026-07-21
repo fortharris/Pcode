@@ -4,6 +4,8 @@ from PyQt6.QtWidgets import (
     QColorDialog, QHBoxLayout, QLineEdit, QPushButton, QWidget,
 )
 
+from Extensions import StyleSheet
+
 
 class ColorChooser(QWidget):
 
@@ -43,9 +45,10 @@ class ColorChooser(QWidget):
         color = QColor(colorHex)
         if color.isValid():
             self.colorButton.setAutoFillBackground(True)
+            border = StyleSheet.CURRENT_PALETTE.get("border", "lightgrey")
             style = ("""background: {0};
                          min-width: 70;
                          max-height: 30;
-                         border: 1px solid lightgrey;
-                         border-radius: 0px;""".format(colorHex))
+                         border: 1px solid {1};
+                         border-radius: 0px;""".format(colorHex, border))
             self.colorButton.setStyleSheet(style)

@@ -1,6 +1,6 @@
 import os
 
-from PyQt6.QtCore import QDateTime
+from PyQt6.QtCore import QDateTime, Qt
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
@@ -17,8 +17,22 @@ class MessagesWidget(QTreeWidget):
         self.setHeaderLabels(["Message", "Time"])
         self.setColumnWidth(0, 400)
         self.setColumnWidth(1, 40)
+        self._show_empty_state()
+
+    def _show_empty_state(self):
+        if self.topLevelItemCount() > 0:
+            return
+        item = QTreeWidgetItem(self)
+        item.setFirstColumnSpanned(True)
+        item.setText(0, "No messages yet")
+        item.setFlags(Qt.ItemFlag.NoItemFlags)
 
     def addMessage(self, messType, title, messageList):
+        # Remove empty-state placeholder if present.
+        if (self.topLevelItemCount() == 1
+                and self.topLevelItem(0).text(0) == "No messages yet"):
+            self.takeTopLevelItem(0)
+
         parentItem = QTreeWidgetItem(self)
         if messType == 0:
             parentItem.setIcon(0, QIcon(
@@ -39,6 +53,6 @@ class MessagesWidget(QTreeWidget):
         parentItem.setExpanded(True)
         self.scrollToItem(parentItem, 1)
 
+        # Badge + flash collapsed bottom pane; do not steal the active panel.
         self.vSplitter.showMessageAvailable()
         self.bottomStackSwitcher.setCount(self, str(self.topLevelItemCount()))
-        self.bottomStackSwitcher.setCurrentWidget(self)

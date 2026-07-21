@@ -120,6 +120,14 @@ class QuickOpen(QDialog):
                     break
         if self.listWidget.count():
             self.listWidget.setCurrentRow(0)
+        elif not self._files:
+            item = QListWidgetItem("No project files found")
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
+            self.listWidget.addItem(item)
+        elif query:
+            item = QListWidgetItem("No matching files")
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
+            self.listWidget.addItem(item)
 
     def _activate(self, item):
         path = item.data(Qt.ItemDataRole.UserRole)

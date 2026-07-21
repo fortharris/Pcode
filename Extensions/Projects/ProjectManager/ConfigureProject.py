@@ -406,14 +406,15 @@ class VenvSetup(QWidget):
 
     def _start_venv_job(self, pythonPath, upgrade=False):
         self._venv_busy = True
+        self._venv_cancelled = False
         title = "Upgrade" if upgrade else "Install"
         self._venv_progress = QProgressDialog(
-            "{0} virtual environment…".format(title),
-            None, 0, 0, self)
+            "{0} virtual environment\u2026".format(title),
+            "Cancel", 0, 0, self)
         self._venv_progress.setWindowTitle(title)
         self._venv_progress.setWindowModality(Qt.WindowModality.WindowModal)
         self._venv_progress.setMinimumDuration(0)
-        self._venv_progress.setCancelButton(None)
+        self._venv_progress.canceled.connect(self._cancel_venv)
         self._venv_progress.show()
         QApplication.processEvents()
 
@@ -425,12 +426,23 @@ class VenvSetup(QWidget):
             lambda err: self._venv_finished(False, upgrade, err))
         self._venv_worker.start()
 
+    def _cancel_venv(self):
+        self._venv_cancelled = True
+        worker = getattr(self, "_venv_worker", None)
+        if worker is not None and worker.isRunning():
+            worker.terminate()
+            worker.wait(2000)
+
     def _venv_finished(self, ok, upgrade, error):
         self._venv_busy = False
         if getattr(self, "_venv_progress", None) is not None:
             self._venv_progress.close()
             self._venv_progress = None
         title = "Upgrade" if upgrade else "Install"
+        if getattr(self, "_venv_cancelled", False):
+            QMessageBox.information(
+                self, title, "{0} cancelled.".format(title))
+            return
         if not ok:
             QMessageBox.warning(
                 self, "Failed {0}".format(title), error or "Unknown error")

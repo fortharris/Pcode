@@ -202,9 +202,9 @@ class UseData(QObject):
                 "Find-Previous": "Shift+F3",
                 "Help": "F2",
                 "Python-Manuals": "F1",
-                "Split-Horizontal": "F10",
+                "Split-Horizontal": "Ctrl+Alt+H",
                 "Split-Vertical": "F9",
-                "Remove-Split": "F11",
+                "Remove-Split": "Ctrl+Alt+U",
                 "Reload-File": "F7",
                 "Change-Tab": "F12",
                 "Change-Tab-Reverse": "Ctrl+Tab",
@@ -219,6 +219,12 @@ class UseData(QObject):
                 "Comment": "Ctrl+E",
                 "Uncomment": "Alt+E",
                 "Show-Completion": "Ctrl+Space",
+                "Command-Palette": "Ctrl+Shift+P",
+                "Quick-Open": "Ctrl+P",
+                "Debug-Continue": "F5",
+                "Debug-Step-Over": "F10",
+                "Debug-Step-Into": "F11",
+                "Debug-Step-Out": "Shift+F11",
                 },
             'Editor': {'Move-To-End-Of-Document': ['Ctrl+End', 2318],
                        'Zoom-Out': ['Ctrl+-', 2334],
@@ -560,6 +566,9 @@ class UseData(QObject):
             if group not in self.CUSTOM_SHORTCUTS or not isinstance(mapping, dict):
                 continue
             for name, value in mapping.items():
+                if name not in self.CUSTOM_SHORTCUTS[group]:
+                    # Drop obsolete keys; keep defaults for newly added ones.
+                    continue
                 if group == "Editor":
                     try:
                         self.CUSTOM_SHORTCUTS[group][name] = [value[0],
@@ -568,6 +577,13 @@ class UseData(QObject):
                         continue
                 else:
                     self.CUSTOM_SHORTCUTS[group][name] = value
+        # Migrate split shortcuts that collided with debugger F10/F11.
+        ide = self.CUSTOM_SHORTCUTS.get("Ide", {})
+        if ide.get("Split-Horizontal") == "F10":
+            ide["Split-Horizontal"] = self.DEFAULT_SHORTCUTS["Ide"][
+                "Split-Horizontal"]
+        if ide.get("Remove-Split") == "F11":
+            ide["Remove-Split"] = self.DEFAULT_SHORTCUTS["Ide"]["Remove-Split"]
 
     # ------------------------------------------------------------------
     # Legacy (XML) migration helpers

@@ -176,9 +176,9 @@ class EditorTabWidget(QTabWidget):
         self._customUiMargins = bool(adjust)
         top = self._tab_bar_height()
         if adjust:
-            self.mainLayout.setContentsMargins(0, top, 14, 12)
+            self.mainLayout.setContentsMargins(0, top, 16, 12)
         else:
-            self.mainLayout.setContentsMargins(0, top, 25, 12)
+            self.mainLayout.setContentsMargins(0, top, 16, 12)
 
     def refreshChromeStyles(self, custom=True):
         """Apply or clear tool-overlay and editor chrome stylesheets."""

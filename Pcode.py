@@ -141,6 +141,7 @@ class Pcode(QWidget):
         self.addPage(self.library, "LIBRARY", QIcon(
             os.path.join("Resources", "images", "library")),
             toolTip="Library", showText=False)
+        # Accessible labels use tooltips; keep switchName as EDITOR/LIBRARY.
         self.projectSwitcher.setDefault()
 
         self.settingsButton = QToolButton()
@@ -328,12 +329,13 @@ class Pcode(QWidget):
             shortcuts["Ide"]["Fullscreen"], self)
         self.shortFullscreen.activated.connect(self.showFullScreenMode)
 
-        self.shortCommandPalette = QShortcut(
-            QKeySequence("Ctrl+Shift+P"), self)
+        palette_key = shortcuts["Ide"].get(
+            "Command-Palette", "Ctrl+Shift+P")
+        self.shortCommandPalette = QShortcut(QKeySequence(palette_key), self)
         self.shortCommandPalette.activated.connect(self.showCommandPalette)
 
-        self.shortQuickOpen = QShortcut(
-            QKeySequence("Ctrl+P"), self)
+        quick_key = shortcuts["Ide"].get("Quick-Open", "Ctrl+P")
+        self.shortQuickOpen = QShortcut(QKeySequence(quick_key), self)
         self.shortQuickOpen.activated.connect(self.showQuickOpen)
 
     def showCommandPalette(self):
@@ -343,6 +345,10 @@ class Pcode(QWidget):
     def showQuickOpen(self):
         window = self._activeProjectWindow()
         if window is None:
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.information(
+                self, "Quick Open",
+                "Open a project first, then use Quick Open to jump to a file.")
             return
         root = window.projectPathDict.get("sourcedir") or ""
         files = index_project_files(root)
@@ -372,24 +378,41 @@ class Pcode(QWidget):
         if window is not None:
             etw = window.editorTabWidget
             sw = window.bottomStackSwitcher
+            ide_keys = self.useData.CUSTOM_SHORTCUTS.get("Ide", {})
+
+            def _label(name, shortcut_key=None):
+                tip = ide_keys.get(shortcut_key or "", "")
+                if tip:
+                    return "{0}\t{1}".format(name, tip)
+                return name
+
             commands.extend([
-                ("Quick Open\u2026", self.showQuickOpen),
-                ("Save All", window.saveAll),
-                ("Save File", etw.save),
-                ("Run Project", window.runProject),
-                ("Run File", window.runFile),
+                (_label("Quick Open\u2026", "Quick-Open"), self.showQuickOpen),
+                (_label("Save All", "Save-All"), window.saveAll),
+                (_label("Save File", "Save-File"), etw.save),
+                (_label("Run Project", "Run-Project"), window.runProject),
+                (_label("Run File", "Run-File"), window.runFile),
                 ("Close Project", window.closeProject),
-                ("Find", window.showFinderWidget),
-                ("Replace", window.showReplaceWidget),
+                (_label("Find", "Find"), window.showFinderWidget),
+                (_label("Replace", "Replace"), window.showReplaceWidget),
                 ("Find in Files", window.showFindInFilesWidget),
                 ("Toggle Outline", window.toggleOutline),
-                ("Go to Line", lambda: window.gotoLineAct.trigger()),
+                (_label("Go to Line", "Go-to-Line"),
+                 lambda: window.gotoLineAct.trigger()),
                 ("Go to Definition", etw.refactor.findDefinition),
                 ("Configure Project", lambda: window.configureAct.trigger()),
                 ("Rename Symbol", etw.refactor.renameAttribute),
-                ("Panel: Output",
+                ("View: Editor",
+                 lambda: etw.viewSwitcher.switchTo(0)),
+                ("View: Snapshot",
+                 lambda: etw.viewSwitcher.switchTo(1)),
+                ("View: Unified Diff",
+                 lambda: etw.viewSwitcher.switchTo(2)),
+                ("View: Context Diff",
+                 lambda: etw.viewSwitcher.switchTo(3)),
+                ("Panel: Run",
                  lambda: sw.setCurrentWidget(window.runWidget)),
-                ("Panel: Alerts",
+                ("Panel: Assistant",
                  lambda: sw.setCurrentWidget(window.assistantWidget)),
                 ("Panel: Messages",
                  lambda: sw.setCurrentWidget(window.messagesWidget)),
@@ -406,13 +429,18 @@ class Pcode(QWidget):
                 ("Git: Push", lambda: window.gitPanel.push()),
                 ("Git: Log", lambda: window.gitPanel.show_log()),
                 ("Git: Diff at Cursor", lambda: window.gitPanel.diff_at_cursor()),
-                ("Debug: Continue", window.debugContinue),
-                ("Debug: Step Over", window.debugStepOver),
-                ("Debug: Step Into", window.debugStepInto),
-                ("Debug: Step Out", window.debugStepOut),
+                (_label("Debug: Continue", "Debug-Continue"),
+                 window.debugContinue),
+                (_label("Debug: Step Over", "Debug-Step-Over"),
+                 window.debugStepOver),
+                (_label("Debug: Step Into", "Debug-Step-Into"),
+                 window.debugStepInto),
+                (_label("Debug: Step Out", "Debug-Step-Out"),
+                 window.debugStepOut),
             ])
             if window.projectPathDict.get("type") == "Desktop Application":
-                commands.append(("Build Project", window.buildProject))
+                commands.append((_label("Build Project", "Build"),
+                                 window.buildProject))
             for path in window.projectData.get("recentfiles", [])[:8]:
                 if not path:
                     continue
@@ -427,6 +455,8 @@ class Pcode(QWidget):
                 "Save-All": window.saveAll,
                 "Run-Project": window.runProject,
                 "Run-File": window.runFile,
+                "Command-Palette": self.showCommandPalette,
+                "Quick-Open": self.showQuickOpen,
             }
             for name, shortcut in self.useData.CUSTOM_SHORTCUTS.get("Ide", {}).items():
                 handler = keymap_dispatch.get(name)

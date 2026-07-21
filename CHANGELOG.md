@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+### UX polish
+- Shortcut collisions fixed: Split Horizontal/Remove remapped off F10/F11; debug F5/F10/F11 only while a debug session is active; Command Palette and Quick Open are remappable
+- Busy overlay is non-modal (WindowModal `show`) with themed chrome; Escape cancels when Cancel is enabled
+- Workspace first-run accepts any folder (or creates layout); clearer validation messages
+- New Project Help dialog + field-level validation errors
+- Bottom panels renamed Output→Run, Alerts→Assistant; Git Fetch/Pull/Push on the toolbar with busy status
+- Theme tokens for busy overlay, splitter notifications, debug status, style editors, search borders
+- Empty states for Messages, Tasks, Git file list, Quick Open, Command Palette
+- Messages no longer steals the active bottom panel; badge + collapsed-pane flash only
+- Quick Open explains when no project is open; View Editor/Snapshot/Diff in the command palette
+- Cross-platform “Reveal in file manager”; Recent Files empty action disabled; Start page respects UI font scale
+- Venv install/upgrade progress dialog is cancellable
+
 ### Workflow
 - Run arguments are split with `shlex` (quoted paths work); profiler forwards args too
 - Go-to-Definition runs on a background thread

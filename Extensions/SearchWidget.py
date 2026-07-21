@@ -7,6 +7,8 @@ from PyQt6.QtWidgets import (
     QVBoxLayout, QWidget,
 )
 
+from Extensions import StyleSheet
+
 
 class SearchWidget(QLabel):
 
@@ -17,7 +19,8 @@ class SearchWidget(QLabel):
         self.editorTabWidget = editorTabWidget
 
         self.mainLayout = QVBoxLayout()
-        self.mainLayout.setContentsMargins(5, 0, 0, 0)
+        self.mainLayout.setContentsMargins(8, 0, 8, 0)
+        self.mainLayout.setSpacing(4)
 
         self.createFindWidget()
         self.createReplaceWidget()
@@ -129,7 +132,7 @@ class SearchWidget(QLabel):
         self.mainLayout.addWidget(self.replacerWidget)
 
     def showFinder(self):
-        self.mainLayout.setContentsMargins(5, 0, 5, 0)
+        self.mainLayout.setContentsMargins(8, 0, 8, 0)
         self.setMinimumHeight(30)
         self.setMaximumHeight(30)
         self.replacerWidget.hide()
@@ -148,7 +151,7 @@ class SearchWidget(QLabel):
             self.findLine.insert(selection)
 
     def showReplaceWidget(self):
-        self.mainLayout.setContentsMargins(5, 5, 5, 5)
+        self.mainLayout.setContentsMargins(8, 8, 8, 8)
         self.setMinimumHeight(70)
         self.setMaximumHeight(70)
         self.findLine.setText(self.editorTabWidget.get_current_word())
@@ -172,9 +175,10 @@ class SearchWidget(QLabel):
     def find(self):
         text = self.findLine.text()
         editor = self.editorTabWidget.focusedEditor()
+        border = StyleSheet.CURRENT_PALETTE.get("border", "lightgrey")
         if text == '':
             self.findLine.setStyleSheet(
-                "QLineEdit {border-bottom: 1px solid lightgrey;}")
+                "QLineEdit {{border-bottom: 1px solid {0};}}".format(border))
             editor.clearAllIndicators(editor.searchIndicator)
         else:
             if self.useData.setting_bool('DynamicSearch'):
@@ -184,10 +188,14 @@ class SearchWidget(QLabel):
                     self.wrapAround, True, 0, 0, True)
                 if found:
                     self.findLine.setStyleSheet(
-                        "QLineEdit {border-bottom: 1px solid lightgrey;}")
+                        "QLineEdit {{border-bottom: 1px solid {0};}}".format(
+                            border))
                 else:
+                    danger = StyleSheet.CURRENT_PALETTE.get(
+                        "danger", "#FF6666")
                     self.findLine.setStyleSheet(
-                        "QLineEdit {border-bottom: 2px solid #FF6666;}")
+                        "QLineEdit {{border-bottom: 2px solid {0};}}".format(
+                            danger))
 
     def findNext(self):
         text = self.findLine.text()

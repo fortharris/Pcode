@@ -62,15 +62,17 @@ Install packages with the venv’s `python -m pip` from a terminal.
 | Go to Definition | Refactor menu / palette (background rope lookup) |
 | Rename / refactor | Rope actions from the editor or palette |
 | Lint / PEP8 | Assistant bottom panel; context menu **Fix All Issues** |
-| Git | Status, branch, stage, commit, amend, fetch, pull, push, diff |
+| Git | Sidebar Git panel: status, branch, stage, commit, amend, fetch, pull, push, diff |
 | Run args | Quoted tokens supported, e.g. `--flag "my file"` |
-| Debug | Run type **Debug** attaches via DAP; margin click / **Alt+B** sets breakpoints; **F5/F10/F11** continue/step |
+| Debug | Run type **Debug** attaches via DAP; margin click / **Alt+B** sets breakpoints; **F5/F10/F11** continue/step (only while debugging; Run Project stays **F5** otherwise) |
+| Split editor | Vertical **F9**; Horizontal **Ctrl+Alt+H**; Remove **Ctrl+Alt+U** |
 | Freeze | Desktop Application projects → Build (cx_Freeze) |
 | Themes | Settings → Theme (Light / Dark / System) |
 | UI style | Settings → UI style: **Custom** (uses Theme) or **System** (OS light/dark + Pcode chrome) |
 | Layout | Sidebar on the left; outline collapsed by default; thin toolbar with **⋯** overflow |
 | UI scale | Settings → UI Font Scale (accessibility) |
 | Print | Default shortcut **Ctrl+Alt+P** |
+| Command Palette | **Ctrl+Shift+P** (remappable) — includes View / panel / Git / Debug actions |
 
 ## Projects and data
 

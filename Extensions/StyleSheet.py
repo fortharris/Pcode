@@ -52,6 +52,19 @@ LIGHT = {
     "editorComment": "#008000",
     "editorKeyword": "#0000FF",
     "editorString": "#A31515",
+    # Status / notification tokens
+    "warning": "#C06000",
+    "success": "#2E8B57",
+    "info": "#007ACC",
+    "danger": "#D24726",
+    "busyBg": "#2D2D30",
+    "busyBorder": "#007ACC",
+    "busyText": "#E8E8E8",
+    "panelHeader": "#D8D8D8",
+    "spaceXs": "4",
+    "spaceSm": "8",
+    "spaceMd": "12",
+    "spaceLg": "16",
 }
 
 DARK = {
@@ -89,6 +102,19 @@ DARK = {
     "editorComment": "#6A9955",
     "editorKeyword": "#569CD6",
     "editorString": "#CE9178",
+    # Status / notification tokens
+    "warning": "#E0A050",
+    "success": "#4EC24E",
+    "info": "#0E7AD1",
+    "danger": "#FD6500",
+    "busyBg": "#252526",
+    "busyBorder": "#0E7AD1",
+    "busyText": "#E8E8E8",
+    "panelHeader": "#333337",
+    "spaceXs": "4",
+    "spaceSm": "8",
+    "spaceMd": "12",
+    "spaceLg": "16",
 }
 
 # Last palette applied by apply_theme (for lexer Default overlays).

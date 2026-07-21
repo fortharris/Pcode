@@ -1,7 +1,7 @@
 import os
 import re
 
-from PyQt6.QtCore import QThread, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, QTimer, pyqtSignal
 from PyQt6.QtGui import QIcon
 from PyQt6.QtWidgets import QTreeWidget, QTreeWidgetItem
 
@@ -13,10 +13,7 @@ class TaskFinderThread(QThread):
     results = []
 
     def run(self):
-        # TODO: this is a test for the following function
-        """
-        Find tasks in source code (TODO, FIXME, XXX, ...)
-        """
+        """Find tasks in source code (TODO, FIXME, XXX, ...)."""
         results = []
         for line, text in enumerate(self.source.splitlines()):
             for todo in re.findall(self.TASKS_PATTERN, text):
@@ -72,6 +69,12 @@ class Tasks(QTreeWidget):
     def updateTasks(self, results):
         self.clear()
         self.bottomStackSwitcher.setCount(self, str(len(results)))
+        if not results:
+            item = QTreeWidgetItem()
+            item.setText(3, "No TODO / FIXME tasks in this file")
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
+            self.addTopLevelItem(item)
+            return
         for i in results:
             item = QTreeWidgetItem()
             item.setIcon(0, QIcon(

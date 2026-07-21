@@ -143,8 +143,8 @@ class Start(QLabel):
         centralLayout.addStretch(1)
 
         label = QLabel("Recent projects")
-        label.setStyleSheet(
-            "color: %s; font: bold 12px;" % self.palette_["accent"])
+        label.setFont(_ui_font(12, bold=True))
+        label.setStyleSheet("color: %s;" % self.palette_["accent"])
         centralLayout.addWidget(label)
 
         self.recentProjectsListWidget = QListWidget()

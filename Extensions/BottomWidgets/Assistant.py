@@ -171,7 +171,10 @@ class Pep8View(QTreeWidget):
 
     def autoPep8Done(self):
         self.editorTabWidget.busyWidget.showBusy(False)
-        
+        if getattr(self, "_fix_cancelled", False):
+            self._fix_cancelled = False
+            return
+
         editor = self.editorTabWidget.getEditor()
         with open(self.editorTabWidget.pep8TempPath, "r") as file:
             editor.setText(file.read())
@@ -183,12 +186,22 @@ class Pep8View(QTreeWidget):
         if len(selectedItems) > 0:
             self.contextMenu.exec(event.globalPos())
 
+    def _cancelFix(self):
+        self._fix_cancelled = True
+        self.editorTabWidget.busyWidget.showBusy(False)
+
     def fixErrors(self):
         # just in case autopep8 check has not been done already
+        self._fix_cancelled = False
         self.editorTabWidget.saveToTemp('pep8')
+        try:
+            self.editorTabWidget.busyWidget.cancel.disconnect(self._cancelFix)
+        except TypeError:
+            pass
+        self.editorTabWidget.busyWidget.cancel.connect(self._cancelFix)
         self.fixerThread.runFix(self.editorTabWidget.pep8TempPath)
-        self.editorTabWidget.busyWidget.showBusy(True,
-                                                 "Applying Style Guide... please wait!")
+        self.editorTabWidget.busyWidget.showBusy(
+            True, "Applying Style Guide... please wait!", enableCancel=True)
 
     def createActions(self):
         self.fixModuleAct = \
@@ -265,7 +278,7 @@ class Assistant(QStackedWidget):
 
         self.errorView = QTreeWidget()
         self.errorView.setColumnCount(3)
-        self.errorView.setHeaderLabels(["", "#", "Alerts"])
+        self.errorView.setHeaderLabels(["", "#", "Issues"])
         self.errorView.setAutoScroll(True)
         self.errorView.setColumnWidth(0, 50)
         self.errorView.setColumnWidth(1, 50)
@@ -426,7 +439,7 @@ class Assistant(QStackedWidget):
             if len(alertsList) == 0:
                 parentItem = QTreeWidgetItem()
                 item = QTreeWidgetItem()
-                item.setText(2, "<No Alerts>")
+                item.setText(2, "<No Issues>")
                 item.setFlags(Qt.ItemFlag.NoItemFlags)
                 parentItem.addChild(item)
                 self.errorView.addTopLevelItem(parentItem)

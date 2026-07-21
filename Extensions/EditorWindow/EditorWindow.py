@@ -241,7 +241,10 @@ class EditorWindow(QWidget):
         self.statusbar.addPermanentWidget(self.encodingLabel)
         self.debugStatusLabel = QLabel()
         self.debugStatusLabel.setAccessibleName("Debug status")
-        self.debugStatusLabel.setStyleSheet("color: #c06000; font-weight: bold;")
+        from Extensions import StyleSheet as _SS
+        _warn = _SS.CURRENT_PALETTE.get("warning", "#c06000")
+        self.debugStatusLabel.setStyleSheet(
+            "color: {0}; font-weight: bold;".format(_warn))
         self.statusbar.addPermanentWidget(self.debugStatusLabel)
 
         self.debugContinueButton = QToolButton()
@@ -291,11 +294,11 @@ class EditorWindow(QWidget):
                 "settings"], self.useData,
             self.editorTabWidget, self.vSplitter,
             self.runProjectAct, self.stopRunAct, self.runFileAct)
-        self.addBottomWidget(self.runWidget, tinted_icon("graphic-design"), "Output")
+        self.addBottomWidget(self.runWidget, tinted_icon("graphic-design"), "Run")
 
         self.assistantWidget = Assistant(
             self.editorTabWidget, self.bottomStackSwitcher)
-        self.addBottomWidget(self.assistantWidget, tinted_icon("flag"), "Alerts")
+        self.addBottomWidget(self.assistantWidget, tinted_icon("flag"), "Assistant")
 
         self.bookmarkWidget = BookmarkWidget(
             self.editorTabWidget, self.bottomStackSwitcher)
@@ -320,7 +323,7 @@ class EditorWindow(QWidget):
         self.bottomStackSwitcher.setDefault()
 
         hbox = QHBoxLayout()
-        hbox.setContentsMargins(4, 0, 4, 0)
+        hbox.setContentsMargins(8, 0, 8, 0)
         hbox.setSpacing(0)
         hbox.addWidget(self.bottomStackSwitcher)
         hbox.addStretch(1)
@@ -707,11 +710,11 @@ class EditorWindow(QWidget):
                                                 "File is unavailable!")
 
     def loadRecentFiles(self):
+        self.recentFilesMenu.clear()
         if len(self.projectData['recentfiles']) > 0:
             self.recentFile_actionGroup = QActionGroup(self)
             self.recentFile_actionGroup.triggered.connect(
                 self.recentFileActivated)
-            self.recentFilesMenu.clear()
             c = 1
             for i in self.projectData['recentfiles']:
                 action = QAction(str(c) + '  ' + i, self)
@@ -721,7 +724,9 @@ class EditorWindow(QWidget):
             self.recentFilesMenu.addSeparator()
             self.recentFilesMenu.addAction(self.clearRecentFilesAct)
         else:
-            self.recentFilesMenu.addAction("No Recent Files")
+            empty = QAction("No Recent Files", self)
+            empty.setEnabled(False)
+            self.recentFilesMenu.addAction(empty)
 
     def updateRecentFiles(self, filePath):
         if filePath in self.projectData['recentfiles']:
@@ -839,6 +844,17 @@ class EditorWindow(QWidget):
             self.debugStepIntoButton, self.debugStepOutButton,
         ):
             button.setVisible(bool(visible))
+        # Avoid F5/F10/F11 colliding with Run / Split when not debugging.
+        for short in (
+            getattr(self, "shortDebugContinue", None),
+            getattr(self, "shortDebugStepOver", None),
+            getattr(self, "shortDebugStepInto", None),
+            getattr(self, "shortDebugStepOut", None),
+        ):
+            if short is not None:
+                short.setEnabled(bool(visible))
+        if getattr(self, "shortRunProject", None) is not None:
+            self.shortRunProject.setEnabled(not visible)
 
     def _onDebugStoppedAt(self, path, line):
         """Navigate to DAP stopped location (line is 1-based)."""
@@ -995,11 +1011,30 @@ class EditorWindow(QWidget):
         self.pythonManualsAct.setShortcut(
             shortcuts["Ide"]["Python-Manuals"])
 
-        self.shortDebugContinue = QShortcut(QKeySequence("F5"), self)
+        self.shortDebugContinue = QShortcut(
+            shortcuts["Ide"].get("Debug-Continue", "F5"), self)
         self.shortDebugContinue.activated.connect(self.debugContinue)
-        self.shortDebugStepOver = QShortcut(QKeySequence("F10"), self)
+        self.shortDebugContinue.setEnabled(False)
+        tip = shortcuts["Ide"].get("Debug-Continue", "F5")
+        self.debugContinueButton.setToolTip("Continue ({0})".format(tip))
+
+        self.shortDebugStepOver = QShortcut(
+            shortcuts["Ide"].get("Debug-Step-Over", "F10"), self)
         self.shortDebugStepOver.activated.connect(self.debugStepOver)
-        self.shortDebugStepInto = QShortcut(QKeySequence("F11"), self)
+        self.shortDebugStepOver.setEnabled(False)
+        tip = shortcuts["Ide"].get("Debug-Step-Over", "F10")
+        self.debugStepOverButton.setToolTip("Step Over ({0})".format(tip))
+
+        self.shortDebugStepInto = QShortcut(
+            shortcuts["Ide"].get("Debug-Step-Into", "F11"), self)
         self.shortDebugStepInto.activated.connect(self.debugStepInto)
-        self.shortDebugStepOut = QShortcut(QKeySequence("Shift+F11"), self)
+        self.shortDebugStepInto.setEnabled(False)
+        tip = shortcuts["Ide"].get("Debug-Step-Into", "F11")
+        self.debugStepIntoButton.setToolTip("Step Into ({0})".format(tip))
+
+        self.shortDebugStepOut = QShortcut(
+            shortcuts["Ide"].get("Debug-Step-Out", "Shift+F11"), self)
         self.shortDebugStepOut.activated.connect(self.debugStepOut)
+        self.shortDebugStepOut.setEnabled(False)
+        tip = shortcuts["Ide"].get("Debug-Step-Out", "Shift+F11")
+        self.debugStepOutButton.setToolTip("Step Out ({0})".format(tip))

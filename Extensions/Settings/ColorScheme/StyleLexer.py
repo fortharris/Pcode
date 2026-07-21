@@ -13,6 +13,12 @@ from Extensions.Settings.ColorScheme.Lexers import CssLexer
 from Extensions.Settings.ColorScheme.Lexers import HtmlLexer
 from Extensions.Settings.ColorScheme.Lexers import XmlLexer
 from Extensions.Settings.ColorScheme.ColorChooser import ColorChooser
+from Extensions import StyleSheet
+
+
+def _header_style():
+    bg = StyleSheet.CURRENT_PALETTE.get("panelHeader", "#D8D8D8")
+    return "background: {0}; padding: 2px;".format(bg)
 
 
 class StyleLexer(QWidget):
@@ -47,7 +53,7 @@ class StyleLexer(QWidget):
 
         hbox = QHBoxLayout()
         label = QLabel("Foreground")
-        label.setStyleSheet("background: lightgrey; padding: 2px;")
+        label.setStyleSheet(_header_style())
         hbox.addWidget(label)
         vbox.addLayout(hbox)
 
@@ -70,7 +76,7 @@ class StyleLexer(QWidget):
 
         hbox = QHBoxLayout()
         label = QLabel("Background")
-        label.setStyleSheet("background: lightgrey; padding: 2px;")
+        label.setStyleSheet(_header_style())
         hbox.addWidget(label)
         vbox.addLayout(hbox)
 
@@ -93,7 +99,7 @@ class StyleLexer(QWidget):
 
         hbox = QHBoxLayout()
         label = QLabel("Font")
-        label.setStyleSheet("background: lightgrey; padding: 2px;")
+        label.setStyleSheet(_header_style())
         hbox.addWidget(label)
         vbox.addLayout(hbox)
 

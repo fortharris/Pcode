@@ -2,7 +2,7 @@
 
 from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import (
-    QDialog, QLineEdit, QListWidget, QListWidgetItem, QVBoxLayout,
+    QDialog, QLabel, QLineEdit, QListWidget, QListWidgetItem, QVBoxLayout,
 )
 
 
@@ -14,24 +14,33 @@ class CommandPalette(QDialog):
             Qt.WindowType.FramelessWindowHint | Qt.WindowType.Dialog)
         self.setModal(True)
         self.resize(560, 360)
+        self.setAccessibleName("Command Palette")
 
         self._commands = []
 
         layout = QVBoxLayout()
-        layout.setContentsMargins(1, 1, 1, 1)
-        layout.setSpacing(0)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(4)
         self.setLayout(layout)
 
         self.searchLine = QLineEdit()
         self.searchLine.setPlaceholderText("Type a command\u2026")
         self.searchLine.setClearButtonEnabled(True)
+        self.searchLine.setAccessibleName("Command Palette search")
         self.searchLine.textChanged.connect(self._refilter)
         self.searchLine.installEventFilter(self)
         layout.addWidget(self.searchLine)
 
         self.listWidget = QListWidget()
+        self.listWidget.setAccessibleName("Command Palette results")
         self.listWidget.itemActivated.connect(self._activate)
         layout.addWidget(self.listWidget)
+
+        self.emptyLabel = QLabel("No matching commands")
+        self.emptyLabel.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.emptyLabel.setAccessibleName("Command Palette empty")
+        self.emptyLabel.hide()
+        layout.addWidget(self.emptyLabel)
 
     def setCommands(self, commands):
         """commands: iterable of (label, callback)."""
@@ -53,12 +62,21 @@ class CommandPalette(QDialog):
         text = text.strip().lower()
         self.listWidget.clear()
         for label, callback in self._commands:
-            if self._matches(text, label.lower()):
-                item = QListWidgetItem(label)
+            # Match against the command name, ignore trailing shortcut column.
+            match_label = label.split("\t", 1)[0].lower()
+            if self._matches(text, match_label) or self._matches(text, label.lower()):
+                item = QListWidgetItem(label.replace("\t", "  "))
                 item.setData(Qt.ItemDataRole.UserRole, callback)
                 self.listWidget.addItem(item)
         if self.listWidget.count():
             self.listWidget.setCurrentRow(0)
+            self.listWidget.show()
+            self.emptyLabel.hide()
+        else:
+            self.listWidget.hide()
+            self.emptyLabel.setText(
+                "No matching commands" if text else "No commands available")
+            self.emptyLabel.show()
 
     @staticmethod
     def _matches(query, label):

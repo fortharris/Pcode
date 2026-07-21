@@ -66,6 +66,7 @@ class ViewSwitcher(QLabel):
     def addButton(self, icon, toolTip):
         button = QToolButton()
         button.setToolTip(toolTip)
+        button.setAccessibleName(toolTip)
         button.setCheckable(True)
         button.setIcon(icon)
         self.buttonGroup.addButton(button)
@@ -77,8 +78,17 @@ class ViewSwitcher(QLabel):
     def setIndex(self, button, index=None):
         button = self.buttonGroup.button(index)
         button.setChecked(True)
+        self.show()
         subStack = self.editorTabWidget.currentWidget()
         subStack.setCurrentIndex(index)
+
+    def switchTo(self, index):
+        """Show the switcher and select a view (0–3)."""
+        self.setIndex(None, index)
+        if index == 2:
+            self.editorTabWidget.getUnifiedDiff().generateUnifiedDiff()
+        elif index == 3:
+            self.editorTabWidget.getContextDiff().generateContextDiff()
 
     def setDefault(self):
         button = self.buttonGroup.button(0)

@@ -80,7 +80,8 @@ class GitPanel(QWidget):
         self.worker.batchFinished.connect(self._on_batch_finished)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setContentsMargins(8, 8, 8, 8)
+        layout.setSpacing(8)
 
         branch_row = QHBoxLayout()
         branch_label = QLabel("Branch:")
@@ -97,6 +98,11 @@ class GitPanel(QWidget):
         self.refreshButton.clicked.connect(self.refresh)
         branch_row.addWidget(self.refreshButton)
         layout.addLayout(branch_row)
+
+        self.statusLabel = QLabel()
+        self.statusLabel.setAccessibleName("Git status")
+        self.statusLabel.hide()
+        layout.addWidget(self.statusLabel)
 
         toolbar = QHBoxLayout()
         self.stageButton = QPushButton("Stage")
@@ -118,6 +124,24 @@ class GitPanel(QWidget):
         self.diffButton.clicked.connect(self.diff_at_cursor)
         toolbar.addWidget(self.diffButton)
 
+        self.fetchButton = QPushButton("Fetch")
+        self.fetchButton.setToolTip("Fetch from all remotes")
+        self.fetchButton.setAccessibleName("Git fetch")
+        self.fetchButton.clicked.connect(self.fetch)
+        toolbar.addWidget(self.fetchButton)
+
+        self.pullButton = QPushButton("Pull")
+        self.pullButton.setToolTip("Pull with fast-forward only")
+        self.pullButton.setAccessibleName("Git pull")
+        self.pullButton.clicked.connect(self.pull)
+        toolbar.addWidget(self.pullButton)
+
+        self.pushButton = QPushButton("Push")
+        self.pushButton.setToolTip("Push current branch to remote")
+        self.pushButton.setAccessibleName("Git push")
+        self.pushButton.clicked.connect(self.push)
+        toolbar.addWidget(self.pushButton)
+
         self.moreButton = QToolButton()
         self.moreButton.setText("More")
         self.moreButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
@@ -125,10 +149,6 @@ class GitPanel(QWidget):
         more_menu = QMenu(self.moreButton)
         more_menu.addAction("Open File", self.open_selected)
         more_menu.addAction("Full Log", self.show_log)
-        more_menu.addSeparator()
-        more_menu.addAction("Fetch", self.fetch)
-        more_menu.addAction("Pull", self.pull)
-        more_menu.addAction("Push", self.push)
         self.moreButton.setMenu(more_menu)
         toolbar.addWidget(self.moreButton)
 
@@ -182,12 +202,19 @@ class GitPanel(QWidget):
             self.stageButton, self.commitButton, self.diffButton,
             self.unstageButton, self.moreButton, self.amendButton,
             self.branchBox, self.refreshButton,
+            self.fetchButton, self.pullButton, self.pushButton,
         ):
             w.setEnabled(enabled and not self._busy)
 
-    def _set_busy(self, busy):
+    def _set_busy(self, busy, message=None):
         self._busy = busy
         self.refreshButton.setEnabled(not busy)
+        if busy:
+            self.statusLabel.setText(message or "Working\u2026")
+            self.statusLabel.show()
+        else:
+            self.statusLabel.hide()
+            self.statusLabel.clear()
         if self._is_repo():
             self._set_actions_enabled(True)
         else:
@@ -207,7 +234,8 @@ class GitPanel(QWidget):
             files.append((code, path))
         return files
 
-    def _start_batch(self, kind, commands, follow_refresh=False, timeout=30):
+    def _start_batch(self, kind, commands, follow_refresh=False, timeout=30,
+                     busy_message=None):
         if not self.root:
             return
         if self.worker.isRunning():
@@ -218,7 +246,7 @@ class GitPanel(QWidget):
         request_id = "{0}:{1}".format(kind, self._request_seq)
         self._current_kind = kind
         self._follow_refresh = follow_refresh
-        self._set_busy(True)
+        self._set_busy(True, busy_message or "Working\u2026")
         self.worker.run_batch(request_id, self.root, commands, timeout=timeout)
 
     def _on_batch_finished(self, request_id, results):
@@ -297,10 +325,15 @@ class GitPanel(QWidget):
 
         self._changed_files = self._parse_status_files(status)
         self.fileList.clear()
-        for file_code, path in self._changed_files:
-            item = QListWidgetItem("{0} {1}".format(file_code, path))
-            item.setData(Qt.ItemDataRole.UserRole, path)
+        if not self._changed_files:
+            item = QListWidgetItem("No changed files")
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
             self.fileList.addItem(item)
+        else:
+            for file_code, path in self._changed_files:
+                item = QListWidgetItem("{0} {1}".format(file_code, path))
+                item.setData(Qt.ItemDataRole.UserRole, path)
+                self.fileList.addItem(item)
 
     def _populate_branches(self, current, branches):
         self._refreshing_branches = True
@@ -475,14 +508,14 @@ class GitPanel(QWidget):
             return
         self._start_batch("action", [
             ("fetch", ("fetch", "--all", "--prune")),
-        ], timeout=120)
+        ], timeout=120, busy_message="Fetching\u2026")
 
     def pull(self):
         if not self._is_repo():
             return
         self._start_batch("action", [
             ("pull", ("pull", "--ff-only")),
-        ], timeout=120)
+        ], timeout=120, busy_message="Pulling\u2026")
 
     def push(self):
         if not self._is_repo():
@@ -496,4 +529,4 @@ class GitPanel(QWidget):
             return
         self._start_batch("action", [
             ("push", ("push",)),
-        ], timeout=120)
+        ], timeout=120, busy_message="Pushing\u2026")
