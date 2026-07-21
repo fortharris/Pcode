@@ -1,5 +1,5 @@
 from PyQt6.QtCore import QDir, QProcess, Qt, QTimer, QUrl
-from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices, QIcon, QKeySequence, QShortcut
+from PyQt6.QtGui import QAction, QActionGroup, QDesktopServices, QIcon, QShortcut
 from PyQt6.QtWidgets import QHBoxLayout, QLabel, QMenu, QMessageBox, QSplitter, QStackedWidget, QStatusBar, QTabWidget, QToolBar, QToolButton, QVBoxLayout, QWidget
 
 import os
