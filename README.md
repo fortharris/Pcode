@@ -75,4 +75,8 @@ Mailing List: [pcode-ide@googlegroups.com](https://groups.google.com/forum/#!for
 
 ### Screenshots
 
-Add GUI captures as `docs/screens/1.png` … `3.png` (see [docs/screens/README.md](docs/screens/README.md)).
+![Start page](docs/screens/1.png)
+
+![Editor](docs/screens/2.png)
+
+![General Settings](docs/screens/3.png)

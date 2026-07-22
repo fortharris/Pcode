@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.2.0 — 2026-07-22
+
 ### UX polish
 - Shortcut collisions fixed: Split Horizontal/Remove remapped off F10/F11; debug F5/F10/F11 only while a debug session is active; Command Palette and Quick Open are remappable
 - Busy overlay is non-modal (WindowModal `show`) with themed chrome; Escape cancels when Cancel is enabled
@@ -14,6 +16,7 @@
 - Quick Open explains when no project is open; View Editor/Snapshot/Diff in the command palette
 - Cross-platform “Reveal in file manager”; Recent Files empty action disabled; Start page respects UI font scale
 - Venv install/upgrade progress dialog is cancellable
+- Top pull-down tool sheets flush to the tab bar
 
 ### Workflow
 - Run arguments are split with `shlex` (quoted paths work); profiler forwards args too
@@ -30,14 +33,7 @@
 - Assistant context menu: removed unfinished “Fix Selected/All Occurrences” stubs
 - **Thin DAP debugger**: Debug run attaches to debugpy, applies margin/Alt+B breakpoints, Continue/Step controls (F5/F10/F11)
 - General Settings UX: two-column layout, Appearance first, radios for completion, filter box, clearer labels
-
-### Migration cleanup
-- Removed historical peel scripts (`scripts/archive/`)
-- Documented color-scheme XML under `stylesdir` as intentional (editor format)
-- Dropped unused `projectdata_xml` / `buildprofile_xml` / `ropeprofile_xml` path keys; kept `session_xml` for migrate-on-load
-- Legacy XML **read** paths retained for one release cycle; XML writes already stopped
-
-## 0.2.0
+- Module Completion: guard empty right-click selection (IndexError fix)
 
 ### Polish
 - Central `Extensions/version.py` (`0.2.0`); About dialog stays in sync with `pyproject.toml`
@@ -57,7 +53,8 @@
 - Color scheme / lexer style files remain XML under the workspace `stylesdir` (editor format, by design)
 - `font_metrics_width` → `Extensions/font_metrics.py`; QFileDialog helpers → `Extensions/file_dialog_utils.py`
 - `qscintilla_compat.py` re-exposes QScintilla scoped enums for legacy flat names
-- `qt_bindings.py` removed
+- `qt_bindings.py` removed; historical peel scripts (`scripts/archive/`) removed
+- Dropped unused `projectdata_xml` / `buildprofile_xml` / `ropeprofile_xml` path keys; kept `session_xml` for migrate-on-load
 - JSON-only saves for project/build/rope manifests (XML read-only for legacy projects)
 
 ### Features
