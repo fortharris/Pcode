@@ -58,16 +58,18 @@ The previously-vendored libraries (`rope`, `pyflakes`, `autopep8`, `pycodestyle`
 
 ### From source & development
 
-**PyQt6 branch (`pyside`):** production code uses direct `PyQt6` imports. Legacy
-`Extensions/qt_bindings.py` has been removed. Color scheme / lexer definitions
-under the workspace `stylesdir` remain XML (editor format).
+**PyQt6:** production code uses direct `PyQt6` imports (the old `qt_bindings`
+shim is gone). Project/workspace settings persist as JSON; legacy XML project
+files are still readable and migrate on load.
 
-**PR:** https://github.com/fortharris/Pcode/compare/master...pyside?expand=1
+**Color schemes:** lexer/style definitions under the workspace `stylesdir` remain
+XML **by design** (editor style format). That is separate from project JSON
+persistence and is not planned to change in this release.
 
 ### License:
 * GPL v3
 
-### Latest version: 0.2.0 (PyQt6 / `pyside` branch)
+### Latest version: 0.2.0
 
 Mailing List: [pcode-ide@googlegroups.com](https://groups.google.com/forum/#!forum/pcode-ide)
 

@@ -31,6 +31,12 @@
 - **Thin DAP debugger**: Debug run attaches to debugpy, applies margin/Alt+B breakpoints, Continue/Step controls (F5/F10/F11)
 - General Settings UX: two-column layout, Appearance first, radios for completion, filter box, clearer labels
 
+### Migration cleanup
+- Removed historical peel scripts (`scripts/archive/`)
+- Documented color-scheme XML under `stylesdir` as intentional (editor format)
+- Dropped unused `projectdata_xml` / `buildprofile_xml` / `ropeprofile_xml` path keys; kept `session_xml` for migrate-on-load
+- Legacy XML **read** paths retained for one release cycle; XML writes already stopped
+
 ## 0.2.0
 
 ### Polish
@@ -48,10 +54,10 @@
 - Workspace and project settings migrate from XML to JSON on first load
 - New projects write JSON only (`project.json`, `Data/*.json`, `Rope/profile.json`, `Build/profile.json`)
 - Legacy XML manifests still **readable** for older projects; no longer written on save
-- Color scheme / lexer style files remain XML under the workspace `stylesdir` (editor format, unchanged)
+- Color scheme / lexer style files remain XML under the workspace `stylesdir` (editor format, by design)
 - `font_metrics_width` → `Extensions/font_metrics.py`; QFileDialog helpers → `Extensions/file_dialog_utils.py`
 - `qscintilla_compat.py` re-exposes QScintilla scoped enums for legacy flat names
-- `qt_bindings.py` removed; migration peel scripts archived under `scripts/archive/`
+- `qt_bindings.py` removed
 - JSON-only saves for project/build/rope manifests (XML read-only for legacy projects)
 
 ### Features
