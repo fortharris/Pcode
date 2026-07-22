@@ -589,9 +589,11 @@ class Pcode(QWidget):
             self.loadProject(directory, True)
 
 def main():
-    # Resources are resolved relative to the working directory, so anchor it to
-    # this file's location regardless of where the entry point is launched from.
-    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    # Resources are resolved relative to the working directory. Anchor cwd to
+    # the app root (repo root in source; directory of the .exe when frozen).
+    from Extensions.app_paths import get_app_root
+
+    os.chdir(get_app_root())
 
     # Configure logging before anything else so errors during early startup
     # (before the workspace log path is known) are still captured. Pcode

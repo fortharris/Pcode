@@ -408,8 +408,9 @@ class UseData(QObject):
         return bootstrap
 
     def _default_workspace_dir(self):
-        repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        return os.path.join(repo_root, 'workspace', 'PcodeProjects')
+        from Extensions.app_paths import get_default_workspace_dir
+
+        return get_default_workspace_dir()
 
     def _ensure_workspace_dirs(self, path):
         for sub in ('Snippets', 'Library', 'Projects',

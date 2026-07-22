@@ -33,7 +33,11 @@ Pcode seeks to simplify the process of development in python by means of:
 
 ### Install (0.2.0)
 
-Pcode 0.2.0 is distributed as **source**. There is no standalone IDE installer yet.
+**Windows (recommended):** download the MSI or portable zip from
+[GitHub Releases](https://github.com/fortharris/Pcode/releases) —
+`Pcode-0.2.0-windows-x64.msi` or `Pcode-0.2.0-windows-x64.zip`.
+
+**From source** (all platforms):
 
 ```bash
 pip install -r requirements.txt        # run from source
@@ -44,7 +48,8 @@ pip install -e .[dev]                  # optional: pytest + ruff for development
 QT_QPA_PLATFORM=offscreen pytest       # unit + smoke tests (headless)
 ```
 
-See [RUN.md](RUN.md) for virtualenv setup, the headless smoke test, and troubleshooting.
+See [RUN.md](RUN.md) for virtualenv setup, freezing the IDE, the headless smoke
+test, and troubleshooting.
 See [docs/USER_GUIDE.md](docs/USER_GUIDE.md) for a short user guide.
 
 Release notes: [GitHub Releases](https://github.com/fortharris/Pcode/releases).

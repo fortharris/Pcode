@@ -128,3 +128,33 @@ jobs:
 
       - name: Build freeze smoke (slow, Windows)
         run: pytest tests/test_smoke.py -m slow
+
+  freeze-ide-windows:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install "debugpy>=1.8"
+
+      - name: Freeze IDE (zip + MSI)
+        run: python scripts/freeze_ide.py
+
+      - name: Upload Windows IDE artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: pcode-windows-x64
+          path: |
+            dist/Pcode-*-windows-x64.zip
+            dist/Pcode-*-windows-x64.msi
+          if-no-files-found: error
+          retention-days: 14

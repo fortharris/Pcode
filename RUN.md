@@ -92,24 +92,33 @@ jobs via GitHub Actions `workflow_dispatch`.
 CI creates `workspace/PcodeProjects/` before tests so headless runs never block
 on the first-run workspace dialog.
 
-### Packaging (project freeze)
+### Packaging
 
-Pcode freezes **user Desktop Application projects** with cx_Freeze (not the
-IDE itself). From the repo root:
+**Freeze the IDE (Windows):** builds `Pcode.exe`, a portable zip, and an MSI:
 
 ```powershell
 .\.pcode-venv\Scripts\python.exe -m pip install -e ".[build]"
+.\.pcode-venv\Scripts\python.exe -m pip install "debugpy>=1.8"   # optional, for Debug
+.\.pcode-venv\Scripts\python.exe scripts\freeze_ide.py
+# or zip only:  ... scripts\freeze_ide.py --skip-msi
+```
+
+Outputs land in `dist/Pcode-<ver>-windows-x64.zip` and `.msi`. CI job
+**freeze-ide-windows** (`workflow_dispatch`) builds and uploads the same
+artifacts. Frozen installs default the workspace to
+`%LOCALAPPDATA%\Pcode\PcodeProjects`.
+
+**Freeze a user project:** cx_Freeze via the in-app Build feature or:
+
+```powershell
 .\.pcode-venv\Scripts\python.exe scripts\freeze_project.py path\to\project
 ```
 
-Headless validation also runs via smoke (`test_build_freeze`) or GitHub Actions
-**freeze-smoke** / **freeze-smoke-windows** (`workflow_dispatch`).
+Headless project-freeze validation: smoke `test_build_freeze` or GitHub Actions
+**freeze-smoke** / **freeze-smoke-windows**.
 
-Release artifacts for the IDE are source installs (`pip install -e .` or
-`pip install -r requirements.txt` + `python Pcode.py`) plus GitHub Releases
-notes. **There is no standalone IDE binary / installer yet** — that is
-intentional for 0.2.0. Version is defined in `Extensions/version.py` and
-`pyproject.toml` (keep them equal).
+Version is defined in `Extensions/version.py` and `pyproject.toml` (keep them
+equal).
 
 User-facing docs: [docs/USER_GUIDE.md](docs/USER_GUIDE.md).
 
@@ -119,11 +128,12 @@ do not remove those readers until a later release cycle.
 ### Post-merge
 
 1. Smoke-test the GUI on Windows (open project, edit, run, git, Quick Open).
-2. In GitHub Actions, run **workflow_dispatch** on **CI** and enable
-   **freeze-smoke** (and optionally **freeze-smoke-windows**).
+2. In GitHub Actions, run **workflow_dispatch** on **CI** for **freeze-smoke**,
+   **freeze-smoke-windows**, and/or **freeze-ide-windows**.
 3. Follow [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) to tag and
    publish (sync `Extensions/version.py`, `pyproject.toml`, and README).
-4. Capture screenshots into `docs/screens/` when cutting the release.
+4. Attach Windows zip/MSI (and optional sdist) to the GitHub Release.
+5. Capture screenshots into `docs/screens/` when cutting the release.
 
 ## Troubleshooting
 

@@ -6,7 +6,11 @@ app.
 
 ## Install and run
 
-**From source (recommended for 0.2.0):**
+**Windows installer / portable:** download `Pcode-*-windows-x64.msi` or `.zip`
+from [GitHub Releases](https://github.com/fortharris/Pcode/releases). Frozen
+installs keep projects under `%LOCALAPPDATA%\Pcode\PcodeProjects`.
+
+**From source (all platforms):**
 
 ```bash
 pip install -r requirements.txt
@@ -20,11 +24,8 @@ pip install -e .
 pcode
 ```
 
-See [RUN.md](../RUN.md) for developer virtualenv setup, tests, and troubleshooting.
-Release steps: [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
-
-There is no standalone IDE installer yet. Releases ship as source plus notes on
-[GitHub Releases](https://github.com/fortharris/Pcode/releases).
+See [RUN.md](../RUN.md) for developer virtualenv setup, freezing the IDE, tests,
+and troubleshooting. Release steps: [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md).
 
 ## Getting started
 

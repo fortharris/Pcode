@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Packaging
+- Windows frozen IDE: `scripts/freeze_ide.py` builds `Pcode.exe`, portable zip, and MSI
+- Frozen installs use `%LOCALAPPDATA%\Pcode\PcodeProjects` as the default workspace
+- CI `freeze-ide-windows` (workflow_dispatch) uploads zip + MSI artifacts
+
 ## 0.2.0 — 2026-07-22
 
 ### UX polish
