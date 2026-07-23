@@ -4,13 +4,14 @@ Git I/O runs on a background QThread so the UI stays responsive.
 """
 
 import os
+import shutil
 import subprocess
 
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtWidgets import (
     QComboBox, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QMenu, QMessageBox, QPlainTextEdit, QPushButton, QToolButton, QVBoxLayout,
-    QWidget,
+    QMenu, QMessageBox, QPlainTextEdit, QPushButton, QSizePolicy, QToolButton,
+    QVBoxLayout, QWidget,
 )
 
 
@@ -26,6 +27,10 @@ def _run_git(root, *args, timeout=30):
         return 127, "git is not installed or not on PATH."
     except Exception as err:
         return 1, str(err)
+
+
+def _git_available():
+    return shutil.which("git") is not None
 
 
 class GitWorker(QThread):
@@ -83,6 +88,49 @@ class GitPanel(QWidget):
         layout.setContentsMargins(8, 8, 8, 8)
         layout.setSpacing(8)
 
+        # --- Empty / no-repo state ---
+        self.emptyState = QWidget()
+        self.emptyState.setObjectName("gitEmptyState")
+        empty_layout = QVBoxLayout(self.emptyState)
+        empty_layout.setContentsMargins(24, 32, 24, 24)
+        empty_layout.setSpacing(10)
+        empty_layout.addStretch(1)
+
+        self.emptyTitle = QLabel("No Git repository")
+        self.emptyTitle.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.emptyTitle.setStyleSheet("font-size: 14px; font-weight: bold;")
+        empty_layout.addWidget(self.emptyTitle)
+
+        self.emptyDetail = QLabel()
+        self.emptyDetail.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.emptyDetail.setWordWrap(True)
+        self.emptyDetail.setEnabled(False)
+        empty_layout.addWidget(self.emptyDetail)
+
+        empty_actions = QHBoxLayout()
+        empty_actions.addStretch(1)
+        self.initButton = QPushButton("Initialize Repository")
+        self.initButton.setAccessibleName("Initialize git repository")
+        self.initButton.setToolTip(
+            "Run git init in the project source folder")
+        self.initButton.clicked.connect(self.initialize_repo)
+        empty_actions.addWidget(self.initButton)
+        self.emptyRefreshButton = QPushButton("Refresh")
+        self.emptyRefreshButton.setAccessibleName("Refresh git status")
+        self.emptyRefreshButton.setToolTip("Check again for a Git repository")
+        self.emptyRefreshButton.clicked.connect(self.refresh)
+        empty_actions.addWidget(self.emptyRefreshButton)
+        empty_actions.addStretch(1)
+        empty_layout.addLayout(empty_actions)
+        empty_layout.addStretch(2)
+        layout.addWidget(self.emptyState)
+
+        # --- Active repo chrome ---
+        self.repoChrome = QWidget()
+        repo_layout = QVBoxLayout(self.repoChrome)
+        repo_layout.setContentsMargins(0, 0, 0, 0)
+        repo_layout.setSpacing(8)
+
         branch_row = QHBoxLayout()
         branch_label = QLabel("Branch:")
         branch_label.setAccessibleName("Git branch label")
@@ -92,81 +140,61 @@ class GitPanel(QWidget):
         self.branchBox.setMinimumWidth(160)
         self.branchBox.activated.connect(self._checkout_branch)
         branch_row.addWidget(self.branchBox, 1)
+
+        self.actionsButton = QToolButton()
+        self.actionsButton.setText("Actions")
+        self.actionsButton.setPopupMode(
+            QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.actionsButton.setAccessibleName("Git actions")
+        self.actionsButton.setToolTip("Stage, sync, and other Git actions")
+        actions_menu = QMenu(self.actionsButton)
+        self.stageAction = actions_menu.addAction(
+            "Stage", self.stage_smart)
+        self.stageAction.setToolTip(
+            "Stage selected file, or all changes if none selected")
+        self.unstageAction = actions_menu.addAction(
+            "Unstage", self.unstage_selected)
+        self.diffAction = actions_menu.addAction(
+            "Diff", self.diff_at_cursor)
+        actions_menu.addSeparator()
+        self.fetchAction = actions_menu.addAction("Fetch", self.fetch)
+        self.pullAction = actions_menu.addAction("Pull", self.pull)
+        self.pushAction = actions_menu.addAction("Push", self.push)
+        actions_menu.addSeparator()
+        self.openFileAction = actions_menu.addAction(
+            "Open File", self.open_selected)
+        self.fullLogAction = actions_menu.addAction(
+            "Full Log", self.show_log)
+        self.actionsButton.setMenu(actions_menu)
+        branch_row.addWidget(self.actionsButton)
+
         self.refreshButton = QPushButton("Refresh")
         self.refreshButton.setAccessibleName("Refresh git status")
         self.refreshButton.setToolTip("Refresh status, branches, and log")
         self.refreshButton.clicked.connect(self.refresh)
         branch_row.addWidget(self.refreshButton)
-        layout.addLayout(branch_row)
+        repo_layout.addLayout(branch_row)
 
         self.statusLabel = QLabel()
         self.statusLabel.setAccessibleName("Git status")
         self.statusLabel.hide()
-        layout.addWidget(self.statusLabel)
+        repo_layout.addWidget(self.statusLabel)
 
-        toolbar = QHBoxLayout()
-        self.stageButton = QPushButton("Stage")
-        self.stageButton.setToolTip(
-            "Stage selected file, or all changes if none selected")
-        self.stageButton.setAccessibleName("Stage git changes")
-        self.stageButton.clicked.connect(self.stage_smart)
-        toolbar.addWidget(self.stageButton)
-
-        self.unstageButton = QPushButton("Unstage")
-        self.unstageButton.setToolTip("Unstage the selected file")
-        self.unstageButton.setAccessibleName("Unstage selected file")
-        self.unstageButton.clicked.connect(self.unstage_selected)
-        toolbar.addWidget(self.unstageButton)
-
-        self.diffButton = QPushButton("Diff")
-        self.diffButton.setToolTip("Show diff for selected or current file")
-        self.diffButton.setAccessibleName("Show git diff")
-        self.diffButton.clicked.connect(self.diff_at_cursor)
-        toolbar.addWidget(self.diffButton)
-
-        self.fetchButton = QPushButton("Fetch")
-        self.fetchButton.setToolTip("Fetch from all remotes")
-        self.fetchButton.setAccessibleName("Git fetch")
-        self.fetchButton.clicked.connect(self.fetch)
-        toolbar.addWidget(self.fetchButton)
-
-        self.pullButton = QPushButton("Pull")
-        self.pullButton.setToolTip("Pull with fast-forward only")
-        self.pullButton.setAccessibleName("Git pull")
-        self.pullButton.clicked.connect(self.pull)
-        toolbar.addWidget(self.pullButton)
-
-        self.pushButton = QPushButton("Push")
-        self.pushButton.setToolTip("Push current branch to remote")
-        self.pushButton.setAccessibleName("Git push")
-        self.pushButton.clicked.connect(self.push)
-        toolbar.addWidget(self.pushButton)
-
-        self.moreButton = QToolButton()
-        self.moreButton.setText("More")
-        self.moreButton.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        self.moreButton.setAccessibleName("More git actions")
-        more_menu = QMenu(self.moreButton)
-        more_menu.addAction("Open File", self.open_selected)
-        more_menu.addAction("Full Log", self.show_log)
-        self.moreButton.setMenu(more_menu)
-        toolbar.addWidget(self.moreButton)
-
-        toolbar.addStretch(1)
-        layout.addLayout(toolbar)
-
+        changes_label = QLabel("Changes")
+        changes_label.setAccessibleName("Changed files label")
+        repo_layout.addWidget(changes_label)
         self.fileList = QListWidget()
         self.fileList.setAccessibleName("Changed files")
         self.fileList.setMaximumHeight(100)
         self.fileList.itemDoubleClicked.connect(self.open_selected)
-        layout.addWidget(self.fileList)
+        repo_layout.addWidget(self.fileList)
 
-        layout.addWidget(QLabel("Recent commits"))
+        repo_layout.addWidget(QLabel("Recent commits"))
         self.logList = QListWidget()
         self.logList.setAccessibleName("Recent commits")
         self.logList.setMaximumHeight(100)
         self.logList.itemActivated.connect(self._show_commit)
-        layout.addWidget(self.logList)
+        repo_layout.addWidget(self.logList)
 
         commit_row = QHBoxLayout()
         commit_row.addWidget(QLabel("Commit:"))
@@ -184,38 +212,70 @@ class GitPanel(QWidget):
             "Amend the last commit (uses message if set, else --no-edit)")
         self.amendButton.clicked.connect(self.amend)
         commit_row.addWidget(self.amendButton)
-        layout.addLayout(commit_row)
+        repo_layout.addLayout(commit_row)
 
         self.output = QPlainTextEdit()
         self.output.setAccessibleName("Git output")
         self.output.setReadOnly(True)
         self.output.setLineWrapMode(QPlainTextEdit.LineWrapMode.NoWrap)
-        layout.addWidget(self.output)
+        self.output.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        repo_layout.addWidget(self.output)
+
+        layout.addWidget(self.repoChrome)
 
         self.refresh()
 
     def _is_repo(self):
         return self.root and os.path.isdir(os.path.join(self.root, ".git"))
 
+    def _show_empty_state(self, title, detail, can_init=False):
+        self.emptyTitle.setText(title)
+        self.emptyDetail.setText(detail)
+        self.initButton.setVisible(can_init)
+        self.initButton.setEnabled(can_init and not self._busy)
+        self.emptyRefreshButton.setEnabled(bool(self.root) and not self._busy)
+        self.emptyState.show()
+        self.repoChrome.hide()
+
+    def _show_repo_chrome(self):
+        self.emptyState.hide()
+        self.repoChrome.show()
+
     def _set_actions_enabled(self, enabled):
         for w in (
-            self.stageButton, self.commitButton, self.diffButton,
-            self.unstageButton, self.moreButton, self.amendButton,
-            self.branchBox, self.refreshButton,
-            self.fetchButton, self.pullButton, self.pushButton,
+            self.commitButton, self.amendButton, self.branchBox,
+            self.commitLine, self.actionsButton,
         ):
             w.setEnabled(enabled and not self._busy)
+        for action in (
+            self.stageAction, self.unstageAction, self.diffAction,
+            self.fetchAction, self.pullAction, self.pushAction,
+            self.openFileAction, self.fullLogAction,
+        ):
+            action.setEnabled(enabled and not self._busy)
+        # Refresh stays available whenever we have a project root.
+        can_refresh = bool(self.root) and not self._busy
+        self.refreshButton.setEnabled(can_refresh)
+        self.emptyRefreshButton.setEnabled(can_refresh)
 
     def _set_busy(self, busy, message=None):
         self._busy = busy
-        self.refreshButton.setEnabled(not busy)
         if busy:
             self.statusLabel.setText(message or "Working\u2026")
             self.statusLabel.show()
+            if self.emptyState.isVisible():
+                self.emptyDetail.setText(message or "Working\u2026")
         else:
             self.statusLabel.hide()
             self.statusLabel.clear()
+        can_refresh = bool(self.root) and not busy
+        self.refreshButton.setEnabled(can_refresh)
+        self.emptyRefreshButton.setEnabled(can_refresh)
+        self.initButton.setEnabled(
+            self.initButton.isVisible() and not busy and _git_available())
         if self._is_repo():
+            self._show_repo_chrome()
             self._set_actions_enabled(True)
         else:
             self._set_actions_enabled(False)
@@ -264,11 +324,23 @@ class GitPanel(QWidget):
         elif kind == "action":
             tag = next(iter(results), "")
             code, out = results.get(tag, (1, ""))
-            self.output.appendPlainText("\n=== {0} ===\n{1}".format(tag, out))
-            if code == 0:
-                if tag in ("commit", "amend"):
-                    self.commitLine.clear()
-                self.refresh()
+            if tag == "init":
+                if code == 0:
+                    self.refresh()
+                else:
+                    self._show_empty_state(
+                        "Could not initialize",
+                        out or "git init failed.",
+                        can_init=_git_available())
+                    self.output.setPlainText(out)
+            else:
+                self._show_repo_chrome()
+                self.output.appendPlainText(
+                    "\n=== {0} ===\n{1}".format(tag, out))
+                if code == 0:
+                    if tag in ("commit", "amend"):
+                        self.commitLine.clear()
+                    self.refresh()
         elif kind == "log":
             out = results.get("log", (1, ""))[1]
             self.output.appendPlainText("\n=== log ===\n" + out)
@@ -292,15 +364,10 @@ class GitPanel(QWidget):
 
     def _apply_refresh(self, results):
         if not self._is_repo():
-            self.output.setPlainText(
-                "Not a git repository.\n\n"
-                "Initialize with: git init")
-            self._set_actions_enabled(False)
-            self.fileList.clear()
-            self.logList.clear()
-            self.branchBox.clear()
+            self._present_non_repo()
             return
 
+        self._show_repo_chrome()
         self._set_actions_enabled(True)
         branch_code, branch = results.get("branch", (1, ""))
         current = branch if branch_code == 0 else ""
@@ -318,6 +385,9 @@ class GitPanel(QWidget):
             self._populate_log_from_text(log_out)
         else:
             self.logList.clear()
+            item = QListWidgetItem("No commits yet")
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
+            self.logList.addItem(item)
 
         text = "Branch: {0}\n\n=== status ===\n{1}".format(
             current or "?", status)
@@ -335,6 +405,33 @@ class GitPanel(QWidget):
                 item.setData(Qt.ItemDataRole.UserRole, path)
                 self.fileList.addItem(item)
 
+    def _present_non_repo(self):
+        self.fileList.clear()
+        self.logList.clear()
+        self.branchBox.clear()
+        self.output.clear()
+        self._set_actions_enabled(False)
+
+        if not self.root:
+            self._show_empty_state(
+                "No project open",
+                "Open a project to use Git here.",
+                can_init=False)
+            return
+
+        if not _git_available():
+            self._show_empty_state(
+                "Git not found",
+                "Install Git and ensure it is on PATH, then click Refresh.",
+                can_init=False)
+            return
+
+        self._show_empty_state(
+            "No Git repository",
+            "This project folder is not a Git repository yet.\n"
+            "Initialize to start tracking changes here:\n{0}".format(self.root),
+            can_init=True)
+
     def _populate_branches(self, current, branches):
         self._refreshing_branches = True
         self.branchBox.clear()
@@ -350,9 +447,16 @@ class GitPanel(QWidget):
 
     def _populate_log_from_text(self, out):
         self.logList.clear()
-        for line in (out or "").splitlines():
-            if not line.strip() or line == "(no output)":
-                continue
+        lines = [
+            line for line in (out or "").splitlines()
+            if line.strip() and line != "(no output)"
+        ]
+        if not lines:
+            item = QListWidgetItem("No commits yet")
+            item.setFlags(Qt.ItemFlag.NoItemFlags)
+            self.logList.addItem(item)
+            return
+        for line in lines:
             item = QListWidgetItem(line)
             sha = line.split()[0]
             item.setData(Qt.ItemDataRole.UserRole, sha)
@@ -360,20 +464,37 @@ class GitPanel(QWidget):
 
     def refresh(self):
         if not self._is_repo():
-            self.output.setPlainText(
-                "Not a git repository.\n\n"
-                "Initialize with: git init")
-            self._set_actions_enabled(False)
-            self.fileList.clear()
-            self.logList.clear()
-            self.branchBox.clear()
+            self._present_non_repo()
             return
+        self._show_repo_chrome()
         self._start_batch("refresh", [
             ("branch", ("branch", "--show-current")),
             ("branches", ("branch", "--format=%(refname:short)")),
             ("status", ("status", "--short", "--branch")),
             ("log", ("log", "-20", "--oneline", "--decorate")),
         ])
+
+    def initialize_repo(self):
+        if not self.root:
+            return
+        if not _git_available():
+            self._present_non_repo()
+            return
+        if self._is_repo():
+            self.refresh()
+            return
+        reply = QMessageBox.question(
+            self, "Initialize Git Repository",
+            "Create a new Git repository in:\n\n{0}\n\nContinue?".format(
+                self.root),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes)
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+        self._start_batch(
+            "action",
+            [("init", ("init",))],
+            busy_message="Initializing\u2026")
 
     def _checkout_branch(self, index):
         if self._refreshing_branches or not self._is_repo() or self._busy:

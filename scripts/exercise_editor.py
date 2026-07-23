@@ -627,15 +627,23 @@ def exercise_git_panel(editor_window):
     """Refresh git panel and exercise branch/log/amend entry points."""
     panel = editor_window.gitPanel
     panel.refresh()
-    text = panel.output.toPlainText()
-    # Exercise UI helpers even when the smoke project is not a git repo.
-    panel.show_log()
     assert hasattr(panel, "amend")
     assert hasattr(panel, "branchBox")
     assert hasattr(panel, "logList")
+    assert hasattr(panel, "emptyState")
+    assert hasattr(panel, "initialize_repo")
+    if panel._is_repo():
+        assert not panel.repoChrome.isHidden()
+        text = panel.output.toPlainText()
+    else:
+        assert not panel.emptyState.isHidden()
+        text = panel.emptyTitle.text()
+    # Exercise UI helpers even when the smoke project is not a git repo.
+    panel.show_log()
     print("STEP git-panel OK, chars:", len(text),
           "| branches:", panel.branchBox.count(),
-          "| log items:", panel.logList.count())
+          "| log items:", panel.logList.count(),
+          "| empty:", not panel.emptyState.isHidden())
 
 
 def exercise_go_to_definition(editor_window, proj_path):
