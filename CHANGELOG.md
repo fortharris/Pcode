@@ -7,6 +7,14 @@
 - Frozen installs use `%LOCALAPPDATA%\Pcode\PcodeProjects` as the default workspace
 - CI `freeze-ide-windows` (workflow_dispatch) uploads zip + MSI artifacts
 
+### Run
+- Safe UTF-8 process I/O (`errors=replace`); child gets `PYTHONIOENCODING=utf-8`
+- Busy-run prompts Stop & Restart; Stop uses terminate-then-kill with console feedback
+- Debug listens on an ephemeral localhost port (no fixed 5678)
+- Internal Run focuses/expands the Run panel; non-zero exits flash error (not only code 1)
+- Profiler/trace temps under project `temp/`; empty interpreter treated like unset
+- “Pause at start” only shown for Debug mode; “Clear Run console” label
+
 ## 0.2.0 — 2026-07-22
 
 ### UX polish

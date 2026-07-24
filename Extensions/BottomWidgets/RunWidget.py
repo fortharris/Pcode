@@ -1,11 +1,11 @@
 import os
 import re
 import sys
-import locale
+import socket
 import shlex
 from PyQt6.Qsci import QsciScintilla, QsciScintillaBase, QsciLexerCustom
 from PyQt6.QtCore import (
-    QByteArray, QCoreApplication, QIODevice, QProcess, QProcessEnvironment,
+    QByteArray, QIODevice, QProcess, QProcessEnvironment,
     QSize, Qt, pyqtSignal,
 )
 from PyQt6.QtGui import QAction, QColor, QIcon, QPalette
@@ -21,7 +21,29 @@ from Extensions import Global
 from Extensions import StyleSheet
 from Extensions.Debug import DapClient, collect_breakpoints
 
-default_encoding = locale.getpreferredencoding()
+# Prefer UTF-8 for child I/O; fall back for display of legacy local output.
+CONSOLE_ENCODING = "utf-8"
+
+
+def decode_process_bytes(data):
+    """Decode QProcess bytes without raising on invalid sequences."""
+    if data is None:
+        return ""
+    if isinstance(data, QByteArray):
+        data = bytes(data)
+    if not data:
+        return ""
+    try:
+        return data.decode(CONSOLE_ENCODING)
+    except UnicodeDecodeError:
+        return data.decode(CONSOLE_ENCODING, errors="replace")
+
+
+def pick_free_tcp_port(host="127.0.0.1"):
+    """Return an unused TCP port on *host* (best-effort ephemeral bind)."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind((host, 0))
+        return int(sock.getsockname()[1])
 
 
 def split_run_arguments(args):
@@ -130,12 +152,11 @@ class SetRunParameters(QLabel):
         mainLayout.addWidget(argsWrap)
         self.argumentsLine.setEnabled(self.runWithArgsBox.isChecked())
 
-        self.clearOutputBox = QCheckBox("Clear output")
+        self.clearOutputBox = QCheckBox("Clear Run console")
         if to_bool(self.projectSettings["ClearOutputWindowOnRun"]):
             self.clearOutputBox.setChecked(True)
         self.clearOutputBox.toggled.connect(self.saveArguments)
         mainLayout.addWidget(self.clearOutputBox)
-
         self.bufferSizeBox = QSpinBox()
         self.bufferSizeBox.setMaximum(999)
         self.bufferSizeBox.setMinimumWidth(90)
@@ -182,6 +203,7 @@ class SetRunParameters(QLabel):
 
         self.setLayout(mainLayout)
         self.setDefaultInterpreter()
+        self.runTypeChanged(self.runTypeBox.currentIndex())
 
     def sizeHint(self):
         lay = self.layout()
@@ -251,6 +273,9 @@ class SetRunParameters(QLabel):
             self.traceTypeBox.show()
         else:
             self.traceTypeBox.hide()
+        # Pause-at-start only applies to Debug mode.
+        if hasattr(self, "debugWaitBox"):
+            self.debugWaitBox.setVisible(index == 3)
 
     def saveArguments(self):
         self.projectSettings["RunWithArguments"] = from_bool(
@@ -374,7 +399,7 @@ class OutputLexer(QsciLexerCustom):
 
 class RunWidget(BaseScintilla):
 
-    loadProfile = pyqtSignal()
+    loadProfile = pyqtSignal(str)
     debugStatusChanged = pyqtSignal(str)
     debugSessionActive = pyqtSignal(bool)
     debugStoppedAt = pyqtSignal(str, int)  # path, 1-based line
@@ -396,6 +421,7 @@ class RunWidget(BaseScintilla):
         self.useData = useData
 
         self.profileMode = False
+        self._profile_path = None
         self._dap_mode = False
         self.dap = DapClient(self)
         self.dap.statusChanged.connect(self.debugStatusChanged.emit)
@@ -486,7 +512,7 @@ class RunWidget(BaseScintilla):
     def insertInput(self, text):
         self.append('\n')
         data = QByteArray()
-        data.append(bytes(text + '\n', encoding="utf-8"))
+        data.append(bytes(text + '\n', encoding=CONSOLE_ENCODING))
         self.runProcess.write(data)
 
     def writeProcessError(self, processError):
@@ -504,22 +530,21 @@ class RunWidget(BaseScintilla):
             self.printout(">>> ReadError!\n", 3)
         elif processError == 5:
             self.printout(">>> UnknownError!\n", 3)
-        self.bottomStackSwitcher.setCurrentWidget(self)
+        self._show_run_panel()
 
     def writeOutput(self):
         while self.runProcess.canReadLine():
             if self.currentProcess is None:
                 break
-            text = self.runProcess.readLine().data().decode(
-                default_encoding)
+            text = decode_process_bytes(self.runProcess.readLine().data())
             self.printout(text, 2)
 
     def writeError(self):
-        text = \
-            self.runProcess.readAllStandardError().data().decode(
-                default_encoding)
-        self.printout(text, 1)
-        self.bottomStackSwitcher.setCurrentWidget(self)
+        text = decode_process_bytes(
+            self.runProcess.readAllStandardError().data())
+        if text:
+            self.printout(text, 1)
+            self._show_run_panel()
 
     def writeExitStatus(self, exitCode, exitStatus):
         self.writeOutput()
@@ -530,7 +555,7 @@ class RunWidget(BaseScintilla):
             # error will be displayed instead by writeProcessError
             pass
         self.currentProcess = None
-        if exitCode == 1:
+        if exitCode != 0:
             self.vSplitter.showError()
         else:
             self.vSplitter.showNormal()
@@ -549,8 +574,10 @@ class RunWidget(BaseScintilla):
         self._end_dap_session()
         self.debugStatusChanged.emit("")
         if self.profileMode:
-            self.loadProfile.emit()
+            path = self._profile_path or os.path.join("temp", "profile")
+            self.loadProfile.emit(path)
             self.profileMode = False
+            self._profile_path = None
 
     def _end_dap_session(self):
         if self._dap_mode or self.dap.is_active:
@@ -613,31 +640,61 @@ class RunWidget(BaseScintilla):
         self.recolor(start, -1)
         self.SendScintilla(QsciScintillaBase.SCI_SETSTYLING, len(text),
                            styleNum)
-        QCoreApplication.processEvents()
         self.setFirstVisibleLine(self.lines())
         self.blocking_cursor_pos = self.position('eof')
         self.setCursorPosition(self.blocking_cursor_pos[
                                0], self.blocking_cursor_pos[1])
 
+    def _child_environment(self):
+        env = QProcessEnvironment.systemEnvironment()
+        env.insert("PYTHONIOENCODING", CONSOLE_ENCODING)
+        env.insert("PYTHONUTF8", "1")
+        return env
+
+    def _project_temp_path(self, *parts):
+        path_dict = getattr(self.editorTabWidget, "projectPathDict", None) or {}
+        tempdir = path_dict.get("tempdir") or os.path.join("temp")
+        os.makedirs(tempdir, exist_ok=True)
+        return os.path.abspath(os.path.join(tempdir, *parts))
+
+    def _show_run_panel(self):
+        self.bottomStackSwitcher.setCurrentWidget(self)
+        sizes = self.vSplitter.sizes()
+        if len(sizes) >= 2 and sizes[1] == 0:
+            total = sum(sizes) or 600
+            bottom = min(220, max(160, total // 3))
+            self.vSplitter.setSizes([max(total - bottom, 80), bottom])
+
+    def _ensure_can_start(self):
+        if self.runProcess.state() == QProcess.ProcessState.NotRunning:
+            return True
+        reply = QMessageBox.question(
+            self, "Run",
+            "A process is already running. Stop it and start again?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if reply != QMessageBox.StandardButton.Yes:
+            return False
+        self.stopProcess()
+        return self.runProcess.state() == QProcess.ProcessState.NotRunning
+
     def pythonPath(self):
-        if self.projectData["DefaultInterpreter"] == "None":
+        interp = (self.projectData.get("DefaultInterpreter") or "").strip()
+        if interp in ("", "None"):
             QMessageBox.critical(
-                self, "Run", "No Python interpreter to run your code. Please install Python.")
+                self, "Run",
+                "No Python interpreter to run your code. Please install Python.")
             return None
-        else:
-            if os.path.exists(self.projectData["DefaultInterpreter"]):
-                return self.projectData["DefaultInterpreter"]
-            else:
-                QMessageBox.critical(
-                    self, "Run", "The current Python interpreter is not available.")
-                return None
+        if os.path.exists(interp):
+            return interp
+        QMessageBox.critical(
+            self, "Run", "The current Python interpreter is not available.")
+        return None
 
     def runModule(self, runScript, fileName, run_internal, run_with_args, args):
         pythonPath = self.pythonPath()
         if pythonPath is None:
             return
-        env = QProcessEnvironment.systemEnvironment()
-        self.runProcess.setProcessEnvironment(env)
+        self.runProcess.setProcessEnvironment(self._child_environment())
         argv = script_argv(runScript, run_with_args, args)
 
         if run_internal:
@@ -649,8 +706,11 @@ class RunWidget(BaseScintilla):
                 self.printout(">>> Running: {0} <arguments=None>\n".format(
                     self.currentProcess), 4)
             self.runProcess.start(pythonPath, argv, self.openMode)
-            self.runProcess.waitForStarted()
         else:
+            self.currentProcess = None
+            self.printout(
+                ">>> External console (Stop cannot track this process): {0}\n"
+                .format(fileName), 4)
             self.runProcess.startDetached(pythonPath, ["-i"] + argv)
 
     def runDebug(self, runScript, fileName, run_internal, run_with_args, args):
@@ -665,11 +725,10 @@ class RunWidget(BaseScintilla):
                 "debugpy is not installed.\nInstall with: pip install debugpy")
             return
 
-        env = QProcessEnvironment.systemEnvironment()
-        self.runProcess.setProcessEnvironment(env)
+        self.runProcess.setProcessEnvironment(self._child_environment())
         # Bind to localhost only — avoid exposing a remote-attach surface.
         listen_host = "127.0.0.1"
-        listen_port = 5678
+        listen_port = pick_free_tcp_port(listen_host)
         listen_addr = "{0}:{1}".format(listen_host, listen_port)
         # Built-in DAP always waits so breakpoints can be applied before run.
         use_dap = bool(run_internal)
@@ -689,10 +748,10 @@ class RunWidget(BaseScintilla):
                 "Debug: starting on " + listen_addr)
             self._dap_mode = use_dap
             self.runProcess.start(pythonPath, debug_args, self.openMode)
-            self.runProcess.waitForStarted()
             if use_dap:
                 self.dap.start(listen_host, listen_port, breakpoints)
         else:
+            self.currentProcess = None
             self.runProcess.startDetached(pythonPath, ["-i"] + debug_args)
             self.printout(
                 ">>> Debug (external attach {0}): started detached\n".format(
@@ -703,8 +762,7 @@ class RunWidget(BaseScintilla):
         if pythonPath is None:
             return
 
-        env = QProcessEnvironment.systemEnvironment()
-        self.runProcess.setProcessEnvironment(env)
+        self.runProcess.setProcessEnvironment(self._child_environment())
         script = script_argv(runScript, run_with_args, args)
 
         if option == 0:
@@ -712,7 +770,7 @@ class RunWidget(BaseScintilla):
         elif option == 1:
             trace_flags = ['--listfuncs']
         elif option == 2:
-            countfile = os.path.abspath(os.path.join("temp", "count.txt"))
+            countfile = self._project_temp_path("count.txt")
             with open(countfile, 'w'):
                 pass
             if run_internal:
@@ -733,17 +791,17 @@ class RunWidget(BaseScintilla):
                     self.currentProcess), 4)
             self.runProcess.start(pythonPath, argv, self.openMode)
         else:
+            self.currentProcess = None
             self.runProcess.startDetached(pythonPath, ['-i'] + argv)
 
     def runProfiler(self, runScript, fileName, run_internal, run_with_args, args):
         pythonPath = self.pythonPath()
         if pythonPath is None:
             return
-        env = QProcessEnvironment.systemEnvironment()
-        self.runProcess.setProcessEnvironment(env)
+        self.runProcess.setProcessEnvironment(self._child_environment())
 
-        p_args = ['-m', 'cProfile', '-o',
-                  os.path.abspath(os.path.join("temp", "profile"))]
+        self._profile_path = self._project_temp_path("profile")
+        p_args = ['-m', 'cProfile', '-o', self._profile_path]
         if os.name == 'nt':
             # On Windows, one has to replace backslashes by slashes to avoid
             # confusion with escape characters (otherwise, for example, '\t'
@@ -763,8 +821,8 @@ class RunWidget(BaseScintilla):
                 self.printout(">>> Profiling: {0} <arguments=None>\n".format(
                     self.currentProcess), 4)
             self.runProcess.start(pythonPath, p_args)
-            self.runProcess.waitForStarted()
         else:
+            self.currentProcess = None
             self.runProcess.startDetached(pythonPath, ["-i"] + p_args)
 
     def reRunFile(self):
@@ -793,6 +851,8 @@ class RunWidget(BaseScintilla):
         self.run(True)
 
     def run(self, project, rerun=False):
+        if not self._ensure_can_start():
+            return
         if project:
             filePath = self.editorTabWidget.projectPathDict["mainscript"]
             fileName = self.editorTabWidget.projectPathDict["name"]
@@ -831,6 +891,10 @@ class RunWidget(BaseScintilla):
             self.clear()
         elif self.lines() >= bufferSize:
             self.clear()
+
+        if run_internal:
+            self._show_run_panel()
+
         runType = self.projectData["RunType"]
         if runType == "Run":
             self.runModule(filePath, fileName, run_internal, run_with_args,
@@ -848,9 +912,16 @@ class RunWidget(BaseScintilla):
 
     def stopProcess(self):
         self._end_dap_session()
-        self.runProcess.kill()
+        if self.runProcess.state() != QProcess.ProcessState.NotRunning:
+            self.printout(">>> Stopping…\n", 3)
+            self.runProcess.terminate()
+            if not self.runProcess.waitForFinished(1500):
+                self.runProcess.kill()
+                self.runProcess.waitForFinished(1000)
+            self.printout(">>> Stopped\n", 3)
         self.currentProcess = None
         self.debugStatusChanged.emit("")
+        self.vSplitter.showNormal()
 
     def contextMenuEvent(self, event):
         if self.isReadOnly():
